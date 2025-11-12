@@ -57,6 +57,23 @@ enum StatusPenduduk {
   }
 }
 
+enum StatusHidup {
+  hidup('Hidup'),
+  wafat('Wafat');
+
+  final String value;
+  const StatusHidup(this.value);
+
+  static StatusHidup? fromString(String? value) {
+    if (value == null) return null;
+    try {
+      return StatusHidup.values.firstWhere((e) => e.value == value);
+    } catch (e) {
+      return null;
+    }
+  }
+}
+
 class Warga {
   final String id;
   final String nama;
@@ -68,7 +85,7 @@ class Warga {
   final String? pendidikanTerakhir;
   final String? pekerjaan;
   final StatusPenduduk? statusPenduduk;
-  final String? statusHidupWafat; // 'Hidup' atau 'Wafat'
+  final StatusHidup? statusHidupWafat;
   final String? keluargaId;
   final String? agama;
   final String? fotoKtp;
@@ -110,7 +127,7 @@ class Warga {
       pendidikanTerakhir: json['pendidikan_terakhir'],
       pekerjaan: json['pekerjaan'],
       statusPenduduk: StatusPenduduk.fromString(json['status_penduduk']),
-      statusHidupWafat: json['status_hidup_wafat'],
+      statusHidupWafat: StatusHidup.fromString(json['status_hidup_wafat']),
       keluargaId: json['keluarga_id'],
       agama: json['agama'],
       fotoKtp: json['foto_ktp'],
@@ -137,7 +154,7 @@ class Warga {
       'pendidikan_terakhir': pendidikanTerakhir,
       'pekerjaan': pekerjaan,
       'status_penduduk': statusPenduduk?.value,
-      'status_hidup_wafat': statusHidupWafat,
+      'status_hidup_wafat': statusHidupWafat?.value,
       'keluarga_id': keluargaId,
       'agama': agama,
       'foto_ktp': fotoKtp,

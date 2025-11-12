@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:jawara_pintar_kel_5/models/warga_model.dart';
 import 'package:jawara_pintar_kel_5/services/warga_service.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show getPrimaryColor;
@@ -20,14 +22,18 @@ class TambahWargaPage extends StatefulWidget {
 class _TambahWargaPageState extends State<TambahWargaPage> {
   // Service
   final _wargaService = WargaService();
-  
+  final _imagePicker = ImagePicker();
+
   // Controllers
   final _namaCtl = TextEditingController();
   final _idCtl = TextEditingController();
-  final _ttlCtl = TextEditingController();
   final _tempatLahirCtl = TextEditingController();
   final _teleponCtl = TextEditingController();
   final _emailCtl = TextEditingController();
+
+  // State
+  DateTime? _tanggalLahir;
+  XFile? _fotoKtp;
 
   // Dropdown states
   Gender? _jenisKelamin;
@@ -35,7 +41,7 @@ class _TambahWargaPageState extends State<TambahWargaPage> {
   GolonganDarah? _golDarah;
   String? _keluargaId;
   String? _peranKeluarga;
-  String? _statusHidup;
+  StatusHidup? _statusHidup;
   StatusPenduduk? _statusPenduduk;
   String? _pendidikan;
   String? _pekerjaan;
@@ -66,6 +72,51 @@ class _TambahWargaPageState extends State<TambahWargaPage> {
         );
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final pickedFile = await _imagePicker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _fotoKtp = pickedFile;
+      });
+    }
+  }
+
+  Future<String?> _uploadFotoKtp(XFile image) async {
+    try {
+      final fileExt = image.path.split('.').last;
+      final fileName = '${DateTime.now().toIso8601String()}.$fileExt';
+      final filePath = 'foto-ktp/$fileName';
+
+      await Supabase.instance.client.storage.from('foto_ktp').upload(
+            filePath,
+            File(image.path),
+            fileOptions: FileOptions(contentType: image.mimeType),
+          );
+      final imageUrl = Supabase.instance.client.storage
+          .from('foto_ktp')
+          .getPublicUrl(filePath);
+      return imageUrl;
+    } on StorageException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Gagal mengunggah foto: ${e.message}. Pastikan bucket "foto_ktp" ada di Supabase Storage.'),
+          ),
+        );
+      }
+      return null;
+    } 
+    catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal mengunggah foto: $e')),
+        );
+      }
+      return null;
     }
   }
 
@@ -102,13 +153,12 @@ class _TambahWargaPageState extends State<TambahWargaPage> {
     setState(() => _isSaving = true);
 
     try {
-      // Parsing tanggal lahir jika ada
-      DateTime? tanggalLahir;
-      if (_ttlCtl.text.isNotEmpty) {
-        try {
-          tanggalLahir = DateTime.parse(_ttlCtl.text);
-        } catch (e) {
-          // Format tanggal tidak valid, skip
+      String? fotoKtpUrl;
+      if (_fotoKtp != null) {
+        fotoKtpUrl = await _uploadFotoKtp(_fotoKtp!);
+        if (fotoKtpUrl == null) {
+          setState(() => _isSaving = false);
+          return; // Hentikan jika upload gagal
         }
       }
 
@@ -116,7 +166,7 @@ class _TambahWargaPageState extends State<TambahWargaPage> {
       final warga = Warga(
         id: _idCtl.text,
         nama: _namaCtl.text,
-        tanggalLahir: tanggalLahir,
+        tanggalLahir: _tanggalLahir,
         tempatLahir: _tempatLahirCtl.text.isEmpty ? null : _tempatLahirCtl.text,
         telepon: _teleponCtl.text.isEmpty ? null : _teleponCtl.text,
         gender: _jenisKelamin,
@@ -127,7 +177,7 @@ class _TambahWargaPageState extends State<TambahWargaPage> {
         statusHidupWafat: _statusHidup,
         keluargaId: _keluargaId,
         agama: _agama,
-        fotoKtp: null,
+        fotoKtp: fotoKtpUrl,
         email: _emailCtl.text.isEmpty ? null : _emailCtl.text,
       );
 
@@ -167,7 +217,6 @@ class _TambahWargaPageState extends State<TambahWargaPage> {
   void dispose() {
     _namaCtl.dispose();
     _idCtl.dispose();
-    _ttlCtl.dispose();
     _tempatLahirCtl.dispose();
     _teleponCtl.dispose();
     _emailCtl.dispose();
@@ -212,11 +261,78 @@ class _TambahWargaPageState extends State<TambahWargaPage> {
                 hint: 'Masukkan NIK',
               ),
               const SizedBox(height: 8),
+              LabeledTextField(
+                label: 'Tempat Lahir',
+                controller: _tempatLahirCtl,
+                hint: 'Masukkan tempat lahir',
+              ),
+              const SizedBox(height: 8),
               DatePickerField(
                 label: 'Tanggal Lahir',
-                controller: _ttlCtl,
+                selectedDate: _tanggalLahir,
+                onDateSelected: (date) {
+                  setState(() {
+                    _tanggalLahir = date;
+                  });
+                },
                 placeholder: 'Pilih Tanggal',
               ),
+            ],
+          ),
+
+          // Informasi Kontak
+          SectionCard(
+            title: 'Informasi Kontak',
+            children: [
+              LabeledTextField(
+                label: 'Nomor Telepon',
+                controller: _teleponCtl,
+                keyboardType: TextInputType.phone,
+                hint: 'Masukkan nomor telepon',
+              ),
+              const SizedBox(height: 8),
+              LabeledTextField(
+                label: 'Email',
+                controller: _emailCtl,
+                keyboardType: TextInputType.emailAddress,
+                hint: 'Masukkan email',
+              ),
+            ],
+          ),
+
+          // Foto KTP
+          SectionCard(
+            title: 'Foto KTP',
+            children: [
+              _fotoKtp == null
+                  ? OutlinedButton.icon(
+                      onPressed: _pickImage,
+                      icon: const Icon(Icons.upload_file),
+                      label: const Text('Pilih Foto KTP'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: getPrimaryColor(context),
+                        side: BorderSide(color: getPrimaryColor(context)),
+                      ),
+                    )
+                  : Column(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.file(
+                            File(_fotoKtp!.path),
+                            height: 200,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextButton.icon(
+                          onPressed: _pickImage,
+                          icon: const Icon(Icons.edit),
+                          label: const Text('Ganti Foto'),
+                        )
+                      ],
+                    ),
             ],
           ),
 
@@ -306,13 +422,20 @@ class _TambahWargaPageState extends State<TambahWargaPage> {
                   DropdownMenuItem(value: 'Anak', child: Text('Anak')),
                 ],
               ),
-              LabeledDropdown<String>(
+              LabeledDropdown<StatusHidup>(
                 label: 'Status Hidup',
                 value: _statusHidup,
                 onChanged: (v) => setState(() => _statusHidup = v),
-                items: const [
-                  DropdownMenuItem(value: 'Hidup', child: Text('Hidup')),
-                  DropdownMenuItem(value: 'Wafat', child: Text('Wafat')),
+                items: [
+                  const DropdownMenuItem(
+                    value: null,
+                    child: Text('-- Pilih --'),
+                  ),
+                  ...StatusHidup.values.map((status) =>
+                      DropdownMenuItem(
+                        value: status,
+                        child: Text(status.value),
+                      )),
                 ],
               ),
               LabeledDropdown<StatusPenduduk>(

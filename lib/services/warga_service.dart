@@ -173,4 +173,23 @@ class WargaService {
       throw Exception('Error fetching keluarga: $e');
     }
   }
+
+  /// Fetch warga berdasarkan ID
+  Future<Warga> getWargaById(String id) async {
+    try {
+      final response = await _supabase
+          .from('warga')
+          .select('''
+            id, nama, tanggal_lahir, tempat_lahir, telepon, gender, 
+            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, email,
+            keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga)
+          ''')
+          .eq('id', id)
+          .single();
+
+      return Warga.fromJson(response);
+    } catch (e) {
+      throw Exception('Error fetching warga by id: $e');
+    }
+  }
 }

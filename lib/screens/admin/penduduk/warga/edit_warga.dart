@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:jawara_pintar_kel_5/models/warga_model.dart';
 import 'package:jawara_pintar_kel_5/services/warga_service.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show getPrimaryColor;
@@ -21,14 +23,19 @@ class EditWargaPage extends StatefulWidget {
 class _EditWargaPageState extends State<EditWargaPage> {
   // Service
   final _wargaService = WargaService();
-  
+  final _imagePicker = ImagePicker();
+
   // Controllers
   late final TextEditingController _namaCtl;
   late final TextEditingController _idCtl;
-  late final TextEditingController _ttlCtl;
   late final TextEditingController _tempatLahirCtl;
   late final TextEditingController _teleponCtl;
   late final TextEditingController _emailCtl;
+
+  // State
+  DateTime? _tanggalLahir;
+  XFile? _fotoKtp;
+  String? _fotoKtpUrl;
 
   // Dropdown states
   Gender? _jenisKelamin;
@@ -36,7 +43,7 @@ class _EditWargaPageState extends State<EditWargaPage> {
   GolonganDarah? _golDarah;
   String? _keluargaId;
   String? _peranKeluarga;
-  String? _statusHidup;
+  StatusHidup? _statusHidup;
   StatusPenduduk? _statusPenduduk;
   String? _pendidikan;
   String? _pekerjaan;
@@ -45,29 +52,50 @@ class _EditWargaPageState extends State<EditWargaPage> {
   List<Keluarga> _keluargaList = [];
   bool _isLoading = false;
   bool _isSaving = false;
+  bool _isFetching = true;
 
   @override
   void initState() {
     super.initState();
-    // Initialize controllers with existing data
-    _namaCtl = TextEditingController(text: widget.warga.nama);
-    _idCtl = TextEditingController(text: widget.warga.id);
-    _ttlCtl = TextEditingController(text: widget.warga.tanggalLahir?.toString().split(' ')[0] ?? '');
-    _tempatLahirCtl = TextEditingController(text: widget.warga.tempatLahir ?? '');
-    _teleponCtl = TextEditingController(text: widget.warga.telepon ?? '');
-    _emailCtl = TextEditingController(text: widget.warga.email ?? '');
-
-    // Initialize dropdown states with existing data
-    _jenisKelamin = widget.warga.gender;
-    _agama = widget.warga.agama;
-    _golDarah = widget.warga.golDarah;
-    _keluargaId = widget.warga.keluargaId;
-    _statusHidup = widget.warga.statusHidupWafat;
-    _statusPenduduk = widget.warga.statusPenduduk;
-    _pendidikan = widget.warga.pendidikanTerakhir;
-    _pekerjaan = widget.warga.pekerjaan;
-
+    _namaCtl = TextEditingController();
+    _idCtl = TextEditingController();
+    _tempatLahirCtl = TextEditingController();
+    _teleponCtl = TextEditingController();
+    _emailCtl = TextEditingController();
+    _fetchWargaData();
     _loadKeluargaData();
+  }
+
+  Future<void> _fetchWargaData() async {
+    setState(() => _isFetching = true);
+    try {
+      final warga = await _wargaService.getWargaById(widget.warga.id);
+      _namaCtl.text = warga.nama;
+      _idCtl.text = warga.id;
+      _tempatLahirCtl.text = warga.tempatLahir ?? '';
+      _teleponCtl.text = warga.telepon ?? '';
+      _emailCtl.text = warga.email ?? '';
+      setState(() {
+        _tanggalLahir = warga.tanggalLahir;
+        _fotoKtpUrl = warga.fotoKtp;
+        _jenisKelamin = warga.gender;
+        _agama = warga.agama;
+        _golDarah = warga.golDarah;
+        _keluargaId = warga.keluargaId;
+        _statusHidup = warga.statusHidupWafat;
+        _statusPenduduk = warga.statusPenduduk;
+        _pendidikan = warga.pendidikanTerakhir;
+        _pekerjaan = warga.pekerjaan;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error fetching warga data: $e')),
+        );
+      }
+    } finally {
+      setState(() => _isFetching = false);
+    }
   }
 
   Future<void> _loadKeluargaData() async {
@@ -85,6 +113,53 @@ class _EditWargaPageState extends State<EditWargaPage> {
         );
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final pickedFile = await _imagePicker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _fotoKtp = pickedFile;
+      });
+    }
+  }
+
+  Future<String?> _uploadFotoKtp(XFile image) async {
+    try {
+      final fileExt = image.path.split('.').last;
+      final fileName = '${DateTime.now().toIso8601String()}.$fileExt';
+      final filePath = 'foto-ktp/$fileName';
+
+      await Supabase.instance.client.storage.from('foto_ktp').upload(
+            image.path,
+            File(image.path),
+            fileOptions: FileOptions(contentType: image.mimeType),
+          );
+
+      final imageUrl = Supabase.instance.client.storage
+      
+          .from('foto_ktp')
+          .getPublicUrl(filePath);
+      return imageUrl;
+    } on StorageException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Gagal mengunggah foto: ${e.message}. Pastikan bucket "foto_ktp" ada di Supabase Storage.'),
+          ),
+        );
+      }
+      return null;
+    } 
+    catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal mengunggah foto: $e')),
+        );
+      }
+      return null;
     }
   }
 
@@ -121,13 +196,12 @@ class _EditWargaPageState extends State<EditWargaPage> {
     setState(() => _isSaving = true);
 
     try {
-      // Parsing tanggal lahir jika ada
-      DateTime? tanggalLahir;
-      if (_ttlCtl.text.isNotEmpty) {
-        try {
-          tanggalLahir = DateTime.parse(_ttlCtl.text);
-        } catch (e) {
-          // Format tanggal tidak valid, skip
+      String? newFotoKtpUrl = _fotoKtpUrl;
+      if (_fotoKtp != null) {
+        newFotoKtpUrl = await _uploadFotoKtp(_fotoKtp!);
+        if (newFotoKtpUrl == null) {
+          setState(() => _isSaving = false);
+          return; // Hentikan jika upload gagal
         }
       }
 
@@ -135,7 +209,7 @@ class _EditWargaPageState extends State<EditWargaPage> {
       final wargaUpdated = Warga(
         id: _idCtl.text,
         nama: _namaCtl.text,
-        tanggalLahir: tanggalLahir,
+        tanggalLahir: _tanggalLahir,
         tempatLahir: _tempatLahirCtl.text.isEmpty ? null : _tempatLahirCtl.text,
         telepon: _teleponCtl.text.isEmpty ? null : _teleponCtl.text,
         gender: _jenisKelamin,
@@ -146,7 +220,7 @@ class _EditWargaPageState extends State<EditWargaPage> {
         statusHidupWafat: _statusHidup,
         keluargaId: _keluargaId,
         agama: _agama,
-        fotoKtp: null,
+        fotoKtp: newFotoKtpUrl,
         email: _emailCtl.text.isEmpty ? null : _emailCtl.text,
       );
 
@@ -188,7 +262,6 @@ class _EditWargaPageState extends State<EditWargaPage> {
   void dispose() {
     _namaCtl.dispose();
     _idCtl.dispose();
-    _ttlCtl.dispose();
     _tempatLahirCtl.dispose();
     _teleponCtl.dispose();
     _emailCtl.dispose();
@@ -213,7 +286,9 @@ class _EditWargaPageState extends State<EditWargaPage> {
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
       ),
-      body: ListView(
+      body: _isFetching
+          ? const Center(child: CircularProgressIndicator())
+          : ListView(
         padding: const EdgeInsets.only(bottom: 24),
         children: [
           // Data Diri
@@ -233,11 +308,87 @@ class _EditWargaPageState extends State<EditWargaPage> {
                 hint: 'Masukkan NIK',
               ),
               const SizedBox(height: 8),
+              LabeledTextField(
+                label: 'Tempat Lahir',
+                controller: _tempatLahirCtl,
+                hint: 'Masukkan tempat lahir',
+              ),
+              const SizedBox(height: 8),
               DatePickerField(
                 label: 'Tanggal Lahir',
-                controller: _ttlCtl,
+                selectedDate: _tanggalLahir,
+                onDateSelected: (date) {
+                  setState(() {
+                    _tanggalLahir = date;
+                  });
+                },
                 placeholder: 'Pilih Tanggal',
               ),
+            ],
+          ),
+
+          // Informasi Kontak
+          SectionCard(
+            title: 'Informasi Kontak',
+            children: [
+              LabeledTextField(
+                label: 'Nomor Telepon',
+                controller: _teleponCtl,
+                keyboardType: TextInputType.phone,
+                hint: 'Masukkan nomor telepon',
+              ),
+              const SizedBox(height: 8),
+              LabeledTextField(
+                label: 'Email',
+                controller: _emailCtl,
+                keyboardType: TextInputType.emailAddress,
+                hint: 'Masukkan email',
+              ),
+            ],
+          ),
+
+          // Foto KTP
+          SectionCard(
+            title: 'Foto KTP',
+            children: [
+              _fotoKtp == null && _fotoKtpUrl == null
+                  ? OutlinedButton.icon(
+                      onPressed: _pickImage,
+                      icon: const Icon(Icons.upload_file),
+                      label: const Text('Pilih Foto KTP'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: getPrimaryColor(context),
+                        side: BorderSide(color: getPrimaryColor(context)),
+                      ),
+                    )
+                  : Column(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: _fotoKtp != null
+                              ? Image.file(
+                                  File(_fotoKtp!.path),
+                                  height: 200,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                )
+                              : Image.network(
+                                  _fotoKtpUrl!,
+                                  height: 200,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Icon(Icons.error),
+                                ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextButton.icon(
+                          onPressed: _pickImage,
+                          icon: const Icon(Icons.edit),
+                          label: const Text('Ganti Foto'),
+                        )
+                      ],
+                    ),
             ],
           ),
 
@@ -327,13 +478,20 @@ class _EditWargaPageState extends State<EditWargaPage> {
                   DropdownMenuItem(value: 'Anak', child: Text('Anak')),
                 ],
               ),
-              LabeledDropdown<String>(
+              LabeledDropdown<StatusHidup>(
                 label: 'Status Hidup',
                 value: _statusHidup,
                 onChanged: (v) => setState(() => _statusHidup = v),
-                items: const [
-                  DropdownMenuItem(value: 'Hidup', child: Text('Hidup')),
-                  DropdownMenuItem(value: 'Wafat', child: Text('Wafat')),
+                items: [
+                  DropdownMenuItem(
+                    value: null,
+                    child: Text('-- Pilih --'),
+                  ),
+                  ...StatusHidup.values.map((status) =>
+                      DropdownMenuItem(
+                        value: status,
+                        child: Text(status.value),
+                      )),
                 ],
               ),
               LabeledDropdown<StatusPenduduk>(
