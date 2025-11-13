@@ -1,11 +1,16 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:jawara_pintar_kel_5/models/warga_model.dart';
+import 'package:jawara_pintar_kel_5/services/warga_service.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show getPrimaryColor;
 import 'package:jawara_pintar_kel_5/widget/form/section_card.dart';
 import 'package:jawara_pintar_kel_5/widget/form/labeled_text_field.dart';
 import 'package:jawara_pintar_kel_5/widget/form/labeled_dropdown.dart';
 import 'package:jawara_pintar_kel_5/widget/form/date_picker_field.dart';
 import 'package:jawara_pintar_kel_5/widget/moon_result_modal.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class TambahWargaPage extends StatefulWidget {
   const TambahWargaPage({super.key});
@@ -15,27 +20,206 @@ class TambahWargaPage extends StatefulWidget {
 }
 
 class _TambahWargaPageState extends State<TambahWargaPage> {
+  // Service
+  final _wargaService = WargaService();
+  final _imagePicker = ImagePicker();
+
   // Controllers
   final _namaCtl = TextEditingController();
-  final _nikCtl = TextEditingController();
-  final _ttlCtl = TextEditingController();
+  final _idCtl = TextEditingController();
+  final _tempatLahirCtl = TextEditingController();
+  final _teleponCtl = TextEditingController();
+  final _emailCtl = TextEditingController();
+
+  // State
+  DateTime? _tanggalLahir;
+  XFile? _fotoKtp;
 
   // Dropdown states
-  String? _jenisKelamin;
+  Gender? _jenisKelamin;
   String? _agama;
-  String? _golDarah;
-  String? _keluarga;
+  GolonganDarah? _golDarah;
+  String? _keluargaId;
   String? _peranKeluarga;
-  String? _statusHidup;
-  String? _statusPenduduk;
+  StatusHidup? _statusHidup;
+  StatusPenduduk? _statusPenduduk;
   String? _pendidikan;
   String? _pekerjaan;
+
+  // Data dari database
+  List<Keluarga> _keluargaList = [];
+  bool _isLoading = false;
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadKeluargaData();
+  }
+
+  Future<void> _loadKeluargaData() async {
+    setState(() => _isLoading = true);
+    try {
+      final keluarga = await _wargaService.getAllKeluarga();
+      setState(() {
+        _keluargaList = keluarga;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading keluarga: $e')),
+        );
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final pickedFile = await _imagePicker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _fotoKtp = pickedFile;
+      });
+    }
+  }
+
+  Future<String?> _uploadFotoKtp(XFile image) async {
+    try {
+      final fileExt = image.path.split('.').last;
+      final fileName = '${DateTime.now().toIso8601String()}.$fileExt';
+      final filePath = 'foto-ktp/$fileName';
+
+      await Supabase.instance.client.storage.from('foto_ktp').upload(
+            filePath,
+            File(image.path),
+            fileOptions: FileOptions(contentType: image.mimeType),
+          );
+      final imageUrl = Supabase.instance.client.storage
+          .from('foto_ktp')
+          .getPublicUrl(filePath);
+      return imageUrl;
+    } on StorageException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Gagal mengunggah foto: ${e.message}. Pastikan bucket "foto_ktp" ada di Supabase Storage.'),
+          ),
+        );
+      }
+      return null;
+    } 
+    catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal mengunggah foto: $e')),
+        );
+      }
+      return null;
+    }
+  }
+
+  Future<void> _saveWarga() async {
+    // Validasi form
+    if (_idCtl.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('NIK tidak boleh kosong')),
+      );
+      return;
+    }
+
+    if (_namaCtl.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nama tidak boleh kosong')),
+      );
+      return;
+    }
+
+    if (_jenisKelamin == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Jenis kelamin harus dipilih')),
+      );
+      return;
+    }
+
+    if (_statusPenduduk == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Status kependudukan harus dipilih')),
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    try {
+      String? fotoKtpUrl;
+      if (_fotoKtp != null) {
+        fotoKtpUrl = await _uploadFotoKtp(_fotoKtp!);
+        if (fotoKtpUrl == null) {
+          setState(() => _isSaving = false);
+          return; // Hentikan jika upload gagal
+        }
+      }
+
+      // Buat object Warga
+      final warga = Warga(
+        id: _idCtl.text,
+        nama: _namaCtl.text,
+        tanggalLahir: _tanggalLahir,
+        tempatLahir: _tempatLahirCtl.text.isEmpty ? null : _tempatLahirCtl.text,
+        telepon: _teleponCtl.text.isEmpty ? null : _teleponCtl.text,
+        gender: _jenisKelamin,
+        golDarah: _golDarah,
+        pendidikanTerakhir: _pendidikan,
+        pekerjaan: _pekerjaan,
+        statusPenduduk: _statusPenduduk,
+        statusHidupWafat: _statusHidup,
+        keluargaId: _keluargaId,
+        agama: _agama,
+        fotoKtp: fotoKtpUrl,
+        email: _emailCtl.text.isEmpty ? null : _emailCtl.text,
+      );
+
+      // Simpan ke database
+      await _wargaService.createWarga(warga);
+
+      if (mounted) {
+        // Tampilkan success modal
+        await showResultModal(
+          context,
+          type: ResultType.success,
+          title: 'Berhasil',
+          description: 'Data warga berhasil disimpan.',
+          actionLabel: 'Selesai',
+          autoProceed: true,
+        );
+
+        // Kembali ke halaman daftar warga dengan hasil 'true'
+        if (mounted) context.pop(true);
+      }
+    } catch (e) {
+      if (mounted) {
+        await showResultModal(
+          context,
+          type: ResultType.error,
+          title: 'Error',
+          description: 'Gagal menyimpan data: $e',
+          actionLabel: 'Coba Lagi',
+        );
+      }
+    } finally {
+      setState(() => _isSaving = false);
+    }
+  }
 
   @override
   void dispose() {
     _namaCtl.dispose();
-    _nikCtl.dispose();
-    _ttlCtl.dispose();
+    _idCtl.dispose();
+    _tempatLahirCtl.dispose();
+    _teleponCtl.dispose();
+    _emailCtl.dispose();
     super.dispose();
   }
 
@@ -72,16 +256,83 @@ class _TambahWargaPageState extends State<TambahWargaPage> {
               const SizedBox(height: 8),
               LabeledTextField(
                 label: 'NIK',
-                controller: _nikCtl,
+                controller: _idCtl,
                 keyboardType: TextInputType.number,
                 hint: 'Masukkan NIK',
               ),
               const SizedBox(height: 8),
+              LabeledTextField(
+                label: 'Tempat Lahir',
+                controller: _tempatLahirCtl,
+                hint: 'Masukkan tempat lahir',
+              ),
+              const SizedBox(height: 8),
               DatePickerField(
                 label: 'Tanggal Lahir',
-                controller: _ttlCtl,
+                selectedDate: _tanggalLahir,
+                onDateSelected: (date) {
+                  setState(() {
+                    _tanggalLahir = date;
+                  });
+                },
                 placeholder: 'Pilih Tanggal',
               ),
+            ],
+          ),
+
+          // Informasi Kontak
+          SectionCard(
+            title: 'Informasi Kontak',
+            children: [
+              LabeledTextField(
+                label: 'Nomor Telepon',
+                controller: _teleponCtl,
+                keyboardType: TextInputType.phone,
+                hint: 'Masukkan nomor telepon',
+              ),
+              const SizedBox(height: 8),
+              LabeledTextField(
+                label: 'Email',
+                controller: _emailCtl,
+                keyboardType: TextInputType.emailAddress,
+                hint: 'Masukkan email',
+              ),
+            ],
+          ),
+
+          // Foto KTP
+          SectionCard(
+            title: 'Foto KTP',
+            children: [
+              _fotoKtp == null
+                  ? OutlinedButton.icon(
+                      onPressed: _pickImage,
+                      icon: const Icon(Icons.upload_file),
+                      label: const Text('Pilih Foto KTP'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: getPrimaryColor(context),
+                        side: BorderSide(color: getPrimaryColor(context)),
+                      ),
+                    )
+                  : Column(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.file(
+                            File(_fotoKtp!.path),
+                            height: 200,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextButton.icon(
+                          onPressed: _pickImage,
+                          icon: const Icon(Icons.edit),
+                          label: const Text('Ganti Foto'),
+                        )
+                      ],
+                    ),
             ],
           ),
 
@@ -89,19 +340,20 @@ class _TambahWargaPageState extends State<TambahWargaPage> {
           SectionCard(
             title: 'Atribut Personal',
             children: [
-              LabeledDropdown<String>(
+              LabeledDropdown<Gender>(
                 label: 'Jenis Kelamin',
                 value: _jenisKelamin,
                 onChanged: (v) => setState(() => _jenisKelamin = v),
-                items: const [
-                  DropdownMenuItem(
-                    value: 'Laki-laki',
-                    child: Text('Laki-laki'),
+                items: [
+                  const DropdownMenuItem(
+                    value: null,
+                    child: Text('-- Pilih --'),
                   ),
-                  DropdownMenuItem(
-                    value: 'Perempuan',
-                    child: Text('Perempuan'),
-                  ),
+                  ...Gender.values.map((gender) =>
+                      DropdownMenuItem(
+                        value: gender,
+                        child: Text(gender.value),
+                      )),
                 ],
               ),
               LabeledDropdown<String>(
@@ -117,15 +369,20 @@ class _TambahWargaPageState extends State<TambahWargaPage> {
                   DropdownMenuItem(value: 'Konghucu', child: Text('Konghucu')),
                 ],
               ),
-              LabeledDropdown<String>(
+              LabeledDropdown<GolonganDarah>(
                 label: 'Golongan Darah',
                 value: _golDarah,
                 onChanged: (v) => setState(() => _golDarah = v),
-                items: const [
-                  DropdownMenuItem(value: 'A', child: Text('A')),
-                  DropdownMenuItem(value: 'B', child: Text('B')),
-                  DropdownMenuItem(value: 'AB', child: Text('AB')),
-                  DropdownMenuItem(value: 'O', child: Text('O')),
+                items: [
+                  const DropdownMenuItem(
+                    value: null,
+                    child: Text('-- Pilih --'),
+                  ),
+                  ...GolonganDarah.values.map((gol) =>
+                      DropdownMenuItem(
+                        value: gol,
+                        child: Text(gol.value),
+                      )),
                 ],
               ),
             ],
@@ -137,17 +394,19 @@ class _TambahWargaPageState extends State<TambahWargaPage> {
             children: [
               LabeledDropdown<String>(
                 label: 'Keluarga',
-                value: _keluarga,
-                onChanged: (v) => setState(() => _keluarga = v),
-                items: const [
+                value: _keluargaId,
+                onChanged: (v) => setState(() => _keluargaId = v),
+                items: [
                   DropdownMenuItem(
-                    value: 'Keluarga Besar Mojokerto',
-                    child: Text('Keluarga Besar Mojokerto'),
+                    value: null,
+                    child: Text(_isLoading ? 'Loading...' : '-- Pilih Keluarga --'),
                   ),
-                  DropdownMenuItem(
-                    value: 'Keluarga Besar Blitar',
-                    child: Text('Keluarga Besar Blitar'),
-                  ),
+                  if (!_isLoading)
+                    ..._keluargaList.map((keluarga) =>
+                        DropdownMenuItem(
+                          value: keluarga.id,
+                          child: Text(keluarga.namaKeluarga),
+                        )),
                 ],
               ),
               LabeledDropdown<String>(
@@ -163,22 +422,36 @@ class _TambahWargaPageState extends State<TambahWargaPage> {
                   DropdownMenuItem(value: 'Anak', child: Text('Anak')),
                 ],
               ),
-              LabeledDropdown<String>(
+              LabeledDropdown<StatusHidup>(
                 label: 'Status Hidup',
                 value: _statusHidup,
                 onChanged: (v) => setState(() => _statusHidup = v),
-                items: const [
-                  DropdownMenuItem(value: 'Hidup', child: Text('Hidup')),
-                  DropdownMenuItem(value: 'Wafat', child: Text('Wafat')),
+                items: [
+                  const DropdownMenuItem(
+                    value: null,
+                    child: Text('-- Pilih --'),
+                  ),
+                  ...StatusHidup.values.map((status) =>
+                      DropdownMenuItem(
+                        value: status,
+                        child: Text(status.value),
+                      )),
                 ],
               ),
-              LabeledDropdown<String>(
+              LabeledDropdown<StatusPenduduk>(
                 label: 'Status Kependudukan',
                 value: _statusPenduduk,
                 onChanged: (v) => setState(() => _statusPenduduk = v),
-                items: const [
-                  DropdownMenuItem(value: 'Aktif', child: Text('Aktif')),
-                  DropdownMenuItem(value: 'Nonaktif', child: Text('Nonaktif')),
+                items: [
+                  const DropdownMenuItem(
+                    value: null,
+                    child: Text('-- Pilih --'),
+                  ),
+                  ...StatusPenduduk.values.map((status) =>
+                      DropdownMenuItem(
+                        value: status,
+                        child: Text(status.value),
+                      )),
                 ],
               ),
             ],
@@ -243,20 +516,18 @@ class _TambahWargaPageState extends State<TambahWargaPage> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                onPressed: () async {
-                  // TODO: Simpan data
-                  await showResultModal(
-                    context,
-                    type: ResultType.success,
-                    title: 'Berhasil',
-                    description: 'Data warga berhasil disimpan.',
-                    actionLabel: 'Selesai',
-                    autoProceed: true,
-                  );
-                  // Kembali ke halaman daftar warga
-                  if (context.mounted) context.pop();
-                },
-                child: const Text('Simpan'),
+                onPressed: _isSaving ? null : () => _saveWarga(),
+                child: _isSaving
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Text('Simpan'),
               ),
             ),
           ),
