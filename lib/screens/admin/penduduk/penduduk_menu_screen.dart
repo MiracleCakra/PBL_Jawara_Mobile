@@ -79,6 +79,81 @@ class PendudukMenuScreen extends StatelessWidget {
       },
     );
   }
+  void _showMarketplaceSubMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        const Color primaryColor = Color(0xFF38BDF8); 
+        
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Handle bar
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                // Title
+                const Text(
+                  'Menu Marketplace',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Kelola produk, pesanan, dan sistem rekomendasi',
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                ),
+                const SizedBox(height: 24),
+                _buildSubMenuItem(
+                  context,
+                  icon: Icons.inventory_2_rounded,
+                  title: 'Manajemen Produk',
+                  subtitle: 'Kelola produk warga',
+                  color: primaryColor,
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.pushNamed('marketplaceProdukList');
+                  },
+                ),
+                const SizedBox(height: 12),
+                _buildSubMenuItem(
+                  context,
+                  icon: Icons.receipt_long_rounded,
+                  title: 'Monitoring Pesanan',
+                  subtitle: 'Lacak status dan kelola transaksi jual beli',
+                  color: primaryColor,
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.pushNamed('marketplaceOrderMonitor');
+                  },
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   Widget _buildSubMenuItem(
     BuildContext context, {
@@ -167,6 +242,14 @@ class PendudukMenuScreen extends StatelessWidget {
                 color: Colors.black54,
                 fontWeight: FontWeight.w500,
               ),
+            ),
+            const SizedBox(height: 20),
+            GradientMenuCard(
+              icon: Icons.storefront_rounded,
+              title: 'Marketplace',
+              subtitle: 'Kelola produk, pemesanan, dan rekomendasi',
+              gradientColors: const [Color(0xFF38BDF8), Color(0xFF60A5FA)],
+              onTap: () => _showMarketplaceSubMenu(context),
             ),
             const SizedBox(height: 20),
             GradientMenuCard(

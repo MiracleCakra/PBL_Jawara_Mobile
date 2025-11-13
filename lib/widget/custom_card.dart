@@ -6,16 +6,20 @@ class CustomCard extends StatelessWidget {
   final Color? color;
   final List<Widget> children;
   final String? title;
+  final Widget? titleWidget;
   final Widget? titleTrailing;
   final double spacing;
+  final EdgeInsetsGeometry? padding;
 
   const CustomCard({
     super.key,
     this.title,
+    this.titleWidget,
     this.titleTrailing,
     this.color,
     required this.children,
     this.spacing = 0.0,
+     this.padding,
   });
 
   @override
@@ -40,11 +44,14 @@ class CustomCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (title != null || titleTrailing != null)
+          // 🔹 Baris judul (mendukung titleWidget & title)
+          if (titleWidget != null || title != null || titleTrailing != null)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                if (title != null)
+                if (titleWidget != null)
+                  Flexible(child: titleWidget!) // tampilkan widget khusus
+                else if (title != null)
                   Flexible(
                     child: Text(
                       title!,
@@ -58,8 +65,12 @@ class CustomCard extends StatelessWidget {
                 titleTrailing ?? const SizedBox.shrink(),
               ],
             ),
-          if (title != null || titleTrailing != null)
+
+          // 🔹 Spasi setelah judul
+          if (titleWidget != null || title != null || titleTrailing != null)
             const SizedBox(height: 16),
+
+          // 🔹 Konten utama
           ...children,
         ],
       ),
