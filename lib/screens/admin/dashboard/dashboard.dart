@@ -4,6 +4,7 @@ import 'package:jawara_pintar_kel_5/providers/admin_dashboard_provider.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/dashboard/kegiatan.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/dashboard/kependudukan.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/dashboard/keuangan.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/dashboard/marketplace.dart';
 import 'package:moon_design/moon_design.dart';
 import 'package:provider/provider.dart';
 
@@ -132,7 +133,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     _previousPage = provider.page;
                     provider.page = index;
                   },
-                  children: [Keuangan(), Kegiatan(), Kependudukan()],
+                  children: [Keuangan(), Kegiatan(), Kependudukan(), Marketplace()],
                 ),
               ),
             ],
