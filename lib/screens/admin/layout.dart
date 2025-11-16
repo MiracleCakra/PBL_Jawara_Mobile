@@ -6,6 +6,7 @@ import 'package:jawara_pintar_kel_5/constants/iconify.dart';
 import 'package:jawara_pintar_kel_5/widget/bottom_app_bar_item.dart';
 import 'package:jawara_pintar_kel_5/widget/system_ui_style.dart';
 import 'package:moon_design/moon_design.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class AdminLayout extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
@@ -26,11 +27,11 @@ class _AdminLayoutState extends State<AdminLayout>
       Iconify(icon, size: 24, color: color);
 
   final Map<String, String> tabs = {
-    'Rumah': '',
-    'Penduduk': IconifyConstants.fluentPeopleLight,
-    'Keuangan': IconifyConstants.letsIconMoneyLight,
-    'Kegiatan': IconifyConstants.arcticonActiviyManager,
-    'Lainnya': IconifyConstants.fluentMoreHorizontalREG,
+      'Rumah': '',
+      'Keluarga': IconifyConstants. fluentPeopleLight,
+      'Marketplace': IconifyConstants.storeIconFlat,
+      'Aktivitas': IconifyConstants.arcticonActiviyManager,
+      'Pengguna': IconifyConstants.fluentPerson24Regular,
   };
 
   @override
