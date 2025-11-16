@@ -13,7 +13,39 @@ class IconifyConstants {
 
   static const String fluentArrowUp =
       '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><path  d="M6 10.5a.75.75 0 0 0 .75-.75V3.81l1.97 1.97a.75.75 0 0 0 1.06-1.06L6.53 1.47a.75.75 0 0 0-1.06 0L2.22 4.72a.75.75 0 1 0 1.06 1.06l1.97-1.97v5.94c0 .414.336.75.75.75"/></svg>';
+  static const String fluentPeopleEdit20Regular =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M4.5 13C4 13 2 13 2 15a4 4 0 0 0 4 4h12a4 4 0 0 0 4-4c0-2-2-2-2-2M10 11a3 3 0 1 0 0-6a3 3 0 0 0 0 6m8 0a3 3 0 1 0 0-6a3 3 0 0 0 0 6M14 13a2 2 0 1 0 0-4a2 2 0 0 0 0 4M6 19c-1.5 0-3-.5-4-1.5M22 19c-1 1-2.5 1.5-4 1.5"/></g></svg>';
 
   static const String fluentArrowDown =
       '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><path  d="M6 1.5a.5.5 0 0 1 .5.5v6.793l2.646-2.647a.5.5 0 1 1 .708.708l-3.5 3.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L5.5 8.793V2a.5.5 0 0 1 .5-.5"/></svg>';
+  static const String fluentClipboardTaskListRtl20Regular =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M18.75 1.5A.75.75 0 0 1 19.5 2.25v19.5a.75.75 0 0 1-1.5 0V2.25a.75.75 0 0 1 .75-.75m-6.75 13a.75.75 0 0 0 0 1.5h-5a.75.75 0 0 0 0-1.5zm0-4a.75.75 0 0 0 0 1.5h-5a.75.75 0 0 0 0-1.5zm-5.75-5.5H16.5a.75.75 0 0 0 .75-.75V6.5a1.5 1.5 0 0 0-1.5-1.5h-10A1.5 1.5 0 0 0 4 6.5v2.5a.75.75 0 0 0 .75.75m11.75-1.5h-10A.5.5 0 0 0 5 6.5v1.5a.75.75 0 0 0 1.5 0V6.5h8.5a.75.75 0 0 0 0-1.5H6.5a2.5 2.5 0 0 0-2.5 2.5v1.5a2.25 2.25 0 0 0 2.25 2.25h10.5a.75.75 0 0 0 0-1.5H6.5Z"/></svg>';
+
+  static const String fluentAdd16Filled =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a.75.75 0 0 1 .75.75v8.5h8.5a.75.75 0 0 1 0 1.5h-8.5v8.5a.75.75 0 0 1-1.5 0v-8.5h-8.5a.75.75 0 0 1 0-1.5h8.5v-8.5A.75.75 0 0 1 12 2"/></svg>';
+
+  static const String familyIconSimple =
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">'
+      '<path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" '
+      'd="M4 19v-3a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v3M9 8a2 2 0 1 1 0-4a2 2 0 0 1 0 4zm6 0a2 2 0 1 1 0-4a2 2 0 0 1 0 4z"/>'
+      '</svg>';
+  static const String fluentPeopleSettings20Regular =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"><circle cx="12" cy="7" r="4"/><path d="M5 21c.21-1.78 1.4-3.5 3.5-5h7c2.1 1.5 3.29 3.22 3.5 5"/></g></svg>';
+  
+  static const String fluentPerson24Regular =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">'
+    '<g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">'
+    '<circle cx="12" cy="7" r="4"/>'
+    '<path d="M5 21c.21-1.78 1.4-3.5 3.5-5h7c2.1 1.5 3.29 3.22 3.5 5"/>'
+    '</g>'
+    '</svg>';
+  static const String storeIconFlat =
+  '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" '
+  'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" '
+  'stroke-linecap="round" stroke-linejoin="round">'
+  '<path d="M3 10l2-4h14l2 4"/>'
+  '<rect x="3" y="10" width="18" height="11" rx="2" />'
+  '<line x1="8" y1="16" x2="16" y2="16" />'
+  '</svg>';
+
 }
