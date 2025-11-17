@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'package:permission_handler/permission_handler.dart';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
@@ -6,6 +9,8 @@ import 'package:jawara_pintar_kel_5/widget/drop_down_trailing_arrow.dart';
 import 'package:jawara_pintar_kel_5/widget/login_button.dart';
 import 'package:jawara_pintar_kel_5/widget/text_input_login.dart';
 import 'package:moon_design/moon_design.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:image_picker/image_picker.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -17,7 +22,10 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   String? errorMessage;
   bool isLogin = true;
+  XFile? _fotoKtp;
+  final _imagePicker = ImagePicker();
 
+  final supabase = Supabase.instance.client;
   final authService = AuthService();
 
   final TextEditingController _controllerEmail = TextEditingController(
@@ -34,34 +42,59 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _controllerPassword.text,
       );
 
+      // upload foto KTP first (if selected) and get its public URL
+      String fotoUrl = '';
+      if (_fotoKtp != null) {
+        final uploadedUrl = await _uploadFotoKtp(_fotoKtp!);
+        if (uploadedUrl != null && uploadedUrl.isNotEmpty) {
+          fotoUrl = uploadedUrl;
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Gagal mengunggah foto. Melanjutkan tanpa foto.'),
+              ),
+            );
+          }
+        }
+      }
+
+      await supabase.from('warga').insert({
+        // use the .text values from controllers
+        'nama': _namaController.text,
+        'id': _nikController.text,
+        'gender': _controllerJenisKelamin.text,
+        'email': _controllerEmail.text,
+        'telepon': _phoneController.text,
+        'foto_ktp': fotoUrl,
+      });
+
       // Navigasi ke halaman dashboard setelah berhasil login
       context.go('/login');
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Registration failed: $e'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Registration failed: $e')));
     }
   }
 
   late final TextEditingController _namaController,
       _nikController,
-      _emailController,
       _phoneController,
       _passwordController,
       _confirmPasswordController,
-      _alamatController;
+      _alamatController,
+      _controllerJenisKelamin;
 
   @override
   void initState() {
     _namaController = TextEditingController();
     _nikController = TextEditingController();
-    _emailController = TextEditingController();
     _phoneController = TextEditingController();
     _passwordController = TextEditingController();
     _confirmPasswordController = TextEditingController();
     _alamatController = TextEditingController();
+    _controllerJenisKelamin = TextEditingController();
     super.initState();
   }
 
@@ -69,21 +102,76 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void dispose() {
     _namaController.dispose();
     _nikController.dispose();
-    _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _alamatController.dispose();
+    _controllerJenisKelamin.dispose();
     super.dispose();
   }
 
-  final Map<int, String> _jenisKelamin = {1: 'Laki-laki', 0: 'Perempuan'};
-  bool? _isLakilaki;
+  final Map<int, String> _jenisKelamin = {1: 'Pria', 0: 'Wanita'};
   bool _showDdKelamin = false;
 
-  bool _showDdPilihRumah = false;
+  Future<void> _pickImage() async {
+    // Meminta izin akses penyimpanan
+    PermissionStatus status = await Permission.storage.request();
+    if (status.isGranted) {
+      final pickedFile = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+      );
+      if (pickedFile != null) {
+        setState(() {
+          _fotoKtp = pickedFile;
+        });
+      }
+    } else {
+      // Menampilkan snackbar atau memberi tahu pengguna bahwa izin diperlukan
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Izin diperlukan untuk mengakses galeri')),
+      );
+    }
+  }
 
-  bool _showDdPilihKelurahan = false;
+  Future<String?> _uploadFotoKtp(XFile image) async {
+    try {
+      final fileExt = image.path.split('.').last;
+      final fileName = '${DateTime.now().toIso8601String()}.$fileExt';
+      final filePath = 'foto-ktp/$fileName';
+
+      await Supabase.instance.client.storage
+          .from('foto_ktp')
+          .upload(
+            filePath,
+            File(image.path),
+            fileOptions: FileOptions(contentType: image.mimeType),
+          );
+      final imageUrl = Supabase.instance.client.storage
+          .from('foto_ktp')
+          .getPublicUrl(filePath);
+      return imageUrl;
+    } on StorageException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Gagal mengunggah foto: ${e.message}. Pastikan bucket "foto_ktp" ada di Supabase Storage.',
+            ),
+          ),
+        );
+        print(e);
+      }
+      return null;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal mengunggah foto: $e')));
+      }
+      print(e);
+      return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -149,7 +237,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             absorbGestures: true,
                             onTap: () => setState(() {
                               _showDdKelamin = false;
-                              _isLakilaki = true;
+                              _controllerJenisKelamin.text =
+                                  _jenisKelamin[1]!; // set controller value
                             }),
                             label: Text(_jenisKelamin[1]!),
                           ),
@@ -157,23 +246,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             absorbGestures: true,
                             onTap: () => setState(() {
                               _showDdKelamin = false;
-                              _isLakilaki = false;
+                              _controllerJenisKelamin.text =
+                                  _jenisKelamin[0]!; // set controller value
                             }),
                             label: Text(_jenisKelamin[0]!),
                           ),
                         ],
                       ),
                       child: dropDownChild(
-                        hintText: _isLakilaki == null
+                        // show selected value from controller if available
+                        hintText: _controllerJenisKelamin.text.isEmpty
                             ? 'Jenis Kelamin'
-                            : _isLakilaki!
-                            ? 'Laki-Laki'
-                            : 'Perempuan',
+                            : _controllerJenisKelamin.text,
                         isShow: _showDdKelamin,
                         setState: () =>
                             setState(() => _showDdKelamin = !_showDdKelamin),
                       ),
                     ),
+                    // replace the upload Container's onTap to call pickImage and show preview
                     Container(
                       width: double.infinity,
                       height: 100,
@@ -188,18 +278,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: Material(
                         color: Colors.transparent,
                         child: InkWell(
-                          onTap: () {},
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(MoonIcons.generic_picture_32_light),
-                              Text(
-                                'Upload foto KK/KTP (.jpg/.png)',
-                                style:
-                                    MoonTokens.light.typography.heading.text14,
-                              ),
-                            ],
-                          ),
+                          onTap: () {
+                            _pickImage();
+                          },
+                          child: _fotoKtp == null
+                              ? Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(MoonIcons.generic_picture_32_light),
+                                    Text(
+                                      'Upload foto KK/KTP (.jpg/.png)',
+                                      style: MoonTokens
+                                          .light
+                                          .typography
+                                          .heading
+                                          .text14,
+                                    ),
+                                  ],
+                                )
+                              : Image.file(
+                                  File(_fotoKtp!.path),
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                ),
                         ),
                       ),
                     ),
@@ -239,63 +340,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           'Show',
                           style: MoonTokens.light.typography.body.text14
                               .copyWith(decoration: TextDecoration.underline),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                inputGroup(
-                  title: 'Alamat',
-                  children: [
-                    MoonDropdown(
-                      show: _showDdPilihRumah,
-                      constrainWidthToChild: true,
-                      onTapOutside: () =>
-                          setState(() => _showDdPilihRumah = false),
-                      content: Column(
-                        children: [
-                          MoonMenuItem(
-                            label: Text('data'),
-                            onTap: () => setState(
-                              () => _showDdPilihRumah = !_showDdPilihRumah,
-                            ),
-                          ),
-                        ],
-                      ),
-                      child: dropDownChild(
-                        hintText: 'Pilih Rumah',
-                        isShow: _showDdPilihRumah,
-                        setState: () => setState(
-                          () => _showDdPilihRumah = !_showDdPilihRumah,
-                        ),
-                      ),
-                    ),
-                    TextInputLogin(
-                      controller: _alamatController,
-                      hint: 'Alamat (Jika tidak ada di list)',
-                      keyboardType: TextInputType.streetAddress,
-                    ),
-                    MoonDropdown(
-                      show: _showDdPilihKelurahan,
-                      constrainWidthToChild: true,
-                      onTapOutside: () =>
-                          setState(() => _showDdPilihKelurahan = false),
-                      content: Column(
-                        children: [
-                          MoonMenuItem(
-                            label: Text('data'),
-                            onTap: () => setState(
-                              () => _showDdPilihKelurahan =
-                                  !_showDdPilihKelurahan,
-                            ),
-                          ),
-                        ],
-                      ),
-                      child: dropDownChild(
-                        hintText: 'Status kepemilikan rumah',
-                        isShow: _showDdPilihKelurahan,
-                        setState: () => setState(
-                          () => _showDdPilihKelurahan = !_showDdPilihKelurahan,
                         ),
                       ),
                     ),
