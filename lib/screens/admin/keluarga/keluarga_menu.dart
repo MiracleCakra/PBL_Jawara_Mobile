@@ -46,14 +46,42 @@ class KeluargaMenuPage extends StatelessWidget {
                 ],
                 menuItems: [
                   MenuItem(
+                    icon: Icons.group_outlined,
+                    label: 'Daftar Keluarga',
+                    onTap: () => context.goNamed('listKeluarga'),
+                  ),
+                  MenuItem(
                     icon: Icons.list_alt_rounded,
-                    label: 'Daftar',
+                    label: 'Daftar Mutasi',
                     onTap: () => context.go('/admin/keluarga/daftar'),
                   ),
                   MenuItem(
                     icon: Icons.person_add_alt_1_rounded,
-                    label: 'Tambah',
+                    label: 'Tambah Mutasi',
                     onTap: () => context.go('/admin/keluarga/tambah'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              _buildMenuCard(
+                context,
+                icon: Icons.person_search_rounded,
+                title: 'Manajemen Warga',
+                subtitle: 'Kelola data warga, tambah, ubah, dan hapus data',
+                gradientColors: const [
+                  Color(0xFF6A1B9A), // Ungu tua
+                  Color(0xFFEC407A)
+                ],
+                menuItems: [
+                  MenuItem(
+                    icon: Icons.group_outlined,
+                    label: 'Daftar Warga',
+                    onTap: () => context.goNamed('listWarga'),
+                  ),
+                  MenuItem(
+                    icon: Icons.person_add_alt_1_rounded,
+                    label: 'Tambah Warga',
+                    onTap: () => context.goNamed('tambahWarga'),
                   ),
                 ],
               ),
