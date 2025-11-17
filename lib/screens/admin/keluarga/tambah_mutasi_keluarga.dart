@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jawara_pintar_kel_5/models/keluarga_model.dart' as k_model;
+import 'package:jawara_pintar_kel_5/services/keluarga_service.dart';
 import 'package:jawara_pintar_kel_5/widget/moon_result_modal.dart';
 
 class TambahMutasiKeluargaPage extends StatefulWidget {
@@ -16,25 +18,27 @@ class _TambahMutasiKeluargaPageState extends State<TambahMutasiKeluargaPage> {
   final _formKey = GlobalKey<FormState>();
   final _alasanMutasiController = TextEditingController();
   final _tanggalMutasiController = TextEditingController();
+  final _alamatBaruController = TextEditingController();
+  final _keluargaService = KeluargaService();
 
   String? _selectedJenisMutasi;
-  String? _selectedKeluarga;
+  k_model.Keluarga? _selectedKeluarga;
 
-  // Sample keluarga options
-  final List<String> _keluargaOptions = [
-    'Keluarga Hidayat',
-    'Keluarga Santoso',
-    'Keluarga Lestari',
-    'Keluarga Ijat',
-  ];
+  late Future<List<k_model.Keluarga>> _keluargaListFuture;
 
-  // Jenis mutasi options
   final List<String> _jenisMutasiOptions = ['Keluar Wilayah', 'Pindah Rumah'];
+
+  @override
+  void initState() {
+    super.initState();
+    _keluargaListFuture = _keluargaService.getAllKeluarga();
+  }
 
   @override
   void dispose() {
     _alasanMutasiController.dispose();
     _tanggalMutasiController.dispose();
+    _alamatBaruController.dispose();
     super.dispose();
   }
 
@@ -43,7 +47,6 @@ class _TambahMutasiKeluargaPageState extends State<TambahMutasiKeluargaPage> {
     final first = DateTime(now.year - 5);
     final last = DateTime(now.year + 5);
 
-    // Parse initial date from controller
     DateTime initial = _parseDate(_tanggalMutasiController.text) ?? now;
     DateTime selected = initial;
 
@@ -112,8 +115,8 @@ class _TambahMutasiKeluargaPageState extends State<TambahMutasiKeluargaPage> {
                       child: CalendarDatePicker(
                         initialDate:
                             initial.isBefore(first) || initial.isAfter(last)
-                            ? now
-                            : initial,
+                                ? now
+                                : initial,
                         firstDate: first,
                         lastDate: last,
                         onDateChanged: (d) => selected = d,
@@ -202,18 +205,48 @@ class _TambahMutasiKeluargaPageState extends State<TambahMutasiKeluargaPage> {
         return;
       }
 
-      // TODO: Implement save logic
-      await showResultModal(
-        context,
-        type: ResultType.success,
-        title: 'Berhasil',
-        description: 'Data mutasi keluarga berhasil disimpan.',
-        actionLabel: 'Selesai',
-        autoProceed: true,
+      String newAlamat = _selectedKeluarga!.alamatRumah;
+      String newStatus = _selectedKeluarga!.statusKeluarga;
+
+      if (_selectedJenisMutasi == 'Pindah Rumah') {
+        newAlamat = _alamatBaruController.text;
+      } else if (_selectedJenisMutasi == 'Keluar Wilayah') {
+        newStatus = 'Nonaktif';
+      }
+
+      final updatedKeluarga = k_model.Keluarga(
+        id: _selectedKeluarga!.id,
+        namaKeluarga: _selectedKeluarga!.namaKeluarga,
+        kepalaKeluargaId: _selectedKeluarga!.kepalaKeluargaId,
+        alamatRumah: newAlamat,
+        statusKepemilikan: _selectedKeluarga!.statusKepemilikan,
+        statusKeluarga: newStatus,
+        jenisMutasi: _selectedJenisMutasi,
+        alasanMutasi: _alasanMutasiController.text,
+        tanggalMutasi: _parseDate(_tanggalMutasiController.text),
       );
 
-      // Kembali ke halaman daftar mutasi
-      if (context.mounted) context.pop();
+      try {
+        await _keluargaService.updateKeluarga(
+            _selectedKeluarga!.id, updatedKeluarga);
+        await showResultModal(
+          context,
+          type: ResultType.success,
+          title: 'Berhasil',
+          description: 'Data mutasi keluarga berhasil disimpan.',
+          actionLabel: 'Selesai',
+          autoProceed: true,
+        );
+        if (context.mounted) context.pop(true);
+      } catch (e) {
+        await showResultModal(
+          context,
+          type: ResultType.error,
+          title: 'Gagal',
+          description: 'Gagal menyimpan data mutasi keluarga: $e',
+          actionLabel: 'OK',
+        );
+      }
     }
   }
 
@@ -246,9 +279,14 @@ class _TambahMutasiKeluargaPageState extends State<TambahMutasiKeluargaPage> {
                 const SizedBox(height: 16),
                 _buildKeluargaDropdown(),
                 const SizedBox(height: 16),
-                _buildAlasanMutasiField(),
-                const SizedBox(height: 16),
-                _buildTanggalMutasiField(),
+                if (_selectedJenisMutasi == 'Pindah Rumah')
+                  _buildAlamatBaruField(),
+                if (_selectedJenisMutasi != null) ...[
+                  const SizedBox(height: 16),
+                  _buildAlasanMutasiField(),
+                  const SizedBox(height: 16),
+                  _buildTanggalMutasiField(),
+                ]
               ],
             ),
             const SizedBox(height: 24),
@@ -362,25 +400,71 @@ class _TambahMutasiKeluargaPageState extends State<TambahMutasiKeluargaPage> {
           ),
         ),
         const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          value: _selectedKeluarga,
-          isExpanded: true,
-          decoration: _inputDecoration('-- Pilih Keluarga --'),
-          hint: const Text('-- Pilih Keluarga --'),
-          items: _keluargaOptions
-              .map(
-                (keluarga) =>
-                    DropdownMenuItem(value: keluarga, child: Text(keluarga)),
-              )
-              .toList(),
-          onChanged: (value) {
-            setState(() {
-              _selectedKeluarga = value;
-            });
+        FutureBuilder<List<k_model.Keluarga>>(
+          future: _keluargaListFuture,
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final keluargaList = snapshot.data!;
+            return DropdownButtonFormField<k_model.Keluarga>(
+              value: _selectedKeluarga,
+              isExpanded: true,
+              decoration: _inputDecoration('-- Pilih Keluarga --'),
+              hint: const Text('-- Pilih Keluarga --'),
+              items: keluargaList
+                  .map(
+                    (keluarga) => DropdownMenuItem(
+                        value: keluarga, child: Text(keluarga.namaKeluarga)),
+                  )
+                  .toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedKeluarga = value;
+                });
+              },
+              validator: (value) {
+                if (value == null) {
+                  return 'Keluarga harus dipilih';
+                }
+                return null;
+              },
+            );
           },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAlamatBaruField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        RichText(
+          text: const TextSpan(
+            text: 'Alamat Baru',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+            children: [
+              TextSpan(
+                text: ' *',
+                style: TextStyle(color: Colors.red),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _alamatBaruController,
+          maxLines: 5,
+          decoration: _inputDecoration('Masukkan alamat baru disini...'),
           validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Keluarga harus dipilih';
+            if (_selectedJenisMutasi == 'Pindah Rumah' &&
+                (value == null || value.trim().isEmpty)) {
+              return 'Alamat baru harus diisi';
             }
             return null;
           },

@@ -1,53 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/penduduk/daftar_keluarga.dart';
-
-// Model for Mutasi Keluarga Data
-class MutasiKeluargaData {
-  final String namaKeluarga;
-  final String jenisMutasi; // Keluar Wilayah, Pindah Rumah
-  final Keluarga keluarga; // Reference to Keluarga object
-
-  const MutasiKeluargaData({
-    required this.namaKeluarga,
-    required this.jenisMutasi,
-    required this.keluarga,
-  });
-
-  // Get jenis mutasi color
-  Color get jenisMutasiColor {
-    return const Color(0xFF4E46B4); // Primary color for both types
-  }
-
-  // Get jenis mutasi background color (outline vs solid)
-  Color get jenisMutasiBackgroundColor {
-    switch (jenisMutasi.toLowerCase()) {
-      case 'keluar wilayah':
-        return Colors.transparent; // Outline style
-      case 'pindah rumah':
-        return const Color(0xFF4E46B4); // Solid style
-      default:
-        return Colors.transparent;
-    }
-  }
-
-  // Get jenis mutasi text color
-  Color get jenisMutasiTextColor {
-    switch (jenisMutasi.toLowerCase()) {
-      case 'keluar wilayah':
-        return const Color(0xFF4E46B4); // Primary color for outline
-      case 'pindah rumah':
-        return Colors.white; // White for solid
-      default:
-        return const Color(0xFF4E46B4);
-    }
-  }
-
-  // Check if it's outline style
-  bool get isOutlineStyle {
-    return jenisMutasi.toLowerCase() == 'keluar wilayah';
-  }
-}
+import 'package:jawara_pintar_kel_5/models/keluarga_model.dart' as k_model;
+import 'package:jawara_pintar_kel_5/services/keluarga_service.dart';
 
 class DaftarMutasiKeluargaPage extends StatefulWidget {
   const DaftarMutasiKeluargaPage({super.key});
@@ -60,77 +14,21 @@ class DaftarMutasiKeluargaPage extends StatefulWidget {
 class _DaftarMutasiKeluargaPageState extends State<DaftarMutasiKeluargaPage> {
   static const Color _primaryColor = Color(0xFF4E46B4);
 
+  final _keluargaService = KeluargaService();
+  late Future<List<k_model.Keluarga>> _keluargaListFuture;
+
   String? _selectedJenisMutasi;
-  String? _selectedKeluarga;
+  String? _selectedKeluargaId;
 
-  // Sample keluarga data for dropdown
-  final List<Keluarga> _allKeluargaOptions = const [
-    Keluarga(
-      namaKeluarga: 'Keluarga Hidayat',
-      kepalaKeluarga: 'Ahmad Hidayat',
-      alamat: 'Blok A No. 1',
-      status: 'Aktif',
-    ),
-    Keluarga(
-      namaKeluarga: 'Keluarga Santoso',
-      kepalaKeluarga: 'Budi Santoso',
-      alamat: 'Blok A No. 5',
-      status: 'Aktif',
-    ),
-    Keluarga(
-      namaKeluarga: 'Keluarga Lestari',
-      kepalaKeluarga: 'Dewi Lestari',
-      alamat: 'Blok B No. 3',
-      status: 'Nonaktif',
-    ),
-    Keluarga(
-      namaKeluarga: 'Keluarga Ijat',
-      kepalaKeluarga: 'Ijat',
-      alamat: 'Keluar Wilayah',
-      status: 'Nonaktif',
-    ),
-  ];
-
-  // Sample mutasi data
-  List<MutasiKeluargaData> get _allMutasi {
-    return [
-      MutasiKeluargaData(
-        namaKeluarga: 'Keluarga Hidayat',
-        jenisMutasi: 'Pindah Rumah',
-        keluarga: _allKeluargaOptions[0],
-      ),
-      MutasiKeluargaData(
-        namaKeluarga: 'Keluarga Santoso',
-        jenisMutasi: 'Keluar Wilayah',
-        keluarga: _allKeluargaOptions[1],
-      ),
-      MutasiKeluargaData(
-        namaKeluarga: 'Keluarga Lestari',
-        jenisMutasi: 'Pindah Rumah',
-        keluarga: _allKeluargaOptions[2],
-      ),
-      MutasiKeluargaData(
-        namaKeluarga: 'Keluarga Ijat',
-        jenisMutasi: 'Keluar Wilayah',
-        keluarga: _allKeluargaOptions[3],
-      ),
-    ];
+  @override
+  void initState() {
+    super.initState();
+    _keluargaListFuture = _keluargaService.getAllKeluarga();
   }
 
-  List<MutasiKeluargaData> get _filteredMutasi {
-    return _allMutasi.where((mutasi) {
-      final matchesJenisMutasi =
-          _selectedJenisMutasi == null ||
-          mutasi.jenisMutasi == _selectedJenisMutasi;
-      final matchesKeluarga =
-          _selectedKeluarga == null || mutasi.namaKeluarga == _selectedKeluarga;
-      return matchesJenisMutasi && matchesKeluarga;
-    }).toList();
-  }
-
-  void _openFilterModal() {
+  void _openFilterModal(List<k_model.Keluarga> keluargaList) {
     String? tempJenisMutasi = _selectedJenisMutasi;
-    String? tempKeluarga = _selectedKeluarga;
+    String? tempKeluargaId = _selectedKeluargaId;
 
     showModalBottomSheet(
       context: context,
@@ -164,19 +62,20 @@ class _DaftarMutasiKeluargaPageState extends State<DaftarMutasiKeluargaPage> {
                       ),
                       const SizedBox(height: 16),
                       _buildKeluargaFilterDropdown(
-                        tempKeluarga,
-                        (value) => setModalState(() => tempKeluarga = value),
+                        keluargaList,
+                        tempKeluargaId,
+                        (value) => setModalState(() => tempKeluargaId = value),
                       ),
                       const SizedBox(height: 24),
                       _buildFilterActions(
                         onReset: () => setModalState(() {
                           tempJenisMutasi = null;
-                          tempKeluarga = null;
+                          tempKeluargaId = null;
                         }),
                         onApply: () {
                           setState(() {
                             _selectedJenisMutasi = tempJenisMutasi;
-                            _selectedKeluarga = tempKeluarga;
+                            _selectedKeluargaId = tempKeluargaId;
                           });
                           Navigator.pop(context);
                         },
@@ -245,6 +144,7 @@ class _DaftarMutasiKeluargaPageState extends State<DaftarMutasiKeluargaPage> {
   }
 
   Widget _buildKeluargaFilterDropdown(
+    List<k_model.Keluarga> keluargaList,
     String? value,
     ValueChanged<String?> onChanged,
   ) {
@@ -260,10 +160,10 @@ class _DaftarMutasiKeluargaPageState extends State<DaftarMutasiKeluargaPage> {
           value: value,
           isExpanded: true,
           decoration: _inputDecoration('Pilih keluarga'),
-          items: _allKeluargaOptions
+          items: keluargaList
               .map(
                 (keluarga) => DropdownMenuItem(
-                  value: keluarga.namaKeluarga,
+                  value: keluarga.id,
                   child: Text(keluarga.namaKeluarga),
                 ),
               )
@@ -363,19 +263,52 @@ class _DaftarMutasiKeluargaPageState extends State<DaftarMutasiKeluargaPage> {
         ),
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            _FilterButton(onTap: _openFilterModal),
-            Expanded(
-              child: _filteredMutasi.isEmpty
-                  ? _buildEmptyState()
-                  : _buildMutasiList(),
-            ),
-          ],
+        child: FutureBuilder<List<k_model.Keluarga>>(
+          future: _keluargaListFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return _buildEmptyState();
+            } else {
+              final allKeluarga = snapshot.data!;
+              final mutasiList = allKeluarga
+                  .where((k) => k.jenisMutasi != null)
+                  .toList();
+
+              final filteredMutasi = mutasiList.where((mutasi) {
+                final matchesJenisMutasi = _selectedJenisMutasi == null ||
+                    mutasi.jenisMutasi == _selectedJenisMutasi;
+                final matchesKeluarga = _selectedKeluargaId == null ||
+                    mutasi.id == _selectedKeluargaId;
+                return matchesJenisMutasi && matchesKeluarga;
+              }).toList();
+
+              return Column(
+                children: [
+                  _FilterButton(onTap: () => _openFilterModal(allKeluarga)),
+                  Expanded(
+                    child: filteredMutasi.isEmpty
+                        ? _buildEmptyState()
+                        : _buildMutasiList(filteredMutasi),
+                  ),
+                ],
+              );
+            }
+          },
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.pushNamed('mutasiKeluargaAdd'),
+        onPressed: () async {
+          final result = await context.pushNamed('mutasiKeluargaAdd');
+          if (result == true) {
+            setState(() {
+              _keluargaListFuture = _keluargaService.getAllKeluarga();
+            });
+          }
+        },
         backgroundColor: const Color(0xFF4E46B4),
         child: const Icon(Icons.add, color: Colors.white),
       ),
@@ -402,12 +335,12 @@ class _DaftarMutasiKeluargaPageState extends State<DaftarMutasiKeluargaPage> {
     );
   }
 
-  Widget _buildMutasiList() {
+  Widget _buildMutasiList(List<k_model.Keluarga> mutasiList) {
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      itemCount: _filteredMutasi.length,
+      itemCount: mutasiList.length,
       itemBuilder: (context, index) {
-        return _MutasiCard(mutasi: _filteredMutasi[index]);
+        return _MutasiCard(mutasi: mutasiList[index]);
       },
     );
   }
@@ -457,7 +390,7 @@ class _FilterButton extends StatelessWidget {
 
 // Mutasi Keluarga Card Widget
 class _MutasiCard extends StatelessWidget {
-  final MutasiKeluargaData mutasi;
+  final k_model.Keluarga mutasi;
 
   const _MutasiCard({required this.mutasi});
 
@@ -481,7 +414,7 @@ class _MutasiCard extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () {
-            context.pushNamed('keluargaDetail', extra: mutasi.keluarga);
+            // context.pushNamed('keluargaDetail', extra: mutasi);
           },
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -504,7 +437,7 @@ class _MutasiCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Kepala Keluarga: ${mutasi.keluarga.kepalaKeluarga}',
+                        'Kepala Keluarga: ${mutasi.kepalaKeluarga?.nama ?? 'N/A'}',
                         style: TextStyle(
                           fontSize: 13,
                           color: Colors.grey[600],
@@ -529,26 +462,34 @@ class _MutasiCard extends StatelessWidget {
 
 // Jenis Mutasi Badge Widget
 class _JenisMutasiBadge extends StatelessWidget {
-  final MutasiKeluargaData mutasi;
+  final k_model.Keluarga mutasi;
 
   const _JenisMutasiBadge({required this.mutasi});
 
   @override
   Widget build(BuildContext context) {
+    bool isOutlineStyle =
+        mutasi.jenisMutasi?.toLowerCase() == 'keluar wilayah';
+    Color jenisMutasiColor = const Color(0xFF4E46B4);
+    Color jenisMutasiBackgroundColor =
+        isOutlineStyle ? Colors.transparent : const Color(0xFF4E46B4);
+    Color jenisMutasiTextColor =
+        isOutlineStyle ? const Color(0xFF4E46B4) : Colors.white;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: mutasi.jenisMutasiBackgroundColor,
+        color: jenisMutasiBackgroundColor,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: mutasi.jenisMutasiColor,
-          width: mutasi.isOutlineStyle ? 1.5 : 0,
+          color: jenisMutasiColor,
+          width: isOutlineStyle ? 1.5 : 0,
         ),
       ),
       child: Text(
-        mutasi.jenisMutasi,
+        mutasi.jenisMutasi ?? 'N/A',
         style: TextStyle(
-          color: mutasi.jenisMutasiTextColor,
+          color: jenisMutasiTextColor,
           fontSize: 12,
           fontWeight: FontWeight.w700,
         ),

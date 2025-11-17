@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jawara_pintar_kel_5/models/keluarga_model.dart' as k_model;
 import 'package:jawara_pintar_kel_5/models/warga_model.dart' as warga_model;
 
 import 'package:jawara_pintar_kel_5/screens/auth/login.dart';
@@ -10,6 +11,13 @@ import 'package:jawara_pintar_kel_5/screens/admin/dashboard/dashboard.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/layout.dart';
 
 // --- Keluarga ---
+import 'package:jawara_pintar_kel_5/screens/admin/keluarga/tambah_keluarga_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/keluarga/edit_keluarga_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/keluarga/keluarga_list_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/warga/daftar_warga.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/warga/tambah_warga.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/warga/edit_warga.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/warga/detail_warga.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/keluarga/keluarga_menu.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/penduduk/daftar_keluarga.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/keluarga/daftar_mutasi_keluarga.dart';
@@ -141,37 +149,83 @@ final router = GoRouter(
               path: '/admin/keluarga',
               name: 'keluargaMenuPage',
               builder: (context, state) => const KeluargaMenuPage(),
-              routes: [
-                GoRoute(
-                  path: 'daftar_keluarga',
-                  name: 'wargaList',
-                  builder: (context, state) => const DaftarKeluargaPage(),
-                ),
-                GoRoute(
-                  path: 'daftar-keluarga',
-                  name: 'keluargaList',
-                  builder: (context, state) => const DaftarKeluargaPage(),
-                ),
-                GoRoute(
-                  path: 'detail-keluarga',
-                  name: 'keluargaDetail',
-                  builder: (context, state) {
-                    final keluarga = state.extra as dynamic;
-                    return DetailKeluargaPage(keluarga: keluarga);
-                  },
-                ),
-                GoRoute(
-                  path: 'daftar',
-                  name: 'mutasiKeluargaList',
-                  builder: (context, state) => const DaftarMutasiKeluargaPage(),
-                ),
-                GoRoute(
-                  path: 'tambah',
-                  name: 'mutasiKeluargaAdd',
-                  builder: (context, state) => const TambahMutasiKeluargaPage(),
-                ),
-              ],
-            ),
+                        routes: [
+                          GoRoute(
+                            path: 'list-keluarga',
+                            name: 'listKeluarga',
+                            builder: (context, state) => const KeluargaListScreen(),
+                            routes: [
+                              GoRoute(
+                                path: 'tambah',
+                                name: 'tambahKeluarga',
+                                builder: (context, state) => const TambahKeluargaScreen(),
+                              ),
+                              GoRoute(
+                                path: 'edit',
+                                name: 'editKeluarga',
+                                builder: (context, state) {
+                                  final keluarga = state.extra as k_model.Keluarga;
+                                  return EditKeluargaScreen(keluarga: keluarga);
+                                },
+                              ),
+                            ],
+                          ),
+                          GoRoute(
+                              path: 'list-warga',
+                              name: 'listWarga',
+                              builder: (context, state) => const DaftarWargaPage(),
+                              routes: [
+                                GoRoute(
+                                  path: 'tambah',
+                                  name: 'tambahWarga',
+                                  builder: (context, state) => const TambahWargaPage(),
+                                ),
+                                GoRoute(
+                                  path: 'edit',
+                                  name: 'editWarga',
+                                  builder: (context, state) {
+                                    final warga = state.extra as warga_model.Warga;
+                                    return EditWargaPage(warga: warga);
+                                  },
+                                ),
+                                GoRoute(
+                                  path: 'detail',
+                                  name: 'detailWarga',
+                                  builder: (context, state) {
+                                    final warga = state.extra as warga_model.Warga;
+                                    return DetailWargaPage(warga: warga);
+                                  },
+                                ),
+                              ]),
+                          GoRoute(
+                            path: 'daftar_keluarga',
+                            name: 'wargaList',
+                            builder: (context, state) => const DaftarKeluargaPage(),
+                          ),
+                          GoRoute(
+                            path: 'daftar-keluarga',
+                            name: 'keluargaList',
+                            builder: (context, state) => const DaftarKeluargaPage(),
+                          ),
+                          GoRoute(
+                            path: 'detail-keluarga',
+                            name: 'keluargaDetail',
+                            builder: (context, state) {
+                              final keluarga = state.extra as dynamic;
+                              return DetailKeluargaPage(keluarga: keluarga);
+                            },
+                          ),
+                          GoRoute(
+                            path: 'daftar',
+                            name: 'mutasiKeluargaList',
+                            builder: (context, state) => const DaftarMutasiKeluargaPage(),
+                          ),
+                          GoRoute(
+                            path: 'tambah',
+                            name: 'mutasiKeluargaAdd',
+                            builder: (context, state) => const TambahMutasiKeluargaPage(),
+                          ),
+                        ],            ),
           ],
         ),
 
