@@ -48,14 +48,13 @@ class MarketplaceMenuScreen extends StatelessWidget {
               ),
               const SizedBox(height: 20),
             
-              // MENU 1: Validasi Produk
               _buildMenuCard(
                 context,
                 icon: Icons.check_circle_outline_rounded,
                 title: 'Validasi Produk',
                 subtitle: 'Validasi produk baru dan hasil klasifikasi gambar (CV).',
                 gradientColors: _validationGradient,
-                onTapCard: () => context.push('/admin/marketplace/validasiproduk'),
+                onTapCard: () => context.push('/admin/marketplace/validasiproduk'), 
                 menuItems: null,
               ),
                             
@@ -66,7 +65,6 @@ class MarketplaceMenuScreen extends StatelessWidget {
       ),
     );
   }
-
 
   Widget _buildGridIconButton(
     BuildContext context, {
@@ -132,8 +130,7 @@ class MarketplaceMenuScreen extends StatelessWidget {
     List<MenuItem>? menuItems,
   }) {
     final hasSubMenus = menuItems != null && menuItems.isNotEmpty;
-    
-    final bottomPadding = hasSubMenus ? 0.0 : 24.0;
+    final bottomPadding = hasSubMenus ? 0.0 : 24.0; 
     
     return Material(
       color: Colors.transparent,
@@ -164,6 +161,7 @@ class MarketplaceMenuScreen extends StatelessWidget {
                 padding: EdgeInsets.fromLTRB(24, 24, 24, bottomPadding), 
                 child: Row(
                   children: [
+                    // Ikon Kiri
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -177,6 +175,8 @@ class MarketplaceMenuScreen extends StatelessWidget {
                       child: Icon(icon, color: Colors.white, size: 32),
                     ),
                     const SizedBox(width: 20),
+                    
+                    // Teks Tengah
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -202,6 +202,19 @@ class MarketplaceMenuScreen extends StatelessWidget {
                         ],
                       ),
                     ),
+                    if (!hasSubMenus)
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.25),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.chevron_right,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
                   ],
                 ),
               ),

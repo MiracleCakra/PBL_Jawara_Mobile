@@ -40,7 +40,7 @@ class _MarketplaceState extends State<Marketplace> {
 
   // Data dummy
   final int totalProdukAktif = 125;
-  final int totalVolumeBulanIni = 7500000;
+  final int totalVolumeBulanIni = 950000;
   final int pesananBaru = 3;
   final int menungguKlasifikasi = 5;
   final int totalActiveAlerts = 4;
@@ -48,37 +48,37 @@ class _MarketplaceState extends State<Marketplace> {
   final List<String> penjualTop = const ['Toko Sayursegar', 'Kios sayur'];
   final List<PieCardModel> kategoriData = [
     PieCardModel(
-    label: 'Grade A', 
-    data: PieChartSectionData(
-      value: 45, 
-      color: Color(0xFF38BDF8),
-      radius: 40,
-      title: '45%',
-      titleStyle: TextStyle(fontSize: 12, color: Colors.white),
+      label: 'Grade A', 
+      data: PieChartSectionData(
+        value: 45, 
+        color: Color(0xFF38BDF8),
+        radius: 40,
+        title: '45%',
+        titleStyle: TextStyle(fontSize: 13, color: Colors.white),
+      ),
     ),
-  ),
-  PieCardModel(
-    label: 'Grade B', 
-    data: PieChartSectionData(
-      value: 20, 
-      color: Color(0xFF38BDF8).withOpacity(0.6), 
-      radius: 40,
-      title: '20%',
-      titleStyle: TextStyle(fontSize: 12, color: Colors.white),
+    PieCardModel(
+      label: 'Grade B', 
+      data: PieChartSectionData(
+        value: 20, 
+        color: Color(0xFF38BDF8).withOpacity(0.6), 
+        radius: 40,
+        title: '20%',
+        titleStyle: TextStyle(fontSize: 12, color: Colors.white),
+      ),
     ),
-  ),
 
-  PieCardModel(
-    label: 'Grade C', 
-    data: PieChartSectionData(
-      value: 10, 
-      color: Color(0xFF60A5FA),
-      radius: 40,
-      title: '10%',
-      titleStyle: TextStyle(fontSize: 12, color: Colors.white),
+    PieCardModel(
+      label: 'Grade C', 
+      data: PieChartSectionData(
+        value: 10, 
+        color: Color(0xFF60A5FA),
+        radius: 40,
+        title: '10%',
+        titleStyle: TextStyle(fontSize: 12, color: Colors.white),
+      ),
     ),
-  ),
-];
+  ];
 
   @override
   void initState() {
@@ -101,61 +101,53 @@ class _MarketplaceState extends State<Marketplace> {
     VoidCallback? onTap,
   }) {
     return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: CustomCard(
-        padding: const EdgeInsets.all(12),
-        children: [
-          Row(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(12),
+    child: CustomCard(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, color: color, size: 20),
-              const SizedBox(width: 8),
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0, top: 2),
+                child: Icon(icon, color: color, size: 20),
+              ),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title,
-                        style: const TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.w600)),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black54,
+                      ),
+                    ),
                     const SizedBox(height: 4),
                     Text(
                       value,
-                      style: MoonTokens.light.typography.heading.text16
-                          .copyWith(fontWeight: FontWeight.bold, color: color),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: color,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
                     ),
                   ],
                 ),
               ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-
-  void _exportReport(BuildContext context) {
-    String detail;
-    String typeLabel;
-    if (selectedMonth == 'Semua Bulan') {
-      typeLabel = 'Tahunan';
-      detail = selectedYear;
-    } else {
-      typeLabel = 'Bulanan';
-      detail = '$selectedMonth $selectedYear';
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '📦 Membuat laporan Marketplace $typeLabel ($detail)...',
         ),
-        duration: const Duration(seconds: 3),
-      ),
-    );
-
-    // TODO: tambahkan logika export PDF / API di sini, berdasarkan selectedMonth & selectedYear
-  }
-
+      ],
+    ),
+  );
+}
+  
   Future<void> _showYearSelection(BuildContext context) {
     return showMoonModalBottomSheet(
       context: context,
@@ -187,22 +179,26 @@ class _MarketplaceState extends State<Marketplace> {
           Expanded(
             child: SingleChildScrollView(
               child: Column(
-                spacing: 10,
                 children: years.map((year) {
-                  return MoonMenuItem(
-                    onTap: () {
-                      setState(() {
-                        selectedYear = year;
-                        selectedMonth = 'Semua Bulan';
-                      });
-                      Navigator.pop(context);
-                    },
-                    label: Text(year),
-                    trailing: year == selectedYear
-                        ? const Icon(
-                            Icons.check,
-                          )
-                        : null,
+                  return Column(
+                    children: [
+                      MoonMenuItem(
+                        onTap: () {
+                          setState(() {
+                            selectedYear = year;
+                            selectedMonth = 'Semua Bulan';
+                          });
+                          Navigator.pop(context);
+                        },
+                        label: Text(year),
+                        trailing: year == selectedYear
+                            ? const Icon(
+                                Icons.check,
+                              )
+                            : null,
+                      ),
+                      const SizedBox(height: 10),
+                    ],
                   );
                 }).toList(),
               ),
@@ -214,60 +210,88 @@ class _MarketplaceState extends State<Marketplace> {
   }
 
   Future<void> _showMonthSelection(BuildContext context) {
-  return showMoonModalBottomSheet(
-    context: context,
-    enableDrag: true,
-    height: MediaQuery.of(context).size.height * 0.7,
-    builder: (BuildContext context) => Column(
-      children: [
-        Column(
-          children: [
-            Container(
-              height: 4,
-              width: 40,
-              margin: const EdgeInsets.symmetric(vertical: 8),
-              decoration: ShapeDecoration(
-                color: context.moonColors!.beerus,
-                shape: MoonSquircleBorder(
-                  borderRadius: BorderRadius.circular(
-                    16,
-                  ).squircleBorderRadius(context),
+    return showMoonModalBottomSheet(
+      context: context,
+      enableDrag: true,
+      height: MediaQuery.of(context).size.height * 0.7,
+      builder: (BuildContext context) => Column(
+        children: [
+          Column(
+            children: [
+              Container(
+                height: 4,
+                width: 40,
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                decoration: ShapeDecoration(
+                  color: context.moonColors!.beerus,
+                  shape: MoonSquircleBorder(
+                    borderRadius: BorderRadius.circular(
+                      16,
+                    ).squircleBorderRadius(context),
+                  ),
                 ),
               ),
-            ),
-            Text(
-              'Pilih Bulan ($selectedYear)',
-              style: MoonTokens.light.typography.heading.text14,
-            ),
-          ],
-        ),
-        Expanded(
-          child: SingleChildScrollView(
-            child: Column(
-              spacing: 10,
-              children: months.map((month) {
-                return MoonMenuItem(
-                  onTap: () {
-                    setState(() {
-                      selectedMonth = month;
-                    });
-                    Navigator.pop(context);
-                  },
-                  label: Text(month),
-                  trailing: month == selectedMonth
-                      ? const Icon(
-                          Icons.check,
-                        )
-                      : null,
-                );
-              }).toList(),
+              Text(
+                'Pilih Bulan ($selectedYear)',
+                style: MoonTokens.light.typography.heading.text14,
+              ),
+            ],
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: months.map((month) {
+                  return Column(
+                    children: [
+                      MoonMenuItem(
+                        onTap: () {
+                          setState(() {
+                            selectedMonth = month;
+                          });
+                          Navigator.pop(context);
+                        },
+                        label: Text(month),
+                        trailing: month == selectedMonth
+                            ? const Icon(
+                                Icons.check,
+                              )
+                            : null,
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+                  );
+                }).toList(),
+              ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  void _exportReport(BuildContext context) {
+    String detail;
+    String typeLabel;
+    if (selectedMonth == 'Semua Bulan') {
+      typeLabel = 'Tahunan';
+      detail = selectedYear;
+    } else {
+      typeLabel = 'Bulanan';
+      detail = '$selectedMonth $selectedYear';
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '📦 Membuat laporan Marketplace $typeLabel ($detail)...',
         ),
-      ],
-    ),
-  );
-}
+        duration: const Duration(seconds: 3),
+      ),
+    );
+
+    // TODO: tambahkan logika export PDF / API di sini, berdasarkan selectedMonth & selectedYear
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -282,7 +306,7 @@ class _MarketplaceState extends State<Marketplace> {
         children: [
           const SizedBox(height: 8),
 
-         Row(
+          Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
@@ -302,39 +326,39 @@ class _MarketplaceState extends State<Marketplace> {
                 ),
               ),
 
-             Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  width: 85,
-                  child: MoonTextInput(
-                    textInputSize: MoonTextInputSize.md,
-                    readOnly: true,
-                    hintText: selectedYear,
-                    onTap: () => _showYearSelection(context),
-                    trailing: const Icon(
-                      Icons.unfold_more_rounded,
-                      size: 20,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 85,
+                    child: MoonTextInput(
+                      textInputSize: MoonTextInputSize.md,
+                      readOnly: true,
+                      hintText: selectedYear,
+                      onTap: () => _showYearSelection(context),
+                      trailing: const Icon(
+                        Icons.unfold_more_rounded,
+                        size: 20,
+                      ),
                     ),
                   ),
-                ),
 
-                const SizedBox(width: 4),
+                  const SizedBox(width: 4),
 
-                SizedBox(
-                  width: 100,
-                  child: MoonTextInput(
-                    textInputSize: MoonTextInputSize.md,
-                    readOnly: true,
-                    hintText: selectedMonth,
-                    onTap: () => _showMonthSelection(context),
-                    trailing: const Icon(
-                      Icons.unfold_more_rounded,
-                      size: 20,
+                  SizedBox(
+                    width: 100,
+                    child: MoonTextInput(
+                      textInputSize: MoonTextInputSize.md,
+                      readOnly: true,
+                      hintText: selectedMonth,
+                      onTap: () => _showMonthSelection(context),
+                      trailing: const Icon(
+                        Icons.unfold_more_rounded,
+                        size: 20,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
+                  const SizedBox(width: 8),
 
                   Stack(
                     alignment: Alignment.topRight,
@@ -384,8 +408,6 @@ class _MarketplaceState extends State<Marketplace> {
             ],
           ),
 
-
-
           const SizedBox(height: 12),
 
           // KPI
@@ -395,7 +417,7 @@ class _MarketplaceState extends State<Marketplace> {
             physics: const NeverScrollableScrollPhysics(),
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
-            childAspectRatio: 2.0,
+            childAspectRatio: MediaQuery.of(context).size.width < 400 ? 1.4 : 1.8,
             children: [
               _buildKpiCard(
                 title: 'Total Produk',
@@ -417,7 +439,7 @@ class _MarketplaceState extends State<Marketplace> {
                 onTap: () => context.pushNamed('marketplaceOrderMonitor'),
               ),
               _buildKpiCard(
-                title: 'Menunggu Klasifikasi CV',
+                title: 'Menunggu Klasifikasi',
                 value: menungguKlasifikasi.toString(),
                 icon: Icons.camera_alt_rounded,
                 color: Colors.orange.shade600,

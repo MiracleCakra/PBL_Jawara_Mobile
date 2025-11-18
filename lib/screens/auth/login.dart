@@ -29,7 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
     text: '',
   );
 
-  Future<void> signInWithEmailAndPassword() async {
+  /*Future<void> signInWithEmailAndPassword() async {
     try {
       await authService.signInWithEmailPassword(
         _controllerEmail.text,
@@ -37,12 +37,50 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       // Navigasi ke halaman dashboard setelah berhasil login
-      context.go('/admin/dashboard');
+      context.go('/warga/dashboard');
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Login failed: Email / Password salah')),
       );
       print(e);
+    }
+  }*/
+  Future<void> signInWithEmailAndPassword() async {
+    String email = _controllerEmail.text.trim();
+    String password = _controllerPassword.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Email & Password tidak boleh kosong')),
+      );
+      return;
+    }
+
+    const String role = "admin";
+
+    switch (role) {
+      case "admin":
+        context.go('/admin/dashboard');
+        break;
+      case "rw":
+        context.go('/rw/dashboard');
+        break;
+      case "rt":
+        context.go('/rt/dashboard');
+        break;
+      case "sekretaris":
+        context.go('/sekretaris/dashboard');
+        break;
+      case "bendahara":
+        context.go('/bendahara/dashboard');
+        break;
+      case "warga":
+        context.go('/warga/dashboard');
+        break;
+      default:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Role tidak dikenal')),
+        );
     }
   }
 
@@ -53,7 +91,6 @@ class _LoginScreenState extends State<LoginScreen> {
   void _setShowLoginForm(bool value) {
     if (!mounted) return;
     if (!value) {
-      // hide keyboard when form is hidden
       FocusScope.of(context).unfocus();
     }
     setState(() => _showLoginForm = value);

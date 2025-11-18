@@ -48,4 +48,6 @@ class IconifyConstants {
   '<line x1="8" y1="16" x2="16" y2="16" />'
   '</svg>';
 
+  
+
 }
