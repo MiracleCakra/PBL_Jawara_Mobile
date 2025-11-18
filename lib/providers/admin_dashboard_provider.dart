@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AdminDashboardProvider extends ChangeNotifier {
-  final List<String> pages = ['Keuangan', 'Kegiatan', 'Kependudukan', 'Keluarga', 'Marketplace'];
+  final List<String> pages = ['Keuangan', 'Kegiatan', 'Kependudukan', 'Marketplace'];
 
   int _page = 0;
   int get page => _page;
