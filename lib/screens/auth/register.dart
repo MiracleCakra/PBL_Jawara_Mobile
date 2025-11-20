@@ -1,10 +1,16 @@
+import 'dart:io';
+import 'package:permission_handler/permission_handler.dart';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
+import 'package:jawara_pintar_kel_5/screens/auth/auth_service.dart';
 import 'package:jawara_pintar_kel_5/widget/drop_down_trailing_arrow.dart';
 import 'package:jawara_pintar_kel_5/widget/login_button.dart';
 import 'package:jawara_pintar_kel_5/widget/text_input_login.dart';
 import 'package:moon_design/moon_design.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:image_picker/image_picker.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -14,23 +20,83 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
+  String? errorMessage;
+  bool isLogin = true;
+  XFile? _fotoKtp;
+  final _imagePicker = ImagePicker();
+
+  final supabase = Supabase.instance.client;
+  final authService = AuthService();
+
+  final TextEditingController _controllerEmail = TextEditingController(
+    text: '',
+  );
+  final TextEditingController _controllerPassword = TextEditingController(
+    text: '',
+  );
+
+  Future<void> createUserWithEmailAndPassword() async {
+    try {
+      await authService.signUpWithEmailPassword(
+        _controllerEmail.text,
+        _controllerPassword.text,
+      );
+
+      // upload foto KTP first (if selected) and get its public URL
+      String fotoUrl = '';
+      if (_fotoKtp != null) {
+        final uploadedUrl = await _uploadFotoKtp(_fotoKtp!);
+        if (uploadedUrl != null && uploadedUrl.isNotEmpty) {
+          fotoUrl = uploadedUrl;
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Gagal mengunggah foto. Melanjutkan tanpa foto.'),
+              ),
+            );
+          }
+        }
+      }
+
+      await supabase.from('warga').insert({
+        // use the .text values from controllers
+        'nama': _namaController.text,
+        'id': _nikController.text,
+        'gender': _controllerJenisKelamin.text,
+        'email': _controllerEmail.text,
+        'telepon': _phoneController.text,
+        'foto_ktp': fotoUrl,
+      });
+
+      // Navigasi ke halaman dashboard setelah berhasil login
+      context.go('/login');
+    } catch (e) {
+      if (mounted) { // Added mounted check for safety
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Registration failed: $e')));
+      }
+    }
+  }
+
   late final TextEditingController _namaController,
       _nikController,
-      _emailController,
       _phoneController,
       _passwordController,
       _confirmPasswordController,
-      _alamatController;
+      _alamatController,
+      _controllerJenisKelamin;
 
   @override
   void initState() {
     _namaController = TextEditingController();
     _nikController = TextEditingController();
-    _emailController = TextEditingController();
     _phoneController = TextEditingController();
     _passwordController = TextEditingController();
     _confirmPasswordController = TextEditingController();
     _alamatController = TextEditingController();
+    _controllerJenisKelamin = TextEditingController();
     super.initState();
   }
 
@@ -38,21 +104,78 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void dispose() {
     _namaController.dispose();
     _nikController.dispose();
-    _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _alamatController.dispose();
+    _controllerJenisKelamin.dispose();
     super.dispose();
   }
 
-  final Map<int, String> _jenisKelamin = {1: 'Laki-laki', 0: 'Perempuan'};
-  bool? _isLakilaki;
+  final Map<int, String> _jenisKelamin = {1: 'Pria', 0: 'Wanita'};
   bool _showDdKelamin = false;
 
-  bool _showDdPilihRumah = false;
+  Future<void> _pickImage() async {
+    // Meminta izin akses penyimpanan
+    PermissionStatus status = await Permission.storage.request();
+    if (status.isGranted) {
+      final pickedFile = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+      );
+      if (pickedFile != null) {
+        setState(() {
+          _fotoKtp = pickedFile;
+        });
+      }
+    } else {
+      if (mounted) { // Added mounted check
+        // Menampilkan snackbar atau memberi tahu pengguna bahwa izin diperlukan
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Izin diperlukan untuk mengakses galeri')),
+        );
+      }
+    }
+  }
 
-  bool _showDdPilihKelurahan = false;
+  Future<String?> _uploadFotoKtp(XFile image) async {
+    try {
+      final fileExt = image.path.split('.').last;
+      final fileName = '${DateTime.now().toIso8601String()}.$fileExt';
+      final filePath = 'foto-ktp/$fileName';
+
+      await Supabase.instance.client.storage
+          .from('foto_ktp')
+          .upload(
+            filePath,
+            File(image.path),
+            fileOptions: FileOptions(contentType: image.mimeType),
+          );
+      final imageUrl = Supabase.instance.client.storage
+          .from('foto_ktp')
+          .getPublicUrl(filePath);
+      return imageUrl;
+    } on StorageException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Gagal mengunggah foto: ${e.message}. Pastikan bucket "foto_ktp" ada di Supabase Storage.',
+            ),
+          ),
+        );
+        print(e);
+      }
+      return null;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal mengunggah foto: $e')));
+      }
+      print(e);
+      return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,8 +187,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             MoonButton.icon(
+              key: const Key('btn_back_nav'), // ---> TAMBAHAN KEY 1
               onTap: () => context.go('/login'),
-              icon: Icon(MoonIcons.controls_chevron_left_32_regular),
+              icon: const Icon(MoonIcons.controls_chevron_left_32_regular),
             ),
             Text(
               "Daftar",
@@ -73,7 +197,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 color: MoonTokens.light.colors.piccolo,
                 fontWeight: FontWeight.w700,
               ),
-              textScaler: TextScaler.linear(0.7),
+              textScaler: const TextScaler.linear(0.7),
             ),
           ],
         ),
@@ -82,6 +206,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: Padding(
         padding: const EdgeInsets.only(top: 4.0),
         child: SingleChildScrollView(
+          key: const Key('scroll_view_register'), // ---> TAMBAHAN KEY 2
           child: Padding(
             padding: const EdgeInsets.only(right: 24, left: 24),
             child: Column(
@@ -98,11 +223,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   title: 'Identitas',
                   children: [
                     TextInputLogin(
+                      key: const Key('input_nama_lengkap'), // ---> TAMBAHAN KEY 3
                       controller: _namaController,
                       hint: 'Nama Lengkap',
                       keyboardType: TextInputType.name,
                     ),
                     TextInputLogin(
+                      key: const Key('input_nik'), // ---> TAMBAHAN KEY 4
                       controller: _nikController,
                       hint: 'NIK',
                       keyboardType: TextInputType.number,
@@ -115,35 +242,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       content: Column(
                         children: [
                           MoonMenuItem(
+                            key: const Key('option_gender_pria'), // ---> TAMBAHAN KEY 5
                             absorbGestures: true,
                             onTap: () => setState(() {
                               _showDdKelamin = false;
-                              _isLakilaki = true;
+                              _controllerJenisKelamin.text =
+                                  _jenisKelamin[1]!; // set controller value
                             }),
                             label: Text(_jenisKelamin[1]!),
                           ),
                           MoonMenuItem(
+                            key: const Key('option_gender_wanita'), // ---> TAMBAHAN KEY 6
                             absorbGestures: true,
                             onTap: () => setState(() {
                               _showDdKelamin = false;
-                              _isLakilaki = false;
+                              _controllerJenisKelamin.text =
+                                  _jenisKelamin[0]!; // set controller value
                             }),
                             label: Text(_jenisKelamin[0]!),
                           ),
                         ],
                       ),
-                      child: dropDownChild(
-                        hintText: _isLakilaki == null
+                      child: MoonTextInput(
+                        key: const Key('dropdown_trigger_gender'), // ---> TAMBAHAN KEY 7
+                        textInputSize: MoonTextInputSize.xl,
+                        readOnly: true,
+                        hintText: _controllerJenisKelamin.text.isEmpty
                             ? 'Jenis Kelamin'
-                            : _isLakilaki!
-                            ? 'Laki-Laki'
-                            : 'Perempuan',
-                        isShow: _showDdKelamin,
-                        setState: () =>
+                            : _controllerJenisKelamin.text,
+                        onTap: () =>
                             setState(() => _showDdKelamin = !_showDdKelamin),
+                        trailing: DropDownTrailingArrow(isShow: _showDdKelamin),
                       ),
                     ),
+                    // replace the upload Container's onTap to call pickImage and show preview
                     Container(
+                      key: const Key('area_upload_foto'), // ---> TAMBAHAN KEY 8
                       width: double.infinity,
                       height: 100,
                       clipBehavior: Clip.antiAlias,
@@ -157,18 +291,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: Material(
                         color: Colors.transparent,
                         child: InkWell(
-                          onTap: () {},
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(MoonIcons.generic_picture_32_light),
-                              Text(
-                                'Upload foto KK/KTP (.jpg/.png)',
-                                style:
-                                    MoonTokens.light.typography.heading.text14,
-                              ),
-                            ],
-                          ),
+                          onTap: () {
+                            _pickImage();
+                          },
+                          child: _fotoKtp == null
+                              ? Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(MoonIcons.generic_picture_32_light),
+                                    Text(
+                                      'Upload foto KK/KTP (.jpg/.png)',
+                                      style: MoonTokens
+                                          .light
+                                          .typography
+                                          .heading
+                                          .text14,
+                                    ),
+                                  ],
+                                )
+                              : Image.file(
+                                  File(_fotoKtp!.path),
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                ),
                         ),
                       ),
                     ),
@@ -178,17 +323,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   title: 'Akun',
                   children: [
                     TextInputLogin(
-                      controller: _emailController,
+                      key: const Key('input_email_reg'), // ---> TAMBAHAN KEY 9
+                      controller: _controllerEmail,
                       hint: 'Email',
                       keyboardType: TextInputType.emailAddress,
                     ),
                     TextInputLogin(
+                      key: const Key('input_phone'), // ---> TAMBAHAN KEY 10
                       controller: _phoneController,
                       hint: 'No Telepone',
                       keyboardType: TextInputType.phone,
                     ),
                     TextInputLogin(
-                      controller: _passwordController,
+                      key: const Key('input_password_reg'), // ---> TAMBAHAN KEY 11
+                      controller: _controllerPassword,
                       hint: 'Password',
                       isPassword: true,
                       trailing: Center(
@@ -200,6 +348,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
                     TextInputLogin(
+                      key: const Key('input_confirm_password'), // ---> TAMBAHAN KEY 12
                       controller: _confirmPasswordController,
                       hint: 'Konfirmasi Password',
                       isPassword: true,
@@ -213,65 +362,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ],
                 ),
-                inputGroup(
-                  title: 'Alamat',
-                  children: [
-                    MoonDropdown(
-                      show: _showDdPilihRumah,
-                      constrainWidthToChild: true,
-                      onTapOutside: () =>
-                          setState(() => _showDdPilihRumah = false),
-                      content: Column(
-                        children: [
-                          MoonMenuItem(
-                            label: Text('data'),
-                            onTap: () => setState(
-                              () => _showDdPilihRumah = !_showDdPilihRumah,
-                            ),
-                          ),
-                        ],
-                      ),
-                      child: dropDownChild(
-                        hintText: 'Pilih Rumah',
-                        isShow: _showDdPilihRumah,
-                        setState: () => setState(
-                          () => _showDdPilihRumah = !_showDdPilihRumah,
-                        ),
-                      ),
-                    ),
-                    TextInputLogin(
-                      controller: _alamatController,
-                      hint: 'Alamat (Jika tidak ada di list)',
-                      keyboardType: TextInputType.streetAddress,
-                    ),
-                    MoonDropdown(
-                      show: _showDdPilihKelurahan,
-                      constrainWidthToChild: true,
-                      onTapOutside: () =>
-                          setState(() => _showDdPilihKelurahan = false),
-                      content: Column(
-                        children: [
-                          MoonMenuItem(
-                            label: Text('data'),
-                            onTap: () => setState(
-                              () => _showDdPilihKelurahan =
-                                  !_showDdPilihKelurahan,
-                            ),
-                          ),
-                        ],
-                      ),
-                      child: dropDownChild(
-                        hintText: 'Status kepemilikan rumah',
-                        isShow: _showDdPilihKelurahan,
-                        setState: () => setState(
-                          () => _showDdPilihKelurahan = !_showDdPilihKelurahan,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
                 const SizedBox(height: 32),
-                LoginButton(text: 'Daftar', onTap: () {}, withColor: true),
+                LoginButton(
+                  key: const Key('btn_submit_register'), // ---> TAMBAHAN KEY 13
+                  text: 'Daftar',
+                  onTap: () {
+                    createUserWithEmailAndPassword();
+                  },
+                  withColor: true,
+                ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -298,6 +397,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ],
                 ),
                 LoginButton(
+                  key: const Key('btn_goto_login'), // ---> TAMBAHAN KEY 14
                   text: 'Login',
                   onTap: () => context.go('/login'),
                   withColor: false,
@@ -316,7 +416,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     required bool isShow,
     required VoidCallback setState,
   }) {
+    // Tambahan Key di sini juga biar aman jika mau testing dropdown detail
     return MoonTextInput(
+      key: const Key('dropdown_child_input'), 
       textInputSize: MoonTextInputSize.xl,
       readOnly: true,
       hintText: hintText,

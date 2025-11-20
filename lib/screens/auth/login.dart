@@ -7,6 +7,7 @@ import 'package:jawara_pintar_kel_5/widget/login_button.dart';
 import 'package:jawara_pintar_kel_5/widget/system_ui_style.dart';
 import 'package:jawara_pintar_kel_5/widget/text_input_login.dart';
 import 'package:moon_design/moon_design.dart';
+import 'auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,6 +17,73 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  bool isLogin = true;
+
+  // get auth service
+  final authService = AuthService();
+
+  final TextEditingController _controllerEmail = TextEditingController(
+    text: '',
+  );
+  final TextEditingController _controllerPassword = TextEditingController(
+    text: '',
+  );
+
+  /*Future<void> signInWithEmailAndPassword() async {
+    try {
+      await authService.signInWithEmailPassword(
+        _controllerEmail.text,
+        _controllerPassword.text,
+      );
+
+      // Navigasi ke halaman dashboard setelah berhasil login
+      context.go('/warga/dashboard');
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Login failed: Email / Password salah')),
+      );
+      print(e);
+    }
+  }*/
+  Future<void> signInWithEmailAndPassword() async {
+    String email = _controllerEmail.text.trim();
+    String password = _controllerPassword.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Email & Password tidak boleh kosong')),
+      );
+      return;
+    }
+
+    const String role = "admin";
+
+    switch (role) {
+      case "admin":
+        context.go('/admin/dashboard');
+        break;
+      case "rw":
+        context.go('/rw/dashboard');
+        break;
+      case "rt":
+        context.go('/rt/dashboard');
+        break;
+      case "sekretaris":
+        context.go('/sekretaris/dashboard');
+        break;
+      case "bendahara":
+        context.go('/bendahara/dashboard');
+        break;
+      case "warga":
+        context.go('/warga/dashboard');
+        break;
+      default:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Role tidak dikenal')),
+        );
+    }
+  }
+
   bool _showLoginForm = false;
 
   final _loginFormHeight = 350.0;
@@ -23,7 +91,6 @@ class _LoginScreenState extends State<LoginScreen> {
   void _setShowLoginForm(bool value) {
     if (!mounted) return;
     if (!value) {
-      // hide keyboard when form is hidden
       FocusScope.of(context).unfocus();
     }
     setState(() => _showLoginForm = value);
@@ -63,7 +130,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               : mascoutHeight,
                           child: GestureDetector(
                             onTap: () => _setShowLoginForm(false),
-                            child: Image.asset("assets/login_banner.webp"),
+                            child: Image.asset(
+                              "assets/login_banner.webp",
+                              key: const Key('banner_image'), // ---> KEY DITAMBAHKAN
+                            ),
                           ),
                         ),
                       ),
@@ -82,16 +152,16 @@ class _LoginScreenState extends State<LoginScreen> {
                                 builder: (context, constraints) {
                                   final textStyle =
                                       MediaQuery.of(context).size.height > 600
-                                      ? MoonTokens
-                                            .light
-                                            .typography
-                                            .heading
-                                            .text48
-                                      : MoonTokens
-                                            .light
-                                            .typography
-                                            .heading
-                                            .text24;
+                                          ? MoonTokens
+                                              .light
+                                              .typography
+                                              .heading
+                                              .text48
+                                          : MoonTokens
+                                              .light
+                                              .typography
+                                              .heading
+                                              .text24;
                                   final children = [
                                     Text(
                                       "Jawara ",
@@ -103,8 +173,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ];
                                   if (constraints.maxWidth < 300) {
                                     return Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: children,
                                     );
                                   }
@@ -130,10 +199,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                       children: [
                                         loginUntukMengakses(),
                                         LoginButton(
+                                          key: const Key('btn_show_login_form'), // ---> KEY DITAMBAHKAN
                                           text: "Login",
                                           onTap: _toggleLoginForm,
                                         ),
                                         LoginButton(
+                                          key: const Key('btn_to_register'), // ---> KEY DITAMBAHKAN
                                           text: "Daftar",
                                           onTap: () => context.go("/register"),
                                           withColor: false,
@@ -184,10 +255,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                         ),
                                   ),
                                   loginUntukMengakses(),
-                                  TextInputLogin(hint: 'Email'),
                                   TextInputLogin(
+                                    key: const Key('input_email'), // ---> KEY DITAMBAHKAN
+                                    hint: 'Email',
+                                    controller: _controllerEmail,
+                                    keyboardType: TextInputType.emailAddress,
+                                  ),
+                                  TextInputLogin(
+                                    key: const Key('input_password'), // ---> KEY DITAMBAHKAN
                                     hint: 'Password',
                                     isPassword: true,
+                                    controller: _controllerPassword,
                                     trailing: Center(
                                       child: Text(
                                         'Show',
@@ -204,8 +282,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ),
                                   LoginButton(
+                                    key: const Key('btn_submit_login'), // ---> KEY DITAMBAHKAN
                                     text: "Login",
-                                    onTap: () => context.go('/admin/dashboard'),
+                                    onTap: () => signInWithEmailAndPassword(),
                                   ),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
@@ -223,6 +302,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                             ),
                                       ),
                                       InkWell(
+                                        key: const Key('link_create_account'), // ---> KEY DITAMBAHKAN (OPSIONAL)
                                         onTap: () => context.go('/register'),
                                         child: Text(
                                           'Buat Akun',
