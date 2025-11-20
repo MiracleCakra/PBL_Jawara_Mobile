@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/penduduk/penerimaan/daftar_penerimaan_warga.dart';
 import 'package:jawara_pintar_kel_5/widget/moon_result_modal.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class DetailPenerimaanWargaPage extends StatefulWidget {
   final PenerimaanWarga penerimaan;
@@ -14,14 +15,18 @@ class DetailPenerimaanWargaPage extends StatefulWidget {
 }
 
 class _DetailPenerimaanWargaPageState extends State<DetailPenerimaanWargaPage> {
+  final supabase = Supabase.instance.client;
   static const Color _primaryColor = Color(0xFF4E46B4);
 
   // Sample data for rumah
-  final String _alamatRumah = 'Blok 5A';
-  final String _statusKepemilikan = 'Pemilik';
+  // final String _alamatRumah = 'Blok 5A';
+  // final String _statusKepemilikan = 'Pemilik';
 
   void _handleApprove() async {
-    // TODO: Call API to approve
+    await supabase
+        .from('warga')
+        .update({'status_penerimaan': 'Diterima'})
+        .eq('id', widget.penerimaan.nik);
     await showResultModal(
       context,
       type: ResultType.success,
@@ -115,7 +120,13 @@ class _DetailPenerimaanWargaPageState extends State<DetailPenerimaanWargaPage> {
                         }
 
                         Navigator.pop(context);
-                        // TODO: Call API to reject with reason
+                        await supabase
+                            .from('warga')
+                            .update({
+                              'status_penerimaan': 'Ditolak',
+                              'alasan_penolakan': reasonController.text.trim(),
+                            })
+                            .eq('id', widget.penerimaan.nik);
                         await showResultModal(
                           context,
                           type: ResultType.error,
@@ -199,8 +210,8 @@ class _DetailPenerimaanWargaPageState extends State<DetailPenerimaanWargaPage> {
                 const SizedBox(height: 16),
                 _buildInfoCard(),
                 const SizedBox(height: 16),
-                _buildRumahCard(),
-                const SizedBox(height: 16),
+                // _buildRumahCard(),
+                // const SizedBox(height: 16),
                 _buildFotoIdentitasCard(),
                 SizedBox(
                   height: showActionButtons ? 80 : 16,
@@ -307,38 +318,38 @@ class _DetailPenerimaanWargaPageState extends State<DetailPenerimaanWargaPage> {
     );
   }
 
-  Widget _buildRumahCard() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildInfoRow(
-            icon: Icons.home_outlined,
-            label: 'Alamat Rumah',
-            value: _alamatRumah,
-          ),
-          _buildDivider(),
-          _buildInfoRow(
-            icon: Icons.key_outlined,
-            label: 'Status Kepemilikan',
-            value: _statusKepemilikan,
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildRumahCard() {
+  //   return Container(
+  //     decoration: BoxDecoration(
+  //       color: Colors.white,
+  //       borderRadius: BorderRadius.circular(16),
+  //       boxShadow: [
+  //         BoxShadow(
+  //           color: Colors.black.withOpacity(0.05),
+  //           blurRadius: 10,
+  //           offset: const Offset(0, 2),
+  //         ),
+  //       ],
+  //     ),
+  //     padding: const EdgeInsets.all(20),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         _buildInfoRow(
+  //           icon: Icons.home_outlined,
+  //           label: 'Alamat Rumah',
+  //           value: _alamatRumah,
+  //         ),
+  //         _buildDivider(),
+  //         _buildInfoRow(
+  //           icon: Icons.key_outlined,
+  //           label: 'Status Kepemilikan',
+  //           value: _statusKepemilikan,
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildStickyFooter() {
     return Container(
@@ -433,8 +444,8 @@ class _DetailPenerimaanWargaPageState extends State<DetailPenerimaanWargaPage> {
           const SizedBox(height: 12),
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: Image.asset(
-              'assets/images/sample_id.jpg',
+            child: Image.network(
+              '${widget.penerimaan.foto}',
               width: double.infinity,
               height: 200,
               fit: BoxFit.cover,
