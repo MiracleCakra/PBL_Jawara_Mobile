@@ -439,7 +439,7 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
                     final item = _filtered[index];
                     return _WargaCard(
                       // BERIKAN KEY BERDASARKAN INDEX AGAR BISA DITEST
-                      key: Key('warga_card_$index'), 
+                      key: Key('warga_card_$index'),
                       warga: item,
                       primary: getPrimaryColor(context),
                       onTap: () => _navigateToDetail(item),
@@ -718,12 +718,12 @@ class _GenderChip extends StatelessWidget {
   const _GenderChip({required this.gender});
   @override
   Widget build(BuildContext context) {
-     // ... (kode sama) ...
+    // ... (kode sama) ...
     Color bg;
     Color text = Colors.white;
     switch (gender) {
       case Gender.lakilaki:
-        bg = const Color(0xFF4E46B4); 
+        bg = const Color(0xFF4E46B4);
         break;
       case Gender.perempuan:
         bg = Colors.pink.shade400;

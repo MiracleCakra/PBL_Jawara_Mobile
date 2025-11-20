@@ -61,14 +61,13 @@ void main() {
     final screenHeight = size.height;
 
     final pendudukX =
-        screenWidth * 0.25; // Menu kedua (Rumah, Penduduk, Keuangan, dll)
+        screenWidth *
+        0.3; // Menu kedua dari 5 menu (Rumah, Penduduk, Keuangan, Kegiatan, Lainnya)
     final pendudukY = screenHeight * 0.95;
 
     print('Tap koordinat bottom nav: ($pendudukX, $pendudukY)');
     await tester.tapAt(Offset(pendudukX, pendudukY));
-    await tester.pumpAndSettle(
-      const Duration(seconds: 3),
-    );
+    await tester.pumpAndSettle(const Duration(seconds: 3));
     print('Verifikasi halaman Penduduk terbuka...');
 
     final allTexts = find.byType(Text);
