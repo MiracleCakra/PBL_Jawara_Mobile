@@ -9,6 +9,7 @@ class PenerimaanWarga {
   final String jenisKelamin;
   final String status; // diterima, nonaktif, pending, ditolak
   final String? email;
+  final String? foto;
 
   const PenerimaanWarga({
     required this.nama,
@@ -16,6 +17,7 @@ class PenerimaanWarga {
     required this.jenisKelamin,
     required this.status,
     this.email,
+    this.foto,
   });
 
   // Get status color
@@ -87,7 +89,7 @@ class _DaftarPenerimaanWargaPageState extends State<DaftarPenerimaanWargaPage> {
 
       final data = await supabase
           .from('warga')
-          .select('id, nama, gender, status_penerimaan, email');
+          .select('id, nama, gender, status_penerimaan, email, foto_ktp');
 
       // Map data from Supabase to List<PenerimaanWarga>
       setState(() {
@@ -98,6 +100,7 @@ class _DaftarPenerimaanWargaPageState extends State<DaftarPenerimaanWargaPage> {
             jenisKelamin: item['gender'] ?? '',
             status: item['status_penerimaan'] ?? '',
             email: item['email'] ?? '',
+            foto: item['foto_ktp'] ?? '',
           );
         }).toList();
       });
