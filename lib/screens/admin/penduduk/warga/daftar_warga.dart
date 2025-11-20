@@ -16,13 +16,13 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   final WargaService _wargaService = WargaService();
-  
+
   String _query = '';
   Gender? _filterGender;
   StatusPenduduk? _filterStatus;
   String? _filterFamily;
   String? _filterLife;
-  
+
   List<Warga> _allWarga = [];
   List<Keluarga> _allKeluarga = [];
 
@@ -86,11 +86,12 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
                             value: null,
                             child: Text('-- Semua --'),
                           ),
-                          ...Gender.values.map((gender) =>
-                              DropdownMenuItem(
-                                value: gender,
-                                child: Text(gender.value),
-                              )),
+                          ...Gender.values.map(
+                            (gender) => DropdownMenuItem(
+                              value: gender,
+                              child: Text(gender.value),
+                            ),
+                          ),
                         ],
                         onChanged: (v) => setModalState(() => tempGender = v),
                       ),
@@ -109,11 +110,12 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
                             value: null,
                             child: Text('-- Semua --'),
                           ),
-                          ...StatusPenduduk.values.map((status) =>
-                              DropdownMenuItem(
-                                value: status,
-                                child: Text(status.value),
-                              )),
+                          ...StatusPenduduk.values.map(
+                            (status) => DropdownMenuItem(
+                              value: status,
+                              child: Text(status.value),
+                            ),
+                          ),
                         ],
                         onChanged: (v) => setModalState(() => tempStatus = v),
                       ),
@@ -132,11 +134,12 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
                             value: null,
                             child: Text('-- Semua Keluarga --'),
                           ),
-                          ..._allKeluarga.map((keluarga) =>
-                              DropdownMenuItem(
-                                value: keluarga.namaKeluarga,
-                                child: Text(keluarga.namaKeluarga),
-                              )),
+                          ..._allKeluarga.map(
+                            (keluarga) => DropdownMenuItem(
+                              value: keluarga.namaKeluarga,
+                              child: Text(keluarga.namaKeluarga),
+                            ),
+                          ),
                         ],
                         onChanged: (v) => setModalState(() => tempFamily = v),
                       ),
@@ -257,7 +260,8 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
   List<Warga> get _filtered {
     return _allWarga.where((warga) {
       // Filter berdasarkan search query
-      final matchesQuery = _query.isEmpty ||
+      final matchesQuery =
+          _query.isEmpty ||
           warga.nama.toLowerCase().contains(_query.toLowerCase()) ||
           warga.id.contains(_query);
 
@@ -270,7 +274,8 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
           _filterStatus == null || warga.statusPenduduk == _filterStatus;
 
       // Filter berdasarkan keluarga
-      final matchesFamily = _filterFamily == null ||
+      final matchesFamily =
+          _filterFamily == null ||
           warga.keluarga?.namaKeluarga == _filterFamily;
 
       // Filter berdasarkan status hidup/wafat
@@ -293,34 +298,36 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
 
   Future<void> _loadWargaData() async {
     // -- TAMBAHKAN PRINT UNTUK DEBUGGING --
-    debugPrint("Mencoba memuat data warga. Status login: ${Supabase.instance.client.auth.currentUser?.email ?? 'Tidak Login'}");
+    debugPrint(
+      "Mencoba memuat data warga. Status login: ${Supabase.instance.client.auth.currentUser?.email ?? 'Tidak Login'}",
+    );
     // ------------------------------------
     try {
       final warga = await _wargaService.getAllWarga();
       final keluarga = await _wargaService.getAllKeluarga();
-      
+
       setState(() {
         _allWarga = warga;
         _allKeluarga = keluarga;
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading data: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading data: $e')));
       }
     }
   }
 
   Future<void> _navigateToDetail(Warga warga) async {
-    final result = await context.pushNamed('detailWarga', extra: warga);
+    final result = await context.pushNamed('wargaDetail', extra: warga);
     if (result == true && mounted) {
       _loadWargaData();
     }
   }
 
   Future<void> _navigateToEdit(Warga warga) async {
-    final result = await context.pushNamed('editWarga', extra: warga);
+    final result = await context.pushNamed('wargaEdit', extra: warga);
     // Jika halaman edit mengembalikan nilai 'true', muat ulang data
     if (result == true && mounted) {
       _loadWargaData();
@@ -328,7 +335,7 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
   }
 
   Future<void> _navigateToAdd() async {
-    final result = await context.pushNamed('tambahWarga');
+    final result = await context.pushNamed('wargaAdd');
     // Jika halaman tambah mengembalikan nilai 'true', muat ulang data
     if (result == true && mounted) {
       _loadWargaData();
@@ -363,21 +370,21 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
   Future<void> _deleteWarga(String nik) async {
     try {
       await _wargaService.deleteWarga(nik);
-      
+
       if (mounted) {
         setState(() {
           _allWarga.removeWhere((w) => w.id == nik);
         });
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Data warga berhasil dihapus')),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error deleting warga: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error deleting warga: $e')));
       }
     }
   }
@@ -740,4 +747,3 @@ class _GenderChip extends StatelessWidget {
     );
   }
 }
-
