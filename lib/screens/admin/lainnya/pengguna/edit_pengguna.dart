@@ -101,8 +101,14 @@ class _EditPenggunaScreenState extends State<EditPenggunaScreen> {
                 items: const [
                   DropdownMenuItem(value: 'Admin', child: Text('Admin')),
                   DropdownMenuItem(value: 'Warga', child: Text('Warga')),
-                  DropdownMenuItem(value: 'Bendahara', child: Text('Bendahara')),
+                  DropdownMenuItem(value: 'Ketua RT', child: Text('Ketua RT')),
+                  DropdownMenuItem(value: 'Ketua RW', child: Text('Ketua RW')),
+                  DropdownMenuItem(value: 'Sekretaris RT', child: Text('Sekretaris RT')),
+                  DropdownMenuItem(value: 'Sekretaris RW', child: Text('Sekretaris RW')),
+                  DropdownMenuItem(value: 'Bendahara RT', child: Text('Bendahara RT')),
+                  DropdownMenuItem(value: 'Bendahara RW', child: Text('Bendahara RW')),
                 ],
+
                 onChanged: (value) => setState(() => _role = value),
               ),
               const SizedBox(height: 32),
@@ -230,6 +236,8 @@ class _EditPenggunaScreenState extends State<EditPenggunaScreen> {
         DropdownButtonFormField<String>(
           value: value,
           isExpanded: true,
+          menuMaxHeight: 300, 
+
           decoration: InputDecoration(
             filled: true,
             fillColor: Colors.white,
@@ -250,6 +258,7 @@ class _EditPenggunaScreenState extends State<EditPenggunaScreen> {
               borderSide: BorderSide(color: primary, width: 1.5),
             ),
           ),
+
           items: items,
           onChanged: onChanged,
         ),

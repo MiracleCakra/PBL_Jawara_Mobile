@@ -254,10 +254,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                               MoonTokens.light.colors.piccolo,
                                         ),
                                   ),
-                                  loginUntukMengakses(),
-                                  TextInputLogin(
-                                    key: const Key('input_email'), // ---> KEY DITAMBAHKAN
-                                    hint: 'Email',
+                                loginUntukMengakses(),
+                                TextInputLogin(
+                                  key: const Key('input_email'),
+                                  hint: 'Email',
                                     controller: _controllerEmail,
                                     keyboardType: TextInputType.emailAddress,
                                   ),

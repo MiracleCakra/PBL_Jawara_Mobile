@@ -14,7 +14,6 @@ class _ChannelTransferScreenState extends State<ChannelTransferScreen> {
   final FocusNode _searchFocusNode = FocusNode();
   String _query = '';
 
-  // Data channel sekarang sudah berisi semua field untuk kebutuhan detail
   final List<Map<String, String>> _channels = [
     {
       'name': 'Transfer BCA',
@@ -192,6 +191,17 @@ class _ChannelTransferScreenState extends State<ChannelTransferScreen> {
           ),
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          context.push('/admin/lainnya/manajemen-channel/tambah');
+        },
+        backgroundColor: primary,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Icon(Icons.add, size: 28),
+      ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,34 +210,13 @@ class _ChannelTransferScreenState extends State<ChannelTransferScreen> {
               color: Colors.white,
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Daftar Channel',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    onPressed: () {
-                      context.push('/admin/lainnya/manajemen-channel/tambah');
-                    },
-                    icon: const Icon(Icons.add, size: 18),
-                    label: const Text(
-                      'Tambah Channel',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ],
+              child: const Text(
+                'Daftar Channel',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
               ),
             ),
             _SearchFilterBar(
@@ -290,6 +279,7 @@ class _SearchFilterBar extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade400, width: 1.0),
                 boxShadow: const [
                   BoxShadow(color: Color.fromRGBO(0, 0, 0, 0.03), blurRadius: 8),
                 ],
@@ -301,9 +291,9 @@ class _SearchFilterBar extends StatelessWidget {
                 onTap: () => focusNode.requestFocus(),
                 decoration: InputDecoration(
                   prefixIcon: Icon(Icons.search, size: 20, color: Colors.grey[600]),
-                  hintText: 'Search',
+                  hintText: 'Cari Berdasarkan Nama Pengguna...',
                   hintStyle: TextStyle(color: Colors.grey[500]),
-                  border: InputBorder.none,
+                  border: InputBorder.none, // Hapus border default TextField
                   contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
                 ),
               ),
@@ -320,6 +310,8 @@ class _SearchFilterBar extends StatelessWidget {
                 padding: const EdgeInsets.all(10.0),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
+                  // --- Tambahkan garis tepi tegas di sini ---
+                  border: Border.all(color: Colors.grey.shade400, width: 1.0),
                   boxShadow: const [
                     BoxShadow(color: Color.fromRGBO(0, 0, 0, 0.03), blurRadius: 8),
                   ],

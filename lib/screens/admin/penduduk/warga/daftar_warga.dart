@@ -78,7 +78,7 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<Gender>(
-                        key: const Key('dropdown_filter_gender'), // ---> KEY
+                        key: const Key('dropdown_filter_gender'),
                         initialValue: tempGender,
                         isExpanded: true,
                         decoration: _dropdownDecoration(),
@@ -103,7 +103,7 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<StatusPenduduk>(
-                        key: const Key('dropdown_filter_status'), // ---> KEY
+                        key: const Key('dropdown_filter_status'),
                         initialValue: tempStatus,
                         isExpanded: true,
                         decoration: _dropdownDecoration(),
@@ -128,7 +128,7 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
-                        key: const Key('dropdown_filter_family'), // ---> KEY
+                        key: const Key('dropdown_filter_family'),
                         initialValue: tempFamily,
                         isExpanded: true,
                         decoration: _dropdownDecoration(),
@@ -153,7 +153,7 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
-                        key: const Key('dropdown_filter_life'), // ---> KEY
+                        key: const Key('dropdown_filter_life'),
                         initialValue: tempLife,
                         isExpanded: true,
                         decoration: _dropdownDecoration(),
@@ -265,21 +265,26 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
 
   List<Warga> get _filtered {
     return _allWarga.where((warga) {
+      // Filter berdasarkan search query
       final matchesQuery =
           _query.isEmpty ||
           warga.nama.toLowerCase().contains(_query.toLowerCase()) ||
           warga.id.contains(_query);
 
+      // Filter berdasarkan gender
       final matchesGender =
           _filterGender == null || warga.gender == _filterGender;
 
+      // Filter berdasarkan status penduduk
       final matchesStatus =
           _filterStatus == null || warga.statusPenduduk == _filterStatus;
 
+      // Filter berdasarkan keluarga
       final matchesFamily =
           _filterFamily == null ||
-          warga.keluarga?.namaKeluarga == _filterFamily;
+           warga.keluarga?.namaKeluarga == _filterFamily;
 
+      // Filter berdasarkan status hidup/wafat
       final matchesLife =
           _filterLife == null || warga.statusHidupWafat == _filterLife;
 
@@ -329,6 +334,7 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
 
   Future<void> _navigateToEdit(Warga warga) async {
     final result = await context.pushNamed('wargaEdit', extra: warga);
+    // Jika halaman edit mengembalikan nilai 'true', muat ulang data
     if (result == true && mounted) {
       _loadWargaData();
     }
@@ -336,6 +342,7 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
 
   Future<void> _navigateToAdd() async {
     final result = await context.pushNamed('wargaAdd');
+    // Jika halaman tambah mengembalikan nilai 'true', muat ulang data
     if (result == true && mounted) {
       _loadWargaData();
     }
@@ -351,12 +358,12 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
         ),
         actions: [
           TextButton(
-            key: const Key('btn_cancel_delete'), // ---> KEY
+            key: const Key('btn_cancel_delete'),
             onPressed: () => Navigator.pop(context),
             child: const Text('Batal'),
           ),
           TextButton(
-            key: const Key('btn_confirm_delete'), // ---> KEY
+            key: const Key('btn_confirm_delete'),
             onPressed: () {
               Navigator.pop(context);
               _deleteWarga(warga.id);
@@ -438,7 +445,6 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
                   itemBuilder: (context, index) {
                     final item = _filtered[index];
                     return _WargaCard(
-                      // BERIKAN KEY BERDASARKAN INDEX AGAR BISA DITEST
                       key: Key('warga_card_$index'),
                       warga: item,
                       primary: getPrimaryColor(context),
@@ -544,7 +550,7 @@ class _WargaCard extends StatelessWidget {
   final VoidCallback? onDelete;
 
   const _WargaCard({
-    super.key, // ---> PASTIKAN SUPER KEY ADA DI SINI
+    super.key,
     required this.warga,
     required this.primary,
     this.onTap,
@@ -620,7 +626,7 @@ class _WargaCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 PopupMenuButton<String>(
-                  key: const Key('btn_menu_card'), // ---> KEY MENU
+                  key: const Key('btn_menu_card'),
                   position: PopupMenuPosition.under,
                   itemBuilder: (context) => [
                     const PopupMenuItem(
@@ -716,6 +722,7 @@ class _StatusChip extends StatelessWidget {
 class _GenderChip extends StatelessWidget {
   final Gender gender;
   const _GenderChip({required this.gender});
+
   @override
   Widget build(BuildContext context) {
     // ... (kode sama) ...

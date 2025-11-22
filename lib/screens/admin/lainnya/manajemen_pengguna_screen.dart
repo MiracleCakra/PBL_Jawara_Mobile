@@ -5,7 +5,8 @@ class ManajemenPenggunaScreen extends StatefulWidget {
   const ManajemenPenggunaScreen({super.key});
 
   @override
-  State<ManajemenPenggunaScreen> createState() => _ManajemenPenggunaScreenState();
+  State<ManajemenPenggunaScreen> createState() =>
+      _ManajemenPenggunaScreenState();
 }
 
 class _ManajemenPenggunaScreenState extends State<ManajemenPenggunaScreen> {
@@ -16,33 +17,55 @@ class _ManajemenPenggunaScreenState extends State<ManajemenPenggunaScreen> {
 
   final List<Map<String, String>> _users = [
     {
-      'name': 'Rafa Fadil Aras',
-      'role': 'Warga',
+      'name': 'Cakra Wanngsa',
+      'role': 'Ketua RW',
       'status': 'Diterima',
       'nik': '3573034501050004',
-      'email': 'rafadilaras@gmail.com',
+      'email': 'cakra@gmail.com',
       'phone': '085850889729',
-      'gender': 'Perempuan',
+      'gender': 'Laki-Laki',
     },
     {
-      'name': 'Ini siapa',
-      'role': 'Admin',
-      'status': 'Diterima',
+      'name': 'Afrizal',
+      'role': 'Warga',
+      'status': 'Menunggu',
       'nik': '3573034501050005',
-      'email': 'admin@gmail.com',
+      'email': 'afrizal@gmail.com',
       'phone': '081234567890',
       'gender': 'Laki-laki',
     },
     {
-      'name': 'Ayu',
+      'name': 'Fara',
       'role': 'Bendahara',
       'status': 'Diterima',
       'nik': '3573034501050006',
-      'email': 'ayu@gmail.com',
+      'email': 'fara@gmail.com',
       'phone': '082345678901',
       'gender': 'Perempuan',
     },
+       {
+      'name': 'Tio',
+      'role': 'Ketua RT',
+      'status': 'Diterima',
+      'nik': '3573033301050008',
+      'email': 'tio@gmail.com',
+      'phone': '082345678901',
+      'gender': 'Laki-Laki',
+    },
   ];
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'Diterima':
+        return primary;
+      case 'Menunggu':
+        return Colors.amber.shade700;
+      case 'Ditolak':
+        return Colors.red.shade600;
+      default:
+        return Colors.grey;
+    }
+  }
 
   void _openFilter() {
     String? role;
@@ -74,7 +97,7 @@ class _ManajemenPenggunaScreenState extends State<ManajemenPenggunaScreen> {
                           width: 40,
                           height: 4,
                           decoration: BoxDecoration(
-                            color: const Color.fromARGB(255, 255, 255, 255),
+                            color: Colors.grey[300],
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
@@ -82,33 +105,60 @@ class _ManajemenPenggunaScreenState extends State<ManajemenPenggunaScreen> {
                       const SizedBox(height: 12),
                       const Text(
                         'Filter Pengguna',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       const SizedBox(height: 16),
-                      const Text('Role', style: TextStyle(fontWeight: FontWeight.w600)),
+                      const Text(
+                        'Role',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
                         value: role,
                         isExpanded: true,
                         decoration: _dropdownDecoration(),
                         items: const [
-                          DropdownMenuItem(value: 'Warga', child: Text('Warga')),
-                          DropdownMenuItem(value: 'Admin', child: Text('Admin')),
-                          DropdownMenuItem(value: 'Bendahara', child: Text('Bendahara')),
+                          DropdownMenuItem(
+                            value: 'Warga',
+                            child: Text('Warga'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Admin',
+                            child: Text('Admin'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Bendahara',
+                            child: Text('Bendahara'),
+                          ),
                         ],
                         onChanged: (v) => setModalState(() => role = v),
                       ),
                       const SizedBox(height: 16),
-                      const Text('Status', style: TextStyle(fontWeight: FontWeight.w600)),
+                      const Text(
+                        'Status',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
                         value: status,
                         isExpanded: true,
                         decoration: _dropdownDecoration(),
                         items: const [
-                          DropdownMenuItem(value: 'Diterima', child: Text('Diterima')),
-                          DropdownMenuItem(value: 'Menunggu', child: Text('Menunggu')),
-                          DropdownMenuItem(value: 'Ditolak', child: Text('Ditolak')),
+                          DropdownMenuItem(
+                            value: 'Diterima',
+                            child: Text('Diterima'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Menunggu',
+                            child: Text('Menunggu'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Ditolak',
+                            child: Text('Ditolak'),
+                          ),
                         ],
                         onChanged: (v) => setModalState(() => status = v),
                       ),
@@ -118,7 +168,9 @@ class _ManajemenPenggunaScreenState extends State<ManajemenPenggunaScreen> {
                           Expanded(
                             child: OutlinedButton(
                               style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                                 side: const BorderSide(
                                   color: Color.fromRGBO(78, 70, 180, 0.12),
                                 ),
@@ -133,7 +185,10 @@ class _ManajemenPenggunaScreenState extends State<ManajemenPenggunaScreen> {
                                   status = null;
                                 });
                               },
-                              child: const Text('Reset Filter', style: TextStyle(fontWeight: FontWeight.w600)),
+                              child: const Text(
+                                'Reset Filter',
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -142,13 +197,18 @@ class _ManajemenPenggunaScreenState extends State<ManajemenPenggunaScreen> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF4E46B4),
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
                               onPressed: () => Navigator.pop(context),
-                              child: const Text('Terapkan', style: TextStyle(fontWeight: FontWeight.w600)),
+                              child: const Text(
+                                'Terapkan',
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
                             ),
                           ),
                         ],
@@ -220,55 +280,32 @@ class _ManajemenPenggunaScreenState extends State<ManajemenPenggunaScreen> {
           ),
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          context.push('/admin/lainnya/manajemen-pengguna/tambah');
+        },
+        backgroundColor: primary,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Icon(Icons.add, size: 28),
+      ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
             Container(
               color: Colors.white,
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Daftar Pengguna',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 10,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        onPressed: () {
-                          context.push(
-                            '/admin/lainnya/manajemen-pengguna/tambah',
-                          );
-                        },
-                        icon: const Icon(Icons.add, size: 18),
-                        label: const Text(
-                          'Tambah Pengguna',
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+              child: const Text(
+                'Daftar Pengguna',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
               ),
             ),
             // Search and filter
@@ -297,6 +334,7 @@ class _ManajemenPenggunaScreenState extends State<ManajemenPenggunaScreen> {
                           extra: user,
                         );
                       },
+                      getStatusColor: _getStatusColor,
                     );
                   },
                 ),
@@ -324,6 +362,8 @@ class _SearchFilterBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const Color borderColor = Color.fromRGBO(0, 0, 0, 0.2);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: Row(
@@ -333,6 +373,7 @@ class _SearchFilterBar extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: borderColor, width: 1.0),
                 boxShadow: const [
                   BoxShadow(
                     color: Color.fromRGBO(0, 0, 0, 0.03),
@@ -351,7 +392,7 @@ class _SearchFilterBar extends StatelessWidget {
                     size: 20,
                     color: Colors.grey[600],
                   ),
-                  hintText: 'Pencarian',
+                  hintText: 'Cari Berdasarkan Nama Pengguna...',
                   hintStyle: TextStyle(color: Colors.grey[500]),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
@@ -372,6 +413,8 @@ class _SearchFilterBar extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(10.0),
                 decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: borderColor, width: 1.0),
                   boxShadow: const [
                     BoxShadow(
                       color: Color.fromRGBO(0, 0, 0, 0.03),
@@ -389,20 +432,23 @@ class _SearchFilterBar extends StatelessWidget {
   }
 }
 
-// Card pengguna tanpa action button, bisa diklik seluruhnya
 class _UserCard extends StatelessWidget {
   final Map<String, String> user;
   final Color primary;
   final VoidCallback? onTap;
+  final Color Function(String) getStatusColor;
 
   const _UserCard({
     required this.user,
     required this.primary,
     this.onTap,
+    required this.getStatusColor,
   });
 
   @override
   Widget build(BuildContext context) {
+    final statusColor = getStatusColor(user['status'] ?? 'Diterima');
+
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(12),
@@ -412,9 +458,9 @@ class _UserCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            boxShadow: [
+            boxShadow: const [
               BoxShadow(
-                color: Color.fromRGBO(255, 255, 255, 1),
+                color: Color.fromRGBO(0, 0, 0, 0.04),
                 blurRadius: 8,
                 offset: Offset(0, 2),
               ),
@@ -430,32 +476,32 @@ class _UserCard extends StatelessWidget {
                   children: [
                     Text(
                       user['name'] ?? '-',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: Colors.black,
                       ),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
                       user['role'] ?? '-',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[700],
-                      ),
+                      style: TextStyle(fontSize: 14, color: Colors.grey[700]),
                     ),
                   ],
                 ),
               ),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
-                  color: Color(0xFF34C759),
+                  color: statusColor,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   user['status'] ?? 'Diterima',
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,

@@ -6,6 +6,246 @@ class DetailPenggunaScreen extends StatelessWidget {
 
   const DetailPenggunaScreen({super.key, required this.userData});
 
+  // Fungsi untuk mendapatkan warna status (disalin dari ManajemenPenggunaScreen)
+  Color _getStatusColor(String? status) {
+    switch (status?.toLowerCase()) {
+      case 'diterima':
+        return const Color(0xFF4E46B4); // Ungu
+      case 'menunggu':
+        return Colors.amber.shade700; // Kuning
+      case 'ditolak':
+        return Colors.red.shade600; // Merah
+      default:
+        return const Color(0xFF4E46B4);
+    }
+  }
+
+  // --- FUNGSI BARU UNTUK BOTTOM SHEET & DIALOG ---
+
+  void _navigateToEdit(BuildContext context) {
+    // Navigasi ke EditPenggunaScreen (Diasumsikan rute sudah terdaftar)
+    context.push('/admin/lainnya/manajemen-pengguna/edit', extra: userData);
+  }
+
+  void _showDeleteDialog(BuildContext context) {
+    final namaPengguna = userData['name'] ?? 'Pengguna';
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'Konfirmasi Hapus',
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+          ),
+          content: Text(
+            'Apakah kamu yakin ingin menghapus pengguna "$namaPengguna"? Aksi ini tidak dapat dibatalkan.',
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey[500],
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+              ),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Batal', style: TextStyle(color: Colors.white)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 10,
+                ),
+              ),
+              onPressed: () {
+                Navigator.pop(context);
+                context.pop(); // Kembali ke halaman Manajemen Pengguna
+                
+                // Logic hapus data pengguna di sini
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Pengguna "$namaPengguna" telah dihapus.'),
+                    backgroundColor: const Color(0xFF2E2B32),
+                  ),
+                );
+              },
+              child: const Text(
+                'Hapus',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showActionBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext bc) {
+        return Container(
+          padding: const EdgeInsets.only(top: 8.0, bottom: 20.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              // Judul "Opsi"
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: Column(
+                    children: [
+                      // Handle Bar
+                      Container(
+                        width: 40,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Opsi',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const Divider(height: 1, thickness: 1, color: Colors.grey),
+
+              // OPSI EDIT DATA
+              _buildOptionTile(
+                icon: Icons.edit_rounded,
+                color: const Color(0xFF4E46B4), // Warna ungu
+                title: 'Edit Data',
+                subtitle: 'Ubah detail pengguna',
+                onTap: () {
+                  Navigator.pop(bc);
+                  _navigateToEdit(context);
+                },
+              ),
+              // OPSI HAPUS DATA
+              _buildOptionTile(
+                icon: Icons.delete_forever,
+                color: Colors.red.shade600,
+                title: 'Hapus Data',
+                subtitle: 'Hapus pengguna ini secara permanen',
+                onTap: () {
+                  Navigator.pop(bc);
+                  _showDeleteDialog(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildOptionTile({
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+        child: Row(
+          children: [
+            // Ikon dengan latar belakang ringan
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      // Jika judul mengandung 'Hapus', gunakan warna ikon, jika tidak, gunakan hitam
+                      color: title.contains('Hapus') ? color : Colors.black), 
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // --- WIDGET DETAIL STANDAR ---
+
+  Widget _buildDetailItem({required String label, required String value}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 16,
+            color: Colors.black,
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,61 +268,13 @@ class DetailPenggunaScreen extends StatelessWidget {
           ),
         ),
         actions: [
-          // Tombol titik tiga / ellipsis untuk popup menu
-          PopupMenuButton<String>(
+          // --- PENGGANTIAN DI SINI: IconButton memanggil BottomSheet ---
+          IconButton(
             icon: const Icon(Icons.more_vert, color: Colors.black),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            color: Colors.white,
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'edit',
-                child: Row(
-                  children: [
-                    const Icon(Icons.edit, size: 18, color: Colors.black),
-                    const SizedBox(width: 8),
-                    const Text('Edit', style: TextStyle(color: Colors.black)),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'hapus',
-                child: Row(
-                  children: [
-                    const Icon(Icons.delete_outline, size: 18, color: Colors.red),
-                    const SizedBox(width: 8),
-                    const Text('Hapus', style: TextStyle(color: Colors.red)),
-                  ],
-                ),
-              ),
-            ],
-            onSelected: (value) {
-              if (value == 'edit') {
-                context.push('/admin/lainnya/manajemen-pengguna/edit', extra: userData);
-              } else if (value == 'hapus') {
-                showDialog(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: const Text('Hapus Pengguna'),
-                    content: const Text('Apakah Anda yakin ingin menghapus pengguna ini?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(ctx),
-                        child: const Text('Batal'),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(ctx);
-                          context.pop();
-                          // Logic hapus di sini
-                        },
-                        child: const Text('Hapus', style: TextStyle(color: Colors.red)),
-                      ),
-                    ],
-                  ),
-                );
-              }
-            },
+            onPressed: () => _showActionBottomSheet(context),
+            tooltip: 'Opsi Aksi',
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: SafeArea(
@@ -91,7 +283,7 @@ class DetailPenggunaScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // DI BAWAH INI ADALAH CARD DETAIL MILIKMU, TIDAK DIUBAH
+              // Detail Card
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -116,6 +308,7 @@ class DetailPenggunaScreen extends StatelessWidget {
                         CircleAvatar(
                           radius: 32,
                           backgroundColor: Colors.grey.shade300,
+                          // Image logic dibiarkan apa adanya, meskipun userData['imageUrl'] belum terdefinisi di data list Anda
                           backgroundImage: userData['imageUrl'] != null
                               ? NetworkImage(userData['imageUrl']!)
                               : null,
@@ -151,6 +344,7 @@ class DetailPenggunaScreen extends StatelessWidget {
                             ],
                           ),
                         ),
+                        // Status Badge
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
@@ -188,44 +382,5 @@ class DetailPenggunaScreen extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  Widget _buildDetailItem({required String label, required String value}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 16,
-            color: Colors.black,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Color _getStatusColor(String? status) {
-    switch (status?.toLowerCase()) {
-      case 'aktif':
-      case 'diterima':
-        return const Color(0xFF34C759);
-      case 'nonaktif':
-      case 'ditolak':
-        return Colors.red;
-      case 'menunggu':
-        return Colors.orange;
-      default:
-        return const Color(0xFF34C759);
-    }
   }
 }

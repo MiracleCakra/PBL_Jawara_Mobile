@@ -33,7 +33,7 @@ List<KegiatanBroadcast> dummyData = [
     tanggal: "12/10/2025",
     konten:
         "PENGUMUMAN — Kepada seluruh warga RT 03/RW 07, besok Minggu pukul 07.00 akan diadakan kerja bakti membersihkan selokan dan lingkungan sekitar. Diharapkan semua warga ikut berpartisipasi. Terima kasih",
-    lampiranGambarUrl: "assets/kerjabakti.png",
+    lampiranGambarUrl: 'assets/images/kerjabkati.png',
     lampiranDokumen: ["file_panduan.pdf", "file_absensi.pdf"],
   ),
   KegiatanBroadcast(
@@ -53,7 +53,7 @@ List<KegiatanBroadcast> dummyData = [
     kategori: "Keuangan",
     konten:
         "Dimohon segera melunasi iuran bulanan sebelum tanggal 20. Bagi yang belum membayar, harap segera menghubungi Bendahara RT.",
-    lampiranGambarUrl: "assets/kerjabakti.png",
+    lampiranGambarUrl: null,
     lampiranDokumen: ["laporan_keuangan.pdf"],
   ),
   KegiatanBroadcast(
@@ -66,7 +66,6 @@ List<KegiatanBroadcast> dummyData = [
     lampiranGambarUrl: null,
     lampiranDokumen: ["Undangan_Rapat.pdf"],
   ),
-
 ];
 
 class DaftarBroadcastScreen extends StatefulWidget {
@@ -81,6 +80,9 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
   DateTime? _filterDate;
   final DateFormat _dateFormat = DateFormat('dd/MM/yyyy');
   final TextEditingController _searchController = TextEditingController();
+
+  // 🔥 Logika untuk menentukan apakah filter sedang aktif
+  bool get _isFilterActive => _filterDate != null;
 
   List<KegiatanBroadcast> _filterBroadcast() {
     Iterable<KegiatanBroadcast> result = dummyData;
@@ -112,13 +114,22 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
     final result = await showModalBottomSheet<Map<String, dynamic>?>(
       context: context,
       isScrollControlled: true,
+      // 🔥 Atur background color menjadi transparan di sini jika perlu, tapi fokus pada isi modal
+      backgroundColor: Colors.transparent,
       builder: (BuildContext modalContext) {
-        return Padding(
-          padding: EdgeInsets.only(
-              top: 20, bottom: MediaQuery.of(modalContext).viewInsets.bottom),
-          child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.75,
-            child: BroadcastFilterScreen(initialDate: _filterDate),
+        return Container(
+          // 🔥 Bungkus dengan Container untuk styling background dan radius
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(25.0)),
+          ),
+          child: Padding(
+            padding: EdgeInsets.only(
+                top: 20, bottom: MediaQuery.of(modalContext).viewInsets.bottom),
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height * 0.75,
+              child: BroadcastFilterScreen(initialDate: _filterDate),
+            ),
           ),
         );
       },
@@ -140,19 +151,25 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
         builder: (context) => DetailBroadcastScreen(broadcastData: data),
       ),
     );
+    // Logika pembaruan/penghapusan data di sini jika diperlukan setelah kembali dari detail
     if (result != null && result is Map<String, dynamic>) {
-      if (result['status'] == 'updated') {
+      // Logic untuk menghapus data dummy jika status 'deleted'
+      if (result['status'] == 'deleted') {
+        setState(() {
+          dummyData.removeWhere((item) => item.judul == data.judul);
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Broadcast "${result['judul']}" berhasil diperbarui.'),
+            content: Text('Broadcast "${data.judul}" telah dihapus.'),
             backgroundColor: Colors.grey.shade800,
             duration: const Duration(seconds: 2),
           ),
         );
-      } else if (result['status'] == 'deleted') {
+      } else if (result['status'] == 'updated') {
+        // Logika memperbarui item di dummyData jika diperlukan
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Broadcast "${result['judul']}" telah dihapus.'),
+            content: Text('Broadcast "${result['judul']}" berhasil diperbarui.'),
             backgroundColor: Colors.grey.shade800,
             duration: const Duration(seconds: 2),
           ),
@@ -180,7 +197,94 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
       setState(() {
         dummyData.insert(0, newBroadcast);
       });
+      // Show Snackbar for success
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Broadcast baru "${newBroadcast.judul}" berhasil ditambahkan!'),
+          backgroundColor: Colors.green.shade600,
+          duration: const Duration(seconds: 2),
+        ),
+      );
     }
+  }
+
+  // 🔥 WIDGET BARU UNTUK SEARCHBAR DAN FILTER
+  Widget _buildFilterBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: SizedBox(
+              height: 50,
+              child: TextField(
+                controller: _searchController,
+                onChanged: (value) => setState(() => _searchQuery = value),
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  hintText: 'Cari Berdasarkan Judul/Pengirim...', // 🔥 Hint text relevan
+                  hintStyle: TextStyle(color: Colors.grey[500]),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    size: 24,
+                    color: Colors.grey.shade500,
+                  ),
+                  prefixIconConstraints: const BoxConstraints(
+                    minWidth: 45,
+                    minHeight: 45,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 18,
+                    horizontal: 16,
+                  ),
+                  isDense: true,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFF4E46B4), width: 1.5), // Warna fokus
+                  ),
+                ),
+                style: const TextStyle(fontSize: 15),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Material(
+            color: _isFilterActive ? Colors.grey.shade200 : Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            child: InkWell(
+              onTap: () => _showFilterModal(context),
+              borderRadius: BorderRadius.circular(8),
+              highlightColor: Colors.transparent,
+              splashColor: Colors.grey.withOpacity(0.2),
+              child: Container(
+                width: 50,
+                height: 50,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300, width: 1),
+                  borderRadius: BorderRadius.circular(8),
+                  color: _isFilterActive ? Colors.grey.shade200 : Colors.white,
+                ),
+                child: Icon(
+                  Icons.tune,
+                  color: _isFilterActive ? Colors.black54 : Colors.black87,
+                  size: 24,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // 
@@ -257,6 +361,7 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
     const primaryColor = Colors.deepPurple;
 
     return Scaffold(
+      backgroundColor: Colors.grey[50], // 🔥 Tambahkan background agar searchbar terlihat menonjol
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 20),
@@ -276,68 +381,8 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black12.withOpacity(0.05),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (value) {
-                        setState(() {
-                          _searchQuery = value;
-                        });
-                      },
-                      decoration: InputDecoration(
-                        hintText: 'Cari Berdasarkan Judul',
-                        hintStyle: TextStyle(color: Colors.grey.shade500),
-                        prefixIcon:
-                            const Icon(Icons.search, color: Colors.grey),
-                        border: InputBorder.none,
-                        contentPadding:
-                            const EdgeInsets.symmetric(vertical: 10),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  height: 40,
-                  width: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black12.withOpacity(0.05),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: IconButton(
-                    icon: const Icon(Icons.tune,
-                        color: Colors.black87, size: 22),
-                    onPressed: () => _showFilterModal(context),
-                    tooltip: 'Filter',
-                  ),
-                ),
-              ],
-            ),
-          ),
+          // 🔥 Ganti Padding lama dengan _buildFilterBar()
+          _buildFilterBar(),
 
           // Daftar Card
           Expanded(

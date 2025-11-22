@@ -50,7 +50,7 @@ List<PesanWarga> allPesan = [
     id: 'p005',
     judul: 'Pembuatan Pos Ronda',
     pengirim: 'Ibu Rina',
-    tanggalDibuat: '17/10/2025',
+    tanggalDibuat: '17/10/25',
     status: 'Diterima',
   ),
 ];
@@ -65,6 +65,8 @@ class PesanWargaScreen extends StatefulWidget {
 class _PesanWargaScreenState extends State<PesanWargaScreen> {
   String? _selectedStatus;
   String _searchText = '';
+  final TextEditingController _searchController = TextEditingController();
+  bool get _isFilterActive => _selectedStatus != null && _selectedStatus!.isNotEmpty;
 
   List<PesanWarga> get _filteredPesan {
     Iterable<PesanWarga> result = allPesan;
@@ -106,13 +108,13 @@ class _PesanWargaScreenState extends State<PesanWargaScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1), 
-        borderRadius: BorderRadius.circular(8), 
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         status,
         style: TextStyle(
-          color: textColor, 
+          color: textColor,
           fontSize: 14,
           fontWeight: FontWeight.bold,
         ),
@@ -120,8 +122,6 @@ class _PesanWargaScreenState extends State<PesanWargaScreen> {
     );
   }
     
-
-
   Widget _buildPesanCard(PesanWarga pesan) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
@@ -227,12 +227,112 @@ class _PesanWargaScreenState extends State<PesanWargaScreen> {
     );
   }
 
+  Widget _buildFilterBar() {
+    final statusList = ['Pending', 'Diterima', 'Ditolak'];
+    const Color focusColor = Color(0xFF4E46B4);
+
+    return Padding(
+    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+    child: Row(
+      children: [
+        // 🔵 SEARCH BAR 60%
+        Flexible(
+          flex: 6,
+          child: SizedBox(
+            height: 50,
+            child: TextField(
+              controller: _searchController,
+              onChanged: (value) => setState(() => _searchText = value),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.white,
+                hintText: 'Cari Berdasarkan Judul/Pengirim...',
+                hintStyle: TextStyle(color: Colors.grey[500]),
+                prefixIcon: Icon(
+                  Icons.search,
+                  size: 24,
+                  color: Colors.grey.shade500,
+                ),
+                prefixIconConstraints: const BoxConstraints(
+                  minWidth: 45,
+                  minHeight: 45,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 18,
+                  horizontal: 16,
+                ),
+                isDense: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide:
+                      BorderSide(color: Colors.grey.shade300, width: 1),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide:
+                      BorderSide(color: Colors.grey.shade300, width: 1),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide:
+                      const BorderSide(color: focusColor, width: 1.5),
+                ),
+              ),
+              style: const TextStyle(fontSize: 15),
+            ),
+          ),
+        ),
+
+        const SizedBox(width: 8),
+        Flexible(
+          flex: 4,
+          child: Container(
+            height: 50,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            decoration: BoxDecoration(
+              color: _isFilterActive ? Colors.grey.shade200 : Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey.shade300, width: 1),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String?>(
+                value: _selectedStatus,
+                hint: const Text('Semua Status',
+                    style: TextStyle(fontSize: 14, color: Colors.black87)),
+                icon: Icon(
+                  Icons.keyboard_arrow_down,
+                  color: _isFilterActive ? Colors.black54 : Colors.black87,
+                  size: 24,
+                ),
+                style: const TextStyle(fontSize: 15, color: Colors.black87),
+                items: [
+                  const DropdownMenuItem<String?>(
+                    value: null,
+                    child: Text('Semua Status'),
+                  ),
+                  ...statusList.map(
+                    (s) => DropdownMenuItem<String?>(
+                      value: s,
+                      child: Text(s),
+                    ),
+                  ),
+                ],
+                onChanged: (val) => setState(() => _selectedStatus = val),
+              ),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Colors.deepPurple;
-    final statusList = ['Pending', 'Diterima', 'Ditolak'];
+    final List<PesanWarga> filteredList = _filteredPesan;
 
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 20),
@@ -252,94 +352,15 @@ class _PesanWargaScreenState extends State<PesanWargaScreen> {
       ),
       body: Column(
         children: [
-          // 🔍 Search + Dropdown Filter
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black12.withOpacity(0.05),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: TextField(
-                      onChanged: (value) => setState(() => _searchText = value),
-                      decoration: InputDecoration(
-                        hintText: 'Cari Berdasarkan Nama atau Judul',
-                        hintStyle: TextStyle(color: Colors.grey.shade500),
-                        prefixIcon: const Icon(
-                          Icons.search,
-                          color: Colors.grey,
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 10,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  height: 40,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black12.withOpacity(0.05),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String?>(
-                      value: _selectedStatus,
-                      hint: const Text('Semua', style: TextStyle(fontSize: 14)),
-                      icon: const Icon(
-                        Icons.keyboard_arrow_down,
-                        color: Colors.black,
-                      ),
-                      items: [
-                        const DropdownMenuItem<String?>(
-                          value: null,
-                          child: Text('Semua'),
-                        ),
-                        ...statusList.map(
-                          (s) => DropdownMenuItem<String?>(
-                            value: s,
-                            child: Text(s),
-                          ),
-                        ),
-                      ],
-                      onChanged: (val) => setState(() => _selectedStatus = val),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Daftar Pesan
+          _buildFilterBar(),
           Expanded(
-            child: _filteredPesan.isEmpty
-                ? const Center(child: Text("Tidak ada pesan yang ditemukan."))
+            child: filteredList.isEmpty
+                ? Center(child: Text("Tidak ada pesan yang ditemukan."))
                 : ListView.builder(
                     padding: const EdgeInsets.only(bottom: 80),
-                    itemCount: _filteredPesan.length,
+                    itemCount: filteredList.length,
                     itemBuilder: (context, index) =>
-                        _buildPesanCard(_filteredPesan[index]),
+                        _buildPesanCard(filteredList[index]),
                   ),
           ),
         ],

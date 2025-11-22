@@ -72,7 +72,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       // Navigasi ke halaman dashboard setelah berhasil login
       context.go('/login');
     } catch (e) {
-      if (mounted) { // Added mounted check for safety
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Registration failed: $e')));
@@ -128,8 +128,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         });
       }
     } else {
-      if (mounted) { // Added mounted check
-        // Menampilkan snackbar atau memberi tahu pengguna bahwa izin diperlukan
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Izin diperlukan untuk mengakses galeri')),
         );
@@ -264,7 +263,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ],
                       ),
                       child: MoonTextInput(
-                        key: const Key('dropdown_trigger_gender'), // ---> TAMBAHAN KEY 7
+                        key: const Key('dropdown_trigger_gender'),
                         textInputSize: MoonTextInputSize.xl,
                         readOnly: true,
                         hintText: _controllerJenisKelamin.text.isEmpty
@@ -295,11 +294,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             _pickImage();
                           },
                           child: _fotoKtp == null
-                              ? Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Icon(MoonIcons.generic_picture_32_light),
-                                    Text(
+                          ? Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(MoonIcons.generic_picture_32_light),
+                                Text(
                                       'Upload foto KK/KTP (.jpg/.png)',
                                       style: MoonTokens
                                           .light
@@ -321,10 +320,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 inputGroup(
                   title: 'Akun',
-                  children: [
-                    TextInputLogin(
-                      key: const Key('input_email_reg'), // ---> TAMBAHAN KEY 9
-                      controller: _controllerEmail,
+                children: [
+                  TextInputLogin(
+                    key: const Key('input_email_reg'),
+                    controller: _controllerEmail,
                       hint: 'Email',
                       keyboardType: TextInputType.emailAddress,
                     ),
@@ -332,11 +331,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       key: const Key('input_phone'), // ---> TAMBAHAN KEY 10
                       controller: _phoneController,
                       hint: 'No Telepone',
-                      keyboardType: TextInputType.phone,
-                    ),
-                    TextInputLogin(
-                      key: const Key('input_password_reg'), // ---> TAMBAHAN KEY 11
-                      controller: _controllerPassword,
+                    keyboardType: TextInputType.phone,
+                  ),
+                  TextInputLogin(
+                    key: const Key('input_password_reg'),
+                    controller: _controllerPassword,
                       hint: 'Password',
                       isPassword: true,
                       trailing: Center(
@@ -364,7 +363,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 32),
                 LoginButton(
-                  key: const Key('btn_submit_register'), // ---> TAMBAHAN KEY 13
+                  key: const Key('btn_submit_register'),
                   text: 'Daftar',
                   onTap: () {
                     createUserWithEmailAndPassword();

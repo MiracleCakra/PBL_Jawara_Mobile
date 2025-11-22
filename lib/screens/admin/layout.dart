@@ -29,6 +29,7 @@ class _AdminLayoutState extends State<AdminLayout>
     'Rumah': '',
     'Penduduk': IconifyConstants.fluentPeopleLight,
     'Keuangan': IconifyConstants.letsIconMoneyLight,
+    'Marketplace': IconifyConstants.storeIconFlat,
     'Kegiatan': IconifyConstants.arcticonActiviyManager,
     'Lainnya': IconifyConstants.fluentMoreHorizontalREG,
   };
@@ -98,9 +99,8 @@ class _AdminLayoutState extends State<AdminLayout>
   }
 
   Future<void> _goTo(int index) async {
-    // Reset the current branch if tapping the active tab.
     final isReselect = index == widget.navigationShell.currentIndex;
-    if (_isAnimating && !isReselect) return; // avoid overlapping animations
+    if (_isAnimating && !isReselect) return;
 
     if (isReselect) {
       widget.navigationShell.goBranch(index, initialLocation: true);
@@ -109,18 +109,14 @@ class _AdminLayoutState extends State<AdminLayout>
 
     try {
       _isAnimating = true;
-      // Fade out current content
       await _controller.forward();
       if (!mounted) return;
 
-      // Switch branch while content is invisible
       widget.navigationShell.goBranch(index, initialLocation: true);
-
-      // Give a frame for the new content to layout before fade-in
       await Future.delayed(const Duration(milliseconds: 16));
     } finally {
       if (mounted) {
-        await _controller.reverse(); // Fade in new content
+        await _controller.reverse();
       }
       _isAnimating = false;
     }

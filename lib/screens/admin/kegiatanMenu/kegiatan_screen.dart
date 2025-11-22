@@ -1,307 +1,317 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'broadcast/daftar_broadcast.dart';
-import 'broadcast/tambah_broadcast.dart';
-import 'pesanwarga/pesanwarga_tab.dart';
 
-// Gradient color constants
-const List<Color> _gradient1 = [Color(0xFF8A2BE2), Color(0xFF9370DB)];
-const List<Color> _gradient2 = [Color(0xFF7B68EE), Color(0xFF9932CC)];
-const List<Color> _gradient3 = [Color(0xFF4B0082), Color(0xFF9932CC)];
-const List<Color> _gradient4 = [Color(0xFFBA55D3), Color(0xFFDA70D6)];
+// Model menu item (dipertahankan)
+class MenuItem {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  MenuItem({required this.icon, required this.label, required this.onTap});
+}
 
 class KegiatanScreen extends StatelessWidget {
   const KegiatanScreen({super.key});
 
-  void _navigateToScreen(BuildContext context, Widget screen) {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => screen));
-  }
+  final pesanWargaPath = '/admin/kegiatan/pesanwarga';
+  final logAktivitasPath = '/admin/kegiatan/logaktivitas';
+  
+  static const List<Color> _gradientKegiatan = [Color(0xFF4E46B4), Color(0xFF6366F1)]; 
+  static const List<Color> _gradientBroadcast = [Color(0xFF6366F1), Color(0xFF8B5CF6)];
+  static const List<Color> _gradientPesanWarga = [Color(0xFF8B5CF6), Color(0xFFA855F7)];
+  static const List<Color> _gradientLogAktivitas = [Color(0xFFA855F7), Color(0xFFC084FC)];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FB), 
-      body: SafeArea(
+      appBar: AppBar(
+        centerTitle: false,
+        elevation: 0,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        automaticallyImplyLeading: false,
+        title: const Text(
+          'Kegiatan',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ),
+      body: Container(
+        color: const Color(0xFFF8F9FA),
         child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: double.infinity,
-                color: Colors.white, 
-                padding: const EdgeInsets.only(
-                    left: 16, right: 16, top: 18, bottom: 10), 
-                child: const Text(
-                  'Kegiatan',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 24,
-                    color: Colors.black,
-                  ),
+              const Text(
+                'Pilih Menu',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-              
-              const Divider(height: 1, thickness: 1, color: Color(0xFFE0E0E0)), 
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Text(
-                  'Pilih Menu',
-                  style: TextStyle(
-                    color: Colors.black54,
-                    fontSize: 15,
+              const SizedBox(height: 20),
+
+              /// ========================== KEGIATAN ==========================
+              _buildMenuCard(
+                context,
+                icon: Icons.event,
+                title: 'Kegiatan',
+                subtitle: 'Kelola data kegiatan',
+                gradientColors: _gradientKegiatan, 
+                onTapCard: null, 
+                menuItems: [
+                  MenuItem(
+                    icon: Icons.list_alt,
+                    label: 'Daftar',
+                    onTap: () => context.push('/admin/kegiatan/daftar'),
                   ),
-                ),
+                  MenuItem(
+                    icon: Icons.add_circle_outline,
+                    label: 'Tambah',
+                    onTap: () => context.push('/admin/kegiatan/tambah'),
+                  ),
+                ],
               ),
-              // Menu Cards
+
+              const SizedBox(height: 20),
+
+              /// ========================== BROADCAST ==========================
+              _buildMenuCard(
+                context,
+                icon: Icons.campaign,
+                title: 'Broadcast',
+                subtitle: 'Kelola data broadcast',
+                gradientColors: _gradientBroadcast, 
+                onTapCard: null, 
+                menuItems: [
+                  MenuItem(
+                    icon: Icons.list_alt_outlined,
+                    label: 'Daftar',
+                    onTap: () => context.push('/admin/kegiatan/broadcast/daftar'),
+                  ),
+                  MenuItem(
+                    icon: Icons.add_circle_outline,
+                    label: 'Tambah',
+                    onTap: () => context.push('/admin/kegiatan/broadcast/tambah'), 
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
+              /// ========================== PESAN WARGA (Direct Click) ==========================
+              _buildMenuCard(
+                context,
+                icon: Icons.message,
+                title: 'Pesan Warga',
+                subtitle: 'Kelola pesan warga',
+                gradientColors: _gradientPesanWarga, 
+                onTapCard: () => context.push(pesanWargaPath),
+                menuItems: const [],
+              ),
+
+              const SizedBox(height: 20),
+
+              /// ========================== LOG AKTIVITAS (Direct Click) ==========================
+              _buildMenuCard(
+                context,
+                icon: Icons.history,
+                title: 'Log Aktivitas',
+                subtitle: 'Jejak aktivitas pengguna',
+                gradientColors: _gradientLogAktivitas, 
+                onTapCard: () => context.push(logAktivitasPath),
+                menuItems: const [],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuCard(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required List<Color> gradientColors,
+    required List<MenuItem> menuItems,
+    VoidCallback? onTapCard, 
+  }) {
+    final bool hasSubMenus = menuItems.isNotEmpty;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: hasSubMenus ? null : onTapCard, 
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: gradientColors,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: gradientColors[0].withOpacity(0.35),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header Card
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
+                padding: EdgeInsets.fromLTRB(24, 24, 24, hasSubMenus ? 0 : 24), 
+                child: Row(
                   children: [
-                    _MenuCard(
-                      title: 'Kegiatan',
-                      subtitle: 'Kelola data kegiatan',
-                      icon: Icons.event,
-                      gradientColors: _gradient1,
-                      daftarTap: () => context.push('/admin/kegiatan/daftar'),
-                      tambahTap: () => context.push('/admin/kegiatan/tambah'),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.25),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.3),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Icon(icon, color: Colors.white, size: 32),
                     ),
-                    const SizedBox(height: 15),
-                    _MenuCard(
-                      title: 'Broadcast',
-                      subtitle: 'Kelola data broadcast',
-                      icon: Icons.campaign,
-                      gradientColors: _gradient2,
-                      daftarTap: () => _navigateToScreen(context, const DaftarBroadcastScreen()),
-                      tambahTap: () => _navigateToScreen(context, const TambahBroadcastScreen()),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            subtitle,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.white.withOpacity(0.9),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 15),
-                    DirectMenuCard(
-                      title: 'Pesan Warga',
-                      subtitle: 'Kelola pesan warga',
-                      icon: Icons.message,
-                      gradientColors: _gradient3,
-                      onTap: () => context.push('/admin/kegiatan/pesanwarga'),
-                    ),
-                    const SizedBox(height: 15),
-                    DirectMenuCard(
-                      title: 'Log Aktivitas',
-                      subtitle: 'Lihat log aktivitas pengguna',
-                      icon: Icons.history,
-                      gradientColors: _gradient4,
-                      onTap: () => context.push('/admin/kegiatan/logaktivitas'),
-                    ),
+                    // ⭐ PERUBAHAN DI SINI: Ikon Panah Bulat Tanpa Border
+                    if (!hasSubMenus) 
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.25),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.chevron_right,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
                   ],
                 ),
               ),
-              const SizedBox(height: 30),
+
+              if (hasSubMenus) ...[
+                const SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Center(
+                    child: _buildFixedMenuGrid(context, menuItems),
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
             ],
           ),
         ),
       ),
     );
   }
-}
 
-class _MenuCard extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final List<Color> gradientColors;
-  final VoidCallback daftarTap;
-  final VoidCallback tambahTap;
-
-  const _MenuCard({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.gradientColors,
-    required this.daftarTap,
-    required this.tambahTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 2),
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          colors: gradientColors,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: Colors.white, size: 32),
-              ),
-              const SizedBox(width: 15),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.85),
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          Row(
-            children: [
-              Expanded(
-                child: TextButton(
-                  onPressed: daftarTap,
-                  style: TextButton.styleFrom(
-                    backgroundColor: Colors.white.withOpacity(0.18),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: Column(
-                    children: const [
-                      Icon(Icons.list_alt, color: Colors.white, size: 24),
-                      SizedBox(height: 2),
-                      Text('Daftar', style: TextStyle(fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: TextButton(
-                  onPressed: tambahTap,
-                  style: TextButton.styleFrom(
-                    backgroundColor: Colors.white.withOpacity(0.18),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: Column(
-                    children: const [
-                      Icon(Icons.add_circle, color: Colors.white, size: 24),
-                      SizedBox(height: 2),
-                      Text('Tambah', style: TextStyle(fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class DirectMenuCard extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final VoidCallback onTap;
-  final List<Color> gradientColors;
-
-  const DirectMenuCard({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.onTap,
-    required this.gradientColors,
-    Key? key,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildGridIconButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(15),
+      borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 5,
-              offset: const Offset(0, 3),
-            ),
-          ],
-          gradient: LinearGradient(
-            colors: gradientColors,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+          color: Colors.white.withOpacity(0.18),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.3),
+            width: 1,
           ),
         ),
-        child: Row(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withOpacity(0.25),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, color: Colors.white, size: 28),
+              child: Icon(icon, color: Colors.white, size: 22),
             ),
-            const SizedBox(width: 15),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                        color: Colors.white.withOpacity(0.8), fontSize: 13),
-                  ),
-                ],
+            const SizedBox(height: 6),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 3),
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 10,
+                  color: Colors.white,
+                  height: 1.1,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildFixedMenuGrid(BuildContext context, List<MenuItem> items) {
+    // ... (Fungsi ini tidak diubah)
+    const tileWidth = 86.0;
+    const tileHeight = 76.0;
+    const spacing = 10.0;
+
+    return Wrap(
+      spacing: spacing,
+      runSpacing: spacing,
+      alignment: WrapAlignment.center,
+      children: items.map((item) {
+        return SizedBox(
+          width: tileWidth,
+          height: tileHeight,
+          child: _buildGridIconButton(
+            icon: item.icon,
+            label: item.label,
+            onTap: item.onTap,
+          ),
+        );
+      }).toList(),
     );
   }
 }

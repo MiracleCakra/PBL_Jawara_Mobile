@@ -135,26 +135,18 @@ class _TambahPenggunaScreenState extends State<TambahPenggunaScreen> {
               _buildDropdownField(
                 label: 'Role',
                 value: _role,
-                hint: 'Pilih role',
                 items: const [
-                  DropdownMenuItem(
-                    value: 'Admin',
-                    child: Text('Admin'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'Warga',
-                    child: Text('Warga'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'Bendahara',
-                    child: Text('Bendahara'),
-                  ),
+                  DropdownMenuItem(value: 'Admin', child: Text('Admin')),
+                  DropdownMenuItem(value: 'Warga', child: Text('Warga')),
+                  DropdownMenuItem(value: 'Ketua RT', child: Text('Ketua RT')),
+                  DropdownMenuItem(value: 'Ketua RW', child: Text('Ketua RW')),
+                  DropdownMenuItem(value: 'Sekretaris RT', child: Text('Sekretaris RT')),
+                  DropdownMenuItem(value: 'Sekretaris RW', child: Text('Sekretaris RW')),
+                  DropdownMenuItem(value: 'Bendahara RT', child: Text('Bendahara RT')),
+                  DropdownMenuItem(value: 'Bendahara RW', child: Text('Bendahara RW')),
                 ],
-                onChanged: (value) {
-                  setState(() {
-                    _role = value;
-                  });
-                },
+
+                onChanged: (value) => setState(() => _role = value),
               ),
               const SizedBox(height: 32),
 
@@ -334,10 +326,9 @@ class _TambahPenggunaScreenState extends State<TambahPenggunaScreen> {
     );
   }
 
-  Widget _buildDropdownField({
+ Widget _buildDropdownField({
     required String label,
     required String? value,
-    required String hint,
     required List<DropdownMenuItem<String>> items,
     required ValueChanged<String?> onChanged,
   }) {
@@ -356,13 +347,8 @@ class _TambahPenggunaScreenState extends State<TambahPenggunaScreen> {
         DropdownButtonFormField<String>(
           value: value,
           isExpanded: true,
-          hint: Text(
-            hint,
-            style: TextStyle(
-              color: Colors.grey.shade400,
-              fontSize: 14,
-            ),
-          ),
+          menuMaxHeight: 300, 
+
           decoration: InputDecoration(
             filled: true,
             fillColor: Colors.white,
@@ -383,6 +369,7 @@ class _TambahPenggunaScreenState extends State<TambahPenggunaScreen> {
               borderSide: BorderSide(color: primary, width: 1.5),
             ),
           ),
+
           items: items,
           onChanged: onChanged,
         ),

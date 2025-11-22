@@ -10,13 +10,14 @@ class WargaService {
       final response = await _supabase
           .from('warga')
           .select('''
-            id, nama, tanggal_lahir, tempat_lahir, telepon, gender,
-            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, email,    
+            id, nama, tanggal_lahir, tempat_lahir, telepon, gender, 
+            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, email,
             keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga)
           ''')
           .order('nama');
 
-      return List<Warga>.from(response.map((json) => Warga.fromJson(json)));
+      return List<Warga>.from(
+          response.map((json) => Warga.fromJson(json)));
     } catch (e) {
       throw Exception('Error fetching warga: $e');
     }
@@ -28,8 +29,8 @@ class WargaService {
       final response = await _supabase
           .from('warga')
           .select('''
-            id, nama, tanggal_lahir, tempat_lahir, telepon, gender,
-            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, email,    
+            id, nama, tanggal_lahir, tempat_lahir, telepon, gender, 
+            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, email,
             keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga)
           ''')
           .eq('nik', nik)
@@ -47,14 +48,15 @@ class WargaService {
       final response = await _supabase
           .from('warga')
           .select('''
-            id, nama, tanggal_lahir, tempat_lahir, telepon, gender,
-            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, email,    
+            id, nama, tanggal_lahir, tempat_lahir, telepon, gender, 
+            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, email,
             keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga)
           ''')
           .eq('keluarga_id', keluargaId)
           .order('nama');
 
-      return List<Warga>.from(response.map((json) => Warga.fromJson(json)));
+      return List<Warga>.from(
+          response.map((json) => Warga.fromJson(json)));
     } catch (e) {
       throw Exception('Error fetching warga by keluarga: $e');
     }
@@ -68,9 +70,11 @@ class WargaService {
     String? searchQuery,
   }) async {
     try {
-      var query = _supabase.from('warga').select('''
-            id, nama, tanggal_lahir, tempat_lahir, telepon, gender,
-            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, email,    
+      var query = _supabase
+          .from('warga')
+          .select('''
+            id, nama, tanggal_lahir, tempat_lahir, telepon, gender, 
+            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, email,
             keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga)
           ''');
 
@@ -88,19 +92,16 @@ class WargaService {
 
       final response = await query.order('nama');
 
-      List<Warga> wargaList = List<Warga>.from(
-        response.map((json) => Warga.fromJson(json)),
-      );
+      List<Warga> wargaList =
+          List<Warga>.from(response.map((json) => Warga.fromJson(json)));
 
       // Filter berdasarkan search query (nama atau ID)
       if (searchQuery != null && searchQuery.isNotEmpty) {
         final lowerQuery = searchQuery.toLowerCase();
         wargaList = wargaList
-            .where(
-              (w) =>
-                  w.nama.toLowerCase().contains(lowerQuery) ||
-                  (w.id.contains(searchQuery)),
-            )
+            .where((w) =>
+                w.nama.toLowerCase().contains(lowerQuery) ||
+                (w.id.contains(searchQuery)))
             .toList();
       }
 
@@ -117,8 +118,8 @@ class WargaService {
           .from('warga')
           .insert(warga.toJson())
           .select('''
-            id, nama, tanggal_lahir, tempat_lahir, telepon, gender,
-            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, email,    
+            id, nama, tanggal_lahir, tempat_lahir, telepon, gender, 
+            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, email,
             keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga)
           ''')
           .single();
@@ -137,8 +138,8 @@ class WargaService {
           .update(warga.toJson())
           .eq('id', id) // DIGANTI dari nik ke id
           .select('''
-            id, nama, tanggal_lahir, tempat_lahir, telepon, gender,
-            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, email,    
+            id, nama, tanggal_lahir, tempat_lahir, telepon, gender, 
+            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, email,
             keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga)
           ''')
           .single();
@@ -152,10 +153,7 @@ class WargaService {
   /// Delete warga
   Future<void> deleteWarga(String id) async {
     try {
-      await _supabase
-          .from('warga')
-          .delete()
-          .eq('id', id); // DIGANTI dari nik ke id
+      await _supabase.from('warga').delete().eq('id', id); // DIGANTI dari nik ke id
     } catch (e) {
       throw Exception('Error deleting warga: $e');
     }
@@ -170,8 +168,7 @@ class WargaService {
           .order('nama_keluarga');
 
       return List<Keluarga>.from(
-        response.map((json) => Keluarga.fromJson(json)),
-      );
+          response.map((json) => Keluarga.fromJson(json)));
     } catch (e) {
       throw Exception('Error fetching keluarga: $e');
     }
@@ -183,8 +180,8 @@ class WargaService {
       final response = await _supabase
           .from('warga')
           .select('''
-            id, nama, tanggal_lahir, tempat_lahir, telepon, gender,
-            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, email,    
+            id, nama, tanggal_lahir, tempat_lahir, telepon, gender, 
+            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, email,
             keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga)
           ''')
           .eq('id', id)

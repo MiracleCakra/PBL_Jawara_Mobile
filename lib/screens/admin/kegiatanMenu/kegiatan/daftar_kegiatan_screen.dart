@@ -20,6 +20,10 @@ class _DaftarKegiatanScreenState extends State<DaftarKegiatanScreen> {
   DateTime? _filterDate;
   String? _filterKategori;
 
+  // 🔥 Tambahkan variabel ini untuk menentukan apakah filter sedang aktif
+  bool get _isFilterActive => _filterDate != null || (_filterKategori != null && _filterKategori != 'Semua Kategori');
+
+
   final List<Map<String, String>> _kegiatanList = [
     {
       'judul': 'Kerja Bakti Lingkungan',
@@ -164,12 +168,93 @@ class _DaftarKegiatanScreenState extends State<DaftarKegiatanScreen> {
     }
   }
 
+  // 🔥 WIDGET BARU UNTUK SEARCHBAR DAN FILTER
+  Widget _buildFilterBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: SizedBox(
+              height: 50,
+              child: TextField(
+                controller: _searchController,
+                onChanged: (value) => setState(() => _searchQuery = value),
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  hintText: 'Cari Berdasarkan Judul/PJ...', // 🔥 Update hint text
+                  hintStyle: TextStyle(color: Colors.grey[500]),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    size: 24,
+                    color: Colors.grey.shade500,
+                  ),
+                  prefixIconConstraints: const BoxConstraints(
+                    minWidth: 45,
+                    minHeight: 45,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 18,
+                    horizontal: 16,
+                  ),
+                  isDense: true,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFF4E46B4), width: 1.5), // Contoh warna fokus
+                  ),
+                ),
+                style: const TextStyle(fontSize: 15),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Material(
+            // 🔥 Menggunakan Material untuk efek inkwell
+            color: _isFilterActive ? Colors.grey.shade200 : Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            child: InkWell(
+              onTap: () => _showFilterModal(context),
+              borderRadius: BorderRadius.circular(8),
+              highlightColor: Colors.transparent,
+              splashColor: Colors.grey.withOpacity(0.2),
+              child: Container(
+                width: 50,
+                height: 50,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300, width: 1),
+                  borderRadius: BorderRadius.circular(8),
+                  color: _isFilterActive ? Colors.grey.shade200 : Colors.white,
+                ),
+                child: Icon(
+                  Icons.tune,
+                  color: _isFilterActive ? Colors.black54 : Colors.black87,
+                  size: 24,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final filteredList = _filterKegiatan();
     const primaryColor = Colors.deepPurple;
 
     return Scaffold(
+      backgroundColor: Colors.grey[50], // 🔥 Tambahkan background color agar kontras dengan search bar
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 20),
@@ -189,64 +274,8 @@ class _DaftarKegiatanScreenState extends State<DaftarKegiatanScreen> {
 
       body: Column(
         children: [
-          // 🔍 Search dan Filter
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black12.withOpacity(0.05),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (value) => setState(() => _searchQuery = value),
-                      decoration: InputDecoration(
-                        hintText: 'Cari Berdasarkan Judul',
-                        hintStyle: TextStyle(color: Colors.grey.shade500),
-                        prefixIcon:
-                            const Icon(Icons.search, color: Colors.grey),
-                        border: InputBorder.none,
-                        contentPadding:
-                            const EdgeInsets.symmetric(vertical: 10),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  height: 40,
-                  width: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black12.withOpacity(0.05),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: IconButton(
-                    icon: const Icon(Icons.tune, color: Colors.black87, size: 22),
-                    onPressed: () => _showFilterModal(context),
-                    tooltip: 'Filter',
-                  ),
-                ),
-              ],
-            ),
-          ),
+          // 🔍 Search dan Filter BARU
+          _buildFilterBar(),
 
           // 📋 Daftar Kegiatan
           Expanded(
@@ -269,31 +298,30 @@ class _DaftarKegiatanScreenState extends State<DaftarKegiatanScreen> {
                       ],
                     ),
                   )
-            :ListView.builder(
-              padding: const EdgeInsets.only(bottom: 90),
-              itemCount: filteredList.length,
-              itemBuilder: (_, index) {
-                final kegiatan = filteredList[index];
-                return GestureDetector(
-                  onTap: () async {
-                    // Navigasi ke halaman detail
-                    final result = await context.push<String>(
-                      '/admin/kegiatan/detail',
-                      extra: kegiatan,
-                    );
-                    if (result == 'deleted') {
-                      setState(() {
-                        _kegiatanList.removeWhere(
-                          (item) => item['judul'] == kegiatan['judul'],
-                        );
-                      });
-                    }
-                  },
-                  child: KegiatanCard(kegiatan: kegiatan),
-                );
-              },
-            ),
-
+                : ListView.builder(
+                    padding: const EdgeInsets.only(bottom: 90),
+                    itemCount: filteredList.length,
+                    itemBuilder: (_, index) {
+                      final kegiatan = filteredList[index];
+                      return GestureDetector(
+                        onTap: () async {
+                          // Navigasi ke halaman detail
+                          final result = await context.push<String>(
+                            '/admin/kegiatan/detail',
+                            extra: kegiatan,
+                          );
+                          if (result == 'deleted') {
+                            setState(() {
+                              _kegiatanList.removeWhere(
+                                (item) => item['judul'] == kegiatan['judul'],
+                              );
+                            });
+                          }
+                        },
+                        child: KegiatanCard(kegiatan: kegiatan),
+                      );
+                    },
+                  ),
           ),
         ],
       ),
@@ -311,6 +339,7 @@ class _DaftarKegiatanScreenState extends State<DaftarKegiatanScreen> {
     );
   }
 }
+// 🔥 Kelas KegiatanCard tidak berubah
 class KegiatanCard extends StatelessWidget {
   final Map<String, String> kegiatan;
 

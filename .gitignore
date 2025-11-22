@@ -43,3 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Ignore .env files containing secrets & unnecessary stuff
+test/api/python/.env
+test/api/python/__pycache__/
