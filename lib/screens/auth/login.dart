@@ -7,6 +7,7 @@ import 'package:jawara_pintar_kel_5/widget/login_button.dart';
 import 'package:jawara_pintar_kel_5/widget/system_ui_style.dart';
 import 'package:jawara_pintar_kel_5/widget/text_input_login.dart';
 import 'package:moon_design/moon_design.dart';
+
 import 'auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -78,9 +79,9 @@ class _LoginScreenState extends State<LoginScreen> {
         context.go('/warga/dashboard');
         break;
       default:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Role tidak dikenal')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Role tidak dikenal')));
     }
   }
 
@@ -132,7 +133,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             onTap: () => _setShowLoginForm(false),
                             child: Image.asset(
                               "assets/login_banner.webp",
-                              key: const Key('banner_image'), // ---> KEY DITAMBAHKAN
+                              key: const Key(
+                                'banner_image',
+                              ), // ---> KEY DITAMBAHKAN
                             ),
                           ),
                         ),
@@ -152,16 +155,16 @@ class _LoginScreenState extends State<LoginScreen> {
                                 builder: (context, constraints) {
                                   final textStyle =
                                       MediaQuery.of(context).size.height > 600
-                                          ? MoonTokens
-                                              .light
-                                              .typography
-                                              .heading
-                                              .text48
-                                          : MoonTokens
-                                              .light
-                                              .typography
-                                              .heading
-                                              .text24;
+                                      ? MoonTokens
+                                            .light
+                                            .typography
+                                            .heading
+                                            .text48
+                                      : MoonTokens
+                                            .light
+                                            .typography
+                                            .heading
+                                            .text24;
                                   final children = [
                                     Text(
                                       "Jawara ",
@@ -173,7 +176,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ];
                                   if (constraints.maxWidth < 300) {
                                     return Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: children,
                                     );
                                   }
@@ -199,12 +203,16 @@ class _LoginScreenState extends State<LoginScreen> {
                                       children: [
                                         loginUntukMengakses(),
                                         LoginButton(
-                                          key: const Key('btn_show_login_form'), // ---> KEY DITAMBAHKAN
+                                          key: const Key(
+                                            'btn_show_login_form',
+                                          ), // ---> KEY DITAMBAHKAN
                                           text: "Login",
                                           onTap: _toggleLoginForm,
                                         ),
                                         LoginButton(
-                                          key: const Key('btn_to_register'), // ---> KEY DITAMBAHKAN
+                                          key: const Key(
+                                            'btn_to_register',
+                                          ), // ---> KEY DITAMBAHKAN
                                           text: "Daftar",
                                           onTap: () => context.go("/register"),
                                           withColor: false,
@@ -254,15 +262,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                               MoonTokens.light.colors.piccolo,
                                         ),
                                   ),
-                                loginUntukMengakses(),
-                                TextInputLogin(
-                                  key: const Key('input_email'),
-                                  hint: 'Email',
+                                  loginUntukMengakses(),
+                                  TextInputLogin(
+                                    key: const Key('input_email'),
+                                    hint: 'Email',
                                     controller: _controllerEmail,
                                     keyboardType: TextInputType.emailAddress,
                                   ),
                                   TextInputLogin(
-                                    key: const Key('input_password'), // ---> KEY DITAMBAHKAN
+                                    key: const Key(
+                                      'input_password',
+                                    ), // ---> KEY DITAMBAHKAN
                                     hint: 'Password',
                                     isPassword: true,
                                     controller: _controllerPassword,
@@ -282,7 +292,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ),
                                   LoginButton(
-                                    key: const Key('btn_submit_login'), // ---> KEY DITAMBAHKAN
+                                    key: const Key(
+                                      'btn_submit_login',
+                                    ), // ---> KEY DITAMBAHKAN
                                     text: "Login",
                                     onTap: () => signInWithEmailAndPassword(),
                                   ),
@@ -302,7 +314,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                             ),
                                       ),
                                       InkWell(
-                                        key: const Key('link_create_account'), // ---> KEY DITAMBAHKAN (OPSIONAL)
+                                        key: const Key(
+                                          'link_create_account',
+                                        ), // ---> KEY DITAMBAHKAN (OPSIONAL)
                                         onTap: () => context.go('/register'),
                                         child: Text(
                                           'Buat Akun',

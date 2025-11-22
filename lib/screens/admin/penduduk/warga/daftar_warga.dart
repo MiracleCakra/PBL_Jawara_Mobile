@@ -282,7 +282,7 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
       // Filter berdasarkan keluarga
       final matchesFamily =
           _filterFamily == null ||
-           warga.keluarga?.namaKeluarga == _filterFamily;
+          warga.keluarga?.namaKeluarga == _filterFamily;
 
       // Filter berdasarkan status hidup/wafat
       final matchesLife =

@@ -1,114 +1,88 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:jawara_pintar_kel_5/models/marketplace_model.dart' as m_model;
 // Models
 import 'package:jawara_pintar_kel_5/models/warga_model.dart';
-
-// Auth
-import 'package:jawara_pintar_kel_5/screens/auth/login.dart';
-import 'package:jawara_pintar_kel_5/screens/auth/register.dart';
-
-// Layout
-import 'package:jawara_pintar_kel_5/screens/admin/layout.dart';
-
 // Dashboard
 import 'package:jawara_pintar_kel_5/screens/admin/dashboard/dashboard.dart';
-
+// Broadcast
+import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/broadcast/daftar_broadcast.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/broadcast/detail_broadcast_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/broadcast/edit_broadcast_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/broadcast/tambah_broadcast.dart';
+// Kegiatan
+import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/kegiatan/daftar_kegiatan_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/kegiatan/detail_kegiatan_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/kegiatan/edit_kegiatan_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/kegiatan/tambah_kegiatan_screen.dart';
+// ========================= KEGIATAN =========================
+// Menu
+import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/kegiatan_screen.dart';
+// Log Aktivitas
+import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/logaktivitas/logaktivitas_admin.dart';
+// Pesan Warga
+import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/pesanwarga/pesanwarga_tab.dart';
 // ========================= KEUANGAN =========================
 import 'package:jawara_pintar_kel_5/screens/admin/keuangan/keuangan_menu_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/keuangan/laporan_keuangan_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/keuangan/pengeluaran_screen.dart';
-
-// Pemasukan
-import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/kategori_iuran_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/pemasukan_lain_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/pemasukan_lain_tambah_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/detail_pemasukan_lain_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/pemasukan_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/tagih_iuran_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/tagihan_screen.dart';
-
-// Pengeluaran
-import 'package:jawara_pintar_kel_5/screens/admin/pengeluaran/daftar_pengeluaran_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/pengeluaran/tambah_pengeluaran_screen.dart';
-
-// ========================= PENDUDUK =========================
-// Menu umum
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/penduduk_menu_screen.dart';
-
-// Rumah
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/rumah/daftar_rumah.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/rumah/detail_rumah.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/rumah/tambah_rumah.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/rumah/edit_rumah.dart';
-
-// Warga
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/warga/daftar_warga.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/warga/detail_warga.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/warga/tambah_warga.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/warga/edit_warga.dart';
-
-// Penerimaan Warga
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/penerimaan/daftar_penerimaan_warga.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/penerimaan/detail_penerimaan_warga.dart';
-
-// Keluarga
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/keluarga/daftar_keluarga.dart' hide Keluarga;
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/keluarga/detail_keluarga.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/keluarga/daftar_mutasi_keluarga.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/keluarga/tambah_mutasi_keluarga.dart';
-
+import 'package:jawara_pintar_kel_5/screens/admin/lainnya/channel_transfer/detail_channel.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/lainnya/channel_transfer/edit_channel.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/lainnya/channel_transfer/tambah_channel.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/lainnya/edit_profile_screen.dart';
+// ========================= LAINNYA =========================
+import 'package:jawara_pintar_kel_5/screens/admin/lainnya/lainnya_menu_screen.dart';
+// Channel Transfer
+import 'package:jawara_pintar_kel_5/screens/admin/lainnya/manajemen_channel_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/lainnya/manajemen_pengguna_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/lainnya/pengguna/detail_pengguna.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/lainnya/pengguna/edit_pengguna.dart';
+// Pengguna
+import 'package:jawara_pintar_kel_5/screens/admin/lainnya/pengguna/tambah_pengguna.dart';
 // ========================= LAPORAN =========================
 import 'package:jawara_pintar_kel_5/screens/admin/laporan/cetak_laporan_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/laporan/semua_pemasukan_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/laporan/semua_pengeluaran_screen.dart';
-
-// ========================= LAINNYA =========================
-import 'package:jawara_pintar_kel_5/screens/admin/lainnya/lainnya_menu_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/lainnya/edit_profile_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/lainnya/manajemen_pengguna_screen.dart';
-
-// Pengguna
-import 'package:jawara_pintar_kel_5/screens/admin/lainnya/pengguna/tambah_pengguna.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/lainnya/pengguna/detail_pengguna.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/lainnya/pengguna/edit_pengguna.dart';
-
-// Channel Transfer
-import 'package:jawara_pintar_kel_5/screens/admin/lainnya/manajemen_channel_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/lainnya/channel_transfer/tambah_channel.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/lainnya/channel_transfer/detail_channel.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/lainnya/channel_transfer/edit_channel.dart';
-
-// ========================= KEGIATAN =========================
-// Menu
-import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/kegiatan_screen.dart';
-
-// Kegiatan
-import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/kegiatan/daftar_kegiatan_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/kegiatan/tambah_kegiatan_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/kegiatan/edit_kegiatan_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/kegiatan/detail_kegiatan_screen.dart';
-
-// Broadcast
-import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/broadcast/daftar_broadcast.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/broadcast/tambah_broadcast.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/broadcast/detail_broadcast_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/broadcast/edit_broadcast_screen.dart';
-
-// Pesan Warga
-import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/pesanwarga/pesanwarga_tab.dart';
-
-// Log Aktivitas
-import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/logaktivitas/logaktivitas_admin.dart';
-
-// ----------------------MARKETPLACE---------------
-import 'package:jawara_pintar_kel_5/screens/admin/marketplace/detail_validasi_produk.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/marketplace/validasiproduk.dart';
+// Layout
+import 'package:jawara_pintar_kel_5/screens/admin/layout.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/marketplace/menu_marketplace.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace_model.dart' as m_model;
-
-
-
+import 'package:jawara_pintar_kel_5/screens/admin/marketplace/validasiproduk.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/detail_pemasukan_lain_screen.dart';
+// Pemasukan
+import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/kategori_iuran_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/pemasukan_lain_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/pemasukan_lain_tambah_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/pemasukan_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/tagih_iuran_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/tagihan_screen.dart';
+// Keluarga
+import 'package:jawara_pintar_kel_5/screens/admin/penduduk/keluarga/daftar_keluarga.dart'
+    hide Keluarga;
+import 'package:jawara_pintar_kel_5/screens/admin/penduduk/keluarga/daftar_mutasi_keluarga.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/penduduk/keluarga/detail_keluarga.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/penduduk/keluarga/tambah_mutasi_keluarga.dart';
+// ========================= PENDUDUK =========================
+// Menu umum
+import 'package:jawara_pintar_kel_5/screens/admin/penduduk/penduduk_menu_screen.dart';
+// Penerimaan Warga
+import 'package:jawara_pintar_kel_5/screens/admin/penduduk/penerimaan/daftar_penerimaan_warga.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/penduduk/penerimaan/detail_penerimaan_warga.dart';
+// Rumah
+import 'package:jawara_pintar_kel_5/screens/admin/penduduk/rumah/daftar_rumah.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/penduduk/rumah/detail_rumah.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/penduduk/rumah/edit_rumah.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/penduduk/rumah/tambah_rumah.dart';
+// Warga
+import 'package:jawara_pintar_kel_5/screens/admin/penduduk/warga/daftar_warga.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/penduduk/warga/detail_warga.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/penduduk/warga/edit_warga.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/penduduk/warga/tambah_warga.dart';
+// Pengeluaran
+import 'package:jawara_pintar_kel_5/screens/admin/pengeluaran/daftar_pengeluaran_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/pengeluaran/tambah_pengeluaran_screen.dart';
+// Auth
+import 'package:jawara_pintar_kel_5/screens/auth/login.dart';
+import 'package:jawara_pintar_kel_5/screens/auth/register.dart';
 
 // ================= Dummy Class (Placeholder) =================
 class DetailValidasiProdukScreen extends StatelessWidget {
@@ -123,7 +97,6 @@ class DetailValidasiProdukScreen extends StatelessWidget {
   }
 }
 // =============================================================
-
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -332,7 +305,7 @@ final router = GoRouter(
             ),
           ],
         ),
-         StatefulShellBranch(
+        StatefulShellBranch(
           routes: [
             GoRoute(
               path: '/admin/marketplace',
