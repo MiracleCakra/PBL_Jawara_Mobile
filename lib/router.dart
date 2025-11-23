@@ -1,114 +1,97 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:jawara_pintar_kel_5/models/marketplace_model.dart' as m_model;
 // Models
 import 'package:jawara_pintar_kel_5/models/warga_model.dart';
-
-// Auth
-import 'package:jawara_pintar_kel_5/screens/auth/login.dart';
-import 'package:jawara_pintar_kel_5/screens/auth/register.dart';
-
-// Layout
-import 'package:jawara_pintar_kel_5/screens/admin/layout.dart';
-
 // Dashboard
 import 'package:jawara_pintar_kel_5/screens/admin/dashboard/dashboard.dart';
-
+// Broadcast
+import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/broadcast/daftar_broadcast.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/broadcast/detail_broadcast_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/broadcast/edit_broadcast_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/broadcast/tambah_broadcast.dart';
+// Kegiatan
+import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/kegiatan/daftar_kegiatan_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/kegiatan/detail_kegiatan_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/kegiatan/edit_kegiatan_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/kegiatan/tambah_kegiatan_screen.dart';
+// ========================= KEGIATAN =========================
+// Menu
+import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/kegiatan_screen.dart';
+// Log Aktivitas
+import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/logaktivitas/logaktivitas_admin.dart';
+// Pesan Warga
+import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/pesanwarga/pesanwarga_tab.dart';
 // ========================= KEUANGAN =========================
 import 'package:jawara_pintar_kel_5/screens/admin/keuangan/keuangan_menu_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/keuangan/laporan_keuangan_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/keuangan/pengeluaran_screen.dart';
-
-// Pemasukan
-import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/kategori_iuran_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/pemasukan_lain_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/pemasukan_lain_tambah_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/detail_pemasukan_lain_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/pemasukan_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/tagih_iuran_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/tagihan_screen.dart';
-
-// Pengeluaran
-import 'package:jawara_pintar_kel_5/screens/admin/pengeluaran/daftar_pengeluaran_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/pengeluaran/tambah_pengeluaran_screen.dart';
-
-// ========================= PENDUDUK =========================
-// Menu umum
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/penduduk_menu_screen.dart';
-
-// Rumah
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/rumah/daftar_rumah.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/rumah/detail_rumah.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/rumah/tambah_rumah.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/rumah/edit_rumah.dart';
-
-// Warga
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/warga/daftar_warga.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/warga/detail_warga.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/warga/tambah_warga.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/warga/edit_warga.dart';
-
-// Penerimaan Warga
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/penerimaan/daftar_penerimaan_warga.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/penerimaan/detail_penerimaan_warga.dart';
-
-// Keluarga
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/keluarga/daftar_keluarga.dart' hide Keluarga;
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/keluarga/detail_keluarga.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/keluarga/daftar_mutasi_keluarga.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/keluarga/tambah_mutasi_keluarga.dart';
-
+import 'package:jawara_pintar_kel_5/screens/admin/lainnya/channel_transfer/detail_channel.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/lainnya/channel_transfer/edit_channel.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/lainnya/channel_transfer/tambah_channel.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/lainnya/edit_profile_screen.dart';
+// ========================= LAINNYA =========================
+import 'package:jawara_pintar_kel_5/screens/admin/lainnya/lainnya_menu_screen.dart';
+// Channel Transfer
+import 'package:jawara_pintar_kel_5/screens/admin/lainnya/manajemen_channel_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/lainnya/manajemen_pengguna_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/lainnya/pengguna/detail_pengguna.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/lainnya/pengguna/edit_pengguna.dart';
+// Pengguna
+import 'package:jawara_pintar_kel_5/screens/admin/lainnya/pengguna/tambah_pengguna.dart';
 // ========================= LAPORAN =========================
 import 'package:jawara_pintar_kel_5/screens/admin/laporan/cetak_laporan_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/laporan/semua_pemasukan_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/laporan/semua_pengeluaran_screen.dart';
-
-// ========================= LAINNYA =========================
-import 'package:jawara_pintar_kel_5/screens/admin/lainnya/lainnya_menu_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/lainnya/edit_profile_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/lainnya/manajemen_pengguna_screen.dart';
-
-// Pengguna
-import 'package:jawara_pintar_kel_5/screens/admin/lainnya/pengguna/tambah_pengguna.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/lainnya/pengguna/detail_pengguna.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/lainnya/pengguna/edit_pengguna.dart';
-
-// Channel Transfer
-import 'package:jawara_pintar_kel_5/screens/admin/lainnya/manajemen_channel_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/lainnya/channel_transfer/tambah_channel.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/lainnya/channel_transfer/detail_channel.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/lainnya/channel_transfer/edit_channel.dart';
-
-// ========================= KEGIATAN =========================
-// Menu
-import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/kegiatan_screen.dart';
-
-// Kegiatan
-import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/kegiatan/daftar_kegiatan_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/kegiatan/tambah_kegiatan_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/kegiatan/edit_kegiatan_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/kegiatan/detail_kegiatan_screen.dart';
-
-// Broadcast
-import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/broadcast/daftar_broadcast.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/broadcast/tambah_broadcast.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/broadcast/detail_broadcast_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/broadcast/edit_broadcast_screen.dart';
-
-// Pesan Warga
-import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/pesanwarga/pesanwarga_tab.dart';
-
-// Log Aktivitas
-import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/logaktivitas/logaktivitas_admin.dart';
-
-// ----------------------MARKETPLACE---------------
-import 'package:jawara_pintar_kel_5/screens/admin/marketplace/detail_validasi_produk.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/marketplace/validasiproduk.dart';
+// Layout
+import 'package:jawara_pintar_kel_5/screens/admin/layout.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/marketplace/menu_marketplace.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace_model.dart' as m_model;
-
-
-
+import 'package:jawara_pintar_kel_5/screens/admin/marketplace/validasiproduk.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/detail_pemasukan_lain_screen.dart';
+// Pemasukan
+import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/kategori_iuran_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/pemasukan_lain_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/pemasukan_lain_tambah_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/pemasukan_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/tagih_iuran_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/tagihan_screen.dart';
+// Keluarga
+import 'package:jawara_pintar_kel_5/screens/admin/penduduk/keluarga/daftar_keluarga.dart'
+    hide Keluarga;
+import 'package:jawara_pintar_kel_5/screens/admin/penduduk/keluarga/daftar_mutasi_keluarga.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/penduduk/keluarga/detail_keluarga.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/penduduk/keluarga/tambah_mutasi_keluarga.dart';
+// ========================= PENDUDUK =========================
+// Menu umum
+import 'package:jawara_pintar_kel_5/screens/admin/penduduk/penduduk_menu_screen.dart';
+// Penerimaan Warga
+import 'package:jawara_pintar_kel_5/screens/admin/penduduk/penerimaan/daftar_penerimaan_warga.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/penduduk/penerimaan/detail_penerimaan_warga.dart';
+// Rumah
+import 'package:jawara_pintar_kel_5/screens/admin/penduduk/rumah/daftar_rumah.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/penduduk/rumah/detail_rumah.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/penduduk/rumah/edit_rumah.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/penduduk/rumah/tambah_rumah.dart';
+// Warga
+import 'package:jawara_pintar_kel_5/screens/admin/penduduk/warga/daftar_warga.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/penduduk/warga/detail_warga.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/penduduk/warga/edit_warga.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/penduduk/warga/tambah_warga.dart';
+// Pengeluaran
+import 'package:jawara_pintar_kel_5/screens/admin/pengeluaran/daftar_pengeluaran_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/pengeluaran/tambah_pengeluaran_screen.dart';
+// Auth
+import 'package:jawara_pintar_kel_5/screens/auth/login.dart';
+import 'package:jawara_pintar_kel_5/screens/auth/register.dart';
+import 'package:jawara_pintar_kel_5/screens/rt/keuangan/keuangan_menu_screen.dart';
+// RT & RW
+import 'package:jawara_pintar_kel_5/screens/rt/lainnya/lainnya_menu_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/rt/layout.dart';
+import 'package:jawara_pintar_kel_5/screens/rt/penduduk/penduduk_menu_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/rw/keuangan/keuangan_menu_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/rw/lainnya/lainnya_menu_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/rw/layout.dart';
+import 'package:jawara_pintar_kel_5/screens/rw/penduduk/penduduk_menu_screen.dart';
 
 // ================= Dummy Class (Placeholder) =================
 class DetailValidasiProdukScreen extends StatelessWidget {
@@ -331,7 +314,7 @@ final router = GoRouter(
             ),
           ],
         ),
-         StatefulShellBranch(
+        StatefulShellBranch(
           routes: [
             GoRoute(
               path: '/admin/marketplace',
@@ -493,6 +476,422 @@ final router = GoRouter(
                 final channelData = state.extra as Map<String, String>;
                 return EditChannelPage(channelData: channelData);
               },
+            ),
+          ],
+        ),
+      ],
+    ),
+    // ========================= RT ROUTES =========================
+    StatefulShellRoute.indexedStack(
+      builder: (context, state, navigationShell) =>
+          RTLayout(navigationShell: navigationShell),
+      branches: [
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/rt/penduduk',
+              name: 'rt_penduduk',
+              builder: (context, state) => const RTMenuPenduduk(),
+              routes: [
+                GoRoute(
+                  path: 'daftar-warga',
+                  name: 'rt_wargaList',
+                  builder: (context, state) => const DaftarWargaPage(),
+                ),
+                GoRoute(
+                  path: 'daftar-rumah',
+                  name: 'rt_rumahList',
+                  builder: (context, state) => const DaftarRumahPage(),
+                ),
+                GoRoute(
+                  path: 'detail-rumah',
+                  name: 'rt_rumahDetail',
+                  builder: (context, state) {
+                    final rumah = state.extra as Rumah;
+                    return DetailRumahPage(rumah: rumah);
+                  },
+                ),
+                GoRoute(
+                  path: 'detail-warga',
+                  name: 'rt_wargaDetail',
+                  builder: (context, state) {
+                    final data = state.extra as Warga;
+                    return DetailWargaPage(warga: data);
+                  },
+                ),
+                GoRoute(
+                  path: 'daftar-keluarga',
+                  name: 'rt_keluargaList',
+                  builder: (context, state) => const DaftarKeluargaPage(),
+                ),
+                GoRoute(
+                  path: 'detail-keluarga',
+                  name: 'rt_keluargaDetail',
+                  builder: (context, state) {
+                    final keluarga = state.extra as dynamic;
+                    return DetailKeluargaPage(keluarga: keluarga);
+                  },
+                ),
+                GoRoute(
+                  path: 'daftar-mutasi-keluarga',
+                  name: 'rt_mutasiKeluargaList',
+                  builder: (context, state) => const DaftarMutasiKeluargaPage(),
+                ),
+                GoRoute(
+                  path: 'daftar-penerimaan',
+                  name: 'rt_penerimaanList',
+                  builder: (context, state) =>
+                      const DaftarPenerimaanWargaPage(),
+                ),
+                GoRoute(
+                  path: 'detail-penerimaan',
+                  name: 'rt_penerimaanDetail',
+                  builder: (context, state) {
+                    final data = state.extra as PenerimaanWarga;
+                    return DetailPenerimaanWargaPage(penerimaan: data);
+                  },
+                ),
+                GoRoute(
+                  path: 'daftar-kegiatan',
+                  name: 'rt_kegiatanList',
+                  builder: (context, state) => const DaftarKegiatanScreen(),
+                ),
+                GoRoute(
+                  path: 'detail-kegiatan',
+                  name: 'rt_kegiatanDetail',
+                  builder: (context, state) {
+                    final kegiatan = state.extra as Map<String, String>;
+                    return DetailKegiatanScreen(kegiatan: kegiatan);
+                  },
+                ),
+                GoRoute(
+                  path: 'daftar-broadcast',
+                  name: 'rt_broadcastList',
+                  builder: (context, state) => const DaftarBroadcastScreen(),
+                ),
+                GoRoute(
+                  path: 'detail-broadcast',
+                  name: 'rt_broadcastDetail',
+                  builder: (context, state) {
+                    final broadcast = state.extra as KegiatanBroadcast;
+                    return DetailBroadcastScreen(broadcastData: broadcast);
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/rt/keuangan',
+              name: 'rt_keuangan',
+              builder: (context, state) => const RTMenuKeuangan(),
+              routes: [
+                GoRoute(
+                  path: 'kategori-iuran',
+                  name: 'rt_kategoriIuran',
+                  builder: (context, state) => const KategoriIuranScreen(),
+                ),
+                GoRoute(
+                  path: 'tagih-iuran',
+                  name: 'rt_tagihIuran',
+                  builder: (context, state) => const TagihIuranScreen(),
+                ),
+                GoRoute(
+                  path: 'tagihan',
+                  name: 'rt_tagihan',
+                  builder: (context, state) => const TagihanScreen(),
+                ),
+                GoRoute(
+                  path: 'pemasukan-lain',
+                  name: 'rt_pemasukanLain',
+                  builder: (context, state) => const PemasukanLainScreen(),
+                ),
+                GoRoute(
+                  path: 'daftar-pengeluaran',
+                  name: 'rt_pengeluaranList',
+                  builder: (context, state) => const DaftarPengeluaranScreen(),
+                ),
+                GoRoute(
+                  path: 'laporan-pemasukan',
+                  name: 'rt_laporanPemasukan',
+                  builder: (context, state) => const SemuaPemasukanScreen(),
+                ),
+                GoRoute(
+                  path: 'laporan-pengeluaran',
+                  name: 'rt_laporanPengeluaran',
+                  builder: (context, state) => const SemuaPengeluaranScreen(),
+                ),
+                GoRoute(
+                  path: 'cetak-laporan',
+                  name: 'rt_cetakLaporan',
+                  builder: (context, state) => const CetakLaporanScreen(),
+                ),
+              ],
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/rt/lainnya',
+              name: 'rt_lainnya',
+              builder: (context, state) => const RTMenuLainnya(),
+              routes: [
+                GoRoute(
+                  path: 'pesan-warga',
+                  name: 'rt_pesanWarga',
+                  builder: (context, state) => const PesanWargaScreen(),
+                ),
+                GoRoute(
+                  path: 'log-aktivitas',
+                  name: 'rt_logAktivitas',
+                  builder: (context, state) => const LogAktivitasScreenAdmin(),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
+    ),
+    // ========================= RW ROUTES =========================
+    StatefulShellRoute.indexedStack(
+      builder: (context, state, navigationShell) =>
+          RWLayout(navigationShell: navigationShell),
+      branches: [
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/rw/penduduk',
+              name: 'rw_penduduk',
+              builder: (context, state) => const RWMenuPenduduk(),
+              routes: [
+                GoRoute(
+                  path: 'daftar-warga',
+                  name: 'rw_wargaList',
+                  builder: (context, state) => const DaftarWargaPage(),
+                ),
+                GoRoute(
+                  path: 'daftar-rumah',
+                  name: 'rw_rumahList',
+                  builder: (context, state) => const DaftarRumahPage(),
+                ),
+                GoRoute(
+                  path: 'detail-rumah',
+                  name: 'rw_rumahDetail',
+                  builder: (context, state) {
+                    final rumah = state.extra as Rumah;
+                    return DetailRumahPage(rumah: rumah);
+                  },
+                ),
+                GoRoute(
+                  path: 'tambah-rumah',
+                  name: 'rw_rumahAdd',
+                  builder: (context, state) => const TambahRumahPage(),
+                ),
+                GoRoute(
+                  path: 'edit-rumah',
+                  name: 'rw_rumahEdit',
+                  builder: (context, state) {
+                    final rumah = state.extra as Rumah;
+                    return EditRumahPage(rumah: rumah);
+                  },
+                ),
+                GoRoute(
+                  path: 'detail-warga',
+                  name: 'rw_wargaDetail',
+                  builder: (context, state) {
+                    final data = state.extra as Warga;
+                    return DetailWargaPage(warga: data);
+                  },
+                ),
+                GoRoute(
+                  path: 'tambah-warga',
+                  name: 'rw_wargaAdd',
+                  builder: (context, state) => const TambahWargaPage(),
+                ),
+                GoRoute(
+                  path: 'edit-warga',
+                  name: 'rw_wargaEdit',
+                  builder: (context, state) {
+                    final data = state.extra as Warga;
+                    return EditWargaPage(warga: data);
+                  },
+                ),
+                GoRoute(
+                  path: 'daftar-keluarga',
+                  name: 'rw_keluargaList',
+                  builder: (context, state) => const DaftarKeluargaPage(),
+                ),
+                GoRoute(
+                  path: 'detail-keluarga',
+                  name: 'rw_keluargaDetail',
+                  builder: (context, state) {
+                    final keluarga = state.extra as dynamic;
+                    return DetailKeluargaPage(keluarga: keluarga);
+                  },
+                ),
+                GoRoute(
+                  path: 'daftar-mutasi-keluarga',
+                  name: 'rw_mutasiKeluargaList',
+                  builder: (context, state) => const DaftarMutasiKeluargaPage(),
+                ),
+                GoRoute(
+                  path: 'tambah-mutasi-keluarga',
+                  name: 'rw_mutasiKeluargaAdd',
+                  builder: (context, state) => const TambahMutasiKeluargaPage(),
+                ),
+                GoRoute(
+                  path: 'daftar-penerimaan',
+                  name: 'rw_penerimaanList',
+                  builder: (context, state) =>
+                      const DaftarPenerimaanWargaPage(),
+                ),
+                GoRoute(
+                  path: 'detail-penerimaan',
+                  name: 'rw_penerimaanDetail',
+                  builder: (context, state) {
+                    final data = state.extra as PenerimaanWarga;
+                    return DetailPenerimaanWargaPage(penerimaan: data);
+                  },
+                ),
+                GoRoute(
+                  path: 'daftar-kegiatan',
+                  name: 'rw_kegiatanList',
+                  builder: (context, state) => const DaftarKegiatanScreen(),
+                ),
+                GoRoute(
+                  path: 'detail-kegiatan',
+                  name: 'rw_kegiatanDetail',
+                  builder: (context, state) {
+                    final kegiatan = state.extra as Map<String, String>;
+                    return DetailKegiatanScreen(kegiatan: kegiatan);
+                  },
+                ),
+                GoRoute(
+                  path: 'tambah-kegiatan',
+                  name: 'rw_kegiatanAdd',
+                  builder: (context, state) => const TambahKegiatanScreen(),
+                ),
+                GoRoute(
+                  path: 'edit-kegiatan',
+                  name: 'rw_kegiatanEdit',
+                  builder: (context, state) {
+                    final kegiatan = state.extra as Map<String, String>;
+                    return EditKegiatanScreen(kegiatan: kegiatan);
+                  },
+                ),
+                GoRoute(
+                  path: 'daftar-broadcast',
+                  name: 'rw_broadcastList',
+                  builder: (context, state) => const DaftarBroadcastScreen(),
+                ),
+                GoRoute(
+                  path: 'detail-broadcast',
+                  name: 'rw_broadcastDetail',
+                  builder: (context, state) {
+                    final broadcast = state.extra as KegiatanBroadcast;
+                    return DetailBroadcastScreen(broadcastData: broadcast);
+                  },
+                ),
+                GoRoute(
+                  path: 'tambah-broadcast',
+                  name: 'rw_broadcastAdd',
+                  builder: (context, state) => const TambahBroadcastScreen(),
+                ),
+                GoRoute(
+                  path: 'edit-broadcast',
+                  name: 'rw_broadcastEdit',
+                  builder: (context, state) {
+                    final broadcast = state.extra as KegiatanBroadcast;
+                    return EditBroadcastScreen(initialBroadcastData: broadcast);
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/rw/keuangan',
+              name: 'rw_keuangan',
+              builder: (context, state) => const RWMenuKeuangan(),
+              routes: [
+                GoRoute(
+                  path: 'kategori-iuran',
+                  name: 'rw_kategoriIuran',
+                  builder: (context, state) => const KategoriIuranScreen(),
+                ),
+                GoRoute(
+                  path: 'tagih-iuran',
+                  name: 'rw_tagihIuran',
+                  builder: (context, state) => const TagihIuranScreen(),
+                ),
+                GoRoute(
+                  path: 'tagihan',
+                  name: 'rw_tagihan',
+                  builder: (context, state) => const TagihanScreen(),
+                ),
+                GoRoute(
+                  path: 'pemasukan-lain',
+                  name: 'rw_pemasukanLain',
+                  builder: (context, state) => const PemasukanLainScreen(),
+                ),
+                GoRoute(
+                  path: 'tambah-pemasukan-lain',
+                  name: 'rw_pemasukanLainAdd',
+                  builder: (context, state) =>
+                      const PemasukanLainTambahScreen(),
+                ),
+                GoRoute(
+                  path: 'daftar-pengeluaran',
+                  name: 'rw_pengeluaranList',
+                  builder: (context, state) => const DaftarPengeluaranScreen(),
+                ),
+                GoRoute(
+                  path: 'tambah-pengeluaran',
+                  name: 'rw_pengeluaranAdd',
+                  builder: (context, state) => const TambahPengeluaranScreen(),
+                ),
+                GoRoute(
+                  path: 'laporan-pemasukan',
+                  name: 'rw_laporanPemasukan',
+                  builder: (context, state) => const SemuaPemasukanScreen(),
+                ),
+                GoRoute(
+                  path: 'laporan-pengeluaran',
+                  name: 'rw_laporanPengeluaran',
+                  builder: (context, state) => const SemuaPengeluaranScreen(),
+                ),
+                GoRoute(
+                  path: 'cetak-laporan',
+                  name: 'rw_cetakLaporan',
+                  builder: (context, state) => const CetakLaporanScreen(),
+                ),
+              ],
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/rw/lainnya',
+              name: 'rw_lainnya',
+              builder: (context, state) => const RWMenuLainnya(),
+              routes: [
+                GoRoute(
+                  path: 'pesan-warga',
+                  name: 'rw_pesanWarga',
+                  builder: (context, state) => const PesanWargaScreen(),
+                ),
+                GoRoute(
+                  path: 'log-aktivitas',
+                  name: 'rw_logAktivitas',
+                  builder: (context, state) => const LogAktivitasScreenAdmin(),
+                ),
+              ],
             ),
           ],
         ),

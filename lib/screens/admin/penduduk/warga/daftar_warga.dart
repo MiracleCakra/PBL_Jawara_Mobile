@@ -78,6 +78,7 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<Gender>(
+                        key: const Key('dropdown_filter_gender'),
                         initialValue: tempGender,
                         isExpanded: true,
                         decoration: _dropdownDecoration(),
@@ -102,6 +103,7 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<StatusPenduduk>(
+                        key: const Key('dropdown_filter_status'),
                         initialValue: tempStatus,
                         isExpanded: true,
                         decoration: _dropdownDecoration(),
@@ -126,6 +128,7 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
+                        key: const Key('dropdown_filter_family'),
                         initialValue: tempFamily,
                         isExpanded: true,
                         decoration: _dropdownDecoration(),
@@ -150,6 +153,7 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
+                        key: const Key('dropdown_filter_life'),
                         initialValue: tempLife,
                         isExpanded: true,
                         decoration: _dropdownDecoration(),
@@ -170,6 +174,7 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
                         children: [
                           Expanded(
                             child: OutlinedButton(
+                              key: const Key('btn_reset_filter'), // ---> KEY
                               style: OutlinedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 14,
@@ -199,6 +204,7 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: ElevatedButton(
+                              key: const Key('btn_apply_filter'), // ---> KEY
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF4E46B4),
                                 foregroundColor: Colors.white,
@@ -297,19 +303,19 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
   }
 
   Future<void> _loadWargaData() async {
-    // -- TAMBAHKAN PRINT UNTUK DEBUGGING --
     debugPrint(
       "Mencoba memuat data warga. Status login: ${Supabase.instance.client.auth.currentUser?.email ?? 'Tidak Login'}",
     );
-    // ------------------------------------
     try {
       final warga = await _wargaService.getAllWarga();
       final keluarga = await _wargaService.getAllKeluarga();
 
-      setState(() {
-        _allWarga = warga;
-        _allKeluarga = keluarga;
-      });
+      if (mounted) {
+        setState(() {
+          _allWarga = warga;
+          _allKeluarga = keluarga;
+        });
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -352,10 +358,12 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
         ),
         actions: [
           TextButton(
+            key: const Key('btn_cancel_delete'),
             onPressed: () => Navigator.pop(context),
             child: const Text('Batal'),
           ),
           TextButton(
+            key: const Key('btn_confirm_delete'),
             onPressed: () {
               Navigator.pop(context);
               _deleteWarga(warga.id);
@@ -430,12 +438,14 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: ListView.separated(
+                  key: const Key('list_warga'), // ---> KEY LISTVIEW
                   padding: const EdgeInsets.only(bottom: 80, top: 8),
                   itemCount: _filtered.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final item = _filtered[index];
                     return _WargaCard(
+                      key: Key('warga_card_$index'),
                       warga: item,
                       primary: getPrimaryColor(context),
                       onTap: () => _navigateToDetail(item),
@@ -450,6 +460,7 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
+        key: const Key('fab_add_warga'), // ---> KEY FAB
         backgroundColor: getPrimaryColor(context),
         onPressed: _navigateToAdd,
         child: const Icon(Icons.add, color: Colors.white),
@@ -490,6 +501,7 @@ class _SearchFilterBar extends StatelessWidget {
                 ],
               ),
               child: TextField(
+                key: const Key('field_search_warga'), // ---> KEY SEARCH
                 controller: controller,
                 focusNode: focusNode,
                 onChanged: onChanged,
@@ -515,6 +527,7 @@ class _SearchFilterBar extends StatelessWidget {
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
             child: InkWell(
+              key: const Key('btn_show_filter'), // ---> KEY FILTER
               borderRadius: BorderRadius.circular(12),
               onTap: onFilterTap,
               child: const Padding(
@@ -537,6 +550,7 @@ class _WargaCard extends StatelessWidget {
   final VoidCallback? onDelete;
 
   const _WargaCard({
+    super.key,
     required this.warga,
     required this.primary,
     this.onTap,
@@ -612,6 +626,7 @@ class _WargaCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 PopupMenuButton<String>(
+                  key: const Key('btn_menu_card'),
                   position: PopupMenuPosition.under,
                   itemBuilder: (context) => [
                     const PopupMenuItem(
@@ -661,17 +676,18 @@ class _WargaCard extends StatelessWidget {
   }
 }
 
+// _StatusChip dan _GenderChip tidak perlu diubah signifikan
 class _StatusChip extends StatelessWidget {
   final StatusPenduduk status;
   const _StatusChip({required this.status});
-
   @override
   Widget build(BuildContext context) {
+    // ... (kode sama) ...
     Color bg;
     Color text = Colors.white;
     switch (status) {
       case StatusPenduduk.aktif:
-        bg = const Color(0xFF4E46B4); // Primary color
+        bg = const Color(0xFF4E46B4);
         break;
       case StatusPenduduk.nonaktif:
         bg = Colors.grey.shade300;
@@ -709,11 +725,12 @@ class _GenderChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ... (kode sama) ...
     Color bg;
     Color text = Colors.white;
     switch (gender) {
       case Gender.lakilaki:
-        bg = const Color(0xFF4E46B4); // Primary color
+        bg = const Color(0xFF4E46B4);
         break;
       case Gender.perempuan:
         bg = Colors.pink.shade400;

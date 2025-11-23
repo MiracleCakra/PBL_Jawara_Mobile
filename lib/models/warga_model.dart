@@ -137,7 +137,8 @@ class Warga {
           : null,
       anggotaKeluarga: json['anggota_keluarga'] != null
           ? List<AnggotaKeluarga>.from(
-              json['anggota_keluarga'].map((x) => AnggotaKeluarga.fromJson(x)))
+              json['anggota_keluarga'].map((x) => AnggotaKeluarga.fromJson(x)),
+            )
           : null,
     );
   }
@@ -224,8 +225,7 @@ class AnggotaKeluarga {
       keluargaId: json['keluarga_id'] ?? '',
       wargaNik: json['warga_id'] ?? '',
       peran: json['peran'],
-      warga:
-          json['warga'] != null ? Warga.fromJson(json['warga']) : null,
+      warga: json['warga'] != null ? Warga.fromJson(json['warga']) : null,
     );
   }
 

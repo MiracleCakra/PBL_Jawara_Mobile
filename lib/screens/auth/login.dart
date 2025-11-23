@@ -7,6 +7,7 @@ import 'package:jawara_pintar_kel_5/widget/login_button.dart';
 import 'package:jawara_pintar_kel_5/widget/system_ui_style.dart';
 import 'package:jawara_pintar_kel_5/widget/text_input_login.dart';
 import 'package:moon_design/moon_design.dart';
+
 import 'auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -56,6 +57,19 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    // Dummy login untuk RT dan RW
+    if (email == "rt@jawara.com" && password == "rt123") {
+      if (!mounted) return;
+      context.go('/rt/penduduk');
+      return;
+    }
+
+    if (email == "rw@jawara.com" && password == "rw123") {
+      if (!mounted) return;
+      context.go('/rw/penduduk');
+      return;
+    }
+
     const String role = "admin";
 
     switch (role) {
@@ -63,10 +77,10 @@ class _LoginScreenState extends State<LoginScreen> {
         context.go('/admin/dashboard');
         break;
       case "rw":
-        context.go('/rw/dashboard');
+        context.go('/rw/penduduk');
         break;
       case "rt":
-        context.go('/rt/dashboard');
+        context.go('/rt/penduduk');
         break;
       case "sekretaris":
         context.go('/sekretaris/dashboard');
@@ -78,9 +92,9 @@ class _LoginScreenState extends State<LoginScreen> {
         context.go('/warga/dashboard');
         break;
       default:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Role tidak dikenal')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Role tidak dikenal')));
     }
   }
 
@@ -130,7 +144,12 @@ class _LoginScreenState extends State<LoginScreen> {
                               : mascoutHeight,
                           child: GestureDetector(
                             onTap: () => _setShowLoginForm(false),
-                            child: Image.asset("assets/login_banner.webp"),
+                            child: Image.asset(
+                              "assets/login_banner.webp",
+                              key: const Key(
+                                'banner_image',
+                              ), // ---> KEY DITAMBAHKAN
+                            ),
                           ),
                         ),
                       ),
@@ -197,10 +216,16 @@ class _LoginScreenState extends State<LoginScreen> {
                                       children: [
                                         loginUntukMengakses(),
                                         LoginButton(
+                                          key: const Key(
+                                            'btn_show_login_form',
+                                          ), // ---> KEY DITAMBAHKAN
                                           text: "Login",
                                           onTap: _toggleLoginForm,
                                         ),
                                         LoginButton(
+                                          key: const Key(
+                                            'btn_to_register',
+                                          ), // ---> KEY DITAMBAHKAN
                                           text: "Daftar",
                                           onTap: () => context.go("/register"),
                                           withColor: false,
@@ -252,11 +277,15 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                   loginUntukMengakses(),
                                   TextInputLogin(
+                                    key: const Key('input_email'),
                                     hint: 'Email',
                                     controller: _controllerEmail,
                                     keyboardType: TextInputType.emailAddress,
                                   ),
                                   TextInputLogin(
+                                    key: const Key(
+                                      'input_password',
+                                    ), // ---> KEY DITAMBAHKAN
                                     hint: 'Password',
                                     isPassword: true,
                                     controller: _controllerPassword,
@@ -276,6 +305,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ),
                                   LoginButton(
+                                    key: const Key(
+                                      'btn_submit_login',
+                                    ), // ---> KEY DITAMBAHKAN
                                     text: "Login",
                                     onTap: () => signInWithEmailAndPassword(),
                                   ),
@@ -295,6 +327,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                             ),
                                       ),
                                       InkWell(
+                                        key: const Key(
+                                          'link_create_account',
+                                        ), // ---> KEY DITAMBAHKAN (OPSIONAL)
                                         onTap: () => context.go('/register'),
                                         child: Text(
                                           'Buat Akun',
