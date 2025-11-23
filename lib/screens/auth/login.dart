@@ -57,6 +57,19 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    // Dummy login untuk RT dan RW
+    if (email == "rt@jawara.com" && password == "rt123") {
+      if (!mounted) return;
+      context.go('/rt/penduduk');
+      return;
+    }
+
+    if (email == "rw@jawara.com" && password == "rw123") {
+      if (!mounted) return;
+      context.go('/rw/penduduk');
+      return;
+    }
+
     const String role = "admin";
 
     switch (role) {
@@ -64,10 +77,10 @@ class _LoginScreenState extends State<LoginScreen> {
         context.go('/admin/dashboard');
         break;
       case "rw":
-        context.go('/rw/dashboard');
+        context.go('/rw/penduduk');
         break;
       case "rt":
-        context.go('/rt/dashboard');
+        context.go('/rt/penduduk');
         break;
       case "sekretaris":
         context.go('/sekretaris/dashboard');

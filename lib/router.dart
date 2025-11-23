@@ -83,6 +83,15 @@ import 'package:jawara_pintar_kel_5/screens/admin/pengeluaran/tambah_pengeluaran
 // Auth
 import 'package:jawara_pintar_kel_5/screens/auth/login.dart';
 import 'package:jawara_pintar_kel_5/screens/auth/register.dart';
+import 'package:jawara_pintar_kel_5/screens/rt/keuangan/keuangan_menu_screen.dart';
+// RT & RW
+import 'package:jawara_pintar_kel_5/screens/rt/lainnya/lainnya_menu_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/rt/layout.dart';
+import 'package:jawara_pintar_kel_5/screens/rt/penduduk/penduduk_menu_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/rw/keuangan/keuangan_menu_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/rw/lainnya/lainnya_menu_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/rw/layout.dart';
+import 'package:jawara_pintar_kel_5/screens/rw/penduduk/penduduk_menu_screen.dart';
 
 // ================= Dummy Class (Placeholder) =================
 class DetailValidasiProdukScreen extends StatelessWidget {
@@ -467,6 +476,422 @@ final router = GoRouter(
                 final channelData = state.extra as Map<String, String>;
                 return EditChannelPage(channelData: channelData);
               },
+            ),
+          ],
+        ),
+      ],
+    ),
+    // ========================= RT ROUTES =========================
+    StatefulShellRoute.indexedStack(
+      builder: (context, state, navigationShell) =>
+          RTLayout(navigationShell: navigationShell),
+      branches: [
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/rt/penduduk',
+              name: 'rt_penduduk',
+              builder: (context, state) => const RTMenuPenduduk(),
+              routes: [
+                GoRoute(
+                  path: 'daftar-warga',
+                  name: 'rt_wargaList',
+                  builder: (context, state) => const DaftarWargaPage(),
+                ),
+                GoRoute(
+                  path: 'daftar-rumah',
+                  name: 'rt_rumahList',
+                  builder: (context, state) => const DaftarRumahPage(),
+                ),
+                GoRoute(
+                  path: 'detail-rumah',
+                  name: 'rt_rumahDetail',
+                  builder: (context, state) {
+                    final rumah = state.extra as Rumah;
+                    return DetailRumahPage(rumah: rumah);
+                  },
+                ),
+                GoRoute(
+                  path: 'detail-warga',
+                  name: 'rt_wargaDetail',
+                  builder: (context, state) {
+                    final data = state.extra as Warga;
+                    return DetailWargaPage(warga: data);
+                  },
+                ),
+                GoRoute(
+                  path: 'daftar-keluarga',
+                  name: 'rt_keluargaList',
+                  builder: (context, state) => const DaftarKeluargaPage(),
+                ),
+                GoRoute(
+                  path: 'detail-keluarga',
+                  name: 'rt_keluargaDetail',
+                  builder: (context, state) {
+                    final keluarga = state.extra as dynamic;
+                    return DetailKeluargaPage(keluarga: keluarga);
+                  },
+                ),
+                GoRoute(
+                  path: 'daftar-mutasi-keluarga',
+                  name: 'rt_mutasiKeluargaList',
+                  builder: (context, state) => const DaftarMutasiKeluargaPage(),
+                ),
+                GoRoute(
+                  path: 'daftar-penerimaan',
+                  name: 'rt_penerimaanList',
+                  builder: (context, state) =>
+                      const DaftarPenerimaanWargaPage(),
+                ),
+                GoRoute(
+                  path: 'detail-penerimaan',
+                  name: 'rt_penerimaanDetail',
+                  builder: (context, state) {
+                    final data = state.extra as PenerimaanWarga;
+                    return DetailPenerimaanWargaPage(penerimaan: data);
+                  },
+                ),
+                GoRoute(
+                  path: 'daftar-kegiatan',
+                  name: 'rt_kegiatanList',
+                  builder: (context, state) => const DaftarKegiatanScreen(),
+                ),
+                GoRoute(
+                  path: 'detail-kegiatan',
+                  name: 'rt_kegiatanDetail',
+                  builder: (context, state) {
+                    final kegiatan = state.extra as Map<String, String>;
+                    return DetailKegiatanScreen(kegiatan: kegiatan);
+                  },
+                ),
+                GoRoute(
+                  path: 'daftar-broadcast',
+                  name: 'rt_broadcastList',
+                  builder: (context, state) => const DaftarBroadcastScreen(),
+                ),
+                GoRoute(
+                  path: 'detail-broadcast',
+                  name: 'rt_broadcastDetail',
+                  builder: (context, state) {
+                    final broadcast = state.extra as KegiatanBroadcast;
+                    return DetailBroadcastScreen(broadcastData: broadcast);
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/rt/keuangan',
+              name: 'rt_keuangan',
+              builder: (context, state) => const RTMenuKeuangan(),
+              routes: [
+                GoRoute(
+                  path: 'kategori-iuran',
+                  name: 'rt_kategoriIuran',
+                  builder: (context, state) => const KategoriIuranScreen(),
+                ),
+                GoRoute(
+                  path: 'tagih-iuran',
+                  name: 'rt_tagihIuran',
+                  builder: (context, state) => const TagihIuranScreen(),
+                ),
+                GoRoute(
+                  path: 'tagihan',
+                  name: 'rt_tagihan',
+                  builder: (context, state) => const TagihanScreen(),
+                ),
+                GoRoute(
+                  path: 'pemasukan-lain',
+                  name: 'rt_pemasukanLain',
+                  builder: (context, state) => const PemasukanLainScreen(),
+                ),
+                GoRoute(
+                  path: 'daftar-pengeluaran',
+                  name: 'rt_pengeluaranList',
+                  builder: (context, state) => const DaftarPengeluaranScreen(),
+                ),
+                GoRoute(
+                  path: 'laporan-pemasukan',
+                  name: 'rt_laporanPemasukan',
+                  builder: (context, state) => const SemuaPemasukanScreen(),
+                ),
+                GoRoute(
+                  path: 'laporan-pengeluaran',
+                  name: 'rt_laporanPengeluaran',
+                  builder: (context, state) => const SemuaPengeluaranScreen(),
+                ),
+                GoRoute(
+                  path: 'cetak-laporan',
+                  name: 'rt_cetakLaporan',
+                  builder: (context, state) => const CetakLaporanScreen(),
+                ),
+              ],
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/rt/lainnya',
+              name: 'rt_lainnya',
+              builder: (context, state) => const RTMenuLainnya(),
+              routes: [
+                GoRoute(
+                  path: 'pesan-warga',
+                  name: 'rt_pesanWarga',
+                  builder: (context, state) => const PesanWargaScreen(),
+                ),
+                GoRoute(
+                  path: 'log-aktivitas',
+                  name: 'rt_logAktivitas',
+                  builder: (context, state) => const LogAktivitasScreenAdmin(),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
+    ),
+    // ========================= RW ROUTES =========================
+    StatefulShellRoute.indexedStack(
+      builder: (context, state, navigationShell) =>
+          RWLayout(navigationShell: navigationShell),
+      branches: [
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/rw/penduduk',
+              name: 'rw_penduduk',
+              builder: (context, state) => const RWMenuPenduduk(),
+              routes: [
+                GoRoute(
+                  path: 'daftar-warga',
+                  name: 'rw_wargaList',
+                  builder: (context, state) => const DaftarWargaPage(),
+                ),
+                GoRoute(
+                  path: 'daftar-rumah',
+                  name: 'rw_rumahList',
+                  builder: (context, state) => const DaftarRumahPage(),
+                ),
+                GoRoute(
+                  path: 'detail-rumah',
+                  name: 'rw_rumahDetail',
+                  builder: (context, state) {
+                    final rumah = state.extra as Rumah;
+                    return DetailRumahPage(rumah: rumah);
+                  },
+                ),
+                GoRoute(
+                  path: 'tambah-rumah',
+                  name: 'rw_rumahAdd',
+                  builder: (context, state) => const TambahRumahPage(),
+                ),
+                GoRoute(
+                  path: 'edit-rumah',
+                  name: 'rw_rumahEdit',
+                  builder: (context, state) {
+                    final rumah = state.extra as Rumah;
+                    return EditRumahPage(rumah: rumah);
+                  },
+                ),
+                GoRoute(
+                  path: 'detail-warga',
+                  name: 'rw_wargaDetail',
+                  builder: (context, state) {
+                    final data = state.extra as Warga;
+                    return DetailWargaPage(warga: data);
+                  },
+                ),
+                GoRoute(
+                  path: 'tambah-warga',
+                  name: 'rw_wargaAdd',
+                  builder: (context, state) => const TambahWargaPage(),
+                ),
+                GoRoute(
+                  path: 'edit-warga',
+                  name: 'rw_wargaEdit',
+                  builder: (context, state) {
+                    final data = state.extra as Warga;
+                    return EditWargaPage(warga: data);
+                  },
+                ),
+                GoRoute(
+                  path: 'daftar-keluarga',
+                  name: 'rw_keluargaList',
+                  builder: (context, state) => const DaftarKeluargaPage(),
+                ),
+                GoRoute(
+                  path: 'detail-keluarga',
+                  name: 'rw_keluargaDetail',
+                  builder: (context, state) {
+                    final keluarga = state.extra as dynamic;
+                    return DetailKeluargaPage(keluarga: keluarga);
+                  },
+                ),
+                GoRoute(
+                  path: 'daftar-mutasi-keluarga',
+                  name: 'rw_mutasiKeluargaList',
+                  builder: (context, state) => const DaftarMutasiKeluargaPage(),
+                ),
+                GoRoute(
+                  path: 'tambah-mutasi-keluarga',
+                  name: 'rw_mutasiKeluargaAdd',
+                  builder: (context, state) => const TambahMutasiKeluargaPage(),
+                ),
+                GoRoute(
+                  path: 'daftar-penerimaan',
+                  name: 'rw_penerimaanList',
+                  builder: (context, state) =>
+                      const DaftarPenerimaanWargaPage(),
+                ),
+                GoRoute(
+                  path: 'detail-penerimaan',
+                  name: 'rw_penerimaanDetail',
+                  builder: (context, state) {
+                    final data = state.extra as PenerimaanWarga;
+                    return DetailPenerimaanWargaPage(penerimaan: data);
+                  },
+                ),
+                GoRoute(
+                  path: 'daftar-kegiatan',
+                  name: 'rw_kegiatanList',
+                  builder: (context, state) => const DaftarKegiatanScreen(),
+                ),
+                GoRoute(
+                  path: 'detail-kegiatan',
+                  name: 'rw_kegiatanDetail',
+                  builder: (context, state) {
+                    final kegiatan = state.extra as Map<String, String>;
+                    return DetailKegiatanScreen(kegiatan: kegiatan);
+                  },
+                ),
+                GoRoute(
+                  path: 'tambah-kegiatan',
+                  name: 'rw_kegiatanAdd',
+                  builder: (context, state) => const TambahKegiatanScreen(),
+                ),
+                GoRoute(
+                  path: 'edit-kegiatan',
+                  name: 'rw_kegiatanEdit',
+                  builder: (context, state) {
+                    final kegiatan = state.extra as Map<String, String>;
+                    return EditKegiatanScreen(kegiatan: kegiatan);
+                  },
+                ),
+                GoRoute(
+                  path: 'daftar-broadcast',
+                  name: 'rw_broadcastList',
+                  builder: (context, state) => const DaftarBroadcastScreen(),
+                ),
+                GoRoute(
+                  path: 'detail-broadcast',
+                  name: 'rw_broadcastDetail',
+                  builder: (context, state) {
+                    final broadcast = state.extra as KegiatanBroadcast;
+                    return DetailBroadcastScreen(broadcastData: broadcast);
+                  },
+                ),
+                GoRoute(
+                  path: 'tambah-broadcast',
+                  name: 'rw_broadcastAdd',
+                  builder: (context, state) => const TambahBroadcastScreen(),
+                ),
+                GoRoute(
+                  path: 'edit-broadcast',
+                  name: 'rw_broadcastEdit',
+                  builder: (context, state) {
+                    final broadcast = state.extra as KegiatanBroadcast;
+                    return EditBroadcastScreen(initialBroadcastData: broadcast);
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/rw/keuangan',
+              name: 'rw_keuangan',
+              builder: (context, state) => const RWMenuKeuangan(),
+              routes: [
+                GoRoute(
+                  path: 'kategori-iuran',
+                  name: 'rw_kategoriIuran',
+                  builder: (context, state) => const KategoriIuranScreen(),
+                ),
+                GoRoute(
+                  path: 'tagih-iuran',
+                  name: 'rw_tagihIuran',
+                  builder: (context, state) => const TagihIuranScreen(),
+                ),
+                GoRoute(
+                  path: 'tagihan',
+                  name: 'rw_tagihan',
+                  builder: (context, state) => const TagihanScreen(),
+                ),
+                GoRoute(
+                  path: 'pemasukan-lain',
+                  name: 'rw_pemasukanLain',
+                  builder: (context, state) => const PemasukanLainScreen(),
+                ),
+                GoRoute(
+                  path: 'tambah-pemasukan-lain',
+                  name: 'rw_pemasukanLainAdd',
+                  builder: (context, state) =>
+                      const PemasukanLainTambahScreen(),
+                ),
+                GoRoute(
+                  path: 'daftar-pengeluaran',
+                  name: 'rw_pengeluaranList',
+                  builder: (context, state) => const DaftarPengeluaranScreen(),
+                ),
+                GoRoute(
+                  path: 'tambah-pengeluaran',
+                  name: 'rw_pengeluaranAdd',
+                  builder: (context, state) => const TambahPengeluaranScreen(),
+                ),
+                GoRoute(
+                  path: 'laporan-pemasukan',
+                  name: 'rw_laporanPemasukan',
+                  builder: (context, state) => const SemuaPemasukanScreen(),
+                ),
+                GoRoute(
+                  path: 'laporan-pengeluaran',
+                  name: 'rw_laporanPengeluaran',
+                  builder: (context, state) => const SemuaPengeluaranScreen(),
+                ),
+                GoRoute(
+                  path: 'cetak-laporan',
+                  name: 'rw_cetakLaporan',
+                  builder: (context, state) => const CetakLaporanScreen(),
+                ),
+              ],
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/rw/lainnya',
+              name: 'rw_lainnya',
+              builder: (context, state) => const RWMenuLainnya(),
+              routes: [
+                GoRoute(
+                  path: 'pesan-warga',
+                  name: 'rw_pesanWarga',
+                  builder: (context, state) => const PesanWargaScreen(),
+                ),
+                GoRoute(
+                  path: 'log-aktivitas',
+                  name: 'rw_logAktivitas',
+                  builder: (context, state) => const LogAktivitasScreenAdmin(),
+                ),
+              ],
             ),
           ],
         ),
