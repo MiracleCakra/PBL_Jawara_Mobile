@@ -1,10 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:jawara_pintar_kel_5/models/kegiatan_model.dart';
+import 'package:jawara_pintar_kel_5/services/kegiatan_service.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/kegiatan/edit_kegiatan_screen.dart';
 
-class DetailKegiatanScreen extends StatelessWidget {
-  final Map<String, String> kegiatan;
+class DetailKegiatanScreen extends StatefulWidget {
+  final KegiatanModel kegiatan;
   const DetailKegiatanScreen({super.key, required this.kegiatan});
+
+  @override
+  State<DetailKegiatanScreen> createState() => _DetailKegiatanScreenState();
+}
+
+class _DetailKegiatanScreenState extends State<DetailKegiatanScreen> {
+  late KegiatanModel _currentKegiatan;
+  final KegiatanService _kegiatanService = KegiatanService();
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentKegiatan = widget.kegiatan;
+  }
 
   Widget _buildDetailField(String label, String value, {int? maxLines = 1}) {
     return Column(
@@ -36,24 +54,30 @@ class DetailKegiatanScreen extends StatelessWidget {
   }
 
   void _navigateToEdit(BuildContext context) async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => EditKegiatanScreen(kegiatan: kegiatan)),
+    final result = await context.push<KegiatanModel>(
+      '/admin/kegiatan/edit',
+      extra: _currentKegiatan,
     );
 
-    if (result != null && result is Map<String, String>) {
+    if (result != null) {
+      setState(() {
+        _currentKegiatan = result;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Kegiatan "${result['judul']}" berhasil diperbarui!'),
+          content: Text('Kegiatan "${result.judul}" berhasil diperbarui!'),
           backgroundColor: Colors.blue.shade600,
         ),
       );
-      Navigator.pop(context, result);
+      // We pop with 'updated' to signal the list screen to refresh
+      if (mounted) {
+        context.pop('updated');
+      }
     }
   }
 
   void _showDeleteDialog(BuildContext context) {
-    final judulKegiatan = kegiatan['judul'] ?? 'Kegiatan';
+    final judulKegiatan = _currentKegiatan.judul;
 
     showDialog(
       context: context,
@@ -100,16 +124,34 @@ class DetailKegiatanScreen extends StatelessWidget {
                   vertical: 10,
                 ),
               ),
-              onPressed: () {
-                Navigator.pop(context);
-                context.pop('deleted');
+              onPressed: () async {
+                setState(() {
+                  _isLoading = true;
+                });
+                Navigator.pop(context); // Close dialog
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Kegiatan "$judulKegiatan" telah dihapus.'),
-                    backgroundColor: const Color(0xFF2E2B32),
-                  ),
-                );
+                try {
+                  await _kegiatanService.deleteKegiatan(_currentKegiatan.id!);
+                  if (mounted) {
+                    context.pop('deleted');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Kegiatan "$judulKegiatan" telah dihapus.'),
+                        backgroundColor: const Color(0xFF2E2B32),
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  setState(() {
+                    _isLoading = false;
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Gagal menghapus kegiatan: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
               },
               child: const Text(
                 'Hapus',
@@ -138,13 +180,11 @@ class DetailKegiatanScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              // Judul "Opsi"
               Center(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   child: Column(
                     children: [
-                      // Handle Bar
                       Container(
                         width: 40,
                         height: 5,
@@ -166,11 +206,9 @@ class DetailKegiatanScreen extends StatelessWidget {
                 ),
               ),
               const Divider(height: 1, thickness: 1, color: Colors.grey),
-
-              // OPSI EDIT DATA
               _buildOptionTile(
                 icon: Icons.edit_rounded,
-                color: const Color(0xFF5E65C0), // Warna ungu kustom/deep purple
+                color: const Color(0xFF5E65C0),
                 title: 'Edit Data',
                 subtitle: 'Ubah detail kegiatan',
                 onTap: () {
@@ -178,7 +216,6 @@ class DetailKegiatanScreen extends StatelessWidget {
                   _navigateToEdit(context);
                 },
               ),
-              // OPSI HAPUS DATA
               _buildOptionTile(
                 icon: Icons.delete_forever,
                 color: Colors.red.shade600,
@@ -195,6 +232,7 @@ class DetailKegiatanScreen extends StatelessWidget {
       },
     );
   }
+
   Widget _buildOptionTile({
     required IconData icon,
     required Color color,
@@ -208,7 +246,6 @@ class DetailKegiatanScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
         child: Row(
           children: [
-            // Ikon dengan latar belakang ringan (seperti di gambar)
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
@@ -243,20 +280,17 @@ class DetailKegiatanScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String namaKegiatan = kegiatan['judul'] ?? 'Nama Kegiatan Tidak Ada';
-    final String kategori = kegiatan['kategori'] ?? 'Lainnya';
-    final String deskripsi =
-        kegiatan['deskripsi'] ?? 'Deskripsi Belum Tersedia';
-    final String tanggal = kegiatan['tanggal'] ?? '-';
-    final String lokasi = kegiatan['lokasi'] ?? 'Belum Ditentukan';
-    final String pj = kegiatan['pj'] ?? '-';
-    final String dibuatOleh = kegiatan['dibuat_oleh'] ?? 'Admin Jawara';
+    final DateFormat detailDateFormat = DateFormat('EEEE, d MMMM yyyy', 'id_ID');
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         foregroundColor: Colors.black,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, size: 20),
+          onPressed: () => context.pop('updated'),
+        ),
         title: const Text(
           'Detail Kegiatan',
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
@@ -273,52 +307,60 @@ class DetailKegiatanScreen extends StatelessWidget {
           ),
         ],
       ),
-
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildDetailField('Nama Kegiatan', namaKegiatan),
-            _buildDetailField('Kategori', kategori),
-            _buildDetailField('Deskripsi', deskripsi, maxLines: null),
-            _buildDetailField('Tanggal', tanggal),
-            _buildDetailField('Lokasi', lokasi),
-            _buildDetailField('Penanggung Jawab', pj),
-            _buildDetailField('Dibuat Oleh', dibuatOleh),
-
-            const SizedBox(height: 16),
-
-            // dokumentasi
-            const Text(
-              'Dokumentasi Event',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildDetailField('Nama Kegiatan', _currentKegiatan.judul),
+                _buildDetailField('Kategori', _currentKegiatan.kategori),
+                _buildDetailField('Deskripsi', _currentKegiatan.deskripsi,
+                    maxLines: null),
+                _buildDetailField(
+                    'Tanggal', detailDateFormat.format(_currentKegiatan.tanggal)),
+                _buildDetailField('Lokasi', _currentKegiatan.lokasi),
+                _buildDetailField('Penanggung Jawab', _currentKegiatan.pj),
+                _buildDetailField('Dibuat Oleh', _currentKegiatan.dibuatOleh ?? 'Admin'),
+                const SizedBox(height: 16),
+                const Text(
+                  'Dokumentasi Event',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  height: 200,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8.0),
+                    color: Colors.grey.shade200,
+                  ),
+                  child: Image.network(
+                    'https://placehold.co/600x400/CCCCCC/333333?text=FOTO+DOKUMENTASI',
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Center(
+                        child: Text(
+                          'Gagal memuat gambar',
+                          style: TextStyle(color: Colors.grey.shade600),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 40),
+              ],
             ),
-            const SizedBox(height: 8),
+          ),
+          if (_isLoading)
             Container(
-              height: 200,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8.0),
-                color: Colors.grey.shade200,
-              ),
-              child: Image.network(
-                // Placeholder Image URL
-                'https://placehold.co/600x400/CCCCCC/333333?text=FOTO+DOKUMENTASI',
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Center(
-                    child: Text(
-                      'Gagal memuat gambar',
-                      style: TextStyle(color: Colors.grey.shade600),
-                    ),
-                  );
-                },
+              color: Colors.black.withOpacity(0.5),
+              child: const Center(
+                child: CircularProgressIndicator(),
               ),
             ),
-            const SizedBox(height: 40),
-          ],
-        ),
+        ],
       ),
     );
   }
