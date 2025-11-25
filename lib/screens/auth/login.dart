@@ -9,6 +9,7 @@ import 'package:jawara_pintar_kel_5/widget/text_input_login.dart';
 import 'package:moon_design/moon_design.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -90,16 +91,16 @@ class _LoginScreenState extends State<LoginScreen> {
             context.go('/admin/dashboard', extra: {'role': role});
             break;
           case "RW":
-            context.go('/rw/dashboard', extra: {'role': role});
+            context.go('/rw/penduduk', extra: {'role': role});
             break;
           case "RT":
-            context.go('/rt/dashboard', extra: {'role': role});
+            context.go('/rt/penduduk', extra: {'role': role});
             break;
           case "Sekretaris":
-            context.go('/sekretaris/dashboard', extra: {'role': role});
+            context.go('/sekretaris/kegiatan', extra: {'role': role});
             break;
           case "Bendahara":
-            context.go('/bendahara/dashboard', extra: {'role': role});
+            context.go('/bendahara/keuangan', extra: {'role': role});
             break;
           case "Warga":
             context.go('/warga/dashboard', extra: {'role': role});

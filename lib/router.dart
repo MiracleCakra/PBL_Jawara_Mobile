@@ -84,6 +84,9 @@ import 'package:jawara_pintar_kel_5/screens/admin/pengeluaran/tambah_pengeluaran
 // Auth
 import 'package:jawara_pintar_kel_5/screens/auth/login.dart';
 import 'package:jawara_pintar_kel_5/screens/auth/register.dart';
+import 'package:jawara_pintar_kel_5/screens/bendahara/keuangan/keuangan_menu_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/bendahara/lainnya/lainnya_menu_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/bendahara/layout.dart';
 import 'package:jawara_pintar_kel_5/screens/rt/keuangan/keuangan_menu_screen.dart';
 // RT & RW
 import 'package:jawara_pintar_kel_5/screens/rt/lainnya/lainnya_menu_screen.dart';
@@ -93,6 +96,10 @@ import 'package:jawara_pintar_kel_5/screens/rw/keuangan/keuangan_menu_screen.dar
 import 'package:jawara_pintar_kel_5/screens/rw/lainnya/lainnya_menu_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/rw/layout.dart';
 import 'package:jawara_pintar_kel_5/screens/rw/penduduk/penduduk_menu_screen.dart';
+// Sekretaris & Bendahara
+import 'package:jawara_pintar_kel_5/screens/sekretaris/kegiatan/kegiatan_menu_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/sekretaris/lainnya/lainnya_menu_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/sekretaris/layout.dart';
 
 // ================= Dummy Class (Placeholder) =================
 class DetailValidasiProdukScreen extends StatelessWidget {
@@ -891,6 +898,178 @@ final router = GoRouter(
                   builder: (context, state) => const LogAktivitasScreenAdmin(),
                 ),
               ],
+            ),
+          ],
+        ),
+      ],
+    ),
+    // ========================= SEKRETARIS ROUTES =========================
+    StatefulShellRoute.indexedStack(
+      builder: (context, state, navigationShell) =>
+          SekretarisLayout(navigationShell: navigationShell),
+      branches: [
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/sekretaris/kegiatan',
+              name: 'sekretaris_kegiatan',
+              builder: (context, state) => const SekretarisMenuKegiatan(),
+              routes: [
+                GoRoute(
+                  path: 'daftar-kegiatan',
+                  name: 'sekretaris_kegiatanList',
+                  builder: (context, state) => const DaftarKegiatanScreen(),
+                ),
+                GoRoute(
+                  path: 'detail-kegiatan',
+                  name: 'sekretaris_kegiatanDetail',
+                  builder: (context, state) {
+                    final kegiatan = state.extra as KegiatanModel;
+                    return DetailKegiatanScreen(kegiatan: kegiatan);
+                  },
+                ),
+                GoRoute(
+                  path: 'tambah-kegiatan',
+                  name: 'sekretaris_kegiatanAdd',
+                  builder: (context, state) => const TambahKegiatanScreen(),
+                ),
+                GoRoute(
+                  path: 'edit-kegiatan',
+                  name: 'sekretaris_kegiatanEdit',
+                  builder: (context, state) {
+                    final kegiatan = state.extra as KegiatanModel;
+                    return EditKegiatanScreen(kegiatan: kegiatan);
+                  },
+                ),
+                GoRoute(
+                  path: 'daftar-broadcast',
+                  name: 'sekretaris_broadcastList',
+                  builder: (context, state) => const DaftarBroadcastScreen(),
+                ),
+                GoRoute(
+                  path: 'detail-broadcast',
+                  name: 'sekretaris_broadcastDetail',
+                  builder: (context, state) {
+                    final broadcast = state.extra as KegiatanBroadcast;
+                    return DetailBroadcastScreen(broadcastData: broadcast);
+                  },
+                ),
+                GoRoute(
+                  path: 'tambah-broadcast',
+                  name: 'sekretaris_broadcastAdd',
+                  builder: (context, state) => const TambahBroadcastScreen(),
+                ),
+                GoRoute(
+                  path: 'edit-broadcast',
+                  name: 'sekretaris_broadcastEdit',
+                  builder: (context, state) {
+                    final broadcast = state.extra as KegiatanBroadcast;
+                    return EditBroadcastScreen(initialBroadcastData: broadcast);
+                  },
+                ),
+                GoRoute(
+                  path: 'log-aktivitas',
+                  name: 'sekretaris_logAktivitas',
+                  builder: (context, state) => const LogAktivitasScreenAdmin(),
+                ),
+              ],
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/sekretaris/lainnya',
+              name: 'sekretaris_lainnya',
+              builder: (context, state) => const SekretarisMenuLainnya(),
+            ),
+          ],
+        ),
+      ],
+    ),
+    // ========================= BENDAHARA ROUTES =========================
+    StatefulShellRoute.indexedStack(
+      builder: (context, state, navigationShell) =>
+          BendaharaLayout(navigationShell: navigationShell),
+      branches: [
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/bendahara/keuangan',
+              name: 'bendahara_keuangan',
+              builder: (context, state) => const BendaharaMenuKeuangan(),
+              routes: [
+                GoRoute(
+                  path: 'kategori-iuran',
+                  name: 'bendahara_kategoriIuran',
+                  builder: (context, state) => const KategoriIuranScreen(),
+                ),
+                GoRoute(
+                  path: 'tagih-iuran',
+                  name: 'bendahara_tagihIuran',
+                  builder: (context, state) => const TagihIuranScreen(),
+                ),
+                GoRoute(
+                  path: 'tagihan',
+                  name: 'bendahara_tagihan',
+                  builder: (context, state) => const TagihanScreen(),
+                ),
+                GoRoute(
+                  path: 'pemasukan-lain',
+                  name: 'bendahara_pemasukanLain',
+                  builder: (context, state) => const PemasukanLainScreen(),
+                ),
+                GoRoute(
+                  path: 'tambah-pemasukan-lain',
+                  name: 'bendahara_pemasukanLainAdd',
+                  builder: (context, state) =>
+                      const PemasukanLainTambahScreen(),
+                ),
+                GoRoute(
+                  path: 'daftar-pengeluaran',
+                  name: 'bendahara_pengeluaranList',
+                  builder: (context, state) => const DaftarPengeluaranScreen(),
+                ),
+                GoRoute(
+                  path: 'tambah-pengeluaran',
+                  name: 'bendahara_pengeluaranAdd',
+                  builder: (context, state) => const TambahPengeluaranScreen(),
+                ),
+                GoRoute(
+                  path: 'laporan-pemasukan',
+                  name: 'bendahara_laporanPemasukan',
+                  builder: (context, state) => const SemuaPemasukanScreen(),
+                ),
+                GoRoute(
+                  path: 'laporan-pengeluaran',
+                  name: 'bendahara_laporanPengeluaran',
+                  builder: (context, state) => const SemuaPengeluaranScreen(),
+                ),
+                GoRoute(
+                  path: 'cetak-laporan',
+                  name: 'bendahara_cetakLaporan',
+                  builder: (context, state) => const CetakLaporanScreen(),
+                ),
+                GoRoute(
+                  path: 'channel-transfer',
+                  name: 'bendahara_channelList',
+                  builder: (context, state) => const ChannelTransferScreen(),
+                ),
+                GoRoute(
+                  path: 'channel-transfer/tambah',
+                  name: 'bendahara_channelAdd',
+                  builder: (context, state) => const TambahChannelPage(),
+                ),
+              ],
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/bendahara/lainnya',
+              name: 'bendahara_lainnya',
+              builder: (context, state) => const BendaharaMenuLainnya(),
             ),
           ],
         ),
