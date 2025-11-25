@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jawara_pintar_kel_5/models/kegiatan_model.dart';
 import 'package:jawara_pintar_kel_5/models/marketplace_model.dart' as m_model;
 // Models
 import 'package:jawara_pintar_kel_5/models/warga_model.dart';
@@ -355,17 +356,15 @@ final router = GoRouter(
                 GoRoute(
                   path: 'detail',
                   builder: (context, state) {
-                    final kegiatanData =
-                        state.extra as Map<String, String>? ?? {};
-                    return DetailKegiatanScreen(kegiatan: kegiatanData);
+                    final kegiatan = state.extra as KegiatanModel;
+                    return DetailKegiatanScreen(kegiatan: kegiatan);
                   },
                 ),
                 GoRoute(
                   path: 'edit',
                   builder: (context, state) {
-                    final kegiatanData =
-                        state.extra as Map<String, String>? ?? {};
-                    return EditKegiatanScreen(kegiatan: kegiatanData);
+                    final kegiatan = state.extra as KegiatanModel;
+                    return EditKegiatanScreen(kegiatan: kegiatan);
                   },
                 ),
                 GoRoute(
@@ -560,7 +559,7 @@ final router = GoRouter(
                   path: 'detail-kegiatan',
                   name: 'rt_kegiatanDetail',
                   builder: (context, state) {
-                    final kegiatan = state.extra as Map<String, String>;
+                    final kegiatan = state.extra as KegiatanModel;
                     return DetailKegiatanScreen(kegiatan: kegiatan);
                   },
                 ),
@@ -765,7 +764,7 @@ final router = GoRouter(
                   path: 'detail-kegiatan',
                   name: 'rw_kegiatanDetail',
                   builder: (context, state) {
-                    final kegiatan = state.extra as Map<String, String>;
+                    final kegiatan = state.extra as KegiatanModel;
                     return DetailKegiatanScreen(kegiatan: kegiatan);
                   },
                 ),
@@ -778,7 +777,7 @@ final router = GoRouter(
                   path: 'edit-kegiatan',
                   name: 'rw_kegiatanEdit',
                   builder: (context, state) {
-                    final kegiatan = state.extra as Map<String, String>;
+                    final kegiatan = state.extra as KegiatanModel;
                     return EditKegiatanScreen(kegiatan: kegiatan);
                   },
                 ),
