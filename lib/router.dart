@@ -441,7 +441,7 @@ final router = GoRouter(
           routes: [
             GoRoute(
               path: '/admin/lainnya',
-              builder: (context, state) => const LainnyaScreen(),
+              builder: (context, state) => LainnyaScreen(),
             ),
             GoRoute(
               path: '/admin/lainnya/edit-profile',
