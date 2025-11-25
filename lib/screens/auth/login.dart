@@ -169,7 +169,12 @@ class _LoginScreenState extends State<LoginScreen> {
                               : mascoutHeight,
                           child: GestureDetector(
                             onTap: () => _setShowLoginForm(false),
-                            child: Image.asset("assets/login_banner.webp"),
+                            child: Image.asset(
+                              "assets/login_banner.webp",
+                              key: const Key(
+                                'banner_image',
+                              ), // ---> KEY DITAMBAHKAN
+                            ),
                           ),
                         ),
                       ),
@@ -236,10 +241,16 @@ class _LoginScreenState extends State<LoginScreen> {
                                       children: [
                                         loginUntukMengakses(),
                                         LoginButton(
+                                          key: const Key(
+                                            'btn_show_login_form',
+                                          ), // ---> KEY DITAMBAHKAN
                                           text: "Login",
                                           onTap: _toggleLoginForm,
                                         ),
                                         LoginButton(
+                                          key: const Key(
+                                            'btn_to_register',
+                                          ), // ---> KEY DITAMBAHKAN
                                           text: "Daftar",
                                           onTap: () => context.go("/register"),
                                           withColor: false,
@@ -291,11 +302,15 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                   loginUntukMengakses(),
                                   TextInputLogin(
+                                    key: const Key('input_email'),
                                     hint: 'Email',
                                     controller: _controllerEmail,
                                     keyboardType: TextInputType.emailAddress,
                                   ),
                                   TextInputLogin(
+                                    key: const Key(
+                                      'input_password',
+                                    ), // ---> KEY DITAMBAHKAN
                                     hint: 'Password',
                                     isPassword: true,
                                     controller: _controllerPassword,
@@ -315,6 +330,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ),
                                   LoginButton(
+                                    key: const Key(
+                                      'btn_submit_login',
+                                    ), // ---> KEY DITAMBAHKAN
                                     text: "Login",
                                     onTap: () => signIn(),
                                   ),
@@ -334,6 +352,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                             ),
                                       ),
                                       InkWell(
+                                        key: const Key(
+                                          'link_create_account',
+                                        ), // ---> KEY DITAMBAHKAN (OPSIONAL)
                                         onTap: () => context.go('/register'),
                                         child: Text(
                                           'Buat Akun',

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:jawara_pintar_kel_5/models/kegiatan_model.dart';
+import 'package:jawara_pintar_kel_5/services/kegiatan_service.dart';
 
 class TambahKegiatanScreen extends StatefulWidget {
   const TambahKegiatanScreen({super.key});
@@ -16,6 +19,9 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
   final TextEditingController _deskripsiController = TextEditingController();
   final TextEditingController _tanggalController = TextEditingController();
 
+  final KegiatanService _kegiatanService = KegiatanService();
+  bool _isLoading = false;
+
   String? _selectedKategori;
   final List<String> _kategoriList = [
     'Komunitas & Sosial',
@@ -26,7 +32,6 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
     'Lainnya',
   ];
 
-  // State Tanggal
   DateTime? _selectedDate;
 
   @override
@@ -39,7 +44,6 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
     super.dispose();
   }
 
-  // Fungsi menampilkan Date Picker
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -53,37 +57,47 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
     if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
-        // Format tanggal
         _tanggalController.text = DateFormat('dd.MM.yyyy').format(picked);
       });
     }
   }
 
-  void _simpanKegiatan() {
+  void _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      final newKegiatan = {
-        'nama': _namaController.text,
-        'kategori': _selectedKategori,
-        'tanggal': _tanggalController.text,
-        'lokasi': _lokasiController.text,
-        'pj': _pjController.text,
-        'deskripsi': _deskripsiController.text,
-      };
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Kegiatan "${newKegiatan['nama']}" berhasil disimpan!'),
-        ),
+      setState(() {
+        _isLoading = true;
+      });
+
+      final newKegiatan = KegiatanModel(
+        judul: _namaController.text,
+        kategori: _selectedKategori!,
+        tanggal: _selectedDate!,
+        lokasi: _lokasiController.text,
+        pj: _pjController.text,
+        deskripsi: _deskripsiController.text,
+        dibuatOleh: 'Admin', // Default value
+        hasDocs: false, // Default value
       );
-      Navigator.pop(context, newKegiatan);
+
+      try {
+        await _kegiatanService.createKegiatan(newKegiatan);
+        if (mounted) {
+          context.pop(true); // Return true on success
+        }
+      } catch (e) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal menyimpan kegiatan: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
-  // Batal ttp halaman tanpa menyimpan data.
-  void _batalForm() {
-    Navigator.pop(context);
-  }
-
-  // Widget input text field
   Widget _buildTextField(
     String label,
     TextEditingController controller,
@@ -104,6 +118,7 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
           controller: controller,
           maxLines: maxLines,
           readOnly: label == 'Tanggal' && suffixIcon != null,
+          onTap: label == 'Tanggal' ? () => _selectDate(context) : null,
           decoration: InputDecoration(
             hintText: hint,
             contentPadding: const EdgeInsets.symmetric(
@@ -117,8 +132,13 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
             suffixIcon: suffixIcon,
           ),
           validator: (value) {
-            if (isRequired && (value == null || value.isEmpty)) {
-              return 'Kolom $label wajib diisi.';
+            if (isRequired) {
+              if (value == null || value.isEmpty) {
+                return 'Kolom $label wajib diisi.';
+              }
+              if (label == 'Tanggal' && _selectedDate == null) {
+                return 'Kolom Tanggal wajib diisi.';
+              }
             }
             return null;
           },
@@ -130,7 +150,7 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
 
   @override
   Widget build(BuildContext context) {
-     const Color simpanColor = Colors.deepPurple;
+    const Color simpanColor = Colors.deepPurple;
     final Color batalColor = Colors.grey.shade500;
 
     return Scaffold(
@@ -147,134 +167,142 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
           child: Divider(height: 1, color: Colors.grey),
         ),
       ),
-
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildTextField(
-                'Nama Kegiatan',
-                _namaController,
-                'Masukkan Nama Kegiatan',
-              ),
-              const Text(
-                'Pilih Kategori',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                value: _selectedKategori,
-                hint: const Text('Pilih Kategori'),
-                decoration: const InputDecoration(
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildTextField(
+                    'Nama Kegiatan',
+                    _namaController,
+                    'Masukkan Nama Kegiatan',
                   ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(8.0)),
-                    borderSide: BorderSide(color: Colors.grey),
+                  const Text(
+                    'Pilih Kategori',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
-                ),
-                items: _kategoriList.map((String kategori) {
-                  return DropdownMenuItem<String>(
-                    value: kategori,
-                    child: Text(kategori),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _selectedKategori = newValue;
-                  });
-                },
-                validator: (value) {
-                  if (value == null) {
-                    return 'Kolom Kategori wajib dipilih.';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 24),
-
-              // Tanggal
-              _buildTextField(
-                'Tanggal',
-                _tanggalController,
-                '12.12.2022',
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.calendar_today, color: Colors.grey),
-                  onPressed: () => _selectDate(context),
-                ),
-                isRequired: true,
-              ),
-
-              _buildTextField(
-                'Lokasi',
-                _lokasiController,
-                'Masukkan Lokasi',
-                isRequired: false,
-              ),
-              _buildTextField(
-                'Penanggung Jawab',
-                _pjController,
-                'Masukkan Penanggung Jawab',
-              ),
-              _buildTextField(
-                'Deskripsi',
-                _deskripsiController,
-                'Tulis detail event seperti agenda, kegiatan dll.',
-                maxLines: 5,
-              ),
-              const SizedBox(height: 16),
-
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16.0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: _batalForm,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: batalColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: const Text(
-                          'Batal',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    value: _selectedKategori,
+                    hint: const Text('Pilih Kategori'),
+                    decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                        borderSide: BorderSide(color: Colors.grey),
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: _simpanKegiatan,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: simpanColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                    items: _kategoriList.map((String kategori) {
+                      return DropdownMenuItem<String>(
+                        value: kategori,
+                        child: Text(kategori),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _selectedKategori = newValue;
+                      });
+                    },
+                    validator: (value) {
+                      if (value == null) {
+                        return 'Kolom Kategori wajib dipilih.';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  _buildTextField(
+                    'Tanggal',
+                    _tanggalController,
+                    'Pilih tanggal pelaksanaan',
+                    suffixIcon:
+                        const Icon(Icons.calendar_today, color: Colors.grey),
+                    isRequired: true,
+                  ),
+                  _buildTextField(
+                    'Lokasi',
+                    _lokasiController,
+                    'Masukkan Lokasi',
+                    isRequired: false,
+                  ),
+                  _buildTextField(
+                    'Penanggung Jawab',
+                    _pjController,
+                    'Masukkan Penanggung Jawab',
+                  ),
+                  _buildTextField(
+                    'Deskripsi',
+                    _deskripsiController,
+                    'Tulis detail event seperti agenda, kegiatan dll.',
+                    maxLines: 5,
+                    isRequired: false,
+                  ),
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => context.pop(),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: batalColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: const Text(
+                              'Batal',
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
                           ),
                         ),
-                        child: const Text(
-                          'Simpan',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _submitForm,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: simpanColor,
+                              foregroundColor: Colors.white,
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: const Text(
+                              'Simpan',
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
               ),
-              const SizedBox(height: 10), 
-            ],
+            ),
           ),
-        ),
+          if (_isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.5),
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
+        ],
       ),
     );
   }

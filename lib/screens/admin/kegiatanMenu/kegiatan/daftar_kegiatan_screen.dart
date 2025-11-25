@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
-import 'tambah_kegiatan_screen.dart';
-import 'detail_kegiatan_screen.dart';
+import 'package:jawara_pintar_kel_5/models/kegiatan_model.dart';
+import 'package:jawara_pintar_kel_5/services/kegiatan_service.dart';
 import 'kegiatan_filter_screen.dart';
 
 class DaftarKegiatanScreen extends StatefulWidget {
@@ -14,98 +14,57 @@ class DaftarKegiatanScreen extends StatefulWidget {
 
 class _DaftarKegiatanScreenState extends State<DaftarKegiatanScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final KegiatanService _kegiatanService = KegiatanService();
   final DateFormat logDateFormat = DateFormat('dd/MM/yyyy');
+
+  late Future<List<KegiatanModel>> _kegiatanFuture;
+  List<KegiatanModel> _allKegiatan = [];
 
   String _searchQuery = '';
   DateTime? _filterDate;
   String? _filterKategori;
 
-  // 🔥 Tambahkan variabel ini untuk menentukan apakah filter sedang aktif
-  bool get _isFilterActive => _filterDate != null || (_filterKategori != null && _filterKategori != 'Semua Kategori');
+  bool get _isFilterActive =>
+      _filterDate != null ||
+      (_filterKategori != null && _filterKategori != 'Semua Kategori');
 
+  @override
+  void initState() {
+    super.initState();
+    _loadKegiatan();
+  }
 
-  final List<Map<String, String>> _kegiatanList = [
-    {
-      'judul': 'Kerja Bakti Lingkungan',
-      'pj': 'Pak Habibi',
-      'tanggal': '12/10/2025',
-      'kategori': 'Sosial',
-      'lokasi': 'Balai Warga RW 01',
-      'deskripsi':
-          'Kerja bakti membersihkan lingkungan dari sampah dan selokan untuk menjaga kebersihan dan keamanan lingkungan.',
-      'dibuat_oleh': 'Admin Jawara',
-      'has_docs': 'true',
-    },
-    {
-      'judul': 'Lomba Hafalan Al-Quran',
-      'pj': 'DMI',
-      'tanggal': '01/11/2025',
-      'kategori': 'Keagamaan',
-      'lokasi': 'Masjid Al-Ikhlas',
-      'deskripsi':
-          'Lomba diadakan untuk memperingati Maulid Nabi dan meningkatkan pemahaman agama.',
-      'dibuat_oleh': 'Admin Jawara',
-      'has_docs': 'false',
-    },
-    {
-      'judul': 'Pelatihan Keterampilan Digital',
-      'pj': 'Karang Taruna',
-      'tanggal': '25/10/2025',
-      'kategori': 'Pendidikan',
-      'lokasi': 'Aula Kecamatan',
-      'deskripsi':
-          'Pelatihan dasar desain grafis dan coding untuk remaja yang tertarik pada teknologi.',
-      'dibuat_oleh': 'Admin Jawara',
-      'has_docs': 'true',
-    },
-    {
-      'judul': 'Senam Pagi Massal',
-      'pj': 'Puskesmas Keliling',
-      'tanggal': '15/10/2025',
-      'kategori': 'Kesehatan & Olahraga',
-      'lokasi': 'Lapangan Bola',
-      'deskripsi':
-          'Senam rutin untuk meningkatkan kebugaran warga dan mempererat tali silaturahmi.',
-      'dibuat_oleh': 'Admin Jawara',
-      'has_docs': 'false',
-    },
-  ];
-  List<Map<String, String>> _filterKegiatan() {
-    Iterable<Map<String, String>> result = _kegiatanList;
+  void _loadKegiatan() {
+    setState(() {
+      _kegiatanFuture = _kegiatanService.getKegiatan();
+    });
+  }
 
-    // Filter Pencarian Judul / PJ
+  List<KegiatanModel> _filterKegiatan() {
+    Iterable<KegiatanModel> result = _allKegiatan;
+
     if (_searchQuery.isNotEmpty) {
       final query = _searchQuery.toLowerCase();
       result = result.where((kegiatan) {
-        final judul = kegiatan['judul']?.toLowerCase() ?? '';
-        final pj = kegiatan['pj']?.toLowerCase() ?? '';
+        final judul = kegiatan.judul.toLowerCase();
+        final pj = kegiatan.pj.toLowerCase();
         return judul.contains(query) || pj.contains(query);
       });
     }
 
-    // Filter Berdasarkan Tanggal
     if (_filterDate != null) {
       result = result.where((kegiatan) {
-        try {
-          final kegiatanDate = logDateFormat.parse(kegiatan['tanggal']!);
-          return kegiatanDate.isAtSameMomentAs(_filterDate!);
-        } catch (_) {
-          return false;
-        }
+        return DateUtils.isSameDay(kegiatan.tanggal, _filterDate);
       });
     }
 
-    // Filter Berdasarkan Kategori
     if (_filterKategori != null && _filterKategori != 'Semua Kategori') {
       result = result.where((kegiatan) =>
-          kegiatan['kategori']?.toLowerCase() ==
-          _filterKategori?.toLowerCase());
+          kegiatan.kategori.toLowerCase() == _filterKategori?.toLowerCase());
     }
 
     return result.toList();
   }
-
-  // =========================== NAVIGASI =====================================
 
   void _showFilterModal(BuildContext context) async {
     final result = await showModalBottomSheet<Map<String, dynamic>?>(
@@ -142,33 +101,19 @@ class _DaftarKegiatanScreenState extends State<DaftarKegiatanScreen> {
   }
 
   void _navigateToAddKegiatan(BuildContext context) async {
-    final newKegiatan = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const TambahKegiatanScreen()),
-    );
+    final result = await context.push<bool>('/admin/kegiatan/tambah');
 
-    if (newKegiatan != null && newKegiatan is Map<String, String>) {
-      if (newKegiatan['judul']?.isNotEmpty ?? false) {
-        setState(() {
-          _kegiatanList.add({
-            ...newKegiatan,
-            'dibuat_oleh': 'Anda (Admin)',
-            'has_docs': 'false',
-          });
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('Kegiatan baru "${newKegiatan['judul']}" berhasil ditambahkan!'),
-            backgroundColor: Colors.green.shade600,
-          ),
-        );
-      }
+    if (result == true) {
+      _loadKegiatan();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Kegiatan baru berhasil ditambahkan!'),
+          backgroundColor: Colors.green.shade600,
+        ),
+      );
     }
   }
 
-  // 🔥 WIDGET BARU UNTUK SEARCHBAR DAN FILTER
   Widget _buildFilterBar() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -183,7 +128,7 @@ class _DaftarKegiatanScreenState extends State<DaftarKegiatanScreen> {
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Colors.white,
-                  hintText: 'Cari Berdasarkan Judul/PJ...', // 🔥 Update hint text
+                  hintText: 'Cari Berdasarkan Judul/PJ...',
                   hintStyle: TextStyle(color: Colors.grey[500]),
                   prefixIcon: Icon(
                     Icons.search,
@@ -209,7 +154,8 @@ class _DaftarKegiatanScreenState extends State<DaftarKegiatanScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFF4E46B4), width: 1.5), // Contoh warna fokus
+                    borderSide:
+                        const BorderSide(color: Color(0xFF4E46B4), width: 1.5),
                   ),
                 ),
                 style: const TextStyle(fontSize: 15),
@@ -218,7 +164,6 @@ class _DaftarKegiatanScreenState extends State<DaftarKegiatanScreen> {
           ),
           const SizedBox(width: 8),
           Material(
-            // 🔥 Menggunakan Material untuk efek inkwell
             color: _isFilterActive ? Colors.grey.shade200 : Colors.white,
             borderRadius: BorderRadius.circular(8),
             child: InkWell(
@@ -250,15 +195,14 @@ class _DaftarKegiatanScreenState extends State<DaftarKegiatanScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredList = _filterKegiatan();
     const primaryColor = Colors.deepPurple;
 
     return Scaffold(
-      backgroundColor: Colors.grey[50], // 🔥 Tambahkan background color agar kontras dengan search bar
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 20),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
         ),
         title: const Text(
           'Kegiatan',
@@ -271,16 +215,24 @@ class _DaftarKegiatanScreenState extends State<DaftarKegiatanScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
       ),
-
       body: Column(
         children: [
-          // 🔍 Search dan Filter BARU
           _buildFilterBar(),
-
-          // 📋 Daftar Kegiatan
           Expanded(
-            child: filteredList.isEmpty
-                ? Center(
+            child: FutureBuilder<List<KegiatanModel>>(
+              future: _kegiatanFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text(
+                        'Error: ${snapshot.error}\nSilakan coba lagi nanti.'),
+                  );
+                }
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -288,45 +240,58 @@ class _DaftarKegiatanScreenState extends State<DaftarKegiatanScreen> {
                             size: 60, color: Colors.grey.shade300),
                         const SizedBox(height: 10),
                         Text(
-                          _searchQuery.isNotEmpty ||
-                                  _filterDate != null ||
-                                  _filterKategori != null
-                              ? "Tidak ada kegiatan yang cocok dengan filter."
-                              : "Belum ada kegiatan yang ditambahkan.",
+                          "Belum ada kegiatan yang ditambahkan.",
                           style: TextStyle(color: Colors.grey.shade500),
                         ),
                       ],
                     ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.only(bottom: 90),
-                    itemCount: filteredList.length,
-                    itemBuilder: (_, index) {
-                      final kegiatan = filteredList[index];
-                      return GestureDetector(
-                        onTap: () async {
-                          // Navigasi ke halaman detail
-                          final result = await context.push<String>(
-                            '/admin/kegiatan/detail',
-                            extra: kegiatan,
-                          );
-                          if (result == 'deleted') {
-                            setState(() {
-                              _kegiatanList.removeWhere(
-                                (item) => item['judul'] == kegiatan['judul'],
-                              );
-                            });
-                          }
-                        },
-                        child: KegiatanCard(kegiatan: kegiatan),
-                      );
-                    },
-                  ),
+                  );
+                }
+
+                _allKegiatan = snapshot.data!;
+                final filteredList = _filterKegiatan();
+
+                if (filteredList.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.search_off,
+                            size: 60, color: Colors.grey.shade300),
+                        const SizedBox(height: 10),
+                        Text(
+                          "Tidak ada kegiatan yang cocok dengan filter.",
+                          style: TextStyle(color: Colors.grey.shade500),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 90),
+                  itemCount: filteredList.length,
+                  itemBuilder: (_, index) {
+                    final kegiatan = filteredList[index];
+                    return GestureDetector(
+                      onTap: () async {
+                        final result = await context.push<String>(
+                          '/admin/kegiatan/detail',
+                          extra: kegiatan,
+                        );
+                        if (result == 'deleted' || result == 'updated') {
+                          _loadKegiatan();
+                        }
+                      },
+                      child: KegiatanCard(kegiatan: kegiatan),
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ],
       ),
-
-      // Tombol Tambah
       floatingActionButton: FloatingActionButton(
         onPressed: () => _navigateToAddKegiatan(context),
         backgroundColor: primaryColor,
@@ -339,15 +304,15 @@ class _DaftarKegiatanScreenState extends State<DaftarKegiatanScreen> {
     );
   }
 }
-// 🔥 Kelas KegiatanCard tidak berubah
-class KegiatanCard extends StatelessWidget {
-  final Map<String, String> kegiatan;
 
+class KegiatanCard extends StatelessWidget {
+  final KegiatanModel kegiatan;
   const KegiatanCard({super.key, required this.kegiatan});
 
   @override
   Widget build(BuildContext context) {
     const categoryColor = Color(0xFF5E65C0);
+    final DateFormat cardDateFormat = DateFormat('d MMMM yyyy', 'id_ID');
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -364,7 +329,7 @@ class KegiatanCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    kegiatan['judul']!,
+                    kegiatan.judul,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
@@ -373,14 +338,14 @@ class KegiatanCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Penanggung Jawab : ${kegiatan['pj']}',
+                    'Penanggung Jawab : ${kegiatan.pj}',
                     style: TextStyle(
                       color: Colors.grey.shade700,
                       fontSize: 14,
                     ),
                   ),
                   Text(
-                    'Tanggal Pelaksanaan : ${kegiatan['tanggal']}',
+                    'Tanggal Pelaksanaan : ${cardDateFormat.format(kegiatan.tanggal)}',
                     style: TextStyle(
                       color: Colors.grey.shade700,
                       fontSize: 14,
@@ -397,7 +362,7 @@ class KegiatanCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      kegiatan['kategori']!,
+                      kegiatan.kategori,
                       style: const TextStyle(
                         color: categoryColor,
                         fontSize: 14,
