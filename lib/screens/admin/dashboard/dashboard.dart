@@ -5,7 +5,7 @@ import 'package:jawara_pintar_kel_5/screens/admin/dashboard/kegiatan.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/dashboard/kependudukan.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/dashboard/keuangan.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/dashboard/marketplace.dart';
-
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:moon_design/moon_design.dart';
 import 'package:provider/provider.dart';
 
@@ -24,6 +24,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _previousPage);
+
+    // Memantau perubahan status autentikasi
+    Supabase.instance.client.auth.onAuthStateChange.listen((event) {
+      if (event.session == null) {
+        // Jika tidak ada session (tidak ada pengguna yang login), arahkan ke layar login
+        context.go('/login');
+      }
+    });
   }
 
   @override
@@ -132,7 +140,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     _previousPage = provider.page;
                     provider.page = index;
                   },
-                  children: [Keuangan(), Kegiatan(), Kependudukan(), Marketplace()],
+                  children: [
+                    Keuangan(),
+                    Kegiatan(),
+                    Kependudukan(),
+                    Marketplace(),
+                  ],
                 ),
               ),
             ],

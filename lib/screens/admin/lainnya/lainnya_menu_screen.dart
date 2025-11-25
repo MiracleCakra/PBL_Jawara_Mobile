@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jawara_pintar_kel_5/screens/auth/auth_service.dart';
 
 class LainnyaScreen extends StatelessWidget {
-  const LainnyaScreen({super.key});
+  LainnyaScreen({super.key});
+
+  final authService = AuthService();
 
   @override
   Widget build(BuildContext context) {
@@ -36,10 +39,7 @@ class LainnyaScreen extends StatelessWidget {
               icon: Icons.person_outline,
               title: 'Manajemen Pengguna',
               subtitle: 'Kelola peran dan akses pengguna aplikasi.',
-              gradientColors: const [
-                Color(0xFF8B5CF6),
-                Color(0xFFA855F7),
-              ],
+              gradientColors: const [Color(0xFF8B5CF6), Color(0xFFA855F7)],
               onTap: () => context.push('/admin/lainnya/manajemen-pengguna'),
             ),
             const SizedBox(height: 16),
@@ -47,10 +47,7 @@ class LainnyaScreen extends StatelessWidget {
               icon: Icons.compare_arrows,
               title: 'Channel Transfer',
               subtitle: 'Pengaturan dan konfigurasi kanal data.',
-              gradientColors: const [
-                Color(0xFFA855F7),
-                Color(0xFFC084FC),
-              ],
+              gradientColors: const [Color(0xFFA855F7), Color(0xFFC084FC)],
               onTap: () => context.push('/admin/lainnya/manajemen-channel'),
             ),
 
@@ -64,22 +61,19 @@ class LainnyaScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            
+
             _buildHeaderCard(
               icon: Icons.person,
               title: "Ningga",
               subtitle: "ningga@gmail.com",
               role: "Administrator",
-              gradientColors: const [
-                Color(0xFF6366F1),
-                Color(0xFF8B5CF6),
-              ],
+              gradientColors: const [Color(0xFF6366F1), Color(0xFF8B5CF6)],
               onTap: () {
                 context.push('/admin/lainnya/edit-profile');
               },
             ),
 
-            const SizedBox(height: 25), 
+            const SizedBox(height: 25),
 
             _buildLogoutButton(context),
           ],
@@ -135,11 +129,14 @@ class LainnyaScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20)),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
+                  ),
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
@@ -150,7 +147,10 @@ class LainnyaScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(5),
@@ -167,7 +167,7 @@ class LainnyaScreen extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
@@ -227,11 +227,14 @@ class LainnyaScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16)),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
@@ -260,7 +263,7 @@ class LainnyaScreen extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildLogoutButton(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
@@ -277,7 +280,10 @@ class LainnyaScreen extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        onTap: () => context.go('/login'),
+        onTap: () {
+          authService.signOut();
+          context.go('/login');
+        },
       ),
     );
   }

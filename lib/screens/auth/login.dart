@@ -7,7 +7,8 @@ import 'package:jawara_pintar_kel_5/widget/login_button.dart';
 import 'package:jawara_pintar_kel_5/widget/system_ui_style.dart';
 import 'package:jawara_pintar_kel_5/widget/text_input_login.dart';
 import 'package:moon_design/moon_design.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -30,6 +31,14 @@ class _LoginScreenState extends State<LoginScreen> {
     text: '',
   );
 
+  @override
+  void initState() {
+    super.initState();
+    debugPrint(
+      "Mencoba memuat data warga. Status login: ${Supabase.instance.client.auth.currentSession ?? 'Tidak Login'}",
+    );
+  }
+
   /*Future<void> signInWithEmailAndPassword() async {
     try {
       await authService.signInWithEmailPassword(
@@ -46,7 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
       print(e);
     }
   }*/
-  Future<void> signInWithEmailAndPassword() async {
+  Future<void> signIn() async {
     String email = _controllerEmail.text.trim();
     String password = _controllerPassword.text.trim();
 
@@ -57,44 +66,60 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    // Dummy login untuk RT dan RW
-    if (email == "rt@jawara.com" && password == "rt123") {
-      if (!mounted) return;
-      context.go('/rt/penduduk');
-      return;
-    }
+    try {
+      // Call the auth service (ignore any specific 'error' field here)
+      await authService.signInWithEmailPassword(email, password);
 
-    if (email == "rw@jawara.com" && password == "rw123") {
-      if (!mounted) return;
-      context.go('/rw/penduduk');
-      return;
-    }
+      // Cek apakah sesi aktif setelah login
+      final session = Supabase.instance.client.auth.currentSession;
+      final response = await Supabase.instance.client
+          .from('warga')
+          .select('role')
+          .eq('email', email)
+          .single();
+      if (session != null) {
+        // Shared_preferences
+        final preferences = await SharedPreferences.getInstance();
+        await preferences.setString('role', response['role']);
 
-    const String role = "admin";
+        String role = response['role'];
 
-    switch (role) {
-      case "admin":
-        context.go('/admin/dashboard');
-        break;
-      case "rw":
-        context.go('/rw/penduduk');
-        break;
-      case "rt":
-        context.go('/rt/penduduk');
-        break;
-      case "sekretaris":
-        context.go('/sekretaris/dashboard');
-        break;
-      case "bendahara":
-        context.go('/bendahara/dashboard');
-        break;
-      case "warga":
-        context.go('/warga/dashboard');
-        break;
-      default:
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Role tidak dikenal')));
+        print(role);
+        switch (role) {
+          case "Admin":
+            context.go('/admin/dashboard', extra: {'role': role});
+            break;
+          case "RW":
+            context.go('/rw/dashboard', extra: {'role': role});
+            break;
+          case "RT":
+            context.go('/rt/dashboard', extra: {'role': role});
+            break;
+          case "Sekretaris":
+            context.go('/sekretaris/dashboard', extra: {'role': role});
+            break;
+          case "Bendahara":
+            context.go('/bendahara/dashboard', extra: {'role': role});
+            break;
+          case "Warga":
+            context.go('/warga/dashboard', extra: {'role': role});
+            break;
+          default:
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('Role tidak dikenal')));
+        }
+      } else {
+        // Jika session tidak ditemukan, tampilkan pesan error
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Session not found after login')),
+        );
+      }
+    } catch (e) {
+      // Tampilkan pesan error jika terjadi exception saat login
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 
@@ -309,7 +334,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       'btn_submit_login',
                                     ), // ---> KEY DITAMBAHKAN
                                     text: "Login",
-                                    onTap: () => signInWithEmailAndPassword(),
+                                    onTap: () => signIn(),
                                   ),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
