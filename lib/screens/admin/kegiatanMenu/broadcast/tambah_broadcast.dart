@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart'; 
 import 'package:file_picker/file_picker.dart'; 
+import 'package:jawara_pintar_kel_5/models/broadcast_model.dart';
+import 'package:jawara_pintar_kel_5/services/broadcast_service.dart';
 
 class TambahBroadcastScreen extends StatefulWidget {
   const TambahBroadcastScreen({super.key});
@@ -15,6 +17,9 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
   final TextEditingController _isiController = TextEditingController();
   List<XFile> _selectedPhotos = [];
   List<PlatformFile> _selectedDocuments = [];
+  bool _isLoading = false;
+
+  final BroadcastService _broadcastService = BroadcastService();
 
   @override
   void dispose() {
@@ -24,12 +29,12 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
   }
   
 
-  // Foto (Max 10)
+  // Foto (Max 10) - UI Only
   Future<void> _pickPhotos() async {
+    // This part is UI only for now. No actual upload will be implemented.
     final ImagePicker picker = ImagePicker();
     try {
       final List<XFile> images = await picker.pickMultiImage();
-
       if (images.isNotEmpty) {
         setState(() {
           _selectedPhotos = images.take(10).toList();
@@ -43,15 +48,15 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
     }
   }
 
-  // Dokumen
+  // Dokumen - UI Only
   Future<void> _pickDocuments() async {
+    // This part is UI only for now. No actual upload will be implemented.
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf'],
         allowMultiple: true,
       );
-
       if (result != null) {
         setState(() {
           _selectedDocuments = result.files.take(10).toList();
@@ -66,18 +71,49 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
   }
 
   // Simpan Broadcast
-  void _simpanBroadcast() {
+  void _simpanBroadcast() async {
     if (_formKey.currentState!.validate()) {
-      final newBroadcast = {
-        'judul': _judulController.text,
-        'isi': _isiController.text,
-        'foto_files': _selectedPhotos.map((f) => f.path).toList(),
-        'dokumen_files': _selectedDocuments.map((f) => f.path).toList(),
-      };
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Broadcast "${newBroadcast['judul']}" berhasil dibuat!')),
+      setState(() {
+        _isLoading = true;
+      });
+
+      // NOTE: File upload is not implemented in the service.
+      // These lists are currently for UI demonstration only.
+      final newBroadcast = BroadcastModel(
+        judul: _judulController.text,
+        konten: _isiController.text,
+        pengirim: 'Admin RT', // Hardcoded as per original logic
+        kategori: 'Pemberitahuan', // Hardcoded for simplicity
+        tanggal: DateTime.now(),
+        lampiranDokumen: _selectedDocuments.map((f) => f.name).toList(),
+        // lampiranGambarUrl should be handled by a file upload service
       );
-      Navigator.pop(context, newBroadcast);
+
+      try {
+        await _broadcastService.createBroadcast(newBroadcast);
+        
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Broadcast "${newBroadcast.judul}" berhasil dibuat!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context, true); // Return true on success
+
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal menyimpan broadcast: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -235,7 +271,7 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
                   children: [
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: _batalForm,
+                        onPressed: _isLoading ? null : _batalForm,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: batalColor,
                           foregroundColor: Colors.white,
@@ -253,7 +289,7 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
                     const SizedBox(width: 16),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: _simpanBroadcast,
+                        onPressed: _isLoading ? null : _simpanBroadcast,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: simpanColor,
                           foregroundColor: Colors.white,
@@ -262,10 +298,19 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                        child: const Text(
-                          'Simpan',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
+                        child: _isLoading 
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'Simpan',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
                       ),
                     ),
                   ],
@@ -280,4 +325,3 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
     );
   }
 }
-          
