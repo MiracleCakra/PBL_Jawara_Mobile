@@ -1,0 +1,218 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:moon_design/moon_design.dart';
+
+class GantiKataSandiScreen extends StatefulWidget {
+  const GantiKataSandiScreen({super.key});
+
+  @override
+  State<GantiKataSandiScreen> createState() => _GantiKataSandiScreenState();
+}
+
+class _GantiKataSandiScreenState extends State<GantiKataSandiScreen> {
+  static const Color _primaryColor = Color(0xFF6366F1); 
+  static const Color _textInputFillColor = Colors.white; 
+  static const Color _textInputOutlineColor = Color(0xFFE5E7EB); 
+  static const Color _successColor = Color.fromARGB(255, 14, 169, 102);
+
+  final TextEditingController _passwordLamaController = TextEditingController();
+  final TextEditingController _passwordBaruController = TextEditingController();
+  final TextEditingController _konfirmasiPasswordController = TextEditingController();
+  
+  final _formKey = GlobalKey<FormState>();
+
+  @override
+  void dispose() {
+    _passwordLamaController.dispose();
+    _passwordBaruController.dispose();
+    _konfirmasiPasswordController.dispose();
+    super.dispose();
+  }
+
+  void _gantiPassword() {
+    if (_formKey.currentState!.validate()) {
+      // TODO: Implementasi logika ganti password sebenarnya di sini
+  
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Kata sandi berhasil diperbarui!'),
+          backgroundColor: const Color.fromARGB(255, 141, 141, 141), 
+        ),
+      );
+      
+      _passwordLamaController.clear();
+      _passwordBaruController.clear();
+      _konfirmasiPasswordController.clear();
+      context.pop();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Terdapat input yang belum valid. Mohon periksa kembali.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FA),
+      appBar: AppBar(
+        surfaceTintColor: Colors.transparent,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        automaticallyImplyLeading: false,
+        elevation: 0,
+        title: Row(
+          children: [
+            MoonButton.icon(
+              onTap: () => context.pop(),
+              icon: const Icon(MoonIcons.controls_chevron_left_32_regular),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              "Ganti Kata Sandi",
+              style: MoonTokens.light.typography.heading.text40.copyWith(
+                color: const Color(0xFF1F2937),
+                fontWeight: FontWeight.w700,
+              ),
+              textScaler: const TextScaler.linear(0.7),
+            ),
+          ],
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.only(right: 24, left: 24, top: 24),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Masukkan kata sandi lama Anda, kemudian masukkan kata sandi baru untuk mengganti password akun Anda.',
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+              ),
+              const SizedBox(height: 24),
+
+              _buildInputField(
+                controller: _passwordLamaController,
+                label: 'Kata Sandi Lama',
+                hint: 'Masukkan kata sandi lama',
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Kata sandi lama wajib diisi.';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+
+              _buildInputField(
+                controller: _passwordBaruController,
+                label: 'Kata Sandi Baru',
+                hint: 'Masukkan kata sandi baru',
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Kata sandi baru wajib diisi.';
+                  }
+                  if (value.length < 6) {
+                    return 'Kata sandi minimal 6 karakter.';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+
+              _buildInputField(
+                controller: _konfirmasiPasswordController,
+                label: 'Konfirmasi Kata Sandi Baru',
+                hint: 'Konfirmasi kata sandi baru',
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Konfirmasi kata sandi wajib diisi.';
+                  }
+                  if (value != _passwordBaruController.text) {
+                    return 'Konfirmasi kata sandi tidak cocok.';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 32),
+
+              SizedBox(
+                width: double.infinity,
+                height: 55,
+                child: ElevatedButton(
+                  onPressed: _gantiPassword,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _primaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Simpan Kata Sandi Baru',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF1F2937),
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          obscureText: true,
+          style: const TextStyle(fontSize: 15),
+          validator: validator,
+          decoration: InputDecoration(
+            hintText: hint,
+            fillColor: _textInputFillColor,
+            filled: true,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8), 
+              borderSide: BorderSide(color: _textInputOutlineColor),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8), 
+              borderSide: BorderSide(color: Colors.grey.shade300), 
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8), 
+              borderSide: const BorderSide(color: _primaryColor, width: 2),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

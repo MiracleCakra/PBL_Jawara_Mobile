@@ -47,3 +47,10 @@ String formatRupiah(int value) {
   final withDots = buf.toString().split('').reversed.join();
   return 'Rp $withDots';
 }
+int unformatRupiah(String value) {
+  final cleaned = value.replaceAll(RegExp(r'[^0-9]'), '');
+
+  if (cleaned.isEmpty) return 0;
+
+  return int.parse(cleaned);
+}
