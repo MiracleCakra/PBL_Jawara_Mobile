@@ -1,0 +1,356 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
+
+const Color _primaryColor = Color.fromARGB(255, 50, 52, 182);
+const Color _deleteColor = Colors.red;
+const Color _editColor = Colors.blue;
+
+
+class WargaDetailKirimanScreen extends StatefulWidget {
+  final Map<String, dynamic> data;
+
+  const WargaDetailKirimanScreen({super.key, required this.data});
+
+  @override
+  State<WargaDetailKirimanScreen> createState() => _WargaDetailKirimanScreenState();
+}
+
+class _WargaDetailKirimanScreenState extends State<WargaDetailKirimanScreen> {
+
+  void _navigateToEdit(BuildContext context) async {
+    final result = await context.pushNamed(
+      'warga_kirimanEdit',
+      extra: widget.data,
+    );
+
+    if (result != null && result is Map<String, dynamic> && result['type'] == 'updated') {
+        // TODO: Lakukan logika refresh data di halaman detail jika perlu
+        setState(() {}); 
+    }
+  }
+
+  void _showDeleteDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text("Konfirmasi Hapus"),
+          content: Text("Anda yakin ingin menghapus kiriman berjudul '${widget.data['judul']}'? Aksi ini tidak dapat dibatalkan."),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text("Batal"),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: _deleteColor),
+              onPressed: () {
+                // TODO: LOGIKA HAPUS DATA DI BACKEND/LIST
+                Navigator.pop(dialogContext); 
+                context.pop({'status': 'deleted', 'judul': widget.data['judul']}); 
+              },
+              child: const Text("Hapus"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showOptionsBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext bc) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 16),
+            Container(
+              height: 5,
+              width: 50,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            _buildOptionTile(
+              icon: Icons.edit_rounded,
+              color: _editColor,
+              title: 'Edit Data',
+              subtitle: 'Ubah detail pesan Anda',
+              onTap: () {
+                Navigator.pop(bc);
+                _navigateToEdit(context);
+              },
+            ),
+            
+            _buildOptionTile(
+              icon: Icons.delete_forever,
+              color: _deleteColor,
+              title: 'Hapus Data',
+              subtitle: 'Hapus pesan ini secara permanen',
+              onTap: () {
+                Navigator.pop(bc);
+                _showDeleteDialog(context);
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+  Widget _buildOptionTile({
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundColor: color.withOpacity(0.15),
+        child: Icon(icon, color: color, size: 24),
+      ),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+      subtitle: Text(subtitle, style: TextStyle(color: Colors.grey.shade600)),
+      onTap: onTap,
+    );
+  }
+
+  Widget _buildStatusBadge(String status) {
+    Color statusColor;
+    switch (status) {
+      case 'Approved':
+      case 'Diterima':
+        statusColor = const Color.fromARGB(255, 76, 58, 208);
+        break;
+      case 'Pending':
+        statusColor = Colors.orange;
+        break;
+      case 'Ditolak':
+        statusColor = Colors.red;
+        break;
+      default:
+        statusColor = Colors.grey;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: statusColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.check_circle, color: statusColor, size: 16),
+          const SizedBox(width: 6),
+          Text(
+            status,
+            style: TextStyle(
+              color: statusColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _SectionCard({required String title, required List<Widget> children}) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Divider(height: 1, thickness: 0.5),
+          const SizedBox(height: 16),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _IconRow({required IconData icon, required String label, required String value}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: _primaryColor.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: _primaryColor, size: 20),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 12,
+                    color: Colors.grey.shade500,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
+    final data = widget.data;
+    final String judul = data['judul'] ?? 'Tanpa Judul';
+    final String deskripsi = data['isi'] ?? data['deskripsi'] ?? 'Deskripsi tidak tersedia.';
+    final String status = data['status'] ?? 'Pending';
+    final String pengirim = data['pengirim'] ?? 'Warga (Pengirim Tidak Diketahui)';
+    final String tanggalStr = data['tanggal'].toString();
+
+    final bool canModify = status == 'Pending';
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FB),
+      appBar: AppBar(
+        title: const Text(
+          "Detail Kiriman",
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: false,
+        titleSpacing: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 20),
+          onPressed: () => context.pop(),
+        ),
+        actions: [
+          if (canModify) 
+            IconButton(
+              icon: const Icon(Icons.more_vert, color: Colors.black),
+              onPressed: () => _showOptionsBottomSheet(context),
+            ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _SectionCard(
+              title: "Informasi Pesan",
+              children: [
+                Text(
+                  judul,
+                  style: const TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1F2937),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Status Metadata
+                _IconRow(
+                  icon: Icons.info_outline,
+                  label: "Status Saat Ini",
+                  value: status,
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.only(left: 48, bottom: 8),
+                  child: _buildStatusBadge(status),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+
+            _SectionCard(
+              title: "Metadata",
+              children: [
+                _IconRow(
+                  icon: Icons.person_outline,
+                  label: "Dikirim oleh",
+                  value: pengirim,
+                ),
+                _IconRow(
+                  icon: Icons.calendar_today_outlined,
+                  label: "Tanggal Dikirim",
+                  value: tanggalStr,
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+
+            // 3. DESKRIPSI (ISI PESAN)
+            _SectionCard(
+              title: "Deskripsi",
+              children: [
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8F9FB),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    deskripsi,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      height: 1.6,
+                      color: Colors.black87,
+                    ),
+                    textAlign: TextAlign.justify,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

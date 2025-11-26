@@ -102,6 +102,86 @@ import 'package:jawara_pintar_kel_5/screens/sekretaris/kegiatan/kegiatan_menu_sc
 import 'package:jawara_pintar_kel_5/screens/sekretaris/lainnya/lainnya_menu_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/sekretaris/layout.dart';
 
+// +++++++++++  WARGA   +++++++++++
+// layout 
+import 'package:jawara_pintar_kel_5/screens/warga/layout_warga.dart';
+// Models
+import 'package:jawara_pintar_kel_5/models/warga_model.dart';
+import 'package:jawara_pintar_kel_5/models/anggota_keluarga_model.dart';
+import 'package:jawara_pintar_kel_5/models/tagihan_model.dart';
+import 'package:jawara_pintar_kel_5/models/warga_tagihan_model.dart';
+import 'package:jawara_pintar_kel_5/models/transaksi_model.dart';
+import 'package:jawara_pintar_kel_5/models/product_model.dart';
+import 'package:jawara_pintar_kel_5/models/ReviewModel.dart';
+import 'package:jawara_pintar_kel_5/models/order_model.dart' as o_model;
+import 'package:jawara_pintar_kel_5/models/broadcah_model.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace_model.dart' as m_model;
+
+// Dashboard
+import 'package:jawara_pintar_kel_5/screens/warga/dashboard/dashboard.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/dashboard/laporanpemasukan.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/dashboard/laporanpengeluaran.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/dashboard/detail_laporan_pemasukan.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/dashboard/detail_laporan_pengeluaran.dart';
+
+// Keluarga
+import 'package:jawara_pintar_kel_5/screens/warga/keluarga/keluarga_menu.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/keluarga/daftar_anggota.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/keluarga/profilkeluarga.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/keluarga/detail_anggota.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/keluarga/tambah_anggota.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/keluarga/edit_anggota.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/keluarga/detail_tagihan.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/keluarga/form_pembayaran.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/keluarga/tagihan.dart';
+
+
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/marketplace_menu.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/keranjangScreen.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/checkoutscreen.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/homepage.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/detail_produk.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/orderhistoryScreen.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/filterScreen.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/store_register.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/store_product_detail.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/store_dashboard.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/store_pending_validasi.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/pesanan_store.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/stok_produk_store.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/edit_produk.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/review_store.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/detail_orders.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/pengaturanstore.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/tambah_produk.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/editprofile_toko.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/buat_akun_toko.dart';
+
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/riview_produk.dart';
+
+// Kegiatan
+import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/kegiatan_menu.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/kegiatanwarga/daftarkegiatanwarga.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/kegiatanwarga/detailkegiatan.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/broadcashwarga/broadcash_warga.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/broadcashwarga/detailBroadcash.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/aspirasiwarga/daftar_aspirasi.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/aspirasiwarga/detail_aspirasi.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/kirimansaya/daftar_kiriman.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/kirimansaya/detail_kiriman.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/kirimansaya/edit_kiriman.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/kirimansaya/tambah_aspirasi.dart';
+
+
+// Profil
+import 'package:jawara_pintar_kel_5/screens/warga/profil/profil_menu.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/profil/profil_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/profil/pengaturan_akun.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/profil/reset_pw_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/profil/pusat_bantuan.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/profil/tentang_apk.dart';
+
+
 // ================= Dummy Class (Placeholder) =================
 class DetailValidasiProdukScreen extends StatelessWidget {
   final dynamic product;
@@ -1063,6 +1143,424 @@ final router = GoRouter(
             ),
           ],
         ),
+
+      ],
+
+    ),
+           //------------------WARGA-----------------------
+    StatefulShellRoute.indexedStack(
+      builder: (context, state, navigationShell) =>
+          WargaLayout(navigationShell: navigationShell),
+      branches: [
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/warga/dashboard',
+              name: 'WargaRumah',
+              builder: (context, state) => const RumahDashboardScreen(),
+              routes: [
+                GoRoute(
+                  path: 'pemasukan',
+                  name: 'SemuaPemasukanWarga',
+                  builder: (context, state) => const SemuaPemasukanWargaScreen(),
+                  routes: [
+                    GoRoute(
+                      path: 'detailpemasukan',
+                      name: 'DetailPemasukanWarga',
+                      builder: (context, state) {
+                        final data = state.extra as TransaksiModel;
+                        return LaporanDetailPemasukanScreen(data: data);
+                      },
+                    ),
+                  ],
+                ),
+                GoRoute(
+                  path: 'pengeluaran',
+                  name: 'SemuaPengeluaranWarga',
+                  builder: (context, state) => const SemuaPengeluaranWargaScreen(),
+                  routes: [
+                    GoRoute(
+                      path: 'detailpengeluaran',
+                      name: 'DetailPengeluaranWarga',
+                      builder: (context, state) {
+                        final data = state.extra as TransaksiModel;
+                        return LaporanDetailPengeluaranScreen(data: data);
+                      },
+                    ),
+                  ],
+                ),
+
+              ]
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/warga/keluarga',
+              name: 'WargaKeluarga',
+              builder: (context, state) => const Keluargamenuwarga(),
+              routes: [
+                GoRoute(
+                  path: 'profil',
+                  name: 'ProfilKeluarga',
+                  builder: (context, state) {
+                    final keluarga = state.extra as dynamic;
+                    return ProfilKeluargaPage(keluarga: keluarga);
+                  },
+                ),
+
+                // TAMBAH ANGGOTA
+                GoRoute(
+                  path: 'tambah',
+                  name: 'TambahAnggotaKeluarga',
+                  builder: (context, state) => const TambahAnggotaKeluargaPage(),
+                ),
+
+                // DAFTAR ANGGOTA
+                GoRoute(
+                  path: 'anggota',
+                  name: 'DaftarAnggotaKeluarga',
+                  builder: (context, state) => const DaftarAnggotaKeluargaPage(),
+                  routes: [
+                    // DETAIL ANGGOTA
+                    GoRoute(
+                      path: 'detail',
+                      name: 'DetailAnggotaKeluarga',
+                      builder: (context, state) {
+                        final anggota = state.extra as Anggota;
+                        return DetailAnggotaKeluargaPage(anggota: anggota);
+                      },
+                      routes: [
+                        GoRoute(
+                          path: 'edit',
+                          name: 'EditAnggotaKeluarga',
+                          builder: (context, state) {
+                            final anggota = state.extra as Anggota;
+                            return EditAnggotaPage(anggota: anggota);
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                GoRoute(
+                  path: 'tagihan',
+                  name: 'DaftarTagihanWarga',
+                  builder: (context, state) => const DaftarTagihanWargaScreen(),
+                  routes: [
+                    GoRoute(
+                      path: 'detail',
+                      name: 'DetailTagihanWarga',
+                      builder: (context, state) {
+                        final tagihan = state.extra as WargaTagihanModel;
+                        return DetailTagihanWargaScreen(tagihan: tagihan);
+                      },
+                      routes: [
+                        GoRoute(
+                          path: 'bayar',
+                          name: 'FormPembayaranWarga',
+                          builder: (context, state) {
+                            final tagihan = state.extra as WargaTagihanModel;
+                            return FormPembayaranScreen(tagihan: tagihan);
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/warga/marketplace',
+              name: 'WargaMarketplaceMenu',
+              builder: (_, __) => const MarketplaceMenuWarga(),
+              routes: [
+                //belanja
+                GoRoute(
+                  path: 'explore',
+                  name: 'WargaExploreShop',
+                  builder: (_, __) => const ShopHomeScreen(),
+                ),
+                GoRoute(
+                  path: 'search',
+                  name: 'WargaProductSearch',
+                  builder: (_, __) => const ProductSearchScreen(),
+                ),
+                GoRoute(
+                  path: 'detail',
+                  name: 'WargaProductDetail',
+                  builder: (_, state) {
+                    final product = state.extra as ProductModel?;
+                    if (product == null) {
+                      return const Center(child: Text("Product not found"));
+                    }
+                    return WargaProductDetailScreen(product: product);
+                  },
+                ),
+                GoRoute(
+                  path: 'cart',
+                  name: 'WargaCart',
+                  builder: (_, __) => const CartScreen(),
+                ),
+                GoRoute(
+                  path: 'checkout',
+                  name: 'WargaCheckout',
+                  builder: (_, __) => const CheckoutScreen(),
+                ),
+                GoRoute(
+                  path: 'orders',
+                  name: 'WargaOrders',
+                  builder: (_, __) => const OrderHistoryScreen(),
+                ),
+                GoRoute(
+                  path: 'reviewsproduk/:productId', 
+                  name: 'WargaProductReviews',
+                  builder: (context, state) {
+                    final productId = state.pathParameters['productId']!;
+                    return ProductReviewScreen(productId: productId); 
+                  },
+                ),
+                // TOKO SAYA 
+                GoRoute(
+                  path: 'mystore',
+                  name: 'WargaMarketplaceHome',
+                  builder: (_, __) => const MyStoreDashboardScreen(),
+                  routes: [
+                    GoRoute(
+                      path: 'mystore',
+                      name: 'WargaMarketplaceStore',
+                      builder: (_, __) => const MyStoreDashboardScreen(),
+                      routes: [
+                        GoRoute(
+                          path: 'stock',
+                          name: 'WargaMarketplaceStoreStock',
+                          builder: (_, __) => const MyStoreStockScreen(),
+                        ),
+                        GoRoute(
+                          path: 'product',
+                          name: 'MyStoreProductDetail',
+                          builder: (_, state) {
+                            final product = state.extra as ProductModel?;
+                            if (product == null) return const Center(child: Text("Product Not Found"));
+                            return MyStoreProductDetailScreen(product: product);
+                          },
+                        
+                          routes: [
+                            GoRoute(
+                              path: 'edit',
+                              name: 'MyStoreProductEdit',
+                              builder: (_, state) {
+                                final product = state.extra as ProductModel?;
+                                if (product == null) return const Center(child: Text("Invalid data"));
+                              
+                                return MyStoreProductEditScreen(product: product);
+                              },
+                            ),
+                          ]
+                        ),
+                        GoRoute(
+                        path: 'add',
+                          name: 'MyStoreProductAdd',
+                          builder: (_, __) => const MyStoreProductAddScreen(),
+                        ),
+                        GoRoute(
+                          path: 'reviews',
+                          name: 'MyStoreReviews',
+                          builder: (_, __) => const MyStoreReviewsScreen(),
+                        ),
+                    
+                      ],
+                    ),
+                   // pendaftaran
+                    GoRoute(
+                      path: 'mysore/register',
+                      name: 'WargaStoreRegister',
+                      builder: (_, __) => const WargaStoreRegisterScreen(),
+                    ),
+                    GoRoute(
+                      path: 'mystore/pending',
+                      name: 'StorePendingValidation',
+                      builder: (_, __) => const StorePendingValidationScreen(),
+                    ),
+
+                    // pesanan
+                    GoRoute(
+                      path: 'orders',
+                      name: 'MyStoreOrders',
+                      builder: (_, __) => const Menupesanan(),
+                      routes: [
+                        GoRoute(
+                          path: 'detail',
+                          name: 'MyStoreOrderDetail',
+                          builder: (_, state) {
+                            final extra = state.extra;
+
+                            if (extra == null || extra is! o_model.OrderModel) {
+                              return const Center(child: Text("Order Not Found"));
+                            }
+
+                            return MyStoreOrderDetail(order: extra);
+                          },
+                        ),
+                      ],
+                    ),
+                    // pengaturan
+                    GoRoute(
+                      path: 'settings',
+                      name: 'MyStoreSettings',
+                      builder: (context, state) => const MyStoreSettingsScreen(),
+                      routes: [
+                        GoRoute(
+                          path: 'edit_store_profile',
+                          name: 'EditStoreProfile',
+                          builder: (context, state) => const EditStoreProfileScreen(),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                  
+              ],
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/warga/kegiatan',
+              name: 'WargaKegiatanMenu',
+              builder: (_, __) => const WargaMenuKegiatanScreen(),
+              routes: [
+                GoRoute(
+                  path: 'list',
+                  name: 'warga_kegiatanList',
+                  builder: (_, __) => const DaftarKegiatanWargaScreen(),
+                ),
+                GoRoute(
+                  path: 'detail', 
+                  name: 'WargaKegiatanDetail',
+                  builder: (context, state) {
+                    final kegiatan = state.extra as Map<String, String>;
+                    return DetailKegiatanWargaScreen(kegiatan: kegiatan);
+                  },
+                ),
+                GoRoute(
+                  path: 'warga-broadcast',
+                  name: 'warga_broadcastList',
+                  builder: (_, __) => const DaftarBroadcastWargaScreen(),
+                  routes: [
+                    GoRoute(
+                      path: 'detail',
+                      name: 'WargaBroadcastDetail',
+                      builder: (context, state) {
+                        final data = state.extra as KegiatanBroadcastWarga;
+                        return DetailBroadcastWargaScreen(broadcastData: data);
+                      },
+                    ),
+                  ],
+                ),
+                GoRoute(
+                  path: 'aspirasi',
+                  name: 'warga_aspirasiHome',
+                  builder: (_, __) => const WargaDaftarAspirasiScreen(),
+                  routes: [
+
+                    GoRoute(
+                      path: 'detail',
+                      name: 'warga_aspirasiDetail',
+                      builder: (context, state) {
+                        final data = state.extra as Map<String, dynamic>?;
+
+                        if (data == null) {
+                          return const Scaffold(
+                            body: Center(child: Text('Data tidak ditemukan')),
+                          );
+                        }
+
+                        return WargaDetailAspirasiScreen(data: data);
+                      },
+                    ),
+                  ],
+                ),
+                GoRoute(
+                  path: 'kiriman-saya',
+                  name: 'warga_pesanSaya',
+                  builder: (context, state) => const WargaPesanSayaScreen(),
+                ),
+                GoRoute(
+                  path: 'kiriman/detail',
+                  name: 'warga_kirimanDetail',
+                  builder: (context, state) {
+                    final data = state.extra as Map<String, dynamic>;
+                    return WargaDetailKirimanScreen(data: data);
+                  },
+                  
+                ),
+                GoRoute(
+                  path: 'kiriman/edit',
+                  name: 'warga_kirimanEdit',
+                  builder: (context, state) {
+                    final data = state.extra as Map<String, dynamic>; 
+                    return WargaEditKirimanScreen(data: data);
+                  },
+                ),
+                GoRoute(
+                  path: 'form',
+                  name: 'warga_aspirasiForm',
+                  builder: (context, state) => const WargaTambahAspirasiScreen(),
+                ),
+
+              ],
+            ),
+          ],
+        ),
+         StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/warga/profil',
+              name: 'profil_menu_warga',
+              builder: (_, __) => const ProfilMenuWarga(),
+              routes: [
+                GoRoute(
+                  path: 'data-diri',
+                  name: 'WargaDataDiri',
+                  builder: (context, state) => const WargaDataDiriScreen(),
+                ),
+                GoRoute(
+                  path: 'edit-data',
+                  builder: (context, state) => const EditStoreProfileScreen(),
+                ),
+                GoRoute(
+                  path: 'pengaturan',
+                  name: 'WargaPengaturanAkun',
+                  builder: (context, state) => const PengaturanAkunScreen(),
+                  routes: [
+                    GoRoute(
+                      path: 'ganti-password',
+                      builder: (context, state) => const GantiKataSandiScreen(),
+                    ),
+                  ]
+                ),
+                GoRoute(
+                  path: 'bantuan', // untuk Pusat Bantuan
+                  name: 'PusatBantuan',
+                  builder: (context, state) => const PusatBantuanScreen(),
+                ),
+                GoRoute(
+                  path: 'about', // untuk Tentang Aplikasi
+                  name: 'AboutApp',
+                  builder: (context, state) => const AboutAppScreen(),
+                ),
+              ],
+            ),
+          ],
+         ),
       ],
     ),
   ],
