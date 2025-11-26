@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'daftar_broadcast.dart';
+import 'package:jawara_pintar_kel_5/models/broadcast_model.dart';
+import 'package:jawara_pintar_kel_5/services/broadcast_service.dart';
 
 class EditBroadcastScreen extends StatefulWidget {
-  final KegiatanBroadcast initialBroadcastData;
+  final BroadcastModel broadcast;
 
   const EditBroadcastScreen({
     Key? key,
-    required this.initialBroadcastData,
+    required this.broadcast,
   }) : super(key: key);
 
   @override
@@ -18,14 +18,15 @@ class _EditBroadcastScreenState extends State<EditBroadcastScreen> {
   late TextEditingController _titleController;
   late TextEditingController _contentController;
   final _formKey = GlobalKey<FormState>();
+  bool _isLoading = false;
+
+  final BroadcastService _broadcastService = BroadcastService();
 
   @override
   void initState() {
     super.initState();
-    _titleController =
-        TextEditingController(text: widget.initialBroadcastData.judul);
-    _contentController =
-        TextEditingController(text: widget.initialBroadcastData.konten);
+    _titleController = TextEditingController(text: widget.broadcast.judul);
+    _contentController = TextEditingController(text: widget.broadcast.konten);
   }
 
   @override
@@ -36,15 +37,42 @@ class _EditBroadcastScreenState extends State<EditBroadcastScreen> {
   }
 
   // Simpan perubahan
-  void _saveChanges() {
+  void _saveChanges() async {
     if (_formKey.currentState!.validate()) {
-      final newTitle = _titleController.text;
-      final newContent = _contentController.text;
-      Navigator.pop(context, {
-        'status': 'updated',
-        'judul': newTitle,
-        'konten': newContent,
+      setState(() {
+        _isLoading = true;
       });
+
+      final updatedBroadcast = widget.broadcast.copyWith(
+        judul: _titleController.text,
+        konten: _contentController.text,
+      );
+
+      try {
+        await _broadcastService.updateBroadcast(widget.broadcast.id!, updatedBroadcast);
+        
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Broadcast "${updatedBroadcast.judul}" berhasil diperbarui.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context, true); // Return true on success
+
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal memperbarui broadcast: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -132,7 +160,7 @@ class _EditBroadcastScreenState extends State<EditBroadcastScreen> {
                     // Tombol Batal
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: _batalForm,
+                        onPressed: _isLoading ? null : _batalForm,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: batalColor,
                           foregroundColor: Colors.white,
@@ -152,7 +180,7 @@ class _EditBroadcastScreenState extends State<EditBroadcastScreen> {
                     // Tombol Simpan
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: _saveChanges,
+                        onPressed: _isLoading ? null : _saveChanges,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: simpanColor,
                           foregroundColor: Colors.white,
@@ -161,10 +189,19 @@ class _EditBroadcastScreenState extends State<EditBroadcastScreen> {
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                        child: const Text(
-                          'Simpan',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
+                        child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'Simpan',
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
                       ),
                     ),
                   ],

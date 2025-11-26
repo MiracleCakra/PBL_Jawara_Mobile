@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jawara_pintar_kel_5/models/broadcast_model.dart';
 import 'package:jawara_pintar_kel_5/models/kegiatan_model.dart';
 import 'package:jawara_pintar_kel_5/models/marketplace_model.dart' as m_model;
 // Models
@@ -385,30 +386,19 @@ final router = GoRouter(
                   builder: (context, state) => const TambahBroadcastScreen(),
                 ),
                 GoRoute(
-                  path: 'broadcast/detail/:judul',
+                  path: 'broadcast/detail',
                   name: 'broadcastDetail',
                   builder: (context, state) {
-                    final _ = state.pathParameters['judul']!;
-                    final broadcastData = state.extra as KegiatanBroadcast?;
-                    if (broadcastData == null)
-                      return const DaftarBroadcastScreen();
-                    return DetailBroadcastScreen(broadcastData: broadcastData);
+                    final broadcast = state.extra as BroadcastModel;
+                    return DetailBroadcastScreen(broadcastModel: broadcast);
                   },
                 ),
                 GoRoute(
-                  path: 'broadcast/edit/:judul',
+                  path: 'broadcast/edit',
                   name: 'broadcastEdit',
                   builder: (context, state) {
-                    final _ = state.pathParameters['judul']!;
-                    final broadcastData = state.extra as Map<String, dynamic>?;
-                    if (broadcastData == null ||
-                        broadcastData['data'] == null) {
-                      return const DaftarBroadcastScreen();
-                    }
-                    return EditBroadcastScreen(
-                      initialBroadcastData:
-                          broadcastData['data'] as KegiatanBroadcast,
-                    );
+                    final broadcast = state.extra as BroadcastModel;
+                    return EditBroadcastScreen(broadcast: broadcast);
                   },
                 ),
                 GoRoute(
@@ -579,8 +569,8 @@ final router = GoRouter(
                   path: 'detail-broadcast',
                   name: 'rt_broadcastDetail',
                   builder: (context, state) {
-                    final broadcast = state.extra as KegiatanBroadcast;
-                    return DetailBroadcastScreen(broadcastData: broadcast);
+                    final broadcast = state.extra as BroadcastModel;
+                    return DetailBroadcastScreen(broadcastModel: broadcast);
                   },
                 ),
               ],
@@ -797,8 +787,8 @@ final router = GoRouter(
                   path: 'detail-broadcast',
                   name: 'rw_broadcastDetail',
                   builder: (context, state) {
-                    final broadcast = state.extra as KegiatanBroadcast;
-                    return DetailBroadcastScreen(broadcastData: broadcast);
+                    final broadcast = state.extra as BroadcastModel;
+                    return DetailBroadcastScreen(broadcastModel: broadcast);
                   },
                 ),
                 GoRoute(
@@ -810,8 +800,8 @@ final router = GoRouter(
                   path: 'edit-broadcast',
                   name: 'rw_broadcastEdit',
                   builder: (context, state) {
-                    final broadcast = state.extra as KegiatanBroadcast;
-                    return EditBroadcastScreen(initialBroadcastData: broadcast);
+                    final broadcast = state.extra as BroadcastModel;
+                    return EditBroadcastScreen(broadcast: broadcast);
                   },
                 ),
               ],
@@ -950,8 +940,8 @@ final router = GoRouter(
                   path: 'detail-broadcast',
                   name: 'sekretaris_broadcastDetail',
                   builder: (context, state) {
-                    final broadcast = state.extra as KegiatanBroadcast;
-                    return DetailBroadcastScreen(broadcastData: broadcast);
+                    final broadcast = state.extra as BroadcastModel;
+                    return DetailBroadcastScreen(broadcastModel: broadcast);
                   },
                 ),
                 GoRoute(
@@ -963,8 +953,8 @@ final router = GoRouter(
                   path: 'edit-broadcast',
                   name: 'sekretaris_broadcastEdit',
                   builder: (context, state) {
-                    final broadcast = state.extra as KegiatanBroadcast;
-                    return EditBroadcastScreen(initialBroadcastData: broadcast);
+                    final broadcast = state.extra as BroadcastModel;
+                    return EditBroadcastScreen(broadcast: broadcast);
                   },
                 ),
                 GoRoute(
