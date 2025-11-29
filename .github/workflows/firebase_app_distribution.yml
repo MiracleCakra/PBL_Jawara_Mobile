@@ -1,14 +1,13 @@
-name: firebase_app_distribution
+name: Firebase App Distribution
 
 on:
   push:
     branches:
       - feature/firebase-integration # atau branch utama Anda
-    workflow_dispatch:
 
 jobs:
   build_and_deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest # atau macos-latest untuk iOS
 
     steps:
       - uses: actions/checkout@v4
@@ -21,30 +20,17 @@ jobs:
         run: flutter pub get
 
       - name: Build Android App Bundle
-        run: flutter build apk --release
+        run: flutter build apk --release # atau flutter build appbundle --release
 
-      # Install Firebase CLI (dijalankan setelah build Flutter)
+      # Install Firebase CLI
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
-      # Siapkan GOOGLE_APPLICATION_CREDENTIALS dari secret JSON
-      - name: Set up Google Application Credentials
-        run: |
-          # Tulis konten JSON secret ke dalam file lokal
-          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}" > service_account_key.json
-          # Setel variabel lingkungan agar Firebase CLI dapat menemukannya secara otomatis
-          echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/service_account_key.json" >> $GITHUB_ENV
-        # Pastikan secret FIREBASE_SERVICE_ACCOUNT_KEY berisi SELURUH konten JSON
-
-      # Dapatkan pesan commit untuk release notes
-      - name: Get commit message for release notes
-        id: get_commit
-        run: echo "message=$(git log -1 --pretty=%B)" >> $GITHUB_OUTPUT
-
-      # Upload ke Firebase App Distribution menggunakan Firebase CLI
       - name: Upload to Firebase App Distribution
-        run: firebase appdistribution:distribute build/app/outputs/flutter-apk/app-release.apk
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
-          app: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
-          groups: pbl-jawara
-          releaseNotes: ${{ steps.get_commit.outputs.message }}
+          appId: ${{ secrets.FIREBASE_ANDROID_APP_ID }}          # App ID Android dari Firebase, format 1:XXXX:android:XXXX
+          token: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }} # Firebase Service Account Key dari GitHub Secrets
+          file: build/app/outputs/flutter-apk/app-release.apk    # Pastikan path ini benar sesuai output build Anda
+          groups: pbl-jawara # Daftar grup tester yang menerima rilis
+          releaseNotes: ${{ steps.get_commit.outputs.message }}   # Menggunakan pesan commit sebagai release notes
