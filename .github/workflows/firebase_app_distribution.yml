@@ -1,0 +1,32 @@
+    name: Firebase App Distribution
+
+    on:
+      push:
+        branches:
+          - main # or your main branch
+
+    jobs:
+      build_and_deploy:
+        runs-on: ubuntu-latest # or macos-latest for iOS
+
+        steps:
+          - uses: actions/checkout@v4
+
+          - uses: subosito/flutter-action@v2
+            with:
+              flutter-version: '3.35.4' # Specify your Flutter version
+
+          - name: Get Flutter dependencies
+            run: flutter pub get
+
+          - name: Build Android App Bundle
+            run: flutter build apk --release # or flutter build appbundle --release
+
+          - name: Upload to Firebase App Distribution
+            uses: wzieba/Firebase-App-Distribution-GitHub-Action@v1
+            with:
+              appId: ${{ secrets.FIREBASE_ANDROID_APP_ID }}          # App ID Android dari Firebase, format 1:XXXX:android:XXXX
+              serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+              file: build/app/outputs/flutter-apk/app-release.apk    # Pastikan path ini benar sesuai output build Anda
+              groups: PBL-Jawara
+              releaseNotes: "Implementation Automated release from GitHub Actions"
