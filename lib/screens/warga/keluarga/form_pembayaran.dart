@@ -50,46 +50,74 @@ class _FormPembayaranScreenState extends State<FormPembayaranScreen> {
   }
 
   Future<void> _scanStrukWithOCR(File imageFile) async {
-    final inputImage = InputImage.fromFile(imageFile);
-    final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
+  final inputImage = InputImage.fromFile(imageFile);
+  final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
 
+  try {
     final recognizedText = await textRecognizer.processImage(inputImage);
     String scannedText = recognizedText.text;
     debugPrint("Hasil OCR: $scannedText");
 
-    // Cari pola angka (misal 10.000 atau 10000)
+    if (scannedText.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Tidak ada teks yang terdeteksi pada gambar."),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     final regExp = RegExp(r'\d{1,3}(?:[.,]\d{3})*');
     final match = regExp.firstMatch(scannedText);
 
-    if (match != null) {
-      String scannedAmountStr = match.group(0)!.replaceAll('.', '').replaceAll(',', '');
-      double scannedAmount = double.tryParse(scannedAmountStr) ?? 0;
-
-      setState(() {
-        _isNominalValid = scannedAmount == widget.tagihan.nominal * 1000;
-      });
-
-      if (_isNominalValid) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Nominal struk sesuai dengan tagihan ✅"),
-            backgroundColor: Colors.green,
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              "Nominal struk tidak sesuai! Tagihan: ${_formatCurrency(widget.tagihan.nominal)}",
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+    if (match == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Nominal tidak dapat ditemukan di struk."),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
     }
 
+    String scannedAmountStr = match.group(0)!.replaceAll('.', '').replaceAll(',', '');
+    double scannedAmount = double.tryParse(scannedAmountStr) ?? 0;
+
+    setState(() {
+      _isNominalValid = scannedAmount == widget.tagihan.nominal * 1000;
+    });
+
+    if (_isNominalValid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Nominal struk sesuai dengan tagihan ✅"),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "Nominal struk tidak sesuai! Tagihan: ${_formatCurrency(widget.tagihan.nominal)}",
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  } catch (e) {
+    debugPrint('OCR Error: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Terjadi kesalahan saat memproses gambar."),
+        backgroundColor: Colors.red,
+      ),
+    );
+  } finally {
     textRecognizer.close();
   }
+}
+
 
   void _submitPayment() async {
     if (_imageFile == null) {

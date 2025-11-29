@@ -4,9 +4,13 @@ import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
 import 'package:jawara_pintar_kel_5/router.dart';
 import 'package:moon_design/moon_design.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  runApp(const MyApp());
   await Supabase.initialize(
     url: 'https://vzqzejlragspnqbjxewh.supabase.co',
     anonKey:

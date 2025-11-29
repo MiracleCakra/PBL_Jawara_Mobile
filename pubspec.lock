@@ -249,6 +249,30 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.9.3+5"
+  firebase_core:
+    dependency: "direct main"
+    description:
+      name: firebase_core
+      sha256: "1f2dfd9f535d81f8b06d7a50ecda6eac1e6922191ed42e09ca2c84bd2288927c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.2.1"
+  firebase_core_platform_interface:
+    dependency: transitive
+    description:
+      name: firebase_core_platform_interface
+      sha256: cccb4f572325dc14904c02fcc7db6323ad62ba02536833dddb5c02cac7341c64
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.0.2"
+  firebase_core_web:
+    dependency: transitive
+    description:
+      name: firebase_core_web
+      sha256: ff18fabb0ad0ed3595d2f2c85007ecc794aadecdff5b3bb1460b7ee47cded398
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.3.0"
   fixnum:
     dependency: transitive
     description:
@@ -623,14 +647,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.2"
-  objective_c:
-    dependency: transitive
-    description:
-      name: objective_c
-      sha256: "1f81ed9e41909d44162d7ec8663b2c647c202317cc0b56d3d56f6a13146a0b64"
-      url: "https://pub.dev"
-    source: hosted
-    version: "9.1.0"
   package_config:
     dependency: transitive
     description:
@@ -683,10 +699,10 @@ packages:
     dependency: transitive
     description:
       name: path_provider_foundation
-      sha256: "6192e477f34018ef1ea790c56fffc7302e3bc3efede9e798b934c252c8c105ba"
+      sha256: "6d13aece7b3f5c5a9731eaf553ff9dcbc2eff41087fd2df587fd0fed9a3eb0c4"
       url: "https://pub.dev"
     source: hosted
-    version: "2.5.0"
+    version: "2.5.1"
   path_provider_linux:
     dependency: transitive
     description:
