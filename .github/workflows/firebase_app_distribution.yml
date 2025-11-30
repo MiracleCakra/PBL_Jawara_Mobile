@@ -2,47 +2,42 @@ name: Firebase App Distribution
 
 on:
   push:
-    branches:
-      - feature/firebase-integration # atau branch utama Anda
+    branches: feature/firebase-distribution
   pull_request:
-    branches:
-      - main
+    branches: main
 
 jobs:
-  build-and-distribute:
-    runs-on: ubuntu-latest # atau macos-latest untuk iOS
+  distribute:
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
+      # Set up Flutter
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.35.4' # Tentukan versi Flutter Anda
+          flutter-version: '3.35.4'
 
+      # Install dependencies
       - name: Install Dependencies
         run: flutter pub get
 
+      # Build APK
       - name: Build APK
-        run: flutter build apk --release # atau flutter build appbundle --release
-
-      # Install Firebase CLI
-      - name: Install Firebase CLI
-        run: npm install -g firebase-tools
-
-      # Upload APK sebagai artifact
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+        run: flutter build apk --release
 
       # Distribute to Firebase
       - name: Distribute to Firebase
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }} # Service Account Key
-        run: |
-          firebase appdistribution:distribute build/app/outputs/flutter-apk/app-release.apk \
-            --app "${{ secrets.FIREBASE_ANDROID_APP_ID }}" \
-            --groups "pbl-jawara" \
-            --release-notes "${{ steps.get_commit.outputs.message }}" # Menggunakan pesan commit sebagai release notes
+        uses: logickoder/firebase-distribution@v1
+        with:
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}  # Service Account Key
+          file: 'build/app/outputs/flutter-apk/**/*.apk'
+          appId: ${{ secrets.FIREBASE_ANDROID_APP_ID }}  # Firebase Android App ID
+          groups: 'pbl-jawara'
+          releaseNotes: |
+            🚀 New features:
+            - Testing Firebase App Distribution
+            - Feature B
+
+            🐛 Bug fixes:
+            - Fixed issue X
