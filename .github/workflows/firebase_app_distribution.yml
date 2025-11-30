@@ -2,8 +2,6 @@ name: Firebase App Distribution
 
 on:
   push:
-    branches: feature/firebase-integration
-  pull_request:
     branches: main
 
 jobs:
@@ -36,8 +34,7 @@ jobs:
           groups: 'pbl-jawara'
           releaseNotes: |
             🚀 New features:
-            - Testing Firebase App Distribution
-            - Feature B
+            - Implementation CI/CD
 
             🐛 Bug fixes:
-            - Fixed issue X
+            - Fixed issue with versioning and distribution
