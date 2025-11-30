@@ -2,12 +2,12 @@ name: Firebase App Distribution
 
 on:
   push:
-    branches: feature/firebase-distribution
+    branches: feature/firebase-integration
   pull_request:
     branches: main
 
 jobs:
-  distribute:
+  build-and-distribute:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
