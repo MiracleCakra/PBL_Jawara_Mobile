@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/broadcashwarga/detailBroadcash.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/broadcashwarga/filter_broadcashwarga.dart';
-import 'package:jawara_pintar_kel_5/models/broadcah_model.dart';
+import 'package:jawara_pintar_kel_5/models/kegiatan/broadcah_model.dart';
 
 /*class KegiatanBroadcastWarga {
   final String judul;

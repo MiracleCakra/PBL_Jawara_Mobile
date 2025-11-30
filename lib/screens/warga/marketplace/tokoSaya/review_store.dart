@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:jawara_pintar_kel_5/models/ReviewModel.dart' show ReviewModel, dummyReviews;
+import 'package:jawara_pintar_kel_5/models/marketplace/ReviewModel.dart' show ReviewModel, dummyReviews;
 
 class MyStoreReviewsScreen extends StatefulWidget {
   const MyStoreReviewsScreen({super.key});

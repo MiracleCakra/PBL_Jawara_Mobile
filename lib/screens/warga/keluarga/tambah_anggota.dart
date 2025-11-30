@@ -1,29 +1,24 @@
+import 'dart:convert';
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:jawara_pintar_kel_5/models/warga_model.dart';
+import 'package:jawara_pintar_kel_5/models/keluarga/warga_model.dart';
 import 'package:jawara_pintar_kel_5/services/warga_service.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show getPrimaryColor;
-import 'package:jawara_pintar_kel_5/widget/form/section_card.dart';
-import 'package:jawara_pintar_kel_5/widget/form/labeled_text_field.dart';
-import 'package:jawara_pintar_kel_5/widget/form/labeled_dropdown.dart';
 import 'package:jawara_pintar_kel_5/widget/form/date_picker_field.dart';
+import 'package:jawara_pintar_kel_5/widget/form/labeled_dropdown.dart';
+import 'package:jawara_pintar_kel_5/widget/form/labeled_text_field.dart';
+import 'package:jawara_pintar_kel_5/widget/form/section_card.dart';
 import 'package:jawara_pintar_kel_5/widget/moon_result_modal.dart';
-
-
-class Keluarga {
-  final String id;
-  final String namaKeluarga;
-  const Keluarga({required this.id, required this.namaKeluarga});
-}
-
 
 class TambahAnggotaKeluargaPage extends StatefulWidget {
   const TambahAnggotaKeluargaPage({super.key});
 
   @override
-  State<TambahAnggotaKeluargaPage> createState() => _TambahAnggotaKeluargaPageState();
+  State<TambahAnggotaKeluargaPage> createState() =>
+      _TambahAnggotaKeluargaPageState();
 }
 
 class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
@@ -32,10 +27,10 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
   final _idCtl = TextEditingController();
   final _tempatLahirCtl = TextEditingController();
   final _teleponCtl = TextEditingController();
+  final ImagePicker _picker = ImagePicker();
 
   DateTime? _tanggalLahir;
 
-  // Dropdown states
   Gender? _jenisKelamin;
   String? _agama;
   GolonganDarah? _golDarah;
@@ -45,25 +40,57 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
   String? _pendidikan;
   String? _pekerjaan;
 
+  File? _fotoKtpFile;
   bool _isSaving = false;
 
-  @override
-  void initState() {
-    super.initState();
+  Future<void> _pickFotoKtp({required ImageSource source}) async {
+    try {
+      final picked = await _picker.pickImage(source: source);
+
+      if (picked == null) return;
+
+      File originalFile = File(picked.path);
+
+      // Validasi max 5MB
+      final bytes = await originalFile.length();
+      if (bytes > 5 * 1024 * 1024) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Ukuran gambar maksimal 5 MB')),
+        );
+        return;
+      }
+
+      setState(() {
+        _fotoKtpFile = originalFile;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal mengambil gambar: $e')));
+    }
   }
 
+  void _removeFotoKtp() {
+    setState(() {
+      _fotoKtpFile = null;
+    });
+  }
+
+  // =======================
+  //  SAVE DATA
+  // =======================
   Future<void> _saveWarga() async {
     if (_idCtl.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('NIK tidak boleh kosong')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('NIK tidak boleh kosong')));
       return;
     }
 
     if (_namaCtl.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nama tidak boleh kosong')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Nama tidak boleh kosong')));
       return;
     }
 
@@ -84,6 +111,10 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
     setState(() => _isSaving = true);
 
     try {
+      String? fotoKtpBase64;
+      if (_fotoKtpFile != null) {
+        fotoKtpBase64 = base64Encode(_fotoKtpFile!.readAsBytesSync());
+      }
 
       final warga = Warga(
         id: _idCtl.text,
@@ -97,10 +128,10 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
         pekerjaan: _pekerjaan,
         statusPenduduk: _statusPenduduk,
         statusHidupWafat: _statusHidup,
-        keluargaId: null, 
+        keluargaId: null,
         agama: _agama,
-        fotoKtp: null,
-        email: null, 
+        fotoKtp: fotoKtpBase64,
+        email: null,
       );
 
       await _wargaService.createWarga(warga);
@@ -141,6 +172,9 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
     super.dispose();
   }
 
+  // =======================
+  //  BUILD UI
+  // =======================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -159,9 +193,11 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
       ),
+
       body: ListView(
         padding: const EdgeInsets.only(bottom: 24),
         children: [
+          // ================= DATA DIRI =================
           SectionCard(
             title: 'Data Diri',
             children: [
@@ -195,15 +231,14 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
                 label: 'Tanggal Lahir',
                 selectedDate: _tanggalLahir,
                 onDateSelected: (date) {
-                  setState(() {
-                    _tanggalLahir = date;
-                  });
+                  setState(() => _tanggalLahir = date);
                 },
                 placeholder: 'Pilih Tanggal',
               ),
             ],
           ),
 
+          // ================= ATRIBUT PERSONAL =================
           SectionCard(
             title: 'Atribut Personal',
             children: [
@@ -216,11 +251,9 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
                     value: null,
                     child: Text('-- Pilih Jenis Kelamin --'),
                   ),
-                  ...Gender.values.map((gender) =>
-                      DropdownMenuItem(
-                        value: gender,
-                        child: Text(gender.value),
-                      )),
+                  ...Gender.values.map(
+                    (g) => DropdownMenuItem(value: g, child: Text(g.value)),
+                  ),
                 ],
               ),
               LabeledDropdown<String>(
@@ -229,7 +262,9 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
                 onChanged: (v) => setState(() => _agama = v),
                 items: const [
                   DropdownMenuItem(
-                      value: null, child: Text('-- Pilih Agama --')),
+                    value: null,
+                    child: Text('-- Pilih Agama --'),
+                  ),
                   DropdownMenuItem(value: 'Islam', child: Text('Islam')),
                   DropdownMenuItem(value: 'Kristen', child: Text('Kristen')),
                   DropdownMenuItem(value: 'Katolik', child: Text('Katolik')),
@@ -247,16 +282,15 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
                     value: null,
                     child: Text('-- Pilih Golongan Darah --'),
                   ),
-                  ...GolonganDarah.values.map((gol) =>
-                      DropdownMenuItem(
-                        value: gol,
-                        child: Text(gol.value),
-                      )),
+                  ...GolonganDarah.values.map(
+                    (gd) => DropdownMenuItem(value: gd, child: Text(gd.value)),
+                  ),
                 ],
               ),
             ],
           ),
 
+          // ================= PERAN =================
           SectionCard(
             title: 'Peran & Latar Belakang',
             children: [
@@ -266,13 +300,16 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
                 onChanged: (v) => setState(() => _peranKeluarga = v),
                 items: const [
                   DropdownMenuItem(
-                      value: null, child: Text('-- Pilih Peran Keluarga --')),
+                    value: null,
+                    child: Text('-- Pilih Peran Keluarga --'),
+                  ),
                   DropdownMenuItem(
                     value: 'Kepala Keluarga',
                     child: Text('Kepala Keluarga'),
                   ),
                   DropdownMenuItem(value: 'Ibu', child: Text('Ibu')),
                   DropdownMenuItem(value: 'Anak', child: Text('Anak')),
+                  DropdownMenuItem(value: 'Lainnya', child: Text('Lainnya')),
                 ],
               ),
               LabeledDropdown<String>(
@@ -281,7 +318,9 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
                 onChanged: (v) => setState(() => _pendidikan = v),
                 items: const [
                   DropdownMenuItem(
-                      value: null, child: Text('-- Pilih Pendidikan Terakhir --')),
+                    value: null,
+                    child: Text('-- Pilih Pendidikan Terakhir --'),
+                  ),
                   DropdownMenuItem(value: 'SD', child: Text('SD')),
                   DropdownMenuItem(value: 'SMP', child: Text('SMP')),
                   DropdownMenuItem(value: 'SMA/SMK', child: Text('SMA/SMK')),
@@ -297,7 +336,9 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
                 onChanged: (v) => setState(() => _pekerjaan = v),
                 items: const [
                   DropdownMenuItem(
-                      value: null, child: Text('-- Pilih Jenis Pekerjaan --')),
+                    value: null,
+                    child: Text('-- Pilih Jenis Pekerjaan --'),
+                  ),
                   DropdownMenuItem(
                     value: 'Pelajar/Mahasiswa',
                     child: Text('Pelajar/Mahasiswa'),
@@ -320,6 +361,7 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
             ],
           ),
 
+          // ================= STATUS =================
           SectionCard(
             title: 'Status',
             children: [
@@ -332,11 +374,9 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
                     value: null,
                     child: Text('-- Pilih Status Hidup --'),
                   ),
-                  ...StatusHidup.values.map((status) =>
-                      DropdownMenuItem(
-                        value: status,
-                        child: Text(status.value),
-                      )),
+                  ...StatusHidup.values.map(
+                    (s) => DropdownMenuItem(value: s, child: Text(s.value)),
+                  ),
                 ],
               ),
               LabeledDropdown<StatusPenduduk>(
@@ -348,17 +388,109 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
                     value: null,
                     child: Text('-- Pilih Status Kependudukan --'),
                   ),
-                  ...StatusPenduduk.values.map((status) =>
-                      DropdownMenuItem(
-                        value: status,
-                        child: Text(status.value),
-                      )),
+                  ...StatusPenduduk.values.map(
+                    (s) => DropdownMenuItem(value: s, child: Text(s.value)),
+                  ),
                 ],
               ),
             ],
           ),
 
+          // ================= FOTO KTP =================
+          SectionCard(
+            title: 'Foto KTP',
+            children: [
+              GestureDetector(
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(16),
+                      ),
+                    ),
+                    builder: (_) => SafeArea(
+                      child: Wrap(
+                        children: [
+                          ListTile(
+                            leading: const Icon(Icons.photo_camera),
+                            title: const Text('Ambil dari Kamera'),
+                            onTap: () {
+                              Navigator.pop(context);
+                              _pickFotoKtp(source: ImageSource.camera);
+                            },
+                          ),
+                          ListTile(
+                            leading: const Icon(Icons.photo_library),
+                            title: const Text('Pilih dari Galeri'),
+                            onTap: () {
+                              Navigator.pop(context);
+                              _pickFotoKtp(source: ImageSource.gallery);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+                child: Container(
+                  height: 160,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: _fotoKtpFile == null
+                      ? const Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.upload, size: 40, color: Colors.grey),
+                              SizedBox(height: 6),
+                              Text("Tap untuk upload foto KTP"),
+                            ],
+                          ),
+                        )
+                      : Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.file(
+                                _fotoKtpFile!,
+                                width: double.infinity,
+                                height: double.infinity,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            Positioned(
+                              right: 8,
+                              top: 8,
+                              child: InkWell(
+                                onTap: _removeFotoKtp,
+                                child: Container(
+                                  decoration: const BoxDecoration(
+                                    color: Colors.black54,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  padding: const EdgeInsets.all(6),
+                                  child: const Icon(
+                                    Icons.close,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+              ),
+            ],
+          ),
+
           const SizedBox(height: 12),
+
+          // ================= BUTTON =================
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: SizedBox(
@@ -372,18 +504,19 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                onPressed: _isSaving ? null : () => _saveWarga(),
+                onPressed: _isSaving ? null : _saveWarga,
                 child: _isSaving
                     ? const SizedBox(
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
                         ),
                       )
-                    : const Text('Simpan'),
+                    : const Text('Kirim Pengajuan'),
               ),
             ),
           ),

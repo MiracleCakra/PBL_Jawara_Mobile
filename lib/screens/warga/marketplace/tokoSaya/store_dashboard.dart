@@ -1,8 +1,8 @@
 // lib/screens/my_store_dashboard_screen.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/product_model.dart';
-import 'package:jawara_pintar_kel_5/models/store_model.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/store_model.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
 
 class MyStoreDashboardScreen extends StatefulWidget {
@@ -241,7 +241,6 @@ class _MyStoreDashboardScreenState extends State<MyStoreDashboardScreen> {
         _buildStatItem(label: 'Penghasilan Bulan Ini', value: formatRupiah(monthlyRevenue.toInt()), icon: Icons.paid, color: successColor),
         Container(height: 60, width: 1, color: Colors.grey.shade200),
         _buildStatItem(label: 'Pesanan Baru', value: pendingOrders.toString(), icon: Icons.delivery_dining, color: warningColor, isRupiah: false, onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Menuju Daftar Pesanan'), duration: Duration(seconds: 1)));
         }),
       ]),
     );

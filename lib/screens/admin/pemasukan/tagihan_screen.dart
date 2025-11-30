@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:jawara_pintar_kel_5/models/tagihan_model.dart';
+import 'package:jawara_pintar_kel_5/models/keuangan/tagihan_model.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/detail_tagihan_screen.dart';
 import 'package:moon_design/moon_design.dart';
 

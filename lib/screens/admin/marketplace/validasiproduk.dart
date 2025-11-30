@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:async';
-import 'package:jawara_pintar_kel_5/models/marketplace_model.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/marketplace_model.dart';
 import 'detail_validasi_produk.dart';
 
 const Color unguColor = Color(0xFF6366F1);

@@ -1,4 +1,4 @@
-import 'package:jawara_pintar_kel_5/models/keluarga_model.dart' as k_model;
+import 'package:jawara_pintar_kel_5/models/keluarga/keluarga_model.dart' as k_model;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class KeluargaService {

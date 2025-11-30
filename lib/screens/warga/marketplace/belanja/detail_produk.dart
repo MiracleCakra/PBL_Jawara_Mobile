@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/product_model.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
 
 class WargaProductDetailScreen extends StatelessWidget {
@@ -374,7 +374,7 @@ class WargaProductDetailScreen extends StatelessWidget {
                       content: Text(
                         '${product.name} ditambahkan ke Keranjang!',
                       ),
-                      backgroundColor: Colors.grey.shade500,
+                      backgroundColor: Colors.grey.shade800,
                     ),
                   );
                 },

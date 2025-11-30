@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/kegiatan_model.dart';
+import 'package:jawara_pintar_kel_5/models/kegiatan/kegiatan_model.dart';
 import 'package:jawara_pintar_kel_5/services/kegiatan_service.dart';
 import 'kegiatan_filter_screen.dart';
 

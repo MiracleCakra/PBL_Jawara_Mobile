@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/warga_model.dart'; 
+import 'warga_model.dart'; 
 
 class Keluarga {
   final String id;

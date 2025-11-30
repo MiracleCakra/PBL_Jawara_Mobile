@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/product_model.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
 
 class MyStoreProductDetailScreen extends StatefulWidget {
@@ -83,45 +83,54 @@ class _MyStoreProductDetailScreenState
     }
   }
 
-  void _showActionBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      builder: (ctx) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Text(
-                'Aksi Produk',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
+void _showActionBottomSheet(BuildContext context) {
+  final bool isRejected = currentProduct.rejectionReason != null &&
+      currentProduct.rejectionReason!.isNotEmpty;
+
+  showModalBottomSheet(
+    context: context,
+    builder: (ctx) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text(
+              'Aksi Produk',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
             ),
-            const Divider(height: 1),
+          ),
+          const Divider(height: 1),
+
+          // Hanya tampilkan tombol edit jika produk tidak ditolak
+          if (!isRejected)
             ListTile(
               leading: const Icon(Icons.edit, color: primaryColor),
               title: const Text('Edit Produk'),
               onTap: () {
-                Navigator.pop(ctx); 
+                Navigator.pop(ctx);
                 _navigateToEditForm(context);
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.delete_forever, color: rejectedColor),
-              title: const Text('Hapus Produk', style: TextStyle(color: rejectedColor)),
-              onTap: () {
-                Navigator.pop(ctx);
-                _confirmDelete(context);
-              },
-            ),
-            const SizedBox(height: 8),
-          ],
-        );
-      },
-    );
-  }
+
+          ListTile(
+            leading: const Icon(Icons.delete_forever, color: rejectedColor),
+            title: Text('Hapus Produk',
+                style: TextStyle(color: rejectedColor)),
+            onTap: () {
+              Navigator.pop(ctx);
+              _confirmDelete(context);
+            },
+          ),
+          const SizedBox(height: 8),
+        ],
+      );
+    },
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {

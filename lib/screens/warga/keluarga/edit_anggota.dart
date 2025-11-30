@@ -6,7 +6,7 @@ import 'package:jawara_pintar_kel_5/widget/form/labeled_text_field.dart';
 import 'package:jawara_pintar_kel_5/widget/form/labeled_dropdown.dart';
 import 'package:jawara_pintar_kel_5/widget/form/date_picker_field.dart';
 import 'package:jawara_pintar_kel_5/widget/moon_result_modal.dart';
-import 'package:jawara_pintar_kel_5/models/anggota_keluarga_model.dart';
+import 'package:jawara_pintar_kel_5/models/keluarga/anggota_keluarga_model.dart';
 
 class EditAnggotaPage extends StatefulWidget {
   final Anggota anggota;
@@ -184,6 +184,8 @@ class _EditAnggotaPageState extends State<EditAnggotaPage> {
                   ),
                   DropdownMenuItem(value: 'Ibu', child: Text('Ibu')),
                   DropdownMenuItem(value: 'Anak', child: Text('Anak')),
+                  DropdownMenuItem(value: 'Lainnya', child: Text('Lainnya')),
+
                 ],
               ),
               LabeledDropdown<String>(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/warga_model.dart';
+import 'package:jawara_pintar_kel_5/models/keluarga/warga_model.dart';
 import 'package:jawara_pintar_kel_5/services/warga_service.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show getPrimaryColor;
 import 'package:supabase_flutter/supabase_flutter.dart';

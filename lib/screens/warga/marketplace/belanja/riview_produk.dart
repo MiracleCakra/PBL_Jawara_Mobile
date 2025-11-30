@@ -384,7 +384,7 @@ class _WriteReviewFormState extends State<WriteReviewForm> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Ulasan berhasil dikirim! Rating: $_currentRating'),
-                      backgroundColor: Colors.green,
+                      backgroundColor: Colors.grey.shade800,
                     ),
                   );
                   Navigator.pop(context); 

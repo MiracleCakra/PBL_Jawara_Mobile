@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/product_model.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
-import 'package:jawara_pintar_kel_5/models/broadcah_model.dart';
+import 'package:jawara_pintar_kel_5/models/kegiatan/broadcah_model.dart';
 
 final List<Map<String, String>> dummyDataKegiatan = [
   {
@@ -195,8 +195,10 @@ class _StatusIuranCard extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween, // <--- penting
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Flexible(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -222,21 +224,24 @@ class _StatusIuranCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 10),
               if (isOverdue)
-                FilledButton(
-                  onPressed: () => context.go("/warga/keluarga/tagihan"),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                SizedBox(
+                  height: 40,
+                  child: FilledButton(
+                    onPressed: () => context.go("/warga/keluarga/tagihan"),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                    ),
+                    child: const Text(
+                      "Bayar",
+                      style: TextStyle(color: Colors.white),
                     ),
                   ),
-                  child: const Text(
-                    "Bayar",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                )
+                ),
             ],
           ),
         ),

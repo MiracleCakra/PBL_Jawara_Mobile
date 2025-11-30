@@ -1,7 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/product_model.dart'; 
+import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart'; 
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah; 
 
 class CartItem {
@@ -51,9 +51,6 @@ class _CartScreenState extends State<CartScreen> {
     setState(() {
       _cartItems.remove(item);
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${item.product.name} dihapus dari keranjang.'), backgroundColor: Colors.red.shade700)
-    );
   }
 
   int get _subtotal {
