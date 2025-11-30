@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jawara_pintar_kel_5/services/store_status_service.dart'; 
+
 
 class WargaStoreRegisterScreen extends StatefulWidget {
   const WargaStoreRegisterScreen({super.key});
@@ -16,6 +18,8 @@ class _WargaStoreRegisterScreenState extends State<WargaStoreRegisterScreen> {
   final TextEditingController deskripsiC = TextEditingController();
   final TextEditingController lokasiC = TextEditingController();
   final TextEditingController noHpC = TextEditingController();
+  final TextEditingController emailC = TextEditingController();
+  final TextEditingController passwordC = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +32,7 @@ class _WargaStoreRegisterScreenState extends State<WargaStoreRegisterScreen> {
         foregroundColor: Colors.black,
         elevation: 0,
         centerTitle: false,
+        automaticallyImplyLeading: false,
         title: const Text(
           "Daftar Toko",
           style: TextStyle(fontWeight: FontWeight.bold),
@@ -97,61 +102,82 @@ class _WargaStoreRegisterScreenState extends State<WargaStoreRegisterScreen> {
     );
   }
 
-  Widget _buildFormCard() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildInput(
-                controller: namaTokoC,
-                label: "Nama Toko",
-                icon: Icons.storefront,
-                validator: (v) =>
-                    v!.isEmpty ? "Nama toko wajib diisi" : null,
-              ),
-              const SizedBox(height: 14),
+ Widget _buildFormCard() {
+  return Card(
+    elevation: 6,
+    color: Colors.grey.shade50,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(20),
+    ),
+    shadowColor: Colors.black.withOpacity(0.1),
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildInput(
+              controller: emailC,
+              label: "Email",
+              icon: Icons.email_outlined,
+              keyboard: TextInputType.emailAddress,
+              validator: (v) => v!.isEmpty ? "Email wajib diisi" : null,
+            ),
+            const SizedBox(height: 18),
 
-              _buildInput(
-                controller: deskripsiC,
-                label: "Deskripsi Toko",
-                icon: Icons.description_outlined,
-                maxLines: 3,
-                validator: (v) =>
-                    v!.isEmpty ? "Deskripsi wajib diisi" : null,
-              ),
-              const SizedBox(height: 14),
+            _buildInput(
+              controller: passwordC,
+              label: "Password",
+              icon: Icons.lock_outline,
+              keyboard: TextInputType.visiblePassword,
+              validator: (v) => v!.isEmpty ? "Password wajib diisi" : null,
+              obscureText: true,
+            ),
+            const SizedBox(height: 18),
 
-              _buildInput(
-                controller: lokasiC,
-                label: "Lokasi (RT/RW)",
-                icon: Icons.location_on_outlined,
-                validator: (v) =>
-                    v!.isEmpty ? "Lokasi wajib diisi" : null,
-              ),
-              const SizedBox(height: 14),
+            _buildInput(
+              controller: namaTokoC,
+              label: "Nama Toko",
+              icon: Icons.storefront_outlined,
+              validator: (v) =>
+                  v!.isEmpty ? "Nama toko wajib diisi" : null,
+            ),
+            const SizedBox(height: 18),
 
-              _buildInput(
-                controller: noHpC,
-                label: "No. HP / WhatsApp",
-                icon: Icons.call_outlined,
-                keyboard: TextInputType.phone,
-                validator: (v) =>
-                    v!.isEmpty ? "Nomor HP wajib diisi" : null,
-              ),
-            ],
-          ),
+            _buildInput(
+              controller: deskripsiC,
+              label: "Deskripsi Toko",
+              icon: Icons.description_outlined,
+              maxLines: 3,
+              validator: (v) =>
+                  v!.isEmpty ? "Deskripsi wajib diisi" : null,
+            ),
+            const SizedBox(height: 18),
+
+            _buildInput(
+              controller: lokasiC,
+              label: "Lokasi (RT/RW)",
+              icon: Icons.location_on_outlined,
+              validator: (v) =>
+                  v!.isEmpty ? "Lokasi wajib diisi" : null,
+            ),
+            const SizedBox(height: 18),
+
+            _buildInput(
+              controller: noHpC,
+              label: "No. HP / WhatsApp",
+              icon: Icons.call_outlined,
+              keyboard: TextInputType.phone,
+              validator: (v) =>
+                  v!.isEmpty ? "Nomor HP wajib diisi" : null,
+            ),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   // Reusable Input
   Widget _buildInput({
@@ -161,12 +187,14 @@ class _WargaStoreRegisterScreenState extends State<WargaStoreRegisterScreen> {
     String? Function(String?)? validator,
     TextInputType? keyboard,
     int maxLines = 1,
+    bool obscureText = false,
   }) {
     return TextFormField(
       controller: controller,
       validator: validator,
       maxLines: maxLines,
       keyboardType: keyboard,
+      obscureText: obscureText,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon),
@@ -188,18 +216,13 @@ class _WargaStoreRegisterScreenState extends State<WargaStoreRegisterScreen> {
     return SizedBox(
       width: double.infinity,
       child: FilledButton(
-        onPressed: () {
-          if (_formKey.currentState!.validate()) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                    "Pendaftaran toko berhasil! Menunggu validasi admin."),
-              ),
-            );
+        onPressed: () async {
+        if (_formKey.currentState!.validate()) {
 
-            context.goNamed("StorePendingValidation");
-          }
-        },
+          await StoreStatusService.setStoreStatus(1);
+          context.goNamed("StorePendingValidation");
+        }
+      },
         style: FilledButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 14),
           backgroundColor: const Color(0xFF6A5AE0),

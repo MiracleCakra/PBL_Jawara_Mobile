@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:async';
-import 'package:jawara_pintar_kel_5/models/marketplace_model.dart' as marketplace_model;
+import 'package:jawara_pintar_kel_5/models/marketplace/marketplace_model.dart' as marketplace_model;
 
 final Color unguColor = marketplace_model.unguColor;
 

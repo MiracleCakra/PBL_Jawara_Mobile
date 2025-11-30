@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/anggota_keluarga_model.dart';
+import 'package:jawara_pintar_kel_5/models/keluarga/anggota_keluarga_model.dart';
 
 class DaftarAnggotaKeluargaPage extends StatefulWidget {
   const DaftarAnggotaKeluargaPage({super.key});
@@ -48,6 +48,18 @@ class _DaftarAnggotaKeluargaPageState extends State<DaftarAnggotaKeluargaPage> {
           jenisKelamin: 'Pria',
           peranKeluarga: 'Anak',
           status: 'Aktif'),
+      Anggota(
+        nama: 'Naomi',
+        nik: '0987650321',
+        jenisKelamin: 'Wanita',
+        peranKeluarga: 'Anak',
+        status: 'Pengajuan'),
+      Anggota(
+        nama: 'Agus',
+        nik: '1122334495',
+        jenisKelamin: 'Pria',
+        peranKeluarga: 'Anak',
+        status: 'Nonaktif'),
     ];
 
     if (mounted) {
@@ -349,13 +361,23 @@ class _AnggotaCard extends StatelessWidget {
   const _AnggotaCard({required this.anggota, this.onTap});
 
   @override
-  Widget build(BuildContext context) {
+    Widget build(BuildContext context) {
     final isMale = (anggota.jenisKelamin?.toLowerCase() ?? "") == "pria";
-    final isAktif = (anggota.status?.toLowerCase() ?? "") == "aktif";
+    final status = (anggota.status?.toLowerCase() ?? "");
 
-    final statusColor =
-        isAktif ? const Color(0xFF4E46B4) : Colors.grey.shade400;
-    final statusTextColor = isAktif ? Colors.white : Colors.black87;
+    // --- FIXED STATUS CHIP ---
+    Color statusColor;
+    Color statusTextColor = Colors.white;
+
+    if (status == "aktif") {
+      statusColor = const Color(0xFF4E46B4); // Ungu
+    } else if (status == "pengajuan") {
+      statusColor = const Color(0xFFFBC02D); // Kuning
+      statusTextColor =Colors.white;
+    } else {
+      statusColor = Colors.grey.shade400; // Nonaktif
+      statusTextColor = Colors.black87;
+    }
 
     final genderBgColor =
         isMale ? Colors.blue.shade50 : Colors.pink.shade50;

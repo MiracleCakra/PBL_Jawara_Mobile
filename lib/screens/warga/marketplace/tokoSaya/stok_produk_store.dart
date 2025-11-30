@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/product_model.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
 
 class MyStoreStockScreen extends StatefulWidget {
@@ -118,7 +118,7 @@ class _MyStoreStockScreenState extends State<MyStoreStockScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('${product.name} berhasil dihapus'),
-              backgroundColor: Colors.redAccent,
+              backgroundColor: Colors.grey.shade800,
             ),
           );
         }

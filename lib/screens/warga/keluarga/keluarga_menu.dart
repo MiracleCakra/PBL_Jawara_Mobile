@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/keluarga_model.dart';
+import 'package:jawara_pintar_kel_5/models/keluarga/keluarga_model.dart';
 
 class Keluargamenuwarga extends StatelessWidget {
   const Keluargamenuwarga({super.key});

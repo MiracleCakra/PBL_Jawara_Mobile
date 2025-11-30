@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:jawara_pintar_kel_5/models/warga_tagihan_model.dart';
+import 'package:jawara_pintar_kel_5/models/keuangan/warga_tagihan_model.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/keluarga/form_pembayaran.dart';

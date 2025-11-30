@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:jawara_pintar_kel_5/models/broadcast_model.dart';
+import 'package:jawara_pintar_kel_5/models/kegiatan/broadcast_model.dart';
 import 'package:jawara_pintar_kel_5/services/broadcast_service.dart';
 
 class EditBroadcastScreen extends StatefulWidget {

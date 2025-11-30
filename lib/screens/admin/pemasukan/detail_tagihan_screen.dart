@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:jawara_pintar_kel_5/models/tagihan_model.dart';
+import 'package:jawara_pintar_kel_5/models/keuangan/tagihan_model.dart';
 
 class DetailTagihanScreen extends StatefulWidget {
   final TagihanModel tagihan;

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:jawara_pintar_kel_5/models/anggota_keluarga_model.dart';
+import 'package:jawara_pintar_kel_5/models/keluarga/anggota_keluarga_model.dart';
 
 class DetailAnggotaKeluargaPage extends StatelessWidget {
   final Anggota anggota;
@@ -49,7 +49,7 @@ class DetailAnggotaKeluargaPage extends StatelessWidget {
     final data = anggota;
 
     final String formattedDate = data.tanggalLahir != null
-        ? DateFormat('d MMMM yyyy').format(data.tanggalLahir!)
+        ? DateFormat('d MMMM yyyy', 'id_ID').format(data.tanggalLahir!)
         : '-';
 
     return Scaffold(
@@ -70,6 +70,11 @@ class DetailAnggotaKeluargaPage extends StatelessWidget {
         children: [
           _buildHeader(data),
           const SizedBox(height: 20),
+
+          // FOTO KTP SECTION
+          _FotoKtpCard(fotoUrl: data.fotoKtp),
+
+          const SizedBox(height: 20),
           _SectionCard(
             title: "Data Diri",
             children: [
@@ -85,6 +90,7 @@ class DetailAnggotaKeluargaPage extends StatelessWidget {
               _IconRow(icon: Icons.self_improvement, label: "Agama", value: data.agama ?? "-"),
             ],
           ),
+
           const SizedBox(height: 20),
           _SectionCard(
             title: "Informasi Kependudukan",
@@ -102,18 +108,19 @@ class DetailAnggotaKeluargaPage extends StatelessWidget {
   }
 
   Widget _buildHeader(Anggota data) {
+    final isFemale = data.jenisKelamin?.toLowerCase() == "wanita";
+
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(12)),
       child: Row(
         children: [
           CircleAvatar(
             radius: 35,
             backgroundColor: Colors.grey.shade300,
             child: Icon(
-              (data.jenisKelamin?.toLowerCase().contains("wanita") ?? false)
-                  ? Icons.female
-                  : Icons.male,
+              isFemale ? Icons.female : Icons.male,
               size: 40,
               color: Colors.grey[700],
             ),
@@ -123,9 +130,14 @@ class DetailAnggotaKeluargaPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("Nama Lengkap", style: TextStyle(fontSize: 12, color: Colors.grey)),
-                Text(data.nama, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                Text("NIK: ${data.nik}", style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                const Text("Nama Lengkap",
+                    style: TextStyle(fontSize: 12, color: Colors.grey)),
+                Text(data.nama,
+                    style: const TextStyle(
+                        fontSize: 20, fontWeight: FontWeight.bold)),
+                Text("NIK: ${data.nik}",
+                    style: const TextStyle(
+                        fontSize: 12, color: Colors.black54)),
               ],
             ),
           )
@@ -134,6 +146,89 @@ class DetailAnggotaKeluargaPage extends StatelessWidget {
     );
   }
 }
+
+// ================= FOTO KTP CARD ================= 
+
+class _FotoKtpCard extends StatelessWidget {
+  final String? fotoUrl;
+
+  const _FotoKtpCard({required this.fotoUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(12)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("Foto KTP / Identitas",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+
+          // Jika tidak ada foto
+          if (fotoUrl == null || fotoUrl!.isEmpty)
+            Container(
+              height: 180,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Center(
+                child: Text("Tidak ada foto KTP"),
+              ),
+            )
+          else
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) =>
+                            _ImagePreviewPage(imageUrl: fotoUrl!)));
+              },
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  fotoUrl!,
+                  height: 180,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// ================= HALAMAN PREVIEW FOTO =================
+
+class _ImagePreviewPage extends StatelessWidget {
+  final String imageUrl;
+
+  const _ImagePreviewPage({required this.imageUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+      ),
+      body: Center(
+        child: InteractiveViewer(
+          child: Image.network(imageUrl),
+        ),
+      ),
+    );
+  }
+}
+
+// ================= SECTION CARD ================= 
 
 class _SectionCard extends StatelessWidget {
   final String title;
@@ -157,6 +252,8 @@ class _SectionCard extends StatelessWidget {
     );
   }
 }
+
+// ================= ROW DENGAN ICON ================= 
 
 class _IconRow extends StatelessWidget {
   final IconData icon;

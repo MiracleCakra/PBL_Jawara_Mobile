@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/broadcashwarga/broadcash_warga.dart';
-import 'package:jawara_pintar_kel_5/models/broadcah_model.dart';
+import 'package:jawara_pintar_kel_5/models/kegiatan/broadcah_model.dart';
 
 
 class DetailBroadcastWargaScreen extends StatelessWidget {

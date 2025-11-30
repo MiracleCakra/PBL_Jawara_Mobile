@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:jawara_pintar_kel_5/models/store_model.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/store_model.dart';
 
 class EditStoreProfileScreen extends StatefulWidget {
   const EditStoreProfileScreen({super.key});
@@ -14,11 +14,11 @@ class EditStoreProfileScreen extends StatefulWidget {
 class _EditStoreProfileScreenState extends State<EditStoreProfileScreen> {
   static const Color primaryColor = Color(0xFF6A5AE0);
 
-  String _storeName = 'Toko Sayur Agus';
+  String _storeName = 'SSS, Sayur Segar Susanto ';
   String _storeDescription =
       'Menyediakan sayuran dan buah segar dari kebun lokal dengan pengiriman cepat ke seluruh RW.';
   String _storePhone = '081234567890';
-  String _storeAddress = 'Jl. Anggrek No. 5, Blok C1';
+  String _storeAddress = 'Jl. Anggrek No. 5, Blok C1, RT 001/RW 001';
   String? _storeImageUrl; 
 
   final _formKey = GlobalKey<FormState>();
@@ -80,18 +80,18 @@ class _EditStoreProfileScreenState extends State<EditStoreProfileScreen> {
       );
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Profil toko berhasil diperbarui!'),
-          backgroundColor: Color.fromARGB(255, 140, 140, 140),
+          backgroundColor: Colors.grey.shade800,
         ),
       );
 
       Navigator.pop(context, updatedStore);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Terdapat input yang belum valid. Mohon periksa lagi...'),
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.grey.shade800,
         ),
       );
     }

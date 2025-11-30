@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/broadcast_model.dart';
-import 'package:jawara_pintar_kel_5/models/kegiatan_model.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace_model.dart' as m_model;
+import 'package:jawara_pintar_kel_5/models/kegiatan/broadcast_model.dart';
+import 'package:jawara_pintar_kel_5/models/kegiatan/kegiatan_model.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/marketplace_model.dart' as m_model;
 // Models
-import 'package:jawara_pintar_kel_5/models/warga_model.dart';
+import 'package:jawara_pintar_kel_5/models/keluarga/warga_model.dart';
 // Dashboard
 import 'package:jawara_pintar_kel_5/screens/admin/dashboard/dashboard.dart';
 // Broadcast
@@ -106,16 +106,16 @@ import 'package:jawara_pintar_kel_5/screens/sekretaris/layout.dart';
 // layout 
 import 'package:jawara_pintar_kel_5/screens/warga/layout_warga.dart';
 // Models
-import 'package:jawara_pintar_kel_5/models/warga_model.dart';
-import 'package:jawara_pintar_kel_5/models/anggota_keluarga_model.dart';
-import 'package:jawara_pintar_kel_5/models/tagihan_model.dart';
-import 'package:jawara_pintar_kel_5/models/warga_tagihan_model.dart';
-import 'package:jawara_pintar_kel_5/models/transaksi_model.dart';
-import 'package:jawara_pintar_kel_5/models/product_model.dart';
-import 'package:jawara_pintar_kel_5/models/ReviewModel.dart';
-import 'package:jawara_pintar_kel_5/models/order_model.dart' as o_model;
-import 'package:jawara_pintar_kel_5/models/broadcah_model.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace_model.dart' as m_model;
+import 'package:jawara_pintar_kel_5/models/keluarga/warga_model.dart';
+import 'package:jawara_pintar_kel_5/models/keluarga/anggota_keluarga_model.dart';
+import 'package:jawara_pintar_kel_5/models/keuangan/tagihan_model.dart';
+import 'package:jawara_pintar_kel_5/models/keuangan/warga_tagihan_model.dart';
+import 'package:jawara_pintar_kel_5/models/keuangan/transaksi_model.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/ReviewModel.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/order_model.dart' as o_model;
+import 'package:jawara_pintar_kel_5/models/kegiatan/broadcah_model.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/marketplace_model.dart' as m_model;
 
 // Dashboard
 import 'package:jawara_pintar_kel_5/screens/warga/dashboard/dashboard.dart';
@@ -143,7 +143,7 @@ import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/homepage.d
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/detail_produk.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/orderhistoryScreen.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/filterScreen.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/store_register.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/login_akun.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/store_product_detail.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/store_dashboard.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/store_pending_validasi.dart';
@@ -156,6 +156,8 @@ import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/pengatura
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/tambah_produk.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/editprofile_toko.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/buat_akun_toko.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/auth_store.dart';
+
 
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/riview_produk.dart';
 
@@ -1326,9 +1328,29 @@ final router = GoRouter(
                     return ProductReviewScreen(productId: productId); 
                   },
                 ),
-                // TOKO SAYA 
+                // TOKO SAYA
                 GoRoute(
-                  path: 'mystore',
+                  path: '/auth-store',
+                  name: 'AuthStoreScreen',
+                  builder: (_, __) => const AuthStoreScreen(),
+                ),
+                GoRoute(
+                  path: '/login-store',
+                  name: 'WargaStoreLoginScreen',
+                  builder: (_, __) => const WargaStoreLoginScreen(),
+                ),
+                GoRoute(
+                   path: '/register-store',
+                      name: 'WargaStoreRegister',
+                      builder: (_, __) => const WargaStoreRegisterScreen(),
+                    ),
+                    GoRoute(
+                      path: '/store-pending',
+                      name: 'StorePendingValidation',
+                      builder: (_, __) => const StorePendingValidationScreen(),
+                    ),
+                GoRoute(
+                  path: '/mystore-dashboard',
                   name: 'WargaMarketplaceHome',
                   builder: (_, __) => const MyStoreDashboardScreen(),
                   routes: [
@@ -1376,17 +1398,6 @@ final router = GoRouter(
                         ),
                     
                       ],
-                    ),
-                   // pendaftaran
-                    GoRoute(
-                      path: 'mysore/register',
-                      name: 'WargaStoreRegister',
-                      builder: (_, __) => const WargaStoreRegisterScreen(),
-                    ),
-                    GoRoute(
-                      path: 'mystore/pending',
-                      name: 'StorePendingValidation',
-                      builder: (_, __) => const StorePendingValidationScreen(),
                     ),
 
                     // pesanan

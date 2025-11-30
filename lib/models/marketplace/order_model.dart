@@ -3,11 +3,11 @@ class OrderModel {
   final String productName;
   final int quantity;
   final int totalPrice;
-  final String status;
+  String status;
   final String customerName;
-  final String deliveryAddress; // string biar aman dan kompatibel
+  final String deliveryAddress;
 
-  const OrderModel({
+  OrderModel({
     required this.id,
     required this.productName,
     required this.quantity,
@@ -15,14 +15,11 @@ class OrderModel {
     required this.status,
     required this.customerName,
     required this.deliveryAddress,
-
   });
 
-  // Helper warna status (opsional, kalau mau dipakai)
   String get displayStatus => status;
 
-  /// Dummy data
-  static const List<OrderModel> dummyOrders = [
+  static final List<OrderModel> dummyOrders = [
     OrderModel(
       id: 'ORD001',
       productName: 'Tomat Segar',

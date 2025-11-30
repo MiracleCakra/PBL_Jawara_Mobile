@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'log_filter_screen.dart';
 import 'dart:async';
-import 'package:jawara_pintar_kel_5/models/logaktivitas_model.dart';
+import 'package:jawara_pintar_kel_5/models/kegiatan/logaktivitas_model.dart';
 
 final List<LogAktivitas> allLogs = [
   LogAktivitas(judul: 'Menghapus data rumah dengan alamat: Jl. Merpati', user: 'Admin Jawara', tanggal: '13 Oktober 2025', type: 'Hapus'),

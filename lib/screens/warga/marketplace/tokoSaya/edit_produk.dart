@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
-import 'package:jawara_pintar_kel_5/models/product_model.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah, unformatRupiah;
 
 class MyStoreProductEditScreen extends StatefulWidget {
@@ -63,7 +63,7 @@ class _MyStoreProductEditScreenState extends State<MyStoreProductEditScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text('${updatedProduct.name} berhasil diperbarui.'),
-            backgroundColor: Colors.grey.shade600),
+            backgroundColor: Colors.grey.shade800),
       );
 
       context.pop(updatedProduct);
