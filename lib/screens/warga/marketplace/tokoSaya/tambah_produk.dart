@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:io';
 import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
+import 'package:jawara_pintar_kel_5/providers/product_provider.dart';
+import 'package:jawara_pintar_kel_5/services/marketplace/store_service.dart';
 
 class MyStoreProductAddScreen extends StatefulWidget {
   const MyStoreProductAddScreen({super.key});
@@ -73,7 +77,7 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
     });
   }
 
-  void _saveProduct() {
+  void _saveProduct() async {
     if (!_formKey.currentState!.validate()) return;
     if (_imageFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -96,29 +100,99 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
 
     final int newPrice = int.tryParse(_priceController.text.trim()) ?? 0;
     final int newStock = int.tryParse(_stockController.text.trim()) ?? 0;
+    
+    // Get warga.id (NIK) from warga table using email
+    final authUser = Supabase.instance.client.auth.currentUser;
+    if (authUser?.email == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Silakan login terlebih dahulu'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    
+    // Query warga table to get warga.id (NIK)
+    final wargaResponse = await Supabase.instance.client
+        .from('warga')
+        .select('id')
+        .eq('email', authUser!.email!)
+        .maybeSingle();
+    
+    if (wargaResponse == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Data warga tidak ditemukan'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+    
+    final userId = wargaResponse['id'] as String;
+
+    // Get store_id from logged in user
+    final storeService = StoreService();
+    final userStore = await storeService.getStoreByUserId(userId);
+    
+    if (userStore == null || userStore.storeId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Anda belum memiliki toko. Silakan daftar toko terlebih dahulu.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
 
     final newProduct = ProductModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      name: _nameController.text.trim(),
-      description: _descController.text.trim(),
-      price: newPrice,
-      stock: newStock,
-      unit: _selectedUnit,
+      nama: _nameController.text.trim(),
+      deskripsi: _descController.text.trim(),
+      harga: newPrice.toDouble(),
+      stok: newStock,
+      satuan: _selectedUnit,
       grade: _selectedGrade,
-      rating: 0.0,
-      isVerified: false,
-      imageUrl: _imageFile!.path,
-      rejectionReason: null,
+      gambar: _imageFile!.path,
+      storeId: userStore.storeId,
     );
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Produk berhasil ditambahkan. Menunggu verifikasi Admin.'),
-        backgroundColor: Colors.grey.shade800,
+    
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
       ),
     );
-
-
-    context.goNamed('WargaMarketplaceStoreStock');
+    
+    // Save to Supabase via ProductProvider
+    final productProvider = Provider.of<ProductProvider>(context, listen: false);
+    final savedProduct = await productProvider.createProduct(newProduct);
+    
+    // Close loading dialog
+    if (mounted) Navigator.of(context).pop();
+    
+    if (savedProduct != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Produk berhasil ditambahkan ke database!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      context.goNamed('WargaMarketplaceStoreStock');
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal menambahkan produk: ${productProvider.errorMessage}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override

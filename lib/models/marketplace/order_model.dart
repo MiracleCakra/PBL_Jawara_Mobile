@@ -1,69 +1,79 @@
 class OrderModel {
-  final String id;
-  final String productName;
-  final int quantity;
-  final int totalPrice;
-  String status;
-  final String customerName;
-  final String deliveryAddress;
+  final int? orderId;
+  final String? userId;
+  final double? totalPrice;
+  final String?
+  orderStatus; // pending, processing, shipped, delivered, cancelled
+  final String? alamat;
+  final int? totalQty;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   OrderModel({
-    required this.id,
-    required this.productName,
-    required this.quantity,
-    required this.totalPrice,
-    required this.status,
-    required this.customerName,
-    required this.deliveryAddress,
+    this.orderId,
+    this.userId,
+    this.totalPrice,
+    this.orderStatus,
+    this.alamat,
+    this.totalQty,
+    this.createdAt,
+    this.updatedAt,
   });
 
-  String get displayStatus => status;
+  // From JSON (dari Supabase)
+  factory OrderModel.fromJson(Map<String, dynamic> json) {
+    return OrderModel(
+      orderId: json['order_id'] as int?,
+      userId: json['user_id'] as String?,
+      totalPrice: (json['total_price'] as num?)?.toDouble(),
+      orderStatus: json['order_status'] as String?,
+      alamat: json['alamat'] as String?,
+      totalQty: json['total_qty'] as int?,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
+          : null,
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'] as String)
+          : null,
+    );
+  }
 
-  static final List<OrderModel> dummyOrders = [
-    OrderModel(
-      id: 'ORD001',
-      productName: 'Tomat Segar',
-      quantity: 2,
-      totalPrice: 30000,
-      customerName: 'Budi Santoso',
-      deliveryAddress: 'RT 01 RW 02 BLOK A3 No.13',
-      status: 'Perlu Dikirim',
-    ),
-    OrderModel(
-      id: 'ORD002',
-      productName: 'Tomat Segar',
-      quantity: 1,
-      totalPrice: 15000,
-      customerName: 'Siti',
-      deliveryAddress: 'RT 02 RW 02 BLOK C4 No.3',
-      status: 'Perlu Dikirim',
-    ),
-    OrderModel(
-      id: 'ORD003',
-      productName: 'Wortel Layu',
-      quantity: 3,
-      totalPrice: 45000,
-      customerName: 'Gita',
-      deliveryAddress: 'RT 04 RW 03 BLOK F4 No.5',
-      status: 'Dikirim',
-    ),
-    OrderModel(
-      id: 'ORD004',
-      productName: 'Wortel Segar',
-      quantity: 5,
-      totalPrice: 50000,
-      customerName: 'Andi',
-      deliveryAddress: 'RT 02 RW 02 BLOK C4 No.6',
-      status: 'Selesai',
-    ),
-    OrderModel(
-      id: 'ORD005',
-      productName: 'Wortel Segar',
-      quantity: 1,
-      totalPrice: 25000,
-      customerName: 'Linans',
-      deliveryAddress: 'RT 03 RW 03 BLOK F4 No.9',
-      status: 'Selesai',
-    ),
-  ];
+  // To JSON (untuk insert/update ke Supabase)
+  Map<String, dynamic> toJson() {
+    return {
+      if (orderId != null) 'order_id': orderId,
+      if (userId != null) 'user_id': userId,
+      if (totalPrice != null) 'total_price': totalPrice,
+      if (orderStatus != null) 'order_status': orderStatus,
+      if (alamat != null) 'alamat': alamat,
+      if (totalQty != null) 'total_qty': totalQty,
+      if (createdAt != null) 'created_at': createdAt!.toIso8601String(),
+      if (updatedAt != null) 'updated_at': updatedAt!.toIso8601String(),
+    };
+  }
+
+  // Copy with
+  OrderModel copyWith({
+    int? orderId,
+    String? userId,
+    double? totalPrice,
+    String? orderStatus,
+    String? alamat,
+    int? totalQty,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return OrderModel(
+      orderId: orderId ?? this.orderId,
+      userId: userId ?? this.userId,
+      totalPrice: totalPrice ?? this.totalPrice,
+      orderStatus: orderStatus ?? this.orderStatus,
+      alamat: alamat ?? this.alamat,
+      totalQty: totalQty ?? this.totalQty,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  String get displayStatus => orderStatus ?? 'Unknown';
 }

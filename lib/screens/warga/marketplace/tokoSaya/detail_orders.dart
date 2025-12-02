@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:jawara_pintar_kel_5/models/marketplace/order_model.dart';
+import 'package:jawara_pintar_kel_5/services/marketplace/order_service.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
 
 class MyStoreOrderDetail extends StatefulWidget {
@@ -19,30 +20,89 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
   static const Color errorColor = Colors.red;
 
   late String currentStatus;
+  List<Map<String, dynamic>> _orderItems = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    currentStatus = widget.order.status;
+    currentStatus = widget.order.orderStatus ?? 'null'; // Keep as 'null' string if no status
+    _loadOrderItems();
+  }
+
+  Future<void> _loadOrderItems() async {
+    if (widget.order.orderId == null) {
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+
+    try {
+      final orderService = OrderService();
+      final items = await orderService.getOrderWithItems(widget.order.orderId!);
+      
+      if (mounted) {
+        setState(() {
+          _orderItems = items;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading order items: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   Future<void> updateOrderStatus(String newStatus) async {
-    try {
-      // TODO backend sambungkan ke Supabase
-      // await Supabase.instance.client
-      //     .from('orders')
-      //     .update({'status': newStatus})
-      //     .eq('id', widget.order.id);
-
-      setState(() => currentStatus = newStatus);
-
-    } catch (e) {
+    if (widget.order.orderId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Gagal mengubah status: $e"),
+        const SnackBar(
+          content: Text("Order ID tidak valid"),
           backgroundColor: Colors.red,
         ),
       );
+      return;
+    }
+
+    try {
+      // Show loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
+      // Update status in database
+      final orderService = OrderService();
+      await orderService.updateOrderStatus(widget.order.orderId!, newStatus);
+
+      if (mounted) {
+        Navigator.pop(context); // Close loading dialog
+        
+        setState(() => currentStatus = newStatus);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Status berhasil diubah menjadi: $newStatus"),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Gagal mengubah status: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -69,15 +129,15 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
             _buildStatusHeader(currentStatus, statusColor),
             const SizedBox(height: 16),
 
-            _buildSectionTitle(context, "Informasi Produk"),
+            _buildSectionTitle(context, "Informasi Pesanan"),
             _buildDetailCard(
               children: [
                 _buildRow(
-                  "Nama Produk",
-                  widget.order.productName,
+                  "Order ID",
+                  "#${widget.order.orderId}",
                   isTitleBold: true,
                 ),
-                _buildRow("Jumlah", "${widget.order.quantity} item"),
+                _buildRow("Total Item", "${widget.order.totalQty ?? 0} item"),
               ],
             ),
 
@@ -87,15 +147,15 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
             _buildDetailCard(
               children: [
                 _buildRow(
-                  "Nama Pembeli",
-                  widget.order.customerName,
+                  "User ID",
+                  widget.order.userId ?? "N/A",
                   isValuePrimary: true,
                 ),
                 _buildRow(
                   "Alamat",
-                  widget.order.deliveryAddress ?? "Alamat tidak tersedia",
+                  widget.order.alamat ?? "Alamat tidak tersedia",
                 ),
-                _buildRow("Tanggal Pesan", "24 Nov 2025"),
+                _buildRow("Tanggal Pesan", widget.order.createdAt?.toString().substring(0, 10) ?? "N/A"),
               ],
             ),
 
@@ -106,13 +166,13 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
               children: [
                 _buildRow(
                   "Subtotal Produk",
-                  formatRupiah(widget.order.totalPrice),
+                  formatRupiah((widget.order.totalPrice ?? 0).toInt()),
                 ),
                 _buildRow("Biaya Admin", formatRupiah(1000)),
                 const Divider(height: 10),
                 _buildRow(
                   "Total Dibayar",
-                  formatRupiah(widget.order.totalPrice + 1000),
+                  formatRupiah(((widget.order.totalPrice ?? 0) + 1000).toInt()),
                   valueStyle: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
@@ -174,7 +234,7 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
       ),
       child: Center(
         child: Text(
-          "STATUS: ${status.toUpperCase()}",
+          "STATUS: ${_getStatusLabel(status)}",
           style: TextStyle(
             color: color,
             fontWeight: FontWeight.w900,
@@ -222,39 +282,52 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
 
   Widget _buildActionButtons(String status) {
     final lower = status.toLowerCase();
+    
+    // Status: NULL (pesanan baru, belum direspons)
+    if (lower == 'null' || status == 'null' || status.isEmpty) {
+      return Column(
+        children: [
+          _button(
+            label: "Kirim Pesanan",
+            icon: Icons.local_shipping_outlined,
+            color: primaryColor,
+            onTap: () {
+              updateOrderStatus("pending");
+              Navigator.pop(context, "pending");
+            },
+          ),
+          const SizedBox(height: 12),
+          _button(
+            label: "Tolak Pesanan",
+            icon: Icons.cancel_outlined,
+            color: Colors.red,
+            onTap: () {
+              updateOrderStatus("canceled");
+              Navigator.pop(context, "canceled");
+            },
+          ),
+        ],
+      );
+    }
+    
+    // Status: pending (pesanan sedang diantar)
     if (lower == 'pending') {
-      return _button(
-        label: "Proses Pesanan",
-        icon: Icons.receipt_long_outlined,
-        color: primaryColor,
-        onTap: () {
-          updateOrderStatus("perlu dikirim");
-          Navigator.pop(context, "perlu dikirim");
-        },
-      );
-    }
-    if (lower == 'perlu dikirim') {
-      return _button(
-        label: "Kirim Pesanan",
-        icon: Icons.local_shipping_outlined,
-        color: Colors.orange.shade700,
-        onTap: () {
-          updateOrderStatus("dikirim");
-          Navigator.pop(context, "dikirim");
-        },
-      );
-    }
-    if (lower == 'dikirim') {
       return _button(
         label: "Pesanan Selesai",
         icon: Icons.check_circle_outline,
         color: successColor,
         onTap: () {
-          updateOrderStatus("selesai");
-          Navigator.pop(context, "selesai");
+          updateOrderStatus("completed");
+          Navigator.pop(context, "completed");
         },
       );
     }
+    
+    // Status: completed atau canceled (tidak ada aksi)
+    if (lower == 'completed' || lower == 'canceled') {
+      return const SizedBox.shrink();
+    }
+    
     return _button(
       label: "Tutup Detail",
       icon: Icons.close,
@@ -288,15 +361,36 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
   }
 
   Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case "selesai":
-        return Colors.deepPurple;
-      case "perlu dikirim":
-        return Colors.amber;
-      case "dikirim":
+    final lower = status.toLowerCase();
+    if (lower == 'null' || status == 'null' || status.isEmpty) {
+      return Colors.orange;
+    }
+    switch (lower) {
+      case "pending":
+        return Colors.blue;
+      case "completed":
         return Colors.green;
+      case "canceled":
+        return Colors.red;
       default:
         return Colors.grey;
+    }
+  }
+
+  String _getStatusLabel(String status) {
+    final lower = status.toLowerCase();
+    if (lower == 'null' || status == 'null' || status.isEmpty) {
+      return "PESANAN BARU";
+    }
+    switch (lower) {
+      case "pending":
+        return "SEDANG DIANTAR";
+      case "completed":
+        return "SELESAI";
+      case "canceled":
+        return "DITOLAK";
+      default:
+        return status.toUpperCase();
     }
   }
 }

@@ -2,9 +2,9 @@ class ReviewModel {
   final int? reviewId;
   final int? productId;
   final String? userId;
-  final int? rating; // 1-5
+  final int? rating;
   final String? reviewText;
-  final String? reviewReply; // balasan dari seller
+  final String? reviewReply;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -19,7 +19,6 @@ class ReviewModel {
     this.updatedAt,
   });
 
-  // From JSON (dari Supabase)
   factory ReviewModel.fromJson(Map<String, dynamic> json) {
     return ReviewModel(
       reviewId: json['review_id'] as int?,
@@ -37,7 +36,6 @@ class ReviewModel {
     );
   }
 
-  // To JSON (untuk insert/update ke Supabase)
   Map<String, dynamic> toJson() {
     return {
       if (reviewId != null) 'review_id': reviewId,
@@ -51,7 +49,6 @@ class ReviewModel {
     };
   }
 
-  // Copy with
   ReviewModel copyWith({
     int? reviewId,
     int? productId,
@@ -74,6 +71,3 @@ class ReviewModel {
     );
   }
 }
-
-// Dummy reviews untuk testing UI (akan diganti dengan data dari Supabase)
-List<ReviewModel> dummyReviews = [];

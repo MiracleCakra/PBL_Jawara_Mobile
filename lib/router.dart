@@ -142,6 +142,8 @@ import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/checkoutsc
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/homepage.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/detail_produk.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/orderhistoryScreen.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/my_orders.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/buyer_order_detail.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/filterScreen.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/login_akun.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/store_product_detail.dart';
@@ -1319,6 +1321,24 @@ final router = GoRouter(
                   path: 'orders',
                   name: 'WargaOrders',
                   builder: (_, __) => const OrderHistoryScreen(),
+                ),
+                GoRoute(
+                  path: 'my-orders',
+                  name: 'MyOrders',
+                  builder: (_, __) => const MyOrdersScreen(),
+                  routes: [
+                    GoRoute(
+                      path: 'detail',
+                      name: 'BuyerOrderDetail',
+                      builder: (_, state) {
+                        final extra = state.extra;
+                        if (extra == null || extra is! o_model.OrderModel) {
+                          return const Center(child: Text("Order Not Found"));
+                        }
+                        return BuyerOrderDetailScreen(order: extra);
+                      },
+                    ),
+                  ],
                 ),
                 GoRoute(
                   path: 'reviewsproduk/:productId', 

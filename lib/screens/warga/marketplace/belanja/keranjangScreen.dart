@@ -1,23 +1,24 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart'; 
+import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
+import 'package:jawara_pintar_kel_5/providers/marketplace/cart_provider.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah; 
 
 class CartItem {
   final ProductModel product;
   int quantity;
+  int? cartId; // Store cart_id for deletion
 
-  CartItem({required this.product, this.quantity = 1});
+  CartItem({required this.product, this.quantity = 1, this.cartId});
   
-  int get subtotal => product.price * quantity;
+  int get subtotal => (product.harga?.toInt() ?? 0) * quantity;
 }
 
-List<CartItem> initialCartItems = [
-  CartItem(product: ProductModel.getSampleProducts()[0], quantity: 2),
-  CartItem(product: ProductModel.getSampleProducts()[3], quantity: 3),
-  CartItem(product: ProductModel.getSampleProducts()[2], quantity: 1),
-];
+// Dummy data - nanti akan diganti dengan data dari CartProvider
+List<CartItem> initialCartItems = [];
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -35,22 +36,149 @@ class _CartScreenState extends State<CartScreen> {
   @override
   void initState() {
     super.initState();
-    _cartItems = List.from(initialCartItems); 
+    _cartItems = List.from(initialCartItems);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadCart();
+    });
   }
-
-  void _updateQuantity(CartItem item, int delta) {
-    setState(() {
-      item.quantity += delta;
-      if (item.quantity <= 0) {
-        _cartItems.remove(item);
+  
+  Future<void> _loadCart() async {
+    try {
+      // Get warga.id (NIK) from warga table using email
+      final authUser = Supabase.instance.client.auth.currentUser;
+      if (authUser?.email == null) {
+        if (mounted) {
+          setState(() {
+            _cartItems = [];
+          });
+        }
+        return;
       }
-    });
+      
+      // Query warga table to get warga.id (NIK)
+      final wargaResponse = await Supabase.instance.client
+          .from('warga')
+          .select('id')
+          .eq('email', authUser!.email!)
+          .maybeSingle();
+      
+      if (wargaResponse != null) {
+        final userId = wargaResponse['id'] as String;
+        final cartProvider = Provider.of<CartProvider>(context, listen: false);
+        await cartProvider.fetchCartWithProducts(userId);
+        
+        // Convert cart items from provider to CartItem format
+        if (mounted) {
+          setState(() {
+            _cartItems = cartProvider.cartItems.map((item) {
+              final product = ProductModel.fromJson(item['produk']);
+              final quantity = item['qty'] as int? ?? 1; // Get actual quantity from database
+              final cartItem = CartItem(product: product, quantity: quantity);
+              // Store cart_id for updates and deletion
+              cartItem.cartId = item['id'] as int;
+              return cartItem;
+            }).toList();
+          });
+        }
+      }
+    } catch (e) {
+      print('Error loading cart: $e');
+      if (mounted) {
+        setState(() {
+          _cartItems = [];
+        });
+      }
+    }
   }
 
-  void _removeItem(CartItem item) {
-    setState(() {
-      _cartItems.remove(item);
-    });
+  Future<void> _updateQuantity(CartItem item, int delta) async {
+    final newQuantity = item.quantity + delta;
+    
+    if (newQuantity <= 0) {
+      // If quantity becomes 0, remove item
+      await _removeItem(item);
+      return;
+    }
+    
+    if (item.cartId == null) return;
+    
+    try {
+      // Update quantity in database
+      await Supabase.instance.client
+          .from('cart')
+          .update({'qty': newQuantity})
+          .eq('id', item.cartId!);
+      
+      // Update local state
+      setState(() {
+        item.quantity = newQuantity;
+      });
+    } catch (e) {
+      print('Error updating quantity: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal mengubah jumlah: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _removeItem(CartItem item) async {
+    if (item.cartId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Gagal menghapus item'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    
+    try {
+      // Get warga.id (NIK) from warga table using email
+      final authUser = Supabase.instance.client.auth.currentUser;
+      if (authUser?.email == null) return;
+      
+      // Query warga table to get warga.id (NIK)
+      final wargaResponse = await Supabase.instance.client
+          .from('warga')
+          .select('id')
+          .eq('email', authUser!.email!)
+          .maybeSingle();
+      
+      if (wargaResponse != null) {
+        final userId = wargaResponse['id'] as String;
+        final cartProvider = Provider.of<CartProvider>(context, listen: false);
+        
+        // Delete from database
+        await cartProvider.removeFromCart(item.cartId!, userId);
+        
+        // Refresh cart from database
+        await _loadCart();
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${item.product.nama} dihapus dari keranjang'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('Error removing item: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal menghapus: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   int get _subtotal {
@@ -82,7 +210,7 @@ class _CartScreenState extends State<CartScreen> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
                 child: Image.asset(
-                  item.product.imageUrl,
+                  item.product.gambar ?? 'assets/images/placeholder.png',
                   width: 80,
                   height: 80,
                   fit: BoxFit.cover,
@@ -100,7 +228,7 @@ class _CartScreenState extends State<CartScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      item.product.name,
+                      item.product.nama ?? 'Produk',
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       maxLines: 1, 
                       overflow: TextOverflow.ellipsis, 
@@ -108,7 +236,7 @@ class _CartScreenState extends State<CartScreen> {
                     const SizedBox(height: 4),
                     // Detail Grade
                     Text(
-                      'Grade: ${item.product.grade}',
+                      'Grade: ${item.product.grade ?? "Grade A"}',
                       style: TextStyle(
                         fontSize: 13,
                         color: item.product.grade == 'Grade A' ? _greenFresh : Colors.grey.shade600,
@@ -118,7 +246,7 @@ class _CartScreenState extends State<CartScreen> {
                     const SizedBox(height: 6),
                     // Harga Satuan
                     Text(
-                      formatRupiah(item.product.price),
+                      formatRupiah(item.product.harga?.toInt() ?? 0),
                       style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                     ),
                   ],
@@ -138,7 +266,7 @@ class _CartScreenState extends State<CartScreen> {
               // Kontrol Kuantitas
               Row(
                 children: [
-                  _buildQuantityButton(Icons.remove, () => _updateQuantity(item, -1), item.quantity <= 1),
+                  _buildQuantityButton(Icons.remove, () => _updateQuantity(item, -1), false),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                     child: Text(
