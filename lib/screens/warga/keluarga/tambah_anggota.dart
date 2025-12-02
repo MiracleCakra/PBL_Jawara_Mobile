@@ -40,6 +40,15 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
   String? _pendidikan;
   String? _pekerjaan;
 
+  // Informasi Rumah
+  String? _rumahDropdown;
+  final _rumahManualCtl = TextEditingController();
+  final List<String> _daftarRumah = [
+    'Rumah A - Jl. Merdeka No. 1',
+    'Rumah B - Jl. Sudirman No. 5',
+    'Rumah C - Jl. Gatot Subroto No. 10',
+  ];
+
   File? _fotoKtpFile;
   bool _isSaving = false;
 
@@ -235,6 +244,45 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
                 },
                 placeholder: 'Pilih Tanggal',
               ),
+            ],
+          ),
+
+          // ================= INFORMASI RUMAH =================
+          SectionCard(
+            title: 'Informasi Rumah',
+            children: [
+              LabeledDropdown<String>(
+                label: 'Rumah',
+                value: _rumahDropdown,
+                onChanged: (v) => setState(() {
+                  _rumahDropdown = v;
+                  if (v != null && v != 'Lainnya') {
+                    _rumahManualCtl.clear();
+                  }
+                }),
+                items: [
+                  const DropdownMenuItem(
+                    value: null,
+                    child: Text('-- Pilih Rumah --'),
+                  ),
+                  ..._daftarRumah.map(
+                    (rumah) =>
+                        DropdownMenuItem(value: rumah, child: Text(rumah)),
+                  ),
+                  const DropdownMenuItem(
+                    value: 'Lainnya',
+                    child: Text('Lainnya (Isi Manual)'),
+                  ),
+                ],
+              ),
+              if (_rumahDropdown == 'Lainnya') ...[
+                const SizedBox(height: 8),
+                LabeledTextField(
+                  label: 'Alamat Rumah',
+                  controller: _rumahManualCtl,
+                  hint: 'Masukkan alamat rumah lengkap',
+                ),
+              ],
             ],
           ),
 

@@ -1,334 +1,721 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
+import 'package:jawara_pintar_kel_5/widget/plot_bar_chart.dart';
+import 'package:moon_design/moon_design.dart';
 
-class KeuanganMenuScreen extends StatelessWidget {
-  const KeuanganMenuScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        centerTitle: false,
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        automaticallyImplyLeading: false,
-        title: const Text(
-          'Keuangan',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-      ),
-      body: Container(
-        color: const Color(0xFFF8F9FA),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Pilih Menu',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.black54,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 20),
-              // Pemasukan card with inline menu items
-              _buildMenuCard(
-                context,
-                icon: Icons.arrow_downward_rounded,
-                title: 'Pemasukan',
-                subtitle: 'Kelola data pemasukan dan iuran',
-                gradientColors: const [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                menuItems: [
-                  MenuItem(
-                    icon: Icons.category_outlined,
-                    label: 'Kategori Iuran',
-                    onTap: () =>
-                        context.push('/admin/pemasukan/kategori-iuran'),
-                  ),
-                  MenuItem(
-                    icon: Icons.payments_outlined,
-                    label: 'Tagih Iuran',
-                    onTap: () => context.push('/admin/pemasukan/tagih-iuran'),
-                  ),
-                  MenuItem(
-                    icon: Icons.receipt_long_outlined,
-                    label: 'Tagihan',
-                    onTap: () => context.push('/admin/pemasukan/tagihan'),
-                  ),
-                  MenuItem(
-                    icon: Icons.attach_money_outlined,
-                    label: 'Pemasukan Lain',
-                    onTap: () =>
-                        context.push('/admin/pemasukan/pemasukan-lain'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              // Pengeluaran card with inline menu items
-              _buildMenuCard(
-                context,
-                icon: Icons.arrow_upward_rounded,
-                title: 'Pengeluaran',
-                subtitle: 'Kelola data pengeluaran',
-                gradientColors: const [Color(0xFF8B5CF6), Color(0xFFA855F7)],
-                menuItems: [
-                  MenuItem(
-                    icon: Icons.list_alt_outlined,
-                    label: 'Daftar',
-                    onTap: () => context.push('/admin/pengeluaran/daftar'),
-                  ),
-                  MenuItem(
-                    icon: Icons.add_circle_outline,
-                    label: 'Tambah',
-                    onTap: () => context.push('/admin/pengeluaran/tambah'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              // Laporan Keuangan card with inline menu items
-              _buildMenuCard(
-                context,
-                icon: Icons.assessment_rounded,
-                title: 'Laporan Keuangan',
-                subtitle: 'Lihat laporan dan analisis keuangan',
-                gradientColors: const [Color(0xFFA855F7), Color(0xFFC084FC)],
-                menuItems: [
-                  MenuItem(
-                    icon: Icons.trending_down_outlined,
-                    label: 'Pemasukan',
-                    onTap: () => context.push('/admin/laporan/semua-pemasukan'),
-                  ),
-                  MenuItem(
-                    icon: Icons.trending_up_outlined,
-                    label: 'Pengeluaran',
-                    onTap: () =>
-                        context.push('/admin/laporan/semua-pengeluaran'),
-                  ),
-                  MenuItem(
-                    icon: Icons.print_outlined,
-                    label: 'Cetak Laporan',
-                    onTap: () => context.push('/admin/laporan/cetak-laporan'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // Build menu card with grid icon layout (GoPay style)
-  Widget _buildMenuCard(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required List<Color> gradientColors,
-    required List<MenuItem> menuItems,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: gradientColors,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: gradientColors[0].withValues(alpha: 0.4),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.3),
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Icon(icon, color: Colors.white, size: 32),
-                  ),
-                  const SizedBox(width: 20),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          subtitle,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.white.withValues(alpha: 0.9),
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            // Fixed grid using Rows & Columns for consistent sizes
-            _buildFixedMenuGrid(context, menuItems),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Build individual grid icon button (GoPay style)
-  Widget _buildGridIconButton(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.3),
-              width: 1,
-            ),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.25),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: Colors.white, size: 24),
-              ),
-              const SizedBox(height: 6),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 3),
-                child: Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white,
-                    height: 1.1,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // Build a fixed grid using Column/Row with a stable number of columns
-  // Columns: even item count -> 4, odd -> 3
-  Widget _buildFixedMenuGrid(BuildContext context, List<MenuItem> items) {
-    const double tileWidth = 86;
-    const double tileHeight = 76;
-    const double spacing = 10;
-    final desiredColumns = items.length % 2 == 0 ? 4 : 3;
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final maxWidth = constraints.maxWidth.isFinite
-            ? constraints.maxWidth
-            : desiredColumns * (tileWidth + spacing);
-        final maxColumns = ((maxWidth + spacing) / (tileWidth + spacing))
-            .floor();
-        final columns = desiredColumns.clamp(
-          1,
-          maxColumns > 0 ? maxColumns : 1,
-        );
-        final rows = (items.length / columns).ceil();
-
-        return Column(
-          children: List.generate(rows, (rowIndex) {
-            final startIdx = rowIndex * columns;
-            final itemsRemaining = items.length - startIdx;
-            final rowCount = itemsRemaining < columns
-                ? itemsRemaining
-                : columns;
-
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: rowIndex == rows - 1 ? 0 : spacing,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(rowCount, (colIndex) {
-                  final idx = startIdx + colIndex;
-                  final child = _buildGridIconButton(
-                    context,
-                    icon: items[idx].icon,
-                    label: items[idx].label,
-                    onTap: items[idx].onTap,
-                  );
-                  return Padding(
-                    padding: EdgeInsets.only(
-                      right: colIndex == rowCount - 1 ? 0 : spacing,
-                    ),
-                    child: SizedBox(
-                      width: tileWidth,
-                      height: tileHeight,
-                      child: child,
-                    ),
-                  );
-                }),
-              ),
-            );
-          }),
-        );
-      },
-    );
-  }
-}
-
-// MenuItem model class
+// Class untuk model menu item
 class MenuItem {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
 
   MenuItem({required this.icon, required this.label, required this.onTap});
+}
+
+class Keuangan extends StatefulWidget {
+  const Keuangan({super.key});
+
+  @override
+  State<Keuangan> createState() => _KeuanganState();
+}
+
+class _KeuanganState extends State<Keuangan> {
+  int _selectedYear = DateTime.now().year;
+  double _opacity = 0;
+  int _selectedSegment = 0; // 0: Pemasukan, 1: Pengeluaran
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(milliseconds: 180), () {
+      if (mounted) setState(() => _opacity = 1);
+    });
+  }
+
+  Widget _buildSegmentButton(String label, int index) {
+    final isSelected = _selectedSegment == index;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      child: Material(
+        color: isSelected ? ConstantColors.primary : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          onTap: () {
+            setState(() {
+              _selectedSegment = index;
+            });
+          },
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            alignment: Alignment.center,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? Colors.white : Colors.grey[700],
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget totalX({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color iconColor,
+    required Color color,
+    required Color valueColor,
+    required Color titleColor,
+  }) {
+    return Expanded(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isSmall = constraints.maxWidth < 160;
+          return Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: isSmall ? 8 : 10,
+              vertical: isSmall ? 10 : 12,
+            ),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.12),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(icon, color: iconColor, size: isSmall ? 16 : 18),
+                    SizedBox(width: isSmall ? 4 : 6),
+                    Expanded(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: isSmall ? 14 : 16,
+                            color: titleColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: isSmall ? 6 : 8),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: isSmall ? 20 : 24,
+                      fontWeight: FontWeight.w900,
+                      color: valueColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget quickButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: ConstantColors.primary.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: ConstantColors.primary, size: 24),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1F2937),
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<dynamic> bottomSheetBuilder(BuildContext context) {
+    return showMoonModalBottomSheet(
+      context: context,
+      enableDrag: true,
+      height: MediaQuery.of(context).size.height * 0.7,
+      builder: (BuildContext context) => Column(
+        children: [
+          Column(
+            children: [
+              Container(
+                height: 4,
+                width: 40,
+                margin: EdgeInsets.symmetric(vertical: 8),
+                decoration: ShapeDecoration(
+                  color: context.moonColors!.beerus,
+                  shape: MoonSquircleBorder(
+                    borderRadius: BorderRadius.circular(
+                      16,
+                    ).squircleBorderRadius(context),
+                  ),
+                ),
+              ),
+              Text(
+                'Pilih Tahun',
+                style: MoonTokens.light.typography.heading.text14.copyWith(
+                  color: ConstantColors.foreground2,
+                ),
+              ),
+            ],
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                // Kembali ke Column standar
+                children: List.generate(10, (index) {
+                  final year = DateTime.now().year - index;
+                  return MoonMenuItem(
+                    onTap: () {
+                      setState(() {
+                        _selectedYear = year;
+                      });
+                      Navigator.pop(context);
+                    },
+                    label: Text('$year'),
+                    trailing: year == _selectedYear
+                        ? const Icon(
+                            MoonIcons.generic_check_alternative_32_light,
+                          )
+                        : null,
+                  );
+                }),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPemasukanChart() {
+    return PlotBarChart(
+      title: '📈 Pemasukan',
+      titleTrailing: Text(
+        '$_selectedYear',
+        style: MoonTokens.light.typography.body.text14,
+      ),
+      getTitlesWidget: (value, meta) {
+        const months = [
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'Mei',
+          'Jun',
+          'Jul',
+          'Agt',
+          'Sep',
+          'Okt',
+          'Nov',
+          'Des',
+        ];
+        if (value.toInt() >= 0 && value.toInt() < months.length) {
+          return Text(
+            months[value.toInt()],
+            style: const TextStyle(fontSize: 10),
+          );
+        }
+        return const Text('');
+      },
+      barGroups: List.generate(12, (index) {
+        final pemasukanValues = [
+          8.0,
+          12.0,
+          10.0,
+          15.0,
+          9.0,
+          14.0,
+          11.0,
+          13.0,
+          16.0,
+          10.0,
+          12.0,
+          18.0,
+        ];
+
+        return BarChartGroupData(
+          x: index,
+          barRods: [
+            BarChartRodData(
+              toY: pemasukanValues[index],
+              color: MoonTokens.light.colors.roshi,
+              width: 8,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ],
+        );
+      }),
+    );
+  }
+
+  Widget _buildPengeluaranChart() {
+    return PlotBarChart(
+      title: '📉 Pengeluaran',
+      titleTrailing: Text(
+        '$_selectedYear',
+        style: MoonTokens.light.typography.body.text14,
+      ),
+      getTitlesWidget: (value, meta) {
+        const months = [
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'Mei',
+          'Jun',
+          'Jul',
+          'Agt',
+          'Sep',
+          'Okt',
+          'Nov',
+          'Des',
+        ];
+        if (value.toInt() >= 0 && value.toInt() < months.length) {
+          return Text(
+            months[value.toInt()],
+            style: const TextStyle(fontSize: 10),
+          );
+        }
+        return const Text('');
+      },
+      barGroups: List.generate(12, (index) {
+        final pengeluaranValues = [
+          6.0,
+          10.0,
+          9.0,
+          12.0,
+          7.0,
+          11.0,
+          9.0,
+          10.0,
+          14.0,
+          8.0,
+          10.0,
+          15.0,
+        ];
+
+        return BarChartGroupData(
+          x: index,
+          barRods: [
+            BarChartRodData(
+              toY: pengeluaranValues[index],
+              color: MoonTokens.light.colors.dodoria,
+              width: 8,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ],
+        );
+      }),
+    );
+  }
+
+  List<MenuItem> get menuItems {
+    return [
+      MenuItem(
+        icon: Icons.category_outlined,
+        label: 'Kategori Iuran',
+        onTap: () => context.push('/admin/pemasukan/kategori-iuran'),
+      ),
+      MenuItem(
+        icon: Icons.payments_outlined,
+        label: 'Tagih Iuran',
+        onTap: () => context.push('/admin/pemasukan/tagih-iuran'),
+      ),
+      MenuItem(
+        icon: Icons.receipt_long_outlined,
+        label: 'Tagihan',
+        onTap: () => context.push('/admin/pemasukan/tagihan'),
+      ),
+      MenuItem(
+        icon: Icons.attach_money_outlined,
+        label: 'Pemasukan Lain',
+        onTap: () => context.push('/admin/pemasukan/pemasukan-lain'),
+      ),
+      MenuItem(
+        icon: Icons.list_alt_outlined,
+        label: 'Daftar Pengeluaran',
+        onTap: () => context.push('/admin/pengeluaran/daftar'),
+      ),
+      MenuItem(
+        icon: Icons.trending_down_outlined,
+        label: 'Laporan Pemasukan',
+        onTap: () => context.push('/admin/laporan/semua-pemasukan'),
+      ),
+      MenuItem(
+        icon: Icons.trending_up_outlined,
+        label: 'Laporan Pengeluaran',
+        onTap: () => context.push('/admin/laporan/semua-pengeluaran'),
+      ),
+      MenuItem(
+        icon: Icons.print_outlined,
+        label: 'Cetak Laporan',
+        onTap: () => context.push('/admin/laporan/cetak-laporan'),
+      ),
+      MenuItem(
+        icon: Icons.compare_arrows,
+        label: 'Channel Transfer',
+        onTap: () => context.push('/admin/lainnya/manajemen-channel'),
+      ),
+    ];
+  }
+
+  // --- Widget Utama Build ---
+  @override
+  Widget build(BuildContext context) {
+    final allMenuItems = menuItems;
+    final row1Items = allMenuItems.sublist(0, 2);
+    final row2Items = allMenuItems.sublist(2, 4);
+    final row3Items = allMenuItems.sublist(4, 6);
+    final row4Items = allMenuItems.sublist(6, 8);
+    final row5Items = [allMenuItems[8]];
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF9FAFB),
+      body: AnimatedOpacity(
+        opacity: _opacity,
+        duration: const Duration(milliseconds: 450),
+        curve: Curves.easeOut,
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(24, 30, 24, 80),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Color(0xFF3B82F6),
+                      Color(0xFF6366F1),
+                      Color(0xFF8B5CF6),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(30),
+                    bottomRight: Radius.circular(30),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Dashboard Keuangan",
+                      style: GoogleFonts.poppins(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    const Text(
+                      "Ringkasan arus kas dan transaksi",
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                    ),
+                  ],
+                ),
+              ),
+
+              Transform.translate(
+                offset: const Offset(0, -50),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: totalX(
+                              title: 'Pemasukan',
+                              value: 'Rp 3.500.000',
+                              icon: Icons.trending_up,
+                              iconColor: ConstantColors.primary,
+                              color: Colors.white,
+                              valueColor: ConstantColors.primary,
+                              titleColor: Color(0xFF1F2937),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: totalX(
+                              title: 'Pengeluaran',
+                              value: 'Rp 1.000.000',
+                              icon: Icons.trending_down,
+                              iconColor: Colors.red,
+                              color: Colors.white,
+                              valueColor: ConstantColors.primary,
+                              titleColor: Color(0xFF1F2937),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 36),
+                      // Menu Navigasi
+                      const Text(
+                        'Menu',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF374151),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Baris 1 Menu
+                      Row(
+                        children: [
+                          Expanded(
+                            child: quickButton(
+                              icon: row1Items[0].icon,
+                              label: row1Items[0].label,
+                              onTap: row1Items[0].onTap,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: quickButton(
+                              icon: row1Items[1].icon,
+                              label: row1Items[1].label,
+                              onTap: row1Items[1].onTap,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // Baris 2 Menu
+                      Row(
+                        children: [
+                          Expanded(
+                            child: quickButton(
+                              icon: row2Items[0].icon,
+                              label: row2Items[0].label,
+                              onTap: row2Items[0].onTap,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: quickButton(
+                              icon: row2Items[1].icon,
+                              label: row2Items[1].label,
+                              onTap: row2Items[1].onTap,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // Baris 3 Menu
+                      Row(
+                        children: [
+                          Expanded(
+                            child: quickButton(
+                              icon: row3Items[0].icon,
+                              label: row3Items[0].label,
+                              onTap: row3Items[0].onTap,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: quickButton(
+                              icon: row3Items[1].icon,
+                              label: row3Items[1].label,
+                              onTap: row3Items[1].onTap,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // Baris 4 Menu
+                      Row(
+                        children: [
+                          Expanded(
+                            child: quickButton(
+                              icon: row4Items[0].icon,
+                              label: row4Items[0].label,
+                              onTap: row4Items[0].onTap,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: quickButton(
+                              icon: row4Items[1].icon,
+                              label: row4Items[1].label,
+                              onTap: row4Items[1].onTap,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // Baris 5 Menu
+                      Row(
+                        children: [
+                          Expanded(
+                            child: quickButton(
+                              icon: row5Items[0].icon,
+                              label: row5Items[0].label,
+                              onTap: row5Items[0].onTap,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(child: SizedBox()),
+                        ],
+                      ),
+
+                      const SizedBox(height: 36),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Statistik Keuangan',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF374151),
+                            ),
+                          ),
+                          // Dropdown Tahun
+                          SizedBox(
+                            width: 100,
+                            child: MoonDropdown(
+                              show: false,
+                              content: const SizedBox.shrink(),
+                              child: MoonTextInput(
+                                textInputSize: MoonTextInputSize.md,
+                                readOnly: true,
+                                hintText: _selectedYear.toString(),
+                                onTap: () => bottomSheetBuilder(context),
+                                trailing: Icon(
+                                  MoonIcons
+                                      .controls_vertical_double_chevron_32_light,
+                                  color: ConstantColors.primary,
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Segment Control
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3F4F6),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: _buildSegmentButton('Pemasukan', 0),
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: _buildSegmentButton('Pengeluaran', 1),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Chart dengan AnimatedSwitcher
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        transitionBuilder: (child, animation) {
+                          return FadeTransition(
+                            opacity: animation,
+                            child: child,
+                          );
+                        },
+                        child: _selectedSegment == 0
+                            ? _buildPemasukanChart()
+                            : _buildPengeluaranChart(),
+                      ),
+
+                      const SizedBox(height: 40),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

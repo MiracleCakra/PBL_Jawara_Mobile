@@ -4,12 +4,16 @@ import 'package:go_router/go_router.dart';
 import 'package:jawara_pintar_kel_5/models/kegiatan/aspirasi_model.dart';
 import 'package:jawara_pintar_kel_5/models/kegiatan/broadcast_model.dart';
 import 'package:jawara_pintar_kel_5/models/kegiatan/kegiatan_model.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/marketplace_model.dart'
-    as m_model;
+import 'package:jawara_pintar_kel_5/models/keluarga/anggota_keluarga_model.dart';
 // Models
 import 'package:jawara_pintar_kel_5/models/keluarga/warga_model.dart';
-// Dashboard
-import 'package:jawara_pintar_kel_5/screens/admin/dashboard/dashboard.dart';
+import 'package:jawara_pintar_kel_5/models/keuangan/transaksi_model.dart';
+import 'package:jawara_pintar_kel_5/models/keuangan/warga_tagihan_model.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/marketplace_model.dart'
+    as m_model;
+import 'package:jawara_pintar_kel_5/models/marketplace/order_model.dart'
+    as o_model;
+import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
 // Broadcast
 import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/broadcast/daftar_broadcast.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/broadcast/detail_broadcast_screen.dart';
@@ -51,6 +55,7 @@ import 'package:jawara_pintar_kel_5/screens/admin/laporan/semua_pengeluaran_scre
 // Layout
 import 'package:jawara_pintar_kel_5/screens/admin/layout.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/marketplace/menu_marketplace.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/marketplace/validasi_akun.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/marketplace/validasiproduk.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/detail_pemasukan_lain_screen.dart';
 // Pemasukan
@@ -106,82 +111,74 @@ import 'package:jawara_pintar_kel_5/screens/sekretaris/lainnya/lainnya_menu_scre
 import 'package:jawara_pintar_kel_5/screens/sekretaris/layout.dart';
 
 // +++++++++++  WARGA   +++++++++++
-// layout
+// layout 
 import 'package:jawara_pintar_kel_5/screens/warga/layout_warga.dart';
 // Models
-import 'package:jawara_pintar_kel_5/models/keluarga/anggota_keluarga_model.dart';
-import 'package:jawara_pintar_kel_5/models/keuangan/warga_tagihan_model.dart';
-import 'package:jawara_pintar_kel_5/models/keuangan/transaksi_model.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
+import 'package:jawara_pintar_kel_5/models/keuangan/tagihan_model.dart';
+
 import 'package:jawara_pintar_kel_5/models/marketplace/ReviewModel.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/order_model.dart'
-    as o_model;
-import 'package:jawara_pintar_kel_5/models/marketplace/marketplace_model.dart'
-    as m_model;
+
 
 // Dashboard
 import 'package:jawara_pintar_kel_5/screens/warga/dashboard/dashboard.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/dashboard/laporanpemasukan.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/dashboard/laporanpengeluaran.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/dashboard/detail_laporan_pemasukan.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/dashboard/detail_laporan_pengeluaran.dart';
-
-// Keluarga
-import 'package:jawara_pintar_kel_5/screens/warga/keluarga/keluarga_menu.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/keluarga/daftar_anggota.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/keluarga/profilkeluarga.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/keluarga/detail_anggota.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/keluarga/tambah_anggota.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/keluarga/edit_anggota.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/keluarga/detail_tagihan.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/keluarga/form_pembayaran.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/keluarga/tagihan.dart';
-
-import 'package:jawara_pintar_kel_5/screens/warga/marketplace/marketplace_menu.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/keranjangScreen.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/checkoutscreen.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/homepage.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/detail_produk.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/orderhistoryScreen.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/my_orders.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/buyer_order_detail.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/filterScreen.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/login_akun.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/store_product_detail.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/store_dashboard.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/store_pending_validasi.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/pesanan_store.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/stok_produk_store.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/edit_produk.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/review_store.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/detail_orders.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/pengaturanstore.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/tambah_produk.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/editprofile_toko.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/buat_akun_toko.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/auth_store.dart';
-
-import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/riview_produk.dart';
-
+import 'package:jawara_pintar_kel_5/screens/warga/dashboard/laporanpemasukan.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/dashboard/laporanpengeluaran.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/aspirasiwarga/daftar_aspirasi.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/aspirasiwarga/detail_aspirasi.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/broadcashwarga/broadcash_warga.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/broadcashwarga/detailBroadcash.dart';
 // Kegiatan
 import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/kegiatan_menu.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/kegiatanwarga/daftarkegiatanwarga.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/kegiatanwarga/detailkegiatan.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/broadcashwarga/broadcash_warga.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/broadcashwarga/detailBroadcash.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/aspirasiwarga/daftar_aspirasi.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/aspirasiwarga/detail_aspirasi.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/kirimansaya/daftar_kiriman.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/kirimansaya/detail_kiriman.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/kirimansaya/edit_kiriman.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/kirimansaya/tambah_aspirasi.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/keluarga/daftar_anggota.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/keluarga/detail_anggota.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/keluarga/detail_tagihan.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/keluarga/edit_anggota.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/keluarga/form_pembayaran.dart';
+// Keluarga
+import 'package:jawara_pintar_kel_5/screens/warga/keluarga/keluarga_menu.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/keluarga/profilkeluarga.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/keluarga/tagihan.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/keluarga/tambah_anggota.dart';
+
+// marketplace
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/marketplace_menu.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/checkoutscreen.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/detail_produk.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/my_orders.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/buyer_order_detail.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/filterScreen.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/homepage.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/keranjangScreen.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/orderhistoryScreen.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/riview_produk.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/auth_store.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/buat_akun_toko.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/detail_orders.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/edit_produk.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/editprofile_toko.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/login_akun.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/pengaturanstore.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/pesanan_store.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/review_store.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/stok_produk_store.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/store_dashboard.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/store_pending_validasi.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/store_product_detail.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/tambah_produk.dart';
 
 // Profil
 import 'package:jawara_pintar_kel_5/screens/warga/profil/profil_menu.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/profil/profil_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/profil/pengaturan_akun.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/profil/reset_pw_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/profil/pusat_bantuan.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/profil/reset_pw_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/profil/tentang_apk.dart';
 
 // ================= Dummy Class (Placeholder) =================
@@ -223,24 +220,9 @@ final router = GoRouter(
         StatefulShellBranch(
           routes: [
             GoRoute(
-              path: '/admin/dashboard',
-              name: 'admin_dashboard',
-              builder: (context, state) => AdminDashboard(),
-            ),
-            GoRoute(
-              path: '/edit-profile',
-              name: 'editProfile',
-              builder: (context, state) => const EditProfileScreen(),
-            ),
-          ],
-        ),
-
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
               path: '/admin/penduduk',
               name: 'pendudukMenu',
-              builder: (context, state) => const PendudukMenuScreen(),
+              builder: (context, state) => const DashboardPendudukPage(),
               routes: [
                 GoRoute(
                   path: 'daftar-warga',
@@ -340,7 +322,7 @@ final router = GoRouter(
           routes: [
             GoRoute(
               path: '/admin/keuangan',
-              builder: (context, state) => const KeuanganMenuScreen(),
+              builder: (context, state) => const Keuangan(),
             ),
             GoRoute(
               path: '/admin/pemasukan',
@@ -410,12 +392,17 @@ final router = GoRouter(
             GoRoute(
               path: '/admin/marketplace',
               name: 'marketplaceMenu',
-              builder: (context, state) => const MarketplaceMenuScreen(),
+              builder: (context, state) => const Marketplace(),
             ),
             GoRoute(
               path: '/admin/marketplace/validasiproduk',
               name: 'validasiProdukList',
               builder: (context, state) => const ValidasiProdukBaruScreen(),
+            ),
+            GoRoute(
+              path: '/admin/marketplace/validasiakuntoko',
+              name: 'validasiAkunToko',
+              builder: (context, state) => const ValidasiAkunTokoScreen(),
             ),
             GoRoute(
               path: '/admin/marketplace/detail',
@@ -1625,7 +1612,7 @@ final router = GoRouter(
                 GoRoute(
                   path: 'pengaturan',
                   name: 'WargaPengaturanAkun',
-                  builder: (context, state) => const PengaturanAkunScreen(),
+                  builder: (context, state) => const MyStoreSettingsScreen(),
                   routes: [
                     GoRoute(
                       path: 'ganti-password',

@@ -13,7 +13,7 @@ class MarketplaceMenuWarga extends StatelessWidget {
 
     switch (status) {
       case 2:
-        // Sudah punya toko, langsung ke dashboard toko
+        // Sudah punya toko
         context.goNamed('WargaMarketplaceStore');
         break;
       case 1:

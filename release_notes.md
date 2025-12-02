@@ -1,34 +1,32 @@
-# Release Notes - Version 1.3.0
+# Release Notes - Version 1.4.0
 
 ## 🚀 New Features:
 
-* **Supabase Integration for Data Management**:
+* **Admin UI Revamp (Full Frontend Update)**:
 
-  * Integrated Supabase client for dynamic data handling across multiple pages.
-  * Replaced static family data with dynamic data from Supabase in **DaftarMutasiKeluargaPage**.
-  * Enabled real-time family member data fetching in **DetailKeluargaPage** via Supabase.
-  * Enhanced **TambahMutasiKeluargaPage** to dynamically load family names from Supabase.
-  * Updated **DaftarRumahPage** to fetch house data dynamically from Supabase.
+  * Redesigned all admin menu pages with a more consistent and modern UI.
+  * Updated color schemes, layout structure, and component styling across all menus.
+  * improved visual hierarchy and spacing for better readability and user experience.
 
-* **House Management Updates**:
+* **Navigation & Layout**:
 
-  * Implemented house record deletion in **DetailRumahPage** using Supabase.
-  * Added house editing functionality in **EditRumahPage** with Supabase integration.
-  * Enabled house creation in **TambahRumahPage** through Supabase.
+  * Updated sidebar and topbar design for better navigation flow.
+  * Enhanced page transitions and interaction feedback for all admin pages.
 
-* **CI/CD Pipeline**:
-
-  * Introduced automated CI/CD pipelines for continuous testing and APK building.
+* **Responsive Design Improvements:**
+  * Optimized all admin screens to improve layout scaling on various Android device sizes.
+  * Implemented adaptive UI widgets to prevent overflow and layout shifting.
 
 ## 🐛 Bug Fixes:
 
-* Fixed issue with versioning and distribution that caused incorrect versioning in the APK.
-* Resolved minor UI bug affecting the home screen layout on Android devices.
+* Resolved multiple UI alignment issues across admin menus.
+* Fixed overflow text and misaligned widgets on small devices.
+* Corrected inconsistent spacing, padding, and button sizes.
+* Fixed icon rendering issues on the admin dashboard.
 
 ## 🔧 Miscellaneous:
 
-* Updated release notes to reflect new features and improvements in version 1.3.0.
-* Updated dependencies for better performance and security.
-* Improved build times by optimizing Flutter build configurations.
+* Refactored UI code across admin pages for cleaner structure and easier maintenance.
+* Updated global theme (typography, color palette, and spacing).
 
 <!-- For more details, visit our [documentation](https://link-to-docs.com). -->

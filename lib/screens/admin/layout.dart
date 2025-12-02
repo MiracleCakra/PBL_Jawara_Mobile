@@ -5,7 +5,6 @@ import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
 import 'package:jawara_pintar_kel_5/constants/iconify.dart';
 import 'package:jawara_pintar_kel_5/widget/bottom_app_bar_item.dart';
 import 'package:jawara_pintar_kel_5/widget/system_ui_style.dart';
-import 'package:moon_design/moon_design.dart';
 
 class AdminLayout extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
@@ -26,7 +25,6 @@ class _AdminLayoutState extends State<AdminLayout>
       Iconify(icon, size: 24, color: color);
 
   final Map<String, String> tabs = {
-    'Rumah': '',
     'Penduduk': IconifyConstants.fluentPeopleLight,
     'Keuangan': IconifyConstants.letsIconMoneyLight,
     'Marketplace': IconifyConstants.storeIconFlat,
@@ -59,9 +57,9 @@ class _AdminLayoutState extends State<AdminLayout>
   Widget build(BuildContext context) {
     return SystemUiStyle(
       backgroundColor:
-          widget.navigationShell.currentIndex == 1 ||
-              widget.navigationShell.currentIndex == 2 ||
-              widget.navigationShell.currentIndex == 3
+          widget.navigationShell.currentIndex == 0 ||
+              widget.navigationShell.currentIndex == 1 ||
+              widget.navigationShell.currentIndex == 2
           ? Colors.white
           : Colors.transparent,
       systemNavigationBarColor: Colors.white,
@@ -78,15 +76,13 @@ class _AdminLayoutState extends State<AdminLayout>
             children: List.generate(
               tabs.length,
               (index) => BottomAppBarItem(
-                icon: index == 0
-                    ? Icon(MoonIcons.generic_home_32_regular)
-                    : Iconify(
-                        tabs.values.elementAt(index),
-                        size: 24,
-                        color: widget.navigationShell.currentIndex == index
-                            ? ConstantColors.primary
-                            : Colors.black,
-                      ),
+                icon: Iconify(
+                  tabs.values.elementAt(index),
+                  size: 24,
+                  color: widget.navigationShell.currentIndex == index
+                      ? ConstantColors.primary
+                      : Colors.black,
+                ),
                 label: tabs.keys.elementAt(index),
                 active: widget.navigationShell.currentIndex == index,
                 onTap: () => _goTo(index),

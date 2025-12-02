@@ -1,7 +1,14 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
+import 'package:jawara_pintar_kel_5/models/pie_card_model.dart';
+import 'package:jawara_pintar_kel_5/widget/plot_bar_chart.dart';
+import 'package:jawara_pintar_kel_5/widget/plot_pie_card.dart';
+import 'package:moon_design/moon_design.dart';
 
-// Model menu item (dipertahankan)
+// Model menu item
 class MenuItem {
   final IconData icon;
   final String label;
@@ -10,238 +17,154 @@ class MenuItem {
   MenuItem({required this.icon, required this.label, required this.onTap});
 }
 
-class KegiatanScreen extends StatelessWidget {
+class KegiatanScreen extends StatefulWidget {
   const KegiatanScreen({super.key});
 
-  final pesanWargaPath = '/admin/kegiatan/pesanwarga';
-  final logAktivitasPath = '/admin/kegiatan/logaktivitas';
-  
-  static const List<Color> _gradientKegiatan = [Color(0xFF4E46B4), Color(0xFF6366F1)]; 
-  static const List<Color> _gradientBroadcast = [Color(0xFF6366F1), Color(0xFF8B5CF6)];
-  static const List<Color> _gradientPesanWarga = [Color(0xFF8B5CF6), Color(0xFFA855F7)];
-  static const List<Color> _gradientLogAktivitas = [Color(0xFFA855F7), Color(0xFFC084FC)];
+  @override
+  State<KegiatanScreen> createState() => _KegiatanScreenState();
+}
+
+class _KegiatanScreenState extends State<KegiatanScreen> {
+  double _opacity = 0;
+  int _selectedSegment = 0; // 0: Per Kategori, 1: Per Bulan
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        centerTitle: false,
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        automaticallyImplyLeading: false,
-        title: const Text(
-          'Kegiatan',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-      ),
-      body: Container(
-        color: const Color(0xFFF8F9FA),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Pilih Menu',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.black54,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              /// ========================== KEGIATAN ==========================
-              _buildMenuCard(
-                context,
-                icon: Icons.event,
-                title: 'Kegiatan',
-                subtitle: 'Kelola data kegiatan',
-                gradientColors: _gradientKegiatan, 
-                onTapCard: null, 
-                menuItems: [
-                  MenuItem(
-                    icon: Icons.list_alt,
-                    label: 'Daftar',
-                    onTap: () => context.push('/admin/kegiatan/daftar'),
-                  ),
-                  MenuItem(
-                    icon: Icons.add_circle_outline,
-                    label: 'Tambah',
-                    onTap: () => context.push('/admin/kegiatan/tambah'),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-
-              /// ========================== BROADCAST ==========================
-              _buildMenuCard(
-                context,
-                icon: Icons.campaign,
-                title: 'Broadcast',
-                subtitle: 'Kelola data broadcast',
-                gradientColors: _gradientBroadcast, 
-                onTapCard: null, 
-                menuItems: [
-                  MenuItem(
-                    icon: Icons.list_alt_outlined,
-                    label: 'Daftar',
-                    onTap: () => context.push('/admin/kegiatan/broadcast/daftar'),
-                  ),
-                  MenuItem(
-                    icon: Icons.add_circle_outline,
-                    label: 'Tambah',
-                    onTap: () => context.push('/admin/kegiatan/broadcast/tambah'), 
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-
-              /// ========================== PESAN WARGA (Direct Click) ==========================
-              _buildMenuCard(
-                context,
-                icon: Icons.message,
-                title: 'Pesan Warga',
-                subtitle: 'Kelola pesan warga',
-                gradientColors: _gradientPesanWarga, 
-                onTapCard: () => context.push(pesanWargaPath),
-                menuItems: const [],
-              ),
-
-              const SizedBox(height: 20),
-
-              /// ========================== LOG AKTIVITAS (Direct Click) ==========================
-              _buildMenuCard(
-                context,
-                icon: Icons.history,
-                title: 'Log Aktivitas',
-                subtitle: 'Jejak aktivitas pengguna',
-                gradientColors: _gradientLogAktivitas, 
-                onTapCard: () => context.push(logAktivitasPath),
-                menuItems: const [],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(milliseconds: 180), () {
+      if (mounted) setState(() => _opacity = 1);
+    });
   }
 
-  Widget _buildMenuCard(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required List<Color> gradientColors,
-    required List<MenuItem> menuItems,
-    VoidCallback? onTapCard, 
-  }) {
-    final bool hasSubMenus = menuItems.isNotEmpty;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: hasSubMenus ? null : onTapCard, 
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: gradientColors,
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+  Widget _buildSegmentButton(String label, int index) {
+    final isSelected = _selectedSegment == index;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      child: Material(
+        color: isSelected ? ConstantColors.primary : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          onTap: () {
+            setState(() {
+              _selectedSegment = index;
+            });
+          },
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            alignment: Alignment.center,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? Colors.white : Colors.grey[700],
+              ),
+              textAlign: TextAlign.center,
             ),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: gradientColors[0].withOpacity(0.35),
-                blurRadius: 16,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header Card
-              Padding(
-                padding: EdgeInsets.fromLTRB(24, 24, 24, hasSubMenus ? 0 : 24), 
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.25),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.3),
-                          width: 1.5,
-                        ),
-                      ),
-                      child: Icon(icon, color: Colors.white, size: 32),
-                    ),
-                    const SizedBox(width: 20),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            subtitle,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.white.withOpacity(0.9),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // ⭐ PERUBAHAN DI SINI: Ikon Panah Bulat Tanpa Border
-                    if (!hasSubMenus) 
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.25),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.chevron_right,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-
-              if (hasSubMenus) ...[
-                const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: Center(
-                    child: _buildFixedMenuGrid(context, menuItems),
-                  ),
-                ),
-                const SizedBox(height: 24),
-              ],
-            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildGridIconButton({
+  Widget _buildKategoriChart() {
+    return PlotPieCard(
+      title: 'Distribusi Kategori Kegiatan',
+      data: [
+        PieCardModel(
+          label: 'Komunitas & Sosial',
+          data: PieChartSectionData(
+            value: 40,
+            color: ConstantColors.primary,
+            radius: 40,
+            showTitle: false,
+          ),
+        ),
+        PieCardModel(
+          label: 'Keamanan',
+          data: PieChartSectionData(
+            value: 35,
+            color: ConstantColors.primary.withOpacity(0.7),
+            radius: 40,
+            showTitle: false,
+          ),
+        ),
+        PieCardModel(
+          label: 'Lainnya',
+          data: PieChartSectionData(
+            value: 25,
+            color: ConstantColors.primary.withOpacity(0.4),
+            radius: 40,
+            showTitle: false,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBulanChart() {
+    return PlotBarChart(
+      title: '📅 Grafik Kegiatan Bulanan',
+      titleTrailing: Text(
+        '${DateTime.now().year}',
+        style: MoonTokens.light.typography.body.text14,
+      ),
+      getTitlesWidget: (value, meta) {
+        const months = [
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'Mei',
+          'Jun',
+          'Jul',
+          'Agt',
+          'Sep',
+          'Okt',
+          'Nov',
+          'Des',
+        ];
+        if (value.toInt() >= 0 && value.toInt() < months.length) {
+          return Text(
+            months[value.toInt()],
+            style: const TextStyle(fontSize: 10),
+          );
+        }
+        return const Text('');
+      },
+      barGroups: List.generate(12, (index) {
+        final kegiatanValues = [
+          5.0,
+          8.0,
+          6.0,
+          10.0,
+          7.0,
+          12.0,
+          9.0,
+          11.0,
+          14.0,
+          8.0,
+          10.0,
+          15.0,
+        ];
+        return BarChartGroupData(
+          x: index,
+          barRods: [
+            BarChartRodData(
+              toY: kegiatanValues[index],
+              color: ConstantColors.primary,
+              width: 8,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ],
+        );
+      }),
+    );
+  }
+
+  // Quick Button (Menu Grid)
+  Widget quickButton({
     required IconData icon,
     required String label,
     required VoidCallback onTap,
@@ -250,40 +173,41 @@ class KegiatanScreen extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Container(
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.18),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.3),
-            width: 1,
-          ),
+          border: Border.all(color: Colors.grey.withOpacity(0.2), width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.25),
-                borderRadius: BorderRadius.circular(10),
+                color: ConstantColors.primary.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: Colors.white, size: 22),
+              child: Icon(icon, color: ConstantColors.primary, size: 24),
             ),
             const SizedBox(height: 6),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 3),
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 10,
-                  color: Colors.white,
-                  height: 1.1,
-                  fontWeight: FontWeight.w500,
-                ),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1F2937),
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -291,27 +215,363 @@ class KegiatanScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFixedMenuGrid(BuildContext context, List<MenuItem> items) {
-    // ... (Fungsi ini tidak diubah)
-    const tileWidth = 86.0;
-    const tileHeight = 76.0;
-    const spacing = 10.0;
+  Widget totalCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color iconColor,
+    required Color color,
+    required Color valueColor,
+    required Color titleColor,
+  }) {
+    return Expanded(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isSmall = constraints.maxWidth < 100;
+          return Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: isSmall ? 8 : 10,
+              vertical: isSmall ? 10 : 12,
+            ),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.withOpacity(0.2), width: 1),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: isSmall ? 18 : 20,
+                      fontWeight: FontWeight.w900,
+                      color: valueColor,
+                    ),
+                  ),
+                ),
+                SizedBox(height: isSmall ? 4 : 6),
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: isSmall ? 10 : 11,
+                    color: titleColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
 
-    return Wrap(
-      spacing: spacing,
-      runSpacing: spacing,
-      alignment: WrapAlignment.center,
-      children: items.map((item) {
-        return SizedBox(
-          width: tileWidth,
-          height: tileHeight,
-          child: _buildGridIconButton(
-            icon: item.icon,
-            label: item.label,
-            onTap: item.onTap,
+  // Daftar menu items
+  List<MenuItem> get menuItems {
+    return [
+      MenuItem(
+        icon: Icons.list_alt,
+        label: 'Daftar Kegiatan',
+        onTap: () => context.push('/admin/kegiatan/daftar'),
+      ),
+      MenuItem(
+        icon: Icons.campaign_outlined,
+        label: 'Daftar Broadcast',
+        onTap: () => context.push('/admin/kegiatan/broadcast/daftar'),
+      ),
+      MenuItem(
+        icon: Icons.message_outlined,
+        label: 'Pesan Warga',
+        onTap: () => context.push('/admin/kegiatan/pesanwarga'),
+      ),
+      MenuItem(
+        icon: Icons.history,
+        label: 'Log Aktivitas',
+        onTap: () => context.push('/admin/kegiatan/logaktivitas'),
+      ),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final allMenuItems = menuItems;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF9FAFB),
+      body: AnimatedOpacity(
+        opacity: _opacity,
+        duration: const Duration(milliseconds: 450),
+        curve: Curves.easeOut,
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              // Header Gradient
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(24, 30, 24, 80),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Color(0xFF3B82F6),
+                      Color(0xFF6366F1),
+                      Color(0xFF8B5CF6),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(30),
+                    bottomRight: Radius.circular(30),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Dashboard Kegiatan",
+                      style: GoogleFonts.poppins(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    const Text(
+                      "Ringkasan kegiatan dan aktivitas warga",
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                    ),
+                  ],
+                ),
+              ),
+
+              Transform.translate(
+                offset: const Offset(0, -60),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Card Ringkasan Kegiatan
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.12),
+                              blurRadius: 18,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.event_note,
+                                  color: ConstantColors.primary,
+                                  size: 24,
+                                ),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Kegiatan',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF374151),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                const Text(
+                                  'Total:',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Color.fromARGB(255, 62, 62, 63),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '15',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w900,
+                                    color: ConstantColors.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                totalCard(
+                                  title: 'Sudah Lewat',
+                                  value: '5',
+                                  icon: Icons.history,
+                                  iconColor: const Color(0xFF9CA3AF),
+                                  color: Colors.white,
+                                  valueColor: ConstantColors.primary,
+                                  titleColor: const Color(0xFF1F2937),
+                                ),
+                                const SizedBox(width: 10),
+                                totalCard(
+                                  title: 'Hari Ini',
+                                  value: '3',
+                                  icon: Icons.today,
+                                  iconColor: const Color(0xFF3B82F6),
+                                  color: Colors.white,
+                                  valueColor: ConstantColors.primary,
+                                  titleColor: const Color(0xFF1F2937),
+                                ),
+                                const SizedBox(width: 10),
+                                totalCard(
+                                  title: 'Akan Datang',
+                                  value: '7',
+                                  icon: Icons.upcoming,
+                                  iconColor: const Color(0xFF10B981),
+                                  color: Colors.white,
+                                  valueColor: ConstantColors.primary,
+                                  titleColor: const Color(0xFF1F2937),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 36),
+
+                      // Menu Section
+                      const Text(
+                        'Menu',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF374151),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Grid Menu 2x2
+                      Row(
+                        children: [
+                          Expanded(
+                            child: quickButton(
+                              icon: allMenuItems[0].icon,
+                              label: allMenuItems[0].label,
+                              onTap: allMenuItems[0].onTap,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: quickButton(
+                              icon: allMenuItems[1].icon,
+                              label: allMenuItems[1].label,
+                              onTap: allMenuItems[1].onTap,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: quickButton(
+                              icon: allMenuItems[2].icon,
+                              label: allMenuItems[2].label,
+                              onTap: allMenuItems[2].onTap,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: quickButton(
+                              icon: allMenuItems[3].icon,
+                              label: allMenuItems[3].label,
+                              onTap: allMenuItems[3].onTap,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 36),
+
+                      // Statistik Kegiatan
+                      const Text(
+                        'Statistik Kegiatan',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF374151),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Segment Control
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3F4F6),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: _buildSegmentButton('Per Kategori', 0),
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: _buildSegmentButton('Per Bulan', 1),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Chart dengan AnimatedSwitcher
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        transitionBuilder: (child, animation) {
+                          return FadeTransition(
+                            opacity: animation,
+                            child: child,
+                          );
+                        },
+                        child: _selectedSegment == 0
+                            ? _buildKategoriChart()
+                            : _buildBulanChart(),
+                      ),
+
+                      const SizedBox(height: 40),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        );
-      }).toList(),
+        ),
+      ),
     );
   }
 }

@@ -59,7 +59,6 @@ class MyStoreSettingsScreen extends StatelessWidget {
           color: errorColor,
           showArrow: false,
           onTap: () {
-            // Tampilkan konfirmasi sebelum hapus akun
             showDialog(
               context: context,
               builder: (context) => AlertDialog(

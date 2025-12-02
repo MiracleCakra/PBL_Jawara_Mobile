@@ -10,6 +10,9 @@ class PenerimaanWarga {
   final String status; // diterima, nonaktif, pending, ditolak
   final String? email;
   final String? foto;
+  final String? alamatRumah;
+  final String? namaKeluarga;
+  final String? anggotaKeluarga;
 
   const PenerimaanWarga({
     required this.nama,
@@ -18,6 +21,9 @@ class PenerimaanWarga {
     required this.status,
     this.email,
     this.foto,
+    this.alamatRumah,
+    this.namaKeluarga,
+    this.anggotaKeluarga,
   });
 
   // Get status color
@@ -101,6 +107,9 @@ class _DaftarPenerimaanWargaPageState extends State<DaftarPenerimaanWargaPage> {
             status: item['status_penerimaan'] ?? '',
             email: item['email'] ?? '',
             foto: item['foto_ktp'] ?? '',
+            alamatRumah: item['alamat_rumah'] ?? '',
+            namaKeluarga: item['nama_keluarga'] ?? '',
+            anggotaKeluarga: item['anggota_keluarga'] ?? '',
           );
         }).toList();
       });
@@ -111,64 +120,64 @@ class _DaftarPenerimaanWargaPageState extends State<DaftarPenerimaanWargaPage> {
   }
 
   // Sample data
-  // final List<PenerimaanWarga> _allPenerimaan = const [
-  //   PenerimaanWarga(
-  //     nama: 'Ahmad Hidayat',
-  //     nik: '3201012501950001',
-  //     jenisKelamin: 'Laki-laki',
-  //     status: 'Pending',
-  //     email: 'ahmad.hidayat@gmail.com',
-  //   ),
-  //   PenerimaanWarga(
-  //     nama: 'Siti Nurhaliza',
-  //     nik: '3201012502960002',
-  //     jenisKelamin: 'Perempuan',
-  //     status: 'Diterima',
-  //     email: 'siti.nurhaliza@gmail.com',
-  //   ),
-  //   PenerimaanWarga(
-  //     nama: 'Budi Santoso',
-  //     nik: '3201012503970003',
-  //     jenisKelamin: 'Laki-laki',
-  //     status: 'Ditolak',
-  //     email: 'budi.santoso@gmail.com',
-  //   ),
-  //   PenerimaanWarga(
-  //     nama: 'Dewi Lestari',
-  //     nik: '3201012504980004',
-  //     jenisKelamin: 'Perempuan',
-  //     status: 'Pending',
-  //     email: 'dewi.lestari@gmail.com',
-  //   ),
-  //   PenerimaanWarga(
-  //     nama: 'Rudi Hartono',
-  //     nik: '3201012505990005',
-  //     jenisKelamin: 'Laki-laki',
-  //     status: 'Diterima',
-  //     email: 'rudi.hartono@gmail.com',
-  //   ),
-  //   PenerimaanWarga(
-  //     nama: 'Maya Kartika',
-  //     nik: '3201012506000006',
-  //     jenisKelamin: 'Perempuan',
-  //     status: 'Nonaktif',
-  //     email: 'maya.kartika@gmail.com',
-  //   ),
-  //   PenerimaanWarga(
-  //     nama: 'Andi Wijaya',
-  //     nik: '3201012507010007',
-  //     jenisKelamin: 'Laki-laki',
-  //     status: 'Pending',
-  //     email: 'andi.wijaya@gmail.com',
-  //   ),
-  //   PenerimaanWarga(
-  //     nama: 'Rina Susanti',
-  //     nik: '3201012508020008',
-  //     jenisKelamin: 'Perempuan',
-  //     status: 'Diterima',
-  //     email: 'rina.susanti@gmail.com',
-  //   ),
-  // ];
+  /*final List<PenerimaanWarga> _allPenerimaan = const [
+    PenerimaanWarga(
+      nama: 'Ahmad Hidayat',
+      nik: '3201012501950001',
+      jenisKelamin: 'Laki-laki',
+      status: 'Pending',
+      email: 'ahmad.hidayat@gmail.com',
+    ),
+    PenerimaanWarga(
+      nama: 'Siti Nurhaliza',
+      nik: '3201012502960002',
+      jenisKelamin: 'Perempuan',
+      status: 'Diterima',
+      email: 'siti.nurhaliza@gmail.com',
+    ),
+    PenerimaanWarga(
+      nama: 'Budi Santoso',
+      nik: '3201012503970003',
+      jenisKelamin: 'Laki-laki',
+      status: 'Ditolak',
+      email: 'budi.santoso@gmail.com',
+    ),
+    PenerimaanWarga(
+      nama: 'Dewi Lestari',
+      nik: '3201012504980004',
+      jenisKelamin: 'Perempuan',
+      status: 'Pending',
+      email: 'dewi.lestari@gmail.com',
+    ),
+    PenerimaanWarga(
+      nama: 'Rudi Hartono',
+      nik: '3201012505990005',
+      jenisKelamin: 'Laki-laki',
+      status: 'Diterima',
+      email: 'rudi.hartono@gmail.com',
+    ),
+    PenerimaanWarga(
+      nama: 'Maya Kartika',
+      nik: '3201012506000006',
+      jenisKelamin: 'Perempuan',
+      status: 'Nonaktif',
+      email: 'maya.kartika@gmail.com',
+    ),
+    PenerimaanWarga(
+      nama: 'Andi Wijaya',
+      nik: '3201012507010007',
+      jenisKelamin: 'Laki-laki',
+      status: 'Pending',
+      email: 'andi.wijaya@gmail.com',
+    ),
+    PenerimaanWarga(
+      nama: 'Rina Susanti',
+      nik: '3201012508020008',
+      jenisKelamin: 'Perempuan',
+      status: 'Diterima',
+      email: 'rina.susanti@gmail.com',
+    ),
+  ];*/
 
   List<PenerimaanWarga> get _filteredPenerimaan {
     return _allPenerimaan.where((penerimaan) {
