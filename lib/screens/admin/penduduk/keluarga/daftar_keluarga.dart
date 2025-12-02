@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Model for Keluarga Data
 class Keluarga {
@@ -7,13 +8,43 @@ class Keluarga {
   final String kepalaKeluarga;
   final String alamat;
   final String status; // aktif, nonaktif
+  final String? alasanMutasi;
+  final String? jenisMutasi;
+  final String? tanggalMutasi;
+  final String? statusKepemiikan;
+  final String pemilik;
+  final String? alamatLama;
 
   const Keluarga({
     required this.namaKeluarga,
     required this.kepalaKeluarga,
     required this.alamat,
     required this.status,
+    required this.pemilik,
+    this.alasanMutasi,
+    this.jenisMutasi,
+    this.tanggalMutasi,
+    this.statusKepemiikan,
+    this.alamatLama,
   });
+
+  static fetchKeluarga(supabase) async {
+    try {
+      // -- TAMBAHKAN PRINT UNTUK DEBUGGING --
+      debugPrint(
+        "Mencoba memuat data Keluarga. Status login: ${supabase.auth.currentUser?.email ?? 'Tidak Login'}",
+      );
+      // ------------------------------------
+      final response = await Supabase.instance.client
+          .from('keluarga')
+          .select('*, rumah!alamat_rumah(*), warga!kepala_keluarga_id(nama)');
+
+      // print("Data fetched successfully: $response");
+      return response;
+    } catch (e) {
+      debugPrint("Gagal memuat data warga: $e");
+    }
+  }
 
   // Get status color
   Color get statusColor {
@@ -49,62 +80,93 @@ class DaftarKeluargaPage extends StatefulWidget {
 
 class _DaftarKeluargaPageState extends State<DaftarKeluargaPage> {
   static const Color _primaryColor = Color(0xFF4E46B4);
+  late final SupabaseClient supabase;
+  late Keluarga keluarga;
 
   final TextEditingController _searchController = TextEditingController();
   String? _selectedStatus;
   String? _selectedRumah;
 
+  List<Keluarga> _allKeluarga = [];
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch data when the page is initialized
+    supabase = Supabase.instance.client;
+    _loadKeluargaData();
+  }
+
+  _loadKeluargaData() async {
+    final response = await Keluarga.fetchKeluarga(supabase);
+    setState(() {
+      _allKeluarga = response.map<Keluarga>((item) {
+        return Keluarga(
+          namaKeluarga: item['nama_keluarga'],
+          kepalaKeluarga: item['warga']['nama'],
+          alamat: item['rumah']['alamat'] ?? '',
+          status: item['status_keluarga'] ?? '',
+          pemilik: item['status_kepemilikan'] ?? '',
+          alasanMutasi: item['alasan_mutasi'] ?? '',
+          jenisMutasi: item['jenis_mutasi'] ?? '',
+          tanggalMutasi: item['tanggal_mutasi'] ?? '',
+          statusKepemiikan: item['status_kepemilikan'] ?? '',
+          alamatLama: item['alamat_lama'] ?? '',
+        );
+      }).toList();
+    });
+  }
   // Sample data
-  final List<Keluarga> _allKeluarga = const [
-    Keluarga(
-      namaKeluarga: 'Keluarga Hidayat',
-      kepalaKeluarga: 'Ahmad Hidayat',
-      alamat: 'Blok A No. 1',
-      status: 'Aktif',
-    ),
-    Keluarga(
-      namaKeluarga: 'Keluarga Santoso',
-      kepalaKeluarga: 'Budi Santoso',
-      alamat: 'Blok A No. 5',
-      status: 'Aktif',
-    ),
-    Keluarga(
-      namaKeluarga: 'Keluarga Lestari',
-      kepalaKeluarga: 'Dewi Lestari',
-      alamat: 'Blok B No. 3',
-      status: 'Nonaktif',
-    ),
-    Keluarga(
-      namaKeluarga: 'Keluarga Hartono',
-      kepalaKeluarga: 'Rudi Hartono',
-      alamat: 'Blok B No. 7',
-      status: 'Aktif',
-    ),
-    Keluarga(
-      namaKeluarga: 'Keluarga Kartika',
-      kepalaKeluarga: 'Maya Kartika',
-      alamat: 'Blok C No. 2',
-      status: 'Aktif',
-    ),
-    Keluarga(
-      namaKeluarga: 'Keluarga Wijaya',
-      kepalaKeluarga: 'Andi Wijaya',
-      alamat: 'Blok C No. 8',
-      status: 'Nonaktif',
-    ),
-    Keluarga(
-      namaKeluarga: 'Keluarga Susanti',
-      kepalaKeluarga: 'Rina Susanti',
-      alamat: 'Blok D No. 4',
-      status: 'Aktif',
-    ),
-    Keluarga(
-      namaKeluarga: 'Keluarga Pratama',
-      kepalaKeluarga: 'Dodi Pratama',
-      alamat: 'Blok D No. 6',
-      status: 'Aktif',
-    ),
-  ];
+  // final List<Keluarga> _allKeluarga = const [
+  //   Keluarga(
+  //     namaKeluarga: 'Keluarga Hidayat',
+  //     kepalaKeluarga: 'Ahmad Hidayat',
+  //     alamat: 'Blok A No. 1',
+  //     status: 'Aktif',
+  //   ),
+  //   Keluarga(
+  //     namaKeluarga: 'Keluarga Santoso',
+  //     kepalaKeluarga: 'Budi Santoso',
+  //     alamat: 'Blok A No. 5',
+  //     status: 'Aktif',
+  //   ),
+  //   Keluarga(
+  //     namaKeluarga: 'Keluarga Lestari',
+  //     kepalaKeluarga: 'Dewi Lestari',
+  //     alamat: 'Blok B No. 3',
+  //     status: 'Nonaktif',
+  //   ),
+  //   Keluarga(
+  //     namaKeluarga: 'Keluarga Hartono',
+  //     kepalaKeluarga: 'Rudi Hartono',
+  //     alamat: 'Blok B No. 7',
+  //     status: 'Aktif',
+  //   ),
+  //   Keluarga(
+  //     namaKeluarga: 'Keluarga Kartika',
+  //     kepalaKeluarga: 'Maya Kartika',
+  //     alamat: 'Blok C No. 2',
+  //     status: 'Aktif',
+  //   ),
+  //   Keluarga(
+  //     namaKeluarga: 'Keluarga Wijaya',
+  //     kepalaKeluarga: 'Andi Wijaya',
+  //     alamat: 'Blok C No. 8',
+  //     status: 'Nonaktif',
+  //   ),
+  //   Keluarga(
+  //     namaKeluarga: 'Keluarga Susanti',
+  //     kepalaKeluarga: 'Rina Susanti',
+  //     alamat: 'Blok D No. 4',
+  //     status: 'Aktif',
+  //   ),
+  //   Keluarga(
+  //     namaKeluarga: 'Keluarga Pratama',
+  //     kepalaKeluarga: 'Dodi Pratama',
+  //     alamat: 'Blok D No. 6',
+  //     status: 'Aktif',
+  //   ),
+  // ];
 
   // Sample rumah options for dropdown
   final List<String> _rumahOptions = [

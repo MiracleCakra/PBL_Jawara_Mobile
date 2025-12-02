@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/penduduk/rumah/daftar_rumah.dart';
 import 'package:jawara_pintar_kel_5/widget/moon_result_modal.dart';
 import 'package:moon_design/moon_design.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class DetailRumahPage extends StatelessWidget {
   final Rumah rumah;
@@ -29,7 +30,7 @@ class DetailRumahPage extends StatelessWidget {
         ),
         actions: [
           _MoreMenu(
-            rumahAddress: rumah.address,
+            rumahAddress: rumah.alamat,
             rumah: rumah,
             onEdit: () {
               context.pushNamed('rumahEdit', extra: rumah);
@@ -39,19 +40,37 @@ class DetailRumahPage extends StatelessWidget {
                 context: context,
                 title: 'Hapus Data Rumah?',
                 message:
-                    'Apakah Anda yakin ingin menghapus data rumah "${rumah.address}"? Data yang sudah dihapus tidak dapat dikembalikan.',
+                    'Apakah Anda yakin ingin menghapus data rumah "${rumah.alamat}"? Data yang sudah dihapus tidak dapat dikembalikan.',
               );
               if (confirmed == true) {
-                // TODO: Call delete service here
-                await showResultModal(
-                  context,
-                  type: ResultType.success,
-                  title: 'Berhasil',
-                  description: 'Data rumah "${rumah.address}" telah dihapus.',
-                  actionLabel: 'Selesai',
-                  autoProceed: true,
-                );
-                if (context.mounted) Navigator.of(context).pop();
+                // Call delete service here (Supabase)
+                try {
+                  // Delete row(s) where alamat equals the rumah.alamat
+                  await Supabase.instance.client
+                      .from('rumah')
+                      .delete()
+                      .eq('alamat', rumah.alamat);
+                  // Show success modal and return a positive result to caller
+                  await showResultModal(
+                    context,
+                    type: ResultType.success,
+                    title: 'Berhasil',
+                    description: 'Data rumah "${rumah.alamat}" telah dihapus.',
+                    actionLabel: 'Selesai',
+                    autoProceed: true,
+                  );
+                  if (context.mounted)
+                    Navigator.of(context).pop(true); // return true
+                } catch (e) {
+                  // Show error modal and do not pop
+                  await showResultModal(
+                    context,
+                    type: ResultType.error,
+                    title: 'Gagal',
+                    description: 'Gagal menghapus rumah: $e',
+                    actionLabel: 'Tutup',
+                  );
+                }
               }
             },
           ),
@@ -61,8 +80,8 @@ class DetailRumahPage extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: [
           _buildInfoCard(),
-          const SizedBox(height: 16),
-          _buildRiwayatPenghuniCard(),
+          // const SizedBox(height: 16),
+          // _buildRiwayatPenghuniCard(),
         ],
       ),
     );
@@ -118,7 +137,7 @@ class DetailRumahPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      rumah.address,
+                      rumah.alamat,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -142,12 +161,12 @@ class DetailRumahPage extends StatelessWidget {
             showBadge: true,
           ),
           const SizedBox(height: 16),
-          // Tipe
-          _buildDetailRow(
-            icon: Icons.business_outlined,
-            label: 'Tipe Bangunan',
-            value: rumah.type,
-          ),
+          // // Tipe
+          // _buildDetailRow(
+          //   icon: Icons.business_outlined,
+          //   label: 'Tipe Bangunan',
+          //   value: rumah.type,
+          // ),
           const SizedBox(height: 16),
           // Penghuni
           _buildDetailRow(
@@ -160,7 +179,7 @@ class DetailRumahPage extends StatelessWidget {
           _buildDetailRow(
             icon: Icons.person_outline,
             label: 'Pemilik',
-            value: rumah.owner,
+            value: rumah.pemilik ?? '-',
           ),
         ],
       ),

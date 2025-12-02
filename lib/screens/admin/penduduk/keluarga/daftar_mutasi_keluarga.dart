@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/penduduk/keluarga/daftar_keluarga.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Model for Mutasi Keluarga Data
 class MutasiKeluargaData {
@@ -58,63 +59,82 @@ class DaftarMutasiKeluargaPage extends StatefulWidget {
 }
 
 class _DaftarMutasiKeluargaPageState extends State<DaftarMutasiKeluargaPage> {
+  late final SupabaseClient supabase;
+  List<Keluarga> _allKeluargaOptions = [];
   static const Color _primaryColor = Color(0xFF4E46B4);
 
   String? _selectedJenisMutasi;
   String? _selectedKeluarga;
 
+  @override
+  void initState() {
+    super.initState();
+    _loadKeluargaData();
+  }
+
+  _loadKeluargaData() async {
+    final response = await Keluarga.fetchKeluarga(Supabase.instance.client);
+    setState(() {
+      _allKeluargaOptions = response.map<Keluarga>((item) {
+        return Keluarga(
+          namaKeluarga: item['nama_keluarga'],
+          kepalaKeluarga: item['warga']['nama'],
+          alamat: item['rumah']['alamat'] ?? '',
+          status: item['status_keluarga'] ?? '',
+          pemilik: item['status_kepemilikan'] ?? '',
+          alasanMutasi: item['alasan_mutasi'] ?? '',
+          jenisMutasi: item['jenis_mutasi'] ?? '',
+          tanggalMutasi: item['tanggal_mutasi'] ?? '',
+          statusKepemiikan: item['status_kepemilikan'] ?? '',
+          alamatLama: item['alamat_lama'] ?? '',
+        );
+      }).toList();
+    });
+  }
+
   // Sample keluarga data for dropdown
-  final List<Keluarga> _allKeluargaOptions = const [
-    Keluarga(
-      namaKeluarga: 'Keluarga Hidayat',
-      kepalaKeluarga: 'Ahmad Hidayat',
-      alamat: 'Blok A No. 1',
-      status: 'Aktif',
-    ),
-    Keluarga(
-      namaKeluarga: 'Keluarga Santoso',
-      kepalaKeluarga: 'Budi Santoso',
-      alamat: 'Blok A No. 5',
-      status: 'Aktif',
-    ),
-    Keluarga(
-      namaKeluarga: 'Keluarga Lestari',
-      kepalaKeluarga: 'Dewi Lestari',
-      alamat: 'Blok B No. 3',
-      status: 'Nonaktif',
-    ),
-    Keluarga(
-      namaKeluarga: 'Keluarga Ijat',
-      kepalaKeluarga: 'Ijat',
-      alamat: 'Keluar Wilayah',
-      status: 'Nonaktif',
-    ),
-  ];
+  // final List<Keluarga> _allKeluargaOptions = const [
+  //   Keluarga(
+  //     namaKeluarga: 'Keluarga Hidayat',
+  //     kepalaKeluarga: 'Ahmad Hidayat',
+  //     alamat: 'Blok A No. 1',
+  //     status: 'Aktif',
+  //     pemilik: 'Milik Sendiri',
+  //   ),
+  //   Keluarga(
+  //     namaKeluarga: 'Keluarga Santoso',
+  //     kepalaKeluarga: 'Budi Santoso',
+  //     alamat: 'Blok A No. 5',
+  //     status: 'Aktif',
+  //     pemilik: 'Milik Sendiri',
+  //   ),
+  //   Keluarga(
+  //     namaKeluarga: 'Keluarga Lestari',
+  //     kepalaKeluarga: 'Dewi Lestari',
+  //     alamat: 'Blok B No. 3',
+  //     status: 'Nonaktif',
+  //     pemilik: 'Milik Sendiri',
+  //   ),
+  //   Keluarga(
+  //     namaKeluarga: 'Keluarga Ijat',
+  //     kepalaKeluarga: 'Ijat',
+  //     alamat: 'Keluar Wilayah',
+  //     status: 'Nonaktif',
+  //     pemilik: 'Milik Sendiri',
+  //   ),
+  // ];
 
   // Sample mutasi data
   List<MutasiKeluargaData> get _allMutasi {
-    return [
-      MutasiKeluargaData(
-        namaKeluarga: 'Keluarga Hidayat',
-        jenisMutasi: 'Pindah Rumah',
-        keluarga: _allKeluargaOptions[0],
-      ),
-      MutasiKeluargaData(
-        namaKeluarga: 'Keluarga Santoso',
-        jenisMutasi: 'Keluar Wilayah',
-        keluarga: _allKeluargaOptions[1],
-      ),
-      MutasiKeluargaData(
-        namaKeluarga: 'Keluarga Lestari',
-        jenisMutasi: 'Pindah Rumah',
-        keluarga: _allKeluargaOptions[2],
-      ),
-      MutasiKeluargaData(
-        namaKeluarga: 'Keluarga Ijat',
-        jenisMutasi: 'Keluar Wilayah',
-        keluarga: _allKeluargaOptions[3],
-      ),
-    ];
+    if (_allKeluargaOptions.isEmpty) return [];
+
+    return _allKeluargaOptions.map((keluarga) {
+      return MutasiKeluargaData(
+        namaKeluarga: keluarga.namaKeluarga,
+        jenisMutasi: keluarga.jenisMutasi ?? '',
+        keluarga: keluarga,
+      );
+    }).toList();
   }
 
   List<MutasiKeluargaData> get _filteredMutasi {

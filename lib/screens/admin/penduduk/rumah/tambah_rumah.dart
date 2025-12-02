@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:jawara_pintar_kel_5/widget/form/section_card.dart';
 import 'package:jawara_pintar_kel_5/widget/form/labeled_text_field.dart';
 import 'package:jawara_pintar_kel_5/widget/moon_result_modal.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class TambahRumahPage extends StatefulWidget {
   const TambahRumahPage({super.key});
@@ -22,15 +23,22 @@ class _TambahRumahPageState extends State<TambahRumahPage> {
     super.dispose();
   }
 
-  void _handleSave() {
+  void _handleSave() async {
     // Validation
     if (_alamatController.text.trim().isEmpty) {
       _showErrorModal('Alamat rumah tidak boleh kosong');
       return;
     }
 
-    // TODO: Save to backend/database
-    _showSuccessModal();
+    try {
+      final supabase = Supabase.instance.client;
+      await supabase.from('rumah').insert({
+        'alamat': _alamatController.text.trim(),
+      });
+      _showSuccessModal();
+    } catch (e) {
+      _showErrorModal('Gagal menambah rumah: $e');
+    }
   }
 
   void _showErrorModal(String message) {
