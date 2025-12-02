@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
+import 'package:intl/intl.dart';
+import 'package:jawara_pintar_kel_5/models/kegiatan/broadcast_model.dart';
+import 'package:jawara_pintar_kel_5/models/kegiatan/kegiatan_model.dart';
+import 'package:jawara_pintar_kel_5/providers/product_provider.dart';
+import 'package:jawara_pintar_kel_5/services/broadcast_service.dart';
+import 'package:jawara_pintar_kel_5/services/kegiatan_service.dart';
+import 'package:jawara_pintar_kel_5/services/marketplace/review_service.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
+import 'package:provider/provider.dart';
 
 final List<Map<String, String>> dummyDataKegiatan = [
   {
@@ -619,20 +626,22 @@ class _LatestInfoListState extends State<_LatestInfoList> {
 
       List<Map<String, dynamic>> combinedList = [];
 
-      combinedList.addAll(kegiatanList.map((k) => {
-            'type': 'Kegiatan',
-            'data': k,
-            'date': k.tanggal,
-          }));
+      combinedList.addAll(
+        kegiatanList.map(
+          (k) => {'type': 'Kegiatan', 'data': k, 'date': k.tanggal},
+        ),
+      );
 
-      combinedList.addAll(broadcastList.map((b) => {
-            'type': 'Broadcast',
-            'data': b,
-            'date': b.tanggal,
-          }));
+      combinedList.addAll(
+        broadcastList.map(
+          (b) => {'type': 'Broadcast', 'data': b, 'date': b.tanggal},
+        ),
+      );
 
-      combinedList.sort((a, b) => (b['date'] as DateTime).compareTo(a['date'] as DateTime));
-      
+      combinedList.sort(
+        (a, b) => (b['date'] as DateTime).compareTo(a['date'] as DateTime),
+      );
+
       return combinedList.take(3).toList();
     } catch (e) {
       throw Exception('Failed to load latest info: $e');
@@ -643,6 +652,7 @@ class _LatestInfoListState extends State<_LatestInfoList> {
   Widget build(BuildContext context) {
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: _latestInfoFuture,
+
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -650,21 +660,36 @@ class _LatestInfoListState extends State<_LatestInfoList> {
           return Center(child: Text("Error: ${snapshot.error}"));
         } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
           final latestInfo = snapshot.data!;
+
           return Column(
             children: latestInfo.map((info) {
               final type = info['type'] as String;
+
               final data = info['data'];
+
               final title = type == 'Kegiatan'
                   ? (data as KegiatanModel).judul
                   : (data as BroadcastModel).judul;
-              final date =
-                  DateFormat('dd/MM/yyyy').format(info['date'] as DateTime);
+
+              final date = DateFormat(
+                'dd/MM/yyyy',
+              ).format(info['date'] as DateTime);
 
               void handleTap() {
                 if (type == 'Kegiatan') {
-                  context.pushNamed('WargaKegiatanDetail', extra: data);
+                  context.goNamed(
+                    'WargaKegiatanDetail',
+                    pathParameters: {
+                      'id': (data as KegiatanModel).id.toString(),
+                    },
+                  );
                 } else if (type == 'Broadcast') {
-                  context.pushNamed('WargaBroadcastDetail', extra: data);
+                  context.goNamed(
+                    'WargaBroadcastDetail',
+                    pathParameters: {
+                      'id': (data as BroadcastModel).id.toString(),
+                    },
+                  );
                 }
               }
 
@@ -693,7 +718,10 @@ class _LatestInfoListState extends State<_LatestInfoList> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
-                      type == "Kegiatan" ? Icons.calendar_today : Icons.campaign,
+                      type == "Kegiatan"
+                          ? Icons.calendar_today
+                          : Icons.campaign,
+
                       color: Colors.deepPurple,
                       size: 20,
                     ),
