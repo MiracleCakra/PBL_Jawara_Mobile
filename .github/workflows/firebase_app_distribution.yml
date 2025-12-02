@@ -34,7 +34,11 @@ jobs:
           groups: 'pbl-jawara'
           releaseNotes: |
             🚀 New features:
-            - Implementation CI/CD
+            - Added aspiration update functionality (both Admin and Normal User).
+            - Broadcast and Activity features implemented, allowing users to view announcements and activities.
+            - Implemented Supabase integration for backend services.
+            - Marketplace feature added, enabling users to browse and purchase products.
+            - Admin-user relationship for Broadcast and Activity established.
 
             🐛 Bug fixes:
-            - Fixed issue with versioning and distribution
+            - I have no idea what bugs were fixed in this version.
