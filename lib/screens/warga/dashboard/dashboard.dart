@@ -8,6 +8,7 @@ import 'package:jawara_pintar_kel_5/services/broadcast_service.dart';
 import 'package:jawara_pintar_kel_5/services/kegiatan_service.dart';
 import 'package:jawara_pintar_kel_5/services/marketplace/review_service.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
+import 'package:jawara_pintar_kel_5/widget/product_image.dart';
 import 'package:provider/provider.dart';
 
 final List<Map<String, String>> dummyDataKegiatan = [
@@ -498,20 +499,11 @@ class _HorizontalProductListState extends State<_HorizontalProductList> {
                             borderRadius: const BorderRadius.vertical(
                               top: Radius.circular(10),
                             ),
-                            child: Image.asset(
-                              p.gambar!,
-                              fit: BoxFit.cover,
+                            child: ProductImage(
+                              imagePath: p.gambar,
                               width: double.infinity,
-                              errorBuilder: (_, __, ___) => Container(
-                                color: gradeColor.withOpacity(0.1),
-                                child: Center(
-                                  child: Icon(
-                                    Icons.local_florist,
-                                    size: isTablet ? 60 : 50,
-                                    color: gradeColor,
-                                  ),
-                                ),
-                              ),
+                              height: double.infinity,
+                              fit: BoxFit.cover,
                             ),
                           ),
                           Positioned(

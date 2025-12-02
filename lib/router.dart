@@ -1,11 +1,12 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jawara_pintar_kel_5/models/kegiatan/aspirasi_model.dart';
 import 'package:jawara_pintar_kel_5/models/kegiatan/broadcast_model.dart';
 import 'package:jawara_pintar_kel_5/models/kegiatan/kegiatan_model.dart';
-import 'package:jawara_pintar_kel_5/models/keluarga/anggota_keluarga_model.dart';
 // Models
+import 'package:jawara_pintar_kel_5/models/keluarga/anggota_keluarga_model.dart';
 import 'package:jawara_pintar_kel_5/models/keluarga/warga_model.dart';
 import 'package:jawara_pintar_kel_5/models/keuangan/transaksi_model.dart';
 import 'package:jawara_pintar_kel_5/models/keuangan/warga_tagihan_model.dart';
@@ -109,16 +110,6 @@ import 'package:jawara_pintar_kel_5/screens/rw/penduduk/penduduk_menu_screen.dar
 import 'package:jawara_pintar_kel_5/screens/sekretaris/kegiatan/kegiatan_menu_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/sekretaris/lainnya/lainnya_menu_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/sekretaris/layout.dart';
-
-// +++++++++++  WARGA   +++++++++++
-// layout 
-import 'package:jawara_pintar_kel_5/screens/warga/layout_warga.dart';
-// Models
-import 'package:jawara_pintar_kel_5/models/keuangan/tagihan_model.dart';
-
-import 'package:jawara_pintar_kel_5/models/marketplace/ReviewModel.dart';
-
-
 // Dashboard
 import 'package:jawara_pintar_kel_5/screens/warga/dashboard/dashboard.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/dashboard/detail_laporan_pemasukan.dart';
@@ -147,24 +138,27 @@ import 'package:jawara_pintar_kel_5/screens/warga/keluarga/keluarga_menu.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/keluarga/profilkeluarga.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/keluarga/tagihan.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/keluarga/tambah_anggota.dart';
-
-// marketplace
-import 'package:jawara_pintar_kel_5/screens/warga/marketplace/marketplace_menu.dart';
+// +++++++++++  WARGA   +++++++++++
+// layout
+import 'package:jawara_pintar_kel_5/screens/warga/layout_warga.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/buyer_order_detail.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/checkoutscreen.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/detail_produk.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/my_orders.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/buyer_order_detail.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/filterScreen.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/homepage.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/keranjangScreen.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/my_orders.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/orderhistoryScreen.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/riview_produk.dart';
+// marketplace
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/marketplace_menu.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/auth_store.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/buat_akun_toko.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/detail_orders.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/edit_produk.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/editprofile_toko.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/login_akun.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/pending_deactivation.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/pengaturanstore.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/pesanan_store.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/review_store.dart';
@@ -173,7 +167,6 @@ import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/store_das
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/store_pending_validasi.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/store_product_detail.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/tambah_produk.dart';
-
 // Profil
 import 'package:jawara_pintar_kel_5/screens/warga/profil/profil_menu.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/profil/profil_screen.dart';
@@ -1085,6 +1078,14 @@ final router = GoRouter(
                       const PemasukanLainTambahScreen(),
                 ),
                 GoRoute(
+                  path: 'pemasukan-lain-detail',
+                  name: 'bendahara_pemasukanLainDetail',
+                  builder: (context, state) {
+                    final data = state.extra as PemasukanLainModel;
+                    return DetailPemasukanLainScreen(data: data);
+                  },
+                ),
+                GoRoute(
                   path: 'daftar-pengeluaran',
                   name: 'bendahara_pengeluaranList',
                   builder: (context, state) => const DaftarPengeluaranScreen(),
@@ -1356,6 +1357,11 @@ final router = GoRouter(
                   builder: (_, __) => const StorePendingValidationScreen(),
                 ),
                 GoRoute(
+                  path: '/store-pending-deactivation',
+                  name: 'StorePendingDeactivation',
+                  builder: (_, __) => const StorePendingDeactivationScreen(),
+                ),
+                GoRoute(
                   path: '/mystore-dashboard',
                   name: 'WargaMarketplaceHome',
                   builder: (_, __) => const MyStoreDashboardScreen(),
@@ -1588,6 +1594,11 @@ final router = GoRouter(
                   name: 'warga_aspirasiForm',
                   builder: (context, state) =>
                       const WargaTambahAspirasiScreen(),
+                ),
+                GoRoute(
+                  path: 'tentang',
+                  name: 'warga_tentangAplikasi',
+                  builder: (context, state) => const AboutAppScreen(),
                 ),
               ],
             ),

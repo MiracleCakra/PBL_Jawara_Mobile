@@ -1,18 +1,21 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'dart:io';
 import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
 import 'package:jawara_pintar_kel_5/providers/product_provider.dart';
+import 'package:jawara_pintar_kel_5/services/marketplace/product_service.dart';
 import 'package:jawara_pintar_kel_5/services/marketplace/store_service.dart';
+import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MyStoreProductAddScreen extends StatefulWidget {
   const MyStoreProductAddScreen({super.key});
 
   @override
-  State<MyStoreProductAddScreen> createState() => _MyStoreProductAddScreenState();
+  State<MyStoreProductAddScreen> createState() =>
+      _MyStoreProductAddScreenState();
 }
 
 class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
@@ -64,7 +67,8 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
   Future<void> _runImageClassification(File image) async {
     await Future.delayed(const Duration(seconds: 2));
     final predictions = ['Sayur Grade A', 'Sayur Grade B', 'Sayur Grade C'];
-    final randomPrediction = predictions[DateTime.now().second % predictions.length];
+    final randomPrediction =
+        predictions[DateTime.now().second % predictions.length];
 
     if (!mounted) return;
 
@@ -72,7 +76,11 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
       _predictedCategory = randomPrediction;
       _isProcessingCV = false;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('CV: Kategori sayur diprediksi sebagai $_predictedCategory'))
+        SnackBar(
+          content: Text(
+            'CV: Kategori sayur diprediksi sebagai $_predictedCategory',
+          ),
+        ),
       );
     });
   }
@@ -81,11 +89,11 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
     if (!_formKey.currentState!.validate()) return;
     if (_imageFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Harap unggah foto produk terlebih dahulu!'),
-        backgroundColor: Colors.grey.shade800,
-      ),
-    );
+        SnackBar(
+          content: const Text('Harap unggah foto produk terlebih dahulu!'),
+          backgroundColor: Colors.grey.shade800,
+        ),
+      );
       return;
     }
     if (_isProcessingCV) {
@@ -100,7 +108,7 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
 
     final int newPrice = int.tryParse(_priceController.text.trim()) ?? 0;
     final int newStock = int.tryParse(_stockController.text.trim()) ?? 0;
-    
+
     // Get warga.id (NIK) from warga table using email
     final authUser = Supabase.instance.client.auth.currentUser;
     if (authUser?.email == null) {
@@ -112,14 +120,14 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
       );
       return;
     }
-    
+
     // Query warga table to get warga.id (NIK)
     final wargaResponse = await Supabase.instance.client
         .from('warga')
         .select('id')
         .eq('email', authUser!.email!)
         .maybeSingle();
-    
+
     if (wargaResponse == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -131,19 +139,101 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
       }
       return;
     }
-    
+
     final userId = wargaResponse['id'] as String;
 
     // Get store_id from logged in user
     final storeService = StoreService();
     final userStore = await storeService.getStoreByUserId(userId);
-    
+
     if (userStore == null || userStore.storeId == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Anda belum memiliki toko. Silakan daftar toko terlebih dahulu.'),
+            content: Text(
+              'Anda belum memiliki toko. Silakan daftar toko terlebih dahulu.',
+            ),
             backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Mengupload gambar...', style: TextStyle(color: Colors.white)),
+          ],
+        ),
+      ),
+    );
+
+    // Upload image to Supabase Storage first
+    String? imageUrl;
+    try {
+      final productService = ProductService();
+      imageUrl = await productService.uploadProductImage(
+        _imageFile!,
+        userStore.storeId!,
+      );
+
+      if (imageUrl == null) {
+        // Close loading dialog
+        if (mounted) Navigator.of(context).pop();
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Gagal mengupload gambar!\n\n'
+                'Pastikan:\n'
+                '1. Bucket "products" sudah dibuat di Supabase Storage\n'
+                '2. Storage Policies sudah diatur (INSERT & SELECT)\n'
+                '3. Bucket berstatus Public\n\n'
+                'Lihat file QUICK_SETUP_STORAGE.md untuk panduan.',
+              ),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 8),
+            ),
+          );
+        }
+        return;
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (mounted) Navigator.of(context).pop();
+
+      if (mounted) {
+        String errorMessage = 'Gagal mengupload gambar: $e';
+
+        if (e.toString().contains('404')) {
+          errorMessage =
+              '❌ Bucket "products" tidak ditemukan!\n\n'
+              'Solusi: Buat bucket di Supabase Storage.\n'
+              'Lihat QUICK_SETUP_STORAGE.md';
+        } else if (e.toString().contains('401') ||
+            e.toString().contains('403')) {
+          errorMessage =
+              '❌ Permission Denied!\n\n'
+              'Solusi: Setup Storage Policies di Supabase.\n'
+              'Lihat QUICK_SETUP_STORAGE.md';
+        } else if (e.toString().contains('409')) {
+          errorMessage = '❌ File sudah ada!\n\nCoba lagi.';
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 8),
           ),
         );
       }
@@ -157,26 +247,20 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
       stok: newStock,
       satuan: _selectedUnit,
       grade: _selectedGrade,
-      gambar: _imageFile!.path,
+      gambar: imageUrl, // Use uploaded image URL
       storeId: userStore.storeId,
     );
-    
-    // Show loading
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
-    
+
     // Save to Supabase via ProductProvider
-    final productProvider = Provider.of<ProductProvider>(context, listen: false);
+    final productProvider = Provider.of<ProductProvider>(
+      context,
+      listen: false,
+    );
     final savedProduct = await productProvider.createProduct(newProduct);
-    
+
     // Close loading dialog
     if (mounted) Navigator.of(context).pop();
-    
+
     if (savedProduct != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -188,7 +272,9 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Gagal menambahkan produk: ${productProvider.errorMessage}'),
+          content: Text(
+            'Gagal menambahkan produk: ${productProvider.errorMessage}',
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -199,7 +285,10 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tambah Produk Baru', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Tambah Produk Baru',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.white,
         elevation: 0.5,
         foregroundColor: Colors.black,
@@ -220,10 +309,16 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
                       SizedBox(
                         width: 14,
                         height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2.5, color: primaryColor),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: primaryColor,
+                        ),
                       ),
                       SizedBox(width: 8),
-                      Text('Menganalisis gambar...', style: TextStyle(color: Colors.grey)),
+                      Text(
+                        'Menganalisis gambar...',
+                        style: TextStyle(color: Colors.grey),
+                      ),
                     ],
                   ),
                 ),
@@ -232,21 +327,35 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
                   padding: const EdgeInsets.only(top: 8.0, bottom: 12.0),
                   child: Text(
                     'Kategori Prediksi CV: $_predictedCategory',
-                    style: const TextStyle(color: primaryColor, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: primaryColor,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               const SizedBox(height: 12),
 
               const _InputLabel("Nama Produk"),
-              _ThemedTextFormField(controller: _nameController, validator: _validateRequired),
+              _ThemedTextFormField(
+                controller: _nameController,
+                validator: _validateRequired,
+              ),
               const SizedBox(height: 12),
 
               const _InputLabel("Deskripsi Produk"),
-              _ThemedTextFormField(controller: _descController, maxLines: 3, validator: _validateRequired),
+              _ThemedTextFormField(
+                controller: _descController,
+                maxLines: 3,
+                validator: _validateRequired,
+              ),
               const SizedBox(height: 12),
 
               const _InputLabel("Harga"),
-              _ThemedTextFormField(controller: _priceController, keyboardType: TextInputType.number, validator: _validatePrice),
+              _ThemedTextFormField(
+                controller: _priceController,
+                keyboardType: TextInputType.number,
+                validator: _validatePrice,
+              ),
               const SizedBox(height: 12),
 
               // Stok & Satuan
@@ -257,7 +366,11 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const _InputLabel("Stok"),
-                        _ThemedTextFormField(controller: _stockController, keyboardType: TextInputType.number, validator: _validateStock),
+                        _ThemedTextFormField(
+                          controller: _stockController,
+                          keyboardType: TextInputType.number,
+                          validator: _validateStock,
+                        ),
                       ],
                     ),
                   ),
@@ -269,12 +382,17 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
                         const _InputLabel("Satuan"),
                         _ThemedDropdownFormField<String>(
                           value: _selectedUnit,
-                          items: _availableUnits.map((unit) => DropdownMenuItem(
-                            value: unit,
-                            child: Text(unit),
-                          )).toList(),
+                          items: _availableUnits
+                              .map(
+                                (unit) => DropdownMenuItem(
+                                  value: unit,
+                                  child: Text(unit),
+                                ),
+                              )
+                              .toList(),
                           onChanged: (val) {
-                            if (val != null) setState(() => _selectedUnit = val);
+                            if (val != null)
+                              setState(() => _selectedUnit = val);
                           },
                           validator: _validateRequired,
                         ),
@@ -288,7 +406,9 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
               const _InputLabel("Grade Kualitas"),
               _ThemedDropdownFormField<String>(
                 value: _selectedGrade,
-                items: _grades.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
+                items: _grades
+                    .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                    .toList(),
                 onChanged: (val) {
                   if (val != null) setState(() => _selectedGrade = val);
                 },
@@ -303,9 +423,18 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
                   style: FilledButton.styleFrom(
                     backgroundColor: primaryColor,
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  child: const Text('Tambah Produk', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'Tambah Produk',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -330,7 +459,10 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
                       ListTile(
-                        leading: const Icon(Icons.photo_library, color: primaryColor),
+                        leading: const Icon(
+                          Icons.photo_library,
+                          color: primaryColor,
+                        ),
                         title: const Text('Pilih dari Galeri'),
                         onTap: () {
                           Navigator.pop(context);
@@ -338,7 +470,10 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
                         },
                       ),
                       ListTile(
-                        leading: const Icon(Icons.camera_alt, color: primaryColor),
+                        leading: const Icon(
+                          Icons.camera_alt,
+                          color: primaryColor,
+                        ),
                         title: const Text('Ambil Foto'),
                         onTap: () {
                           Navigator.pop(context);
@@ -366,9 +501,19 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
                 ? Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.camera_alt_outlined, size: 40, color: primaryColor),
+                      Icon(
+                        Icons.camera_alt_outlined,
+                        size: 40,
+                        color: primaryColor,
+                      ),
                       const SizedBox(height: 8),
-                      Text('Pilih/Ambil Foto Produk', style: TextStyle(color: primaryColor, fontWeight: FontWeight.w600)),
+                      Text(
+                        'Pilih/Ambil Foto Produk',
+                        style: TextStyle(
+                          color: primaryColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ],
                   )
                 : ClipRRect(
@@ -382,19 +527,22 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
   }
 
   String? _validateRequired(String? value) {
-    if (value == null || value.trim().isEmpty) return 'Kolom ini tidak boleh kosong';
+    if (value == null || value.trim().isEmpty)
+      return 'Kolom ini tidak boleh kosong';
     return null;
   }
 
   String? _validatePrice(String? value) {
     if (_validateRequired(value) != null) return 'Harga tidak boleh kosong';
-    if (int.tryParse(value!) == null || int.parse(value) <= 0) return 'Masukkan harga yang valid (angka > 0)';
+    if (int.tryParse(value!) == null || int.parse(value) <= 0)
+      return 'Masukkan harga yang valid (angka > 0)';
     return null;
   }
 
   String? _validateStock(String? value) {
     if (_validateRequired(value) != null) return 'Stok tidak boleh kosong';
-    if (int.tryParse(value!) == null || int.parse(value) < 0) return 'Masukkan stok yang valid (angka >= 0)';
+    if (int.tryParse(value!) == null || int.parse(value) < 0)
+      return 'Masukkan stok yang valid (angka >= 0)';
     return null;
   }
 }
@@ -407,7 +555,13 @@ class _InputLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6.0, top: 8.0),
-      child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.black87)),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontWeight: FontWeight.w600,
+          color: Colors.black87,
+        ),
+      ),
     );
   }
 }
@@ -435,13 +589,28 @@ class _ThemedTextFormField extends StatelessWidget {
       maxLines: maxLines,
       keyboardType: keyboardType,
       decoration: InputDecoration(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
         filled: true,
         fillColor: Colors.grey.shade50,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: primaryColor, width: 2)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5)),
-        errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.red, width: 1.5)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: primaryColor, width: 2),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Colors.red, width: 1.5),
+        ),
       ),
     );
   }
@@ -472,13 +641,28 @@ class _ThemedDropdownFormField<T> extends StatelessWidget {
       isExpanded: true,
       iconEnabledColor: primaryColor,
       decoration: InputDecoration(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
         filled: true,
         fillColor: Colors.grey.shade50,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: primaryColor, width: 2)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5)),
-        errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.red, width: 1.5)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: primaryColor, width: 2),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Colors.red, width: 1.5),
+        ),
       ),
     );
   }

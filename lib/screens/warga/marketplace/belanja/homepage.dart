@@ -1,10 +1,12 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
-import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
-import 'package:provider/provider.dart';
 import 'package:jawara_pintar_kel_5/providers/product_provider.dart';
+import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
+import 'package:jawara_pintar_kel_5/widget/product_image.dart';
+import 'package:provider/provider.dart';
 
 class ShopHomeScreen extends StatefulWidget {
   const ShopHomeScreen({super.key});
@@ -146,16 +148,11 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
                   children: [
                     ClipRRect(
                       borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
-                      child: Image.asset(
-                        p.gambar ?? 'assets/images/placeholder.png',
-                        fit: BoxFit.cover,
+                      child: ProductImage(
+                        imagePath: p.gambar,
                         width: double.infinity,
-                        errorBuilder: (_, __, ___) => Container(
-                          color: gradeColor.withOpacity(0.1),
-                          child: Center(
-                            child: Icon(Icons.local_florist, size: isTablet ? 60 : 50, color: gradeColor),
-                          ),
-                        ),
+                        height: double.infinity,
+                        fit: BoxFit.cover,
                       ),
                     ),
                     Positioned(

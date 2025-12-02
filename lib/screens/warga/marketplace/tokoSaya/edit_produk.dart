@@ -1,8 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
-import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah, unformatRupiah;
+import 'package:jawara_pintar_kel_5/services/marketplace/product_service.dart';
+import 'package:jawara_pintar_kel_5/utils.dart'
+    show formatRupiah, unformatRupiah;
 
 class MyStoreProductEditScreen extends StatefulWidget {
   final ProductModel product;
@@ -21,6 +26,8 @@ class _MyStoreProductEditScreenState extends State<MyStoreProductEditScreen> {
   static const List<String> availableUnits = ['kg', 'ikat', 'pcs', 'karung'];
 
   final _formKey = GlobalKey<FormState>();
+  final ImagePicker _picker = ImagePicker();
+  final ProductService _productService = ProductService();
 
   late String _name;
   late String _description;
@@ -28,6 +35,9 @@ class _MyStoreProductEditScreenState extends State<MyStoreProductEditScreen> {
   late int _stock;
   late String _grade;
   late String _unit;
+
+  File? _imageFile;
+  String? _currentImageUrl;
 
   @override
   void initState() {
@@ -38,19 +48,134 @@ class _MyStoreProductEditScreenState extends State<MyStoreProductEditScreen> {
     _stock = widget.product.stok ?? 0;
     _grade = widget.product.grade ?? 'Grade A';
     _unit = widget.product.satuan ?? 'kg';
+    _currentImageUrl = widget.product.gambar;
   }
 
-  void _saveForm() {
+  Future<void> _pickImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+    if (image != null) {
+      setState(() {
+        _imageFile = File(image.path);
+      });
+    }
+  }
+
+  Future<void> _pickImageFromGallery() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        _imageFile = File(image.path);
+      });
+    }
+  }
+
+  void _showImageSourceDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Pilih Sumber Gambar'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Kamera'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Galeri'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImageFromGallery();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _saveForm() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
-      // TODO: Panggil provider.updateProduct(newProduct) di sini
+      // Show loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
+      String? imageUrl = _currentImageUrl; // Use existing image by default
+
+      // Upload new image if selected
+      if (_imageFile != null) {
+        try {
+          imageUrl = await _productService.uploadProductImage(
+            _imageFile!,
+            widget.product.storeId!,
+          );
+
+          if (imageUrl == null) {
+            if (mounted) Navigator.pop(context); // Close loading
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    'Gagal mengupload gambar baru!\n\n'
+                    'Pastikan:\n'
+                    '1. Bucket "products" sudah dibuat\n'
+                    '2. Storage Policies sudah diatur\n'
+                    '3. Bucket berstatus Public\n\n'
+                    'Lihat QUICK_SETUP_STORAGE.md',
+                  ),
+                  backgroundColor: Colors.red,
+                  duration: Duration(seconds: 8),
+                ),
+              );
+            }
+            return;
+          }
+        } catch (e) {
+          if (mounted) Navigator.pop(context); // Close loading
+          if (mounted) {
+            String errorMessage = 'Error upload gambar: $e';
+
+            if (e.toString().contains('404')) {
+              errorMessage =
+                  '❌ Bucket "products" tidak ditemukan!\n\n'
+                  'Lihat QUICK_SETUP_STORAGE.md';
+            } else if (e.toString().contains('401') ||
+                e.toString().contains('403')) {
+              errorMessage =
+                  '❌ Permission Denied!\n\n'
+                  'Setup Storage Policies di Supabase.\n'
+                  'Lihat QUICK_SETUP_STORAGE.md';
+            }
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(errorMessage),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 8),
+              ),
+            );
+          }
+          return;
+        }
+      }
 
       final updatedProduct = ProductModel(
         productId: widget.product.productId,
         nama: _name,
         deskripsi: _description,
-        gambar: widget.product.gambar,
+        gambar: imageUrl,
         grade: _grade,
         harga: _price.toDouble(),
         stok: _stock,
@@ -59,13 +184,17 @@ class _MyStoreProductEditScreenState extends State<MyStoreProductEditScreen> {
         createdAt: widget.product.createdAt,
       );
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('${updatedProduct.nama} berhasil diperbarui.'),
-            backgroundColor: Colors.grey.shade800),
-      );
+      if (mounted) Navigator.pop(context); // Close loading
 
-      context.pop(updatedProduct);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${updatedProduct.nama} berhasil diperbarui.'),
+            backgroundColor: Colors.grey.shade800,
+          ),
+        );
+        context.pop(updatedProduct);
+      }
     }
   }
 
@@ -77,8 +206,10 @@ class _MyStoreProductEditScreenState extends State<MyStoreProductEditScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Produk',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Edit Produk',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.white,
         elevation: 0.5,
       ),
@@ -94,6 +225,70 @@ class _MyStoreProductEditScreenState extends State<MyStoreProductEditScreen> {
                 const SizedBox(height: 16),
               ],
 
+              // Image Preview
+              Center(
+                child: GestureDetector(
+                  onTap: _showImageSourceDialog,
+                  child: Container(
+                    height: 200,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade400),
+                    ),
+                    child: _imageFile != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.file(_imageFile!, fit: BoxFit.cover),
+                          )
+                        : _currentImageUrl != null &&
+                              _currentImageUrl!.isNotEmpty
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              _currentImageUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.add_photo_alternate,
+                                      size: 50,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Tap untuk ubah gambar',
+                                      style: TextStyle(
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                          )
+                        : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.add_photo_alternate,
+                                size: 50,
+                                color: Colors.grey.shade600,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Tap untuk pilih gambar',
+                                style: TextStyle(color: Colors.grey.shade600),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
 
               // Nama Produk
               _buildTextFormField(
@@ -134,13 +329,11 @@ class _MyStoreProductEditScreenState extends State<MyStoreProductEditScreen> {
                     child: _buildTextFormField(
                       label: 'Harga',
                       initialValue: formatRupiah(_price),
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: false),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                      ],
-                      onSaved: (value) =>
-                          _price = unformatRupiah(value ?? '0'),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: false,
+                      ),
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      onSaved: (value) => _price = unformatRupiah(value ?? '0'),
                       validator: (value) {
                         if (value == null || unformatRupiah(value) <= 0) {
                           return 'Harga harus lebih dari nol.';
@@ -180,9 +373,7 @@ class _MyStoreProductEditScreenState extends State<MyStoreProductEditScreen> {
                       label: 'Stok',
                       initialValue: _stock.toString(),
                       keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                      ],
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       onSaved: (value) =>
                           _stock = int.tryParse(value ?? '0') ?? 0,
                       validator: (value) {
@@ -252,9 +443,7 @@ class _MyStoreProductEditScreenState extends State<MyStoreProductEditScreen> {
       initialValue: initialValue,
       decoration: InputDecoration(
         labelText: label,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: Colors.black38),
@@ -283,9 +472,7 @@ class _MyStoreProductEditScreenState extends State<MyStoreProductEditScreen> {
       value: value,
       decoration: InputDecoration(
         labelText: label,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: Colors.black38),
@@ -294,14 +481,14 @@ class _MyStoreProductEditScreenState extends State<MyStoreProductEditScreen> {
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: primaryColor, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 16,
+        ),
       ),
       isExpanded: true,
       items: items.map<DropdownMenuItem<String>>((String item) {
-        return DropdownMenuItem<String>(
-          value: item,
-          child: Text(item),
-        );
+        return DropdownMenuItem<String>(value: item, child: Text(item));
       }).toList(),
       onChanged: onChanged,
       onSaved: onSaved,
@@ -319,16 +506,17 @@ class _MyStoreProductEditScreenState extends State<MyStoreProductEditScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('❗ Produk sebelumnya DITOLAK oleh Admin:',
-              style:
-                  TextStyle(fontWeight: FontWeight.bold, color: rejectedColor)),
+          const Text(
+            '❗ Produk sebelumnya DITOLAK oleh Admin:',
+            style: TextStyle(fontWeight: FontWeight.bold, color: rejectedColor),
+          ),
           const SizedBox(height: 5),
           Text(reason, style: const TextStyle(color: Colors.black87)),
           const SizedBox(height: 5),
           const Text(
             'Produk akan kembali ke status "Menunggu Verifikasi" setelah perubahan disimpan.',
             style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
-          )
+          ),
         ],
       ),
     );
