@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
-import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
 import 'package:jawara_pintar_kel_5/models/kegiatan/broadcah_model.dart';
+import 'package:jawara_pintar_kel_5/providers/product_provider.dart';
+import 'package:jawara_pintar_kel_5/services/marketplace/review_service.dart';
+import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
+import 'package:provider/provider.dart';
 
 final List<Map<String, String>> dummyDataKegiatan = [
   {
@@ -94,7 +96,10 @@ class _HeaderSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 16),
+          padding: EdgeInsets.symmetric(
+            horizontal: horizontalPadding,
+            vertical: 16,
+          ),
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               colors: [Color(0xFF6A5AE0), Color(0xFF8EA3F5)],
@@ -102,7 +107,9 @@ class _HeaderSection extends StatelessWidget {
               end: Alignment.bottomCenter,
             ),
           ),
-          child: Column(children: const [_UserHeaderWidget(), SizedBox(height: 20)]),
+          child: Column(
+            children: const [_UserHeaderWidget(), SizedBox(height: 20)],
+          ),
         ),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
@@ -146,7 +153,10 @@ class _UserHeaderWidget extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("Selamat Datang,", style: TextStyle(color: Colors.white)),
+              const Text(
+                "Selamat Datang,",
+                style: TextStyle(color: Colors.white),
+              ),
               Text(
                 "Bapak Susanto",
                 style: TextStyle(
@@ -259,10 +269,16 @@ class _FinancialSummarySection extends StatelessWidget {
   Widget build(BuildContext context) {
     final horizontalPadding = isTablet ? 32.0 : 16.0;
 
-    final totalIncome = dummyFinancialData
-        .firstWhere((data) => data['label'] == 'Pemasukan Kas RT')['amount'] as int;
-    final totalExpense = dummyFinancialData
-        .firstWhere((data) => data['label'] == 'Pengeluaran Kas RT')['amount'] as int;
+    final totalIncome =
+        dummyFinancialData.firstWhere(
+              (data) => data['label'] == 'Pemasukan Kas RT',
+            )['amount']
+            as int;
+    final totalExpense =
+        dummyFinancialData.firstWhere(
+              (data) => data['label'] == 'Pengeluaran Kas RT',
+            )['amount']
+            as int;
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 0),
@@ -349,14 +365,20 @@ class _FinancialCard extends StatelessWidget {
                       color: color.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(icon, size: isBalanceCard ? 26 : 22, color: color),
+                    child: Icon(
+                      icon,
+                      size: isBalanceCard ? 26 : 22,
+                      color: color,
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       title,
                       style: TextStyle(
-                        fontWeight: isBalanceCard ? FontWeight.bold : FontWeight.w500,
+                        fontWeight: isBalanceCard
+                            ? FontWeight.bold
+                            : FontWeight.w500,
                         color: Colors.black54,
                         fontSize: isBalanceCard ? 16 : 14,
                       ),
@@ -385,15 +407,57 @@ class _FinancialCard extends StatelessWidget {
 }
 
 // ================= Horizontal Product List =================
-class _HorizontalProductList extends StatelessWidget {
-  _HorizontalProductList();
+class _HorizontalProductList extends StatefulWidget {
+  const _HorizontalProductList();
 
-  final List<ProductModel> products =
-      ProductModel.getSampleProducts().where((p) => p.isVerified).toList();
+  @override
+  State<_HorizontalProductList> createState() => _HorizontalProductListState();
+}
+
+class _HorizontalProductListState extends State<_HorizontalProductList> {
+  final Map<int, double> _productRatings = {};
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = context.read<ProductProvider>();
+      if (provider.products.isEmpty) {
+        provider.fetchAllProducts();
+      }
+    });
+  }
+
+  Future<void> _loadRating(int productId) async {
+    if (!_productRatings.containsKey(productId)) {
+      try {
+        final rating = await ReviewService().getAverageRating(productId);
+        if (mounted) {
+          setState(() {
+            _productRatings[productId] = rating;
+          });
+        }
+      } catch (e) {
+        // Ignore error, rating will remain null
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final isTablet = MediaQuery.of(context).size.width >= 600;
+    final products = context
+        .watch<ProductProvider>()
+        .products
+        .take(10)
+        .toList();
+
+    if (products.isEmpty) {
+      return SizedBox(
+        height: isTablet ? 240 : 190,
+        child: const Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return SizedBox(
       height: isTablet ? 240 : 190,
@@ -406,10 +470,10 @@ class _HorizontalProductList extends StatelessWidget {
           final gradeColor = p.grade == 'Grade A'
               ? const Color(0xFF6A5AE0)
               : p.grade == 'Grade B'
-                  ? Colors.orange.shade600
-                  : p.grade == 'Grade C'
-                      ? Colors.pink.shade700
-                      : Colors.grey;
+              ? Colors.orange.shade600
+              : p.grade == 'Grade C'
+              ? Colors.pink.shade700
+              : Colors.grey;
 
           return SizedBox(
             width: isTablet ? 170 : 140,
@@ -427,9 +491,11 @@ class _HorizontalProductList extends StatelessWidget {
                       child: Stack(
                         children: [
                           ClipRRect(
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(10),
+                            ),
                             child: Image.asset(
-                              p.imageUrl,
+                              p.gambar!,
                               fit: BoxFit.cover,
                               width: double.infinity,
                               errorBuilder: (_, __, ___) => Container(
@@ -448,7 +514,10 @@ class _HorizontalProductList extends StatelessWidget {
                             right: 0,
                             top: 0,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: gradeColor,
                                 borderRadius: const BorderRadius.only(
@@ -457,7 +526,7 @@ class _HorizontalProductList extends StatelessWidget {
                                 ),
                               ),
                               child: Text(
-                                p.grade.replaceAll('Grade ', ''),
+                                p.grade!.replaceAll('Grade ', ''),
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 10,
@@ -475,25 +544,44 @@ class _HorizontalProductList extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            p.name,
+                            p.nama!,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(fontWeight: FontWeight.w500),
                           ),
                           Text(
-                            formatRupiah(p.price),
+                            formatRupiah(p.harga!.toInt()),
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.green,
                             ),
                           ),
-                          Row(
-                            children: [
-                              const Icon(Icons.star, size: 12, color: Colors.amber),
-                              Text(
-                                " ${p.rating}",
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                            ],
+                          FutureBuilder<void>(
+                            future: _loadRating(p.productId!),
+                            builder: (context, snapshot) {
+                              final rating = _productRatings[p.productId];
+                              if (rating == null || rating == 0) {
+                                return const Text(
+                                  'Belum ada rating',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey,
+                                  ),
+                                );
+                              }
+                              return Row(
+                                children: [
+                                  const Icon(
+                                    Icons.star,
+                                    size: 12,
+                                    color: Colors.amber,
+                                  ),
+                                  Text(
+                                    " ${rating.toStringAsFixed(1)}",
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                ],
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -601,7 +689,9 @@ class _LatestInfoList extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
-                info['type'] == "Kegiatan" ? Icons.calendar_today : Icons.campaign,
+                info['type'] == "Kegiatan"
+                    ? Icons.calendar_today
+                    : Icons.campaign,
                 color: Colors.deepPurple,
                 size: 20,
               ),

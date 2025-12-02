@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
+import 'package:provider/provider.dart';
+import 'package:jawara_pintar_kel_5/providers/product_provider.dart';
 
 class ProductSearchScreen extends StatefulWidget {
   const ProductSearchScreen({super.key});
@@ -40,7 +42,7 @@ class _ProductSearchScreenState extends State<ProductSearchScreen> {
       _searchResults = [];
     });
     
-    final allProducts = ProductModel.getSampleProducts().where((p) => p.isVerified).toList();
+    final allProducts = context.read<ProductProvider>().products;
     final lowerCaseQuery = query.toLowerCase();
 
     if (query.isEmpty) {
@@ -51,9 +53,9 @@ class _ProductSearchScreenState extends State<ProductSearchScreen> {
     }
     
     final filtered = allProducts.where((product) {
-      return product.name.toLowerCase().contains(lowerCaseQuery) ||
-             product.description.toLowerCase().contains(lowerCaseQuery) ||
-             product.grade.toLowerCase().contains(lowerCaseQuery);
+      return (product.nama?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
+             (product.deskripsi?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
+             (product.grade?.toLowerCase().contains(lowerCaseQuery) ?? false);
     }).toList();
 
     setState(() {
@@ -67,7 +69,7 @@ class _ProductSearchScreenState extends State<ProductSearchScreen> {
       leading: ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: Image.asset(
-          product.imageUrl,
+          product.gambar ?? 'assets/images/placeholder.png',
           width: 50,
           height: 50,
           fit: BoxFit.cover,
@@ -76,11 +78,12 @@ class _ProductSearchScreenState extends State<ProductSearchScreen> {
         ),
       ),
       title: Text(
-        product.name,
+        product.nama ?? 'Produk',
         style: const TextStyle(fontWeight: FontWeight.w600),
       ),
       subtitle: Text(
-        '${formatRupiah(product.price)} • ${product.grade}',
+        '${formatRupiah(product.harga?.toInt() ?? 0)} • ${product.grade ?? "Grade A"}',
+
         style: const TextStyle(color: Colors.grey),
       ),
       trailing: const Icon(Icons.chevron_right, color: Colors.grey),

@@ -1,16 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
+import 'package:jawara_pintar_kel_5/providers/marketplace/cart_provider.dart';
+import 'package:jawara_pintar_kel_5/services/marketplace/review_service.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
 
-class WargaProductDetailScreen extends StatelessWidget {
+class WargaProductDetailScreen extends StatefulWidget {
   final ProductModel product;
 
   const WargaProductDetailScreen({super.key, required this.product});
 
-  static const Color _primaryColor = Color(0xFF6366F1);
-  static const Color _iconColor = Color(0xFF8B5CF6);
+  @override
+  State<WargaProductDetailScreen> createState() => _WargaProductDetailScreenState();
+}
+
+class _WargaProductDetailScreenState extends State<WargaProductDetailScreen> {
+  static const Color _primaryColor = Color(0xFF6A5AE0);
   static const Color _greenFresh = Color(0xFF4ADE80);
+  
+  final _reviewService = ReviewService();
+  List<Map<String, dynamic>> _reviews = [];
+  bool _isLoadingReviews = true;
+  double _averageRating = 0.0;
+  
+  @override
+  void initState() {
+    super.initState();
+    _loadReviews();
+  }
+  
+  Future<void> _loadReviews() async {
+    try {
+      final reviews = await _reviewService.getReviewsWithUserInfo(widget.product.productId!);
+      
+      // Calculate average rating
+      double totalRating = 0;
+      for (var review in reviews) {
+        totalRating += (review['rating'] as int? ?? 0);
+      }
+      
+      setState(() {
+        _reviews = reviews;
+        _averageRating = reviews.isEmpty ? 0 : totalRating / reviews.length;
+        _isLoadingReviews = false;
+      });
+    } catch (e) {
+      print('Error loading reviews: $e');
+      setState(() => _isLoadingReviews = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +65,8 @@ class WargaProductDetailScreen extends StatelessWidget {
       ),
     );
   }
+  
+  ProductModel get product => widget.product;
 
   Widget _buildAppBar(BuildContext context) {
     return Positioned(
@@ -64,9 +106,9 @@ class WargaProductDetailScreen extends StatelessWidget {
           backgroundColor: Colors.white,
           flexibleSpace: FlexibleSpaceBar(
             background: Hero(
-              tag: 'product-${product.id}',
+              tag: 'product-${product.productId}',
               child: Image.asset(
-                product.imageUrl,
+                product.gambar ?? 'assets/images/placeholder.png',
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
@@ -103,7 +145,7 @@ class WargaProductDetailScreen extends StatelessWidget {
                 children: [
                   // Nama & Harga
                   Text(
-                    product.name,
+                    product.nama ?? 'Produk',
                     style: const TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -115,7 +157,7 @@ class WargaProductDetailScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        formatRupiah(product.price),
+                        formatRupiah(product.harga?.toInt() ?? 0),
                         style: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.w900,
@@ -129,15 +171,15 @@ class WargaProductDetailScreen extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: product.grade == 'Grade A'
+                          color: (product.grade ?? 'Grade A') == 'Grade A'
                               ? _greenFresh
-                              : product.grade == 'Grade B'
+                              : (product.grade ?? 'Grade B') == 'Grade B'
                               ? Colors.amber
                               : Colors.red,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          product.grade,
+                          product.grade ?? 'Grade A',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
@@ -160,7 +202,7 @@ class WargaProductDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    product.description,
+                    product.deskripsi ?? 'Tidak ada deskripsi',
                     style: const TextStyle(
                       fontSize: 16,
                       height: 1.5,
@@ -226,92 +268,113 @@ class WargaProductDetailScreen extends StatelessWidget {
     );
   }
   Widget _buildRatingAndReviewSection(BuildContext context) {
-  double rating = product.rating;
-  int reviewCount = 125;
+    if (_isLoadingReviews) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Center(child: CircularProgressIndicator()),
+      );
+    }
 
-  return Container(
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: Colors.grey.shade100,
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Row(
-                children: [
-                  const Icon(Icons.star, color: Colors.amber, size: 17),
-                  const SizedBox(width: 8),
-                  Text(
-                    rating.toStringAsFixed(1),
-                    style: const TextStyle(
-                      fontSize: 15,
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    const Icon(Icons.star, color: Colors.amber, size: 17),
+                    const SizedBox(width: 8),
+                    Text(
+                      _averageRating.toStringAsFixed(1),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Flexible(
+                      child: Text(
+                        '(${_reviews.length} ulasan)',
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 15,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              if (_reviews.isNotEmpty)
+                TextButton(
+                  onPressed: () {
+                    // TODO: Navigate to all reviews page
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Halaman semua ulasan (coming soon)'),
+                        duration: Duration(milliseconds: 800),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    'Lihat Semua >',
+                    style: TextStyle(
+                      color: Colors.blue.shade700,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Flexible(
-                    child: Text(
-                      '($reviewCount ReviewProduk)',
-                      style: const TextStyle(
-                        color: Colors.grey,
-                        fontSize: 15,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                ),
+            ],
+          ),
 
-            TextButton(
-              onPressed: () {
-                context.push('/warga/marketplace/reviewsproduk/${product.id}');
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Menuju Halaman Semua Review'),
-                    duration: Duration(milliseconds: 800),
-                  ),
-                );
-              },
-              child: Text(
-                'Lihat Semua >',
-                style: TextStyle(
-                  color: Colors.blue.shade700,
-                  fontWeight: FontWeight.bold,
+          const Divider(height: 20),
+          
+          if (_reviews.isEmpty)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: Text(
+                  'Belum ada ulasan',
+                  style: TextStyle(color: Colors.grey, fontSize: 14),
                 ),
               ),
+            )
+          else ...[
+            const Text(
+              'Ulasan Terbaru:',
+              style: TextStyle(fontWeight: FontWeight.w600),
             ),
+            const SizedBox(height: 8),
+            
+            // Show first 2 reviews only
+            for (int i = 0; i < (_reviews.length > 2 ? 2 : _reviews.length); i++)
+              _buildSingleReview(
+                _reviews[i]['user_name'] as String? ?? 'Pembeli',
+                _reviews[i]['review_text'] as String? ?? '',
+                (_reviews[i]['rating'] as int? ?? 0).toDouble(),
+                _reviews[i]['review_reply'] as String?,
+              ),
           ],
-        ),
-
-        const Divider(height: 20),
-        const Text(
-          'Ulasan Terbaru:',
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
-        _buildSingleReview(
-          'Lala S.',
-          'Tomatnya Grade A banget! Segar dan mulus. Cocok buat salad. Pengiriman cepat.',
-          5.0,
-        ),
-        _buildSingleReview(
-          'Budi J.',
-          'Wortel layu ini cocok untuk jus, harganya bersahabat. Seller responsif.',
-          4.0,
-        ),
-      ],
+        ],
     ),
   );
 }
 
 
-  Widget _buildSingleReview(String name, String comment, double star) {
+  Widget _buildSingleReview(String name, String comment, double star, String? reply) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Column(
@@ -329,10 +392,12 @@ class WargaProductDetailScreen extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              Icon(Icons.star, size: 16, color: Colors.amber),
-              Text(
-                star.toStringAsFixed(1),
-                style: const TextStyle(fontSize: 14),
+              Row(
+                children: List.generate(5, (i) => Icon(
+                  Icons.star,
+                  size: 14,
+                  color: i < star ? Colors.amber : Colors.grey.shade300,
+                )),
               ),
             ],
           ),
@@ -341,6 +406,45 @@ class WargaProductDetailScreen extends StatelessWidget {
             comment,
             style: const TextStyle(fontSize: 14, color: Colors.black87),
           ),
+          
+          // Seller Reply
+          if (reply != null && reply.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: _primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.store, size: 16, color: _primaryColor),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Balasan Penjual:',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: _primaryColor,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          reply,
+                          style: const TextStyle(fontSize: 13, fontStyle: FontStyle.italic),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -368,15 +472,70 @@ class WargaProductDetailScreen extends StatelessWidget {
             SizedBox(
               height: 50,
               child: OutlinedButton.icon(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        '${product.name} ditambahkan ke Keranjang!',
+                onPressed: () async {
+                  final cartProvider = Provider.of<CartProvider>(context, listen: false);
+                  // Get warga.id (NIK) from warga table using email
+                  final authUser = Supabase.instance.client.auth.currentUser;
+                  if (authUser?.email == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Silakan login terlebih dahulu'),
+                        backgroundColor: Colors.red,
                       ),
-                      backgroundColor: Colors.grey.shade800,
-                    ),
-                  );
+                    );
+                    return;
+                  }
+                  
+                  // Query warga table to get warga.id (NIK)
+                  final wargaResponse = await Supabase.instance.client
+                      .from('warga')
+                      .select('id')
+                      .eq('email', authUser!.email!)
+                      .maybeSingle();
+                  
+                  if (wargaResponse == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Data warga tidak ditemukan'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+                  
+                  final userId = wargaResponse['id'] as String;
+                  
+                  if (product.productId == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Produk tidak valid'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+                  
+                  final success = await cartProvider.addToCart(userId, product.productId!);
+                  
+                  if (success) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          '${product.nama} ditambahkan ke Keranjang!',
+                        ),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Gagal menambahkan ke keranjang: ${cartProvider.errorMessage}',
+                        ),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
                 },
                 icon: const Icon(Icons.add_shopping_cart),
                 label: const Text('Keranjang'),
@@ -396,8 +555,62 @@ class WargaProductDetailScreen extends StatelessWidget {
               child: SizedBox(
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: () {
-                    context.push('/warga/marketplace/checkout', extra: product);
+                  onPressed: () async {
+                    // Beli Sekarang - langsung ke checkout tanpa masuk keranjang
+                    try {
+                      final authUser = Supabase.instance.client.auth.currentUser;
+                      if (authUser?.email == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Silakan login terlebih dahulu'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+                      
+                      print('DEBUG BuyNow: User email = ${authUser!.email}');
+                      
+                      // Query warga table to get warga.id (NIK)
+                      final wargaResponse = await Supabase.instance.client
+                          .from('warga')
+                          .select('id')
+                          .eq('email', authUser.email!)
+                          .maybeSingle();
+                      
+                      if (wargaResponse == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Data warga tidak ditemukan'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+                      
+                      final userId = wargaResponse['id'] as String;
+                      print('DEBUG BuyNow: User ID = $userId');
+                      print('DEBUG BuyNow: Product = ${product.nama}, ID = ${product.productId}');
+                      
+                      // Pass product to checkout with buy_now flag
+                      final checkoutData = {
+                        'type': 'buy_now',
+                        'product': product,
+                        'userId': userId,
+                      };
+                      
+                      print('DEBUG BuyNow: Navigating to checkout with data: $checkoutData');
+                      
+                      context.push('/warga/marketplace/checkout', extra: checkoutData);
+                    } catch (e) {
+                      print('DEBUG BuyNow: Error = $e');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Terjadi kesalahan: $e'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _primaryColor,

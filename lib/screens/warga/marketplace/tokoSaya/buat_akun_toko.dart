@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/services/store_status_service.dart'; 
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:jawara_pintar_kel_5/services/store_status_service.dart';
+import 'package:jawara_pintar_kel_5/services/marketplace/store_service.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/store_model.dart'; 
 
 
 class WargaStoreRegisterScreen extends StatefulWidget {
@@ -13,6 +16,7 @@ class WargaStoreRegisterScreen extends StatefulWidget {
 
 class _WargaStoreRegisterScreenState extends State<WargaStoreRegisterScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _storeService = StoreService();
 
   final TextEditingController namaTokoC = TextEditingController();
   final TextEditingController deskripsiC = TextEditingController();
@@ -20,6 +24,8 @@ class _WargaStoreRegisterScreenState extends State<WargaStoreRegisterScreen> {
   final TextEditingController noHpC = TextEditingController();
   final TextEditingController emailC = TextEditingController();
   final TextEditingController passwordC = TextEditingController();
+  
+  bool _isSubmitting = false;
 
   @override
   Widget build(BuildContext context) {
@@ -216,13 +222,92 @@ class _WargaStoreRegisterScreenState extends State<WargaStoreRegisterScreen> {
     return SizedBox(
       width: double.infinity,
       child: FilledButton(
-        onPressed: () async {
-        if (_formKey.currentState!.validate()) {
+        onPressed: _isSubmitting ? null : () async {
+          if (_formKey.currentState!.validate()) {
+            setState(() => _isSubmitting = true);
 
-          await StoreStatusService.setStoreStatus(1);
-          context.goNamed("StorePendingValidation");
-        }
-      },
+            try {
+              // Get user_id from email
+              final authUser = Supabase.instance.client.auth.currentUser;
+              if (authUser?.email != null) {
+                final wargaResponse = await Supabase.instance.client
+                    .from('warga')
+                    .select('id')
+                    .eq('email', authUser!.email!)
+                    .maybeSingle();
+
+                if (wargaResponse == null) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Data warga tidak ditemukan'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                  setState(() => _isSubmitting = false);
+                  return;
+                }
+
+                final userId = wargaResponse['id'] as String;
+
+                // Check if user already has a store
+                final existingStore = await _storeService.getStoreByUserId(userId);
+                if (existingStore != null) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Anda sudah memiliki toko yang terdaftar'),
+                        backgroundColor: Colors.orange,
+                      ),
+                    );
+                  }
+                  setState(() => _isSubmitting = false);
+                  return;
+                }
+
+                // Create new store with "Pending" status (waiting for admin verification)
+                final newStore = StoreModel(
+                  userId: userId,
+                  nama: namaTokoC.text.trim(),
+                  deskripsi: deskripsiC.text.trim(),
+                  alamat: lokasiC.text.trim(),
+                  kontak: noHpC.text.trim(),
+                  verifikasi: 'Pending', // Status menunggu verifikasi admin
+                  createdAt: DateTime.now(),
+                );
+
+                await _storeService.createStore(newStore);
+                await StoreStatusService.setStoreStatus(1);
+
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Toko berhasil didaftarkan! Menunggu verifikasi admin.'),
+                      backgroundColor: Colors.green,
+                      duration: Duration(seconds: 3),
+                    ),
+                  );
+                  context.goNamed("StorePendingValidation");
+                }
+              }
+            } catch (e) {
+              print('Error creating store: $e');
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Gagal mendaftarkan toko: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            } finally {
+              if (mounted) {
+                setState(() => _isSubmitting = false);
+              }
+            }
+          }
+        },
         style: FilledButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 14),
           backgroundColor: const Color(0xFF6A5AE0),
@@ -230,10 +315,19 @@ class _WargaStoreRegisterScreenState extends State<WargaStoreRegisterScreen> {
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        child: const Text(
-          "Daftar Sekarang",
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
+        child: _isSubmitting
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : const Text(
+                "Daftar Sekarang",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
       ),
     );
   }

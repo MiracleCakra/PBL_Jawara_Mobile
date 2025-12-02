@@ -1,116 +1,86 @@
 class ProductModel {
-  final String id;
-  final String name;
-  final String description;
-  final String imageUrl;
-  final String grade; // Grade A, B, C
-  final int price;
-  final double rating;
-  final bool isVerified;
-  
-  // PROPERTI BARU:
-  final int stock; // Jumlah stok (misal: 10 kg)
-  final String unit; // Satuan (misal: 'kg', 'ikat', 'pcs')
-  final String? rejectionReason; // Alasan penolakan admin (null jika verified/pending)
+  final int? productId;
+  final String? nama;
+  final String? deskripsi;
+  final double? harga; // harga dari supabase adalah numeric
+  final int? stok;
+  final String? gambar;
+  final String? grade; // Grade A, B, C
+  final String? satuan; // kg, ikat, pcs, karung
+  final int? storeId;
+  final DateTime? createdAt;
 
   ProductModel({
-    required this.id,
-    required this.name,
-    required this.description,
-    required this.imageUrl,
-    required this.grade,
-    required this.price,
-    required this.rating,
-    required this.isVerified,
-    // Tambahkan di constructor:
-    this.stock = 0,
-    this.unit = 'kg',
-    this.rejectionReason, 
+    this.productId,
+    this.nama,
+    this.deskripsi,
+    this.harga,
+    this.stok,
+    this.gambar,
+    this.grade,
+    this.satuan,
+    this.storeId,
+    this.createdAt,
   });
 
-  // ---- SAMPLE DATA UNTUK TESTING ----
-  static List<ProductModel> getSampleProducts() {
-    return [
-      // 1. VERIFIED & STOK ADA (Muncul di dashboard dan explore)
-      ProductModel(
-        id: 'p1',
-        name: 'Tomat Segar',
-        description: 'Tomat merah segar langsung dari kebun warga.',
-        imageUrl: 'assets/images/tomatsegar.jpg',
-        grade: 'Grade A',
-        price: 15000,
-        rating: 4.8,
-        isVerified: true,
-        stock: 15,
-        unit: 'kg',
-      ),
-      // 2. VERIFIED & STOK ADA (Muncul di dashboard dan explore)
-      ProductModel(
-        id: 'p2',
-        name: 'Wortel segar',
-        description: 'Wortel organik dengan kualitas premium.',
-        imageUrl: 'assets/images/wortelsegar.jpg',
-        grade: 'Grade A',
-        price: 12000,
-        rating: 4.6,
-        isVerified: true,
-        stock: 25,
-        unit: 'ikat',
-      ),
-      ProductModel(
-        id: 'p2',
-        name: 'Wortel layu',
-        description: 'Wortel layu.',
-        imageUrl: 'assets/images/wortellayu.jpg',
-        grade: 'Grade B',
-        price: 12000,
-        rating: 4.6,
-        isVerified: true,
-        stock: 25,
-        unit: 'ikat',
-      ),
-      // 3. PENDING (isVerified: false, rejectionReason: null)
-      ProductModel(
-        id: 'p3',
-        name: 'Tomat Busuk',
-        description: 'Pakan magot, Biofuel',
-        imageUrl: 'assets/images/tomatbusuk.jpg',
-        grade: 'Grade C',
-        price: 5000,
-        rating: 0.0,
-        isVerified: false,
-        stock: 5,
-        unit: 'kg',
-        rejectionReason: null, // Status pending
-      ),
-      
-      // 4. REJECTED
-      ProductModel(
-        id: 'p4',
-        name: 'Wortel Layu',
-        description: 'Wortel layu tapi masih segar di dalamnya.',
-        imageUrl: 'assets/images/wortellayu.jpg',
-        grade: 'Grade B',
-        price: 8000,
-        rating: 4.3,
-        isVerified: false,
-        stock: 10,
-        unit: 'pcs',
-        rejectionReason: 'Kualitas foto buram. Harap foto ulang dengan pencahayaan yang lebih baik.', // Alasan penolakan
-      ),
-    ];
+  // From JSON (dari Supabase)
+  factory ProductModel.fromJson(Map<String, dynamic> json) {
+    return ProductModel(
+      productId: json['product_id'] as int?,
+      nama: json['nama'] as String?,
+      deskripsi: json['deskripsi'] as String?,
+      harga: (json['harga'] as num?)?.toDouble(),
+      stok: json['stok'] as int?,
+      gambar: json['gambar'] as String?,
+      grade: json['grade'] as String?,
+      satuan: json['satuan'] as String?,
+      storeId: json['store_id'] as int?,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
+          : null,
+    );
   }
 
-  // ---- FILTERS BANTUAN ----
-  static List<ProductModel> getVerifiedProducts() {
-    return getSampleProducts().where((p) => p.isVerified).toList();
+  // To JSON (untuk insert/update ke Supabase)
+  Map<String, dynamic> toJson() {
+    return {
+      if (productId != null) 'product_id': productId,
+      if (nama != null) 'nama': nama,
+      if (deskripsi != null) 'deskripsi': deskripsi,
+      if (harga != null) 'harga': harga,
+      if (stok != null) 'stok': stok,
+      if (gambar != null) 'gambar': gambar,
+      if (grade != null) 'grade': grade,
+      if (satuan != null) 'satuan': satuan,
+      if (storeId != null) 'store_id': storeId,
+      if (createdAt != null) 'created_at': createdAt!.toIso8601String(),
+    };
   }
 
-  static List<ProductModel> getPendingProducts() {
-    return getSampleProducts().where((p) => !p.isVerified && p.rejectionReason == null).toList();
-  }
-
-  static List<ProductModel> getRejectedProducts() {
-    return getSampleProducts().where((p) => !p.isVerified && p.rejectionReason != null).toList();
+  // Copy with
+  ProductModel copyWith({
+    int? productId,
+    String? nama,
+    String? deskripsi,
+    double? harga,
+    int? stok,
+    String? gambar,
+    String? grade,
+    String? satuan,
+    int? storeId,
+    DateTime? createdAt,
+  }) {
+    return ProductModel(
+      productId: productId ?? this.productId,
+      nama: nama ?? this.nama,
+      deskripsi: deskripsi ?? this.deskripsi,
+      harga: harga ?? this.harga,
+      stok: stok ?? this.stok,
+      gambar: gambar ?? this.gambar,
+      grade: grade ?? this.grade,
+      satuan: satuan ?? this.satuan,
+      storeId: storeId ?? this.storeId,
+      createdAt: createdAt ?? this.createdAt,
+    );
   }
 }

@@ -17,7 +17,7 @@ class CartProvider extends ChangeNotifier {
   }
 
   double get totalPrice =>
-      _items.fold(0, (sum, item) => sum + item.price);
+      _items.fold(0, (sum, item) => sum + item.harga!);
 
   void clearCart() {
     _items.clear();
