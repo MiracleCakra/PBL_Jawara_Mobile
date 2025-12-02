@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:jawara_pintar_kel_5/models/kegiatan/aspirasi_model.dart';
+import 'package:jawara_pintar_kel_5/services/aspirasi_service.dart';
 
 class EditPesanWargaScreen extends StatefulWidget {
-  final Map<String, String> pesan;
+  final AspirasiModel pesan;
 
   const EditPesanWargaScreen({super.key, required this.pesan});
 
@@ -13,6 +15,8 @@ class _EditPesanWargaScreenState extends State<EditPesanWargaScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _judulController = TextEditingController();
   final TextEditingController _deskripsiController = TextEditingController();
+  final AspirasiService _aspirasiService = AspirasiService();
+  bool _isLoading = false;
 
   // Status yang BISA DIUBAH
   String? _selectedStatus;
@@ -21,13 +25,11 @@ class _EditPesanWargaScreenState extends State<EditPesanWargaScreen> {
   @override
   void initState() {
     super.initState();
-    final Map<String, String> data = widget.pesan;
+    _judulController.text = widget.pesan.judul;
+    _deskripsiController.text = widget.pesan.isi;
 
-    _judulController.text = data['judul'] ?? '';
-    _deskripsiController.text = data['deskripsi'] ?? '';
-
-    if (_statusList.contains(data['status'])) {
-      _selectedStatus = data['status'];
+    if (_statusList.contains(widget.pesan.status)) {
+      _selectedStatus = widget.pesan.status;
     }
   }
 
@@ -39,16 +41,34 @@ class _EditPesanWargaScreenState extends State<EditPesanWargaScreen> {
   }
 
   // Simpan Perubahan
-  void _simpanPerubahan() {
+  void _simpanPerubahan() async {
     if (_formKey.currentState!.validate()) {
-      final updatedPesan = Map<String, String>.from(widget.pesan);
+      setState(() {
+        _isLoading = true;
+      });
 
-      updatedPesan['status'] = _selectedStatus!;
-      updatedPesan['id'] = widget.pesan['id']!;
-      updatedPesan['judul'] = _judulController.text;
-      updatedPesan['deskripsi'] = _deskripsiController.text;
-      
-      Navigator.pop(context, updatedPesan);
+      final updatedAspirasi = widget.pesan.copyWith(
+        status: _selectedStatus!,
+      );
+
+      try {
+        await _aspirasiService.updateAspiration(updatedAspirasi);
+        if (mounted) {
+          Navigator.pop(context, true);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Gagal memperbarui: $e')),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
     }
   }
 
@@ -108,7 +128,6 @@ class _EditPesanWargaScreenState extends State<EditPesanWargaScreen> {
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
         ),
       ),
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -191,7 +210,7 @@ class _EditPesanWargaScreenState extends State<EditPesanWargaScreen> {
                     // Tombol Simpan
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: _simpanPerubahan, 
+                        onPressed: _isLoading ? null : _simpanPerubahan,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: simpanColor,
                           foregroundColor: Colors.white,
@@ -200,13 +219,18 @@ class _EditPesanWargaScreenState extends State<EditPesanWargaScreen> {
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                        child: const Text(
-                          'Simpan',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        child: _isLoading
+                            ? const CircularProgressIndicator(
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(Colors.white),
+                              )
+                            : const Text(
+                                'Simpan',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                       ),
                     ),
                   ],
@@ -220,4 +244,3 @@ class _EditPesanWargaScreenState extends State<EditPesanWargaScreen> {
     );
   }
 }
-              

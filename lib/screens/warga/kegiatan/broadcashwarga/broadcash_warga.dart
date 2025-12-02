@@ -1,71 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/broadcashwarga/detailBroadcash.dart';
+import 'package:jawara_pintar_kel_5/models/kegiatan/broadcast_model.dart';
+import 'package:jawara_pintar_kel_5/services/broadcast_service.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/broadcashwarga/filter_broadcashwarga.dart';
-import 'package:jawara_pintar_kel_5/models/kegiatan/broadcah_model.dart';
-
-/*class KegiatanBroadcastWarga {
-  final String judul;
-  final String pengirim;
-  final String tanggal;
-  final String kategori;
-  final String konten;
-  final String? lampiranGambarUrl;
-  final List<String> lampiranDokumen;
-
-  KegiatanBroadcastWarga({
-    required this.judul,
-    required this.pengirim,
-    required this.tanggal,
-    required this.konten,
-    this.kategori = "Pemberitahuan",
-    this.lampiranGambarUrl,
-    this.lampiranDokumen = const [],
-  });
-}
-
-List<KegiatanBroadcastWarga> dummyData = [
-  KegiatanBroadcastWarga(
-    judul: "Pemberitahuan Kerja Bakti",
-    pengirim: "Ketua RT",
-    tanggal: "12/10/2025",
-    konten:
-        "PENGUMUMAN — Kepada seluruh warga RT 03/RW 07, besok Minggu pukul 07.00 akan diadakan kerja bakti membersihkan selokan dan lingkungan sekitar. Diharapkan semua warga ikut berpartisipasi. Terima kasih",
-    lampiranGambarUrl: 'assets/images/images.png',
-    lampiranDokumen: ["file_panduan.pdf", "file_absensi.pdf"],
-  ),
-  KegiatanBroadcastWarga(
-    judul: "Pengumuman Lomba Kebersihan",
-    pengirim: "Sekretaris RW",
-    tanggal: "23/10/2025",
-    kategori: "Pengumuman",
-    konten:
-        "Lomba Kebersihan Lingkungan akan dimulai minggu depan. Mohon partisipasi seluruh warga agar lingkungan tetap bersih dan asri.",
-    lampiranGambarUrl: null,
-    lampiranDokumen: ["Panduan_Lomba.pdf"],
-  ),
-  KegiatanBroadcastWarga(
-    judul: "Himbauan Pembayaran Iuran",
-    pengirim: "Bendahara RT",
-    tanggal: "15/10/2025",
-    kategori: "Keuangan",
-    konten:
-        "Dimohon segera melunasi iuran bulanan sebelum tanggal 20. Bagi yang belum membayar, harap segera menghubungi Bendahara RT.",
-    lampiranGambarUrl: null,
-    lampiranDokumen: ["laporan_keuangan.pdf"],
-  ),
-  KegiatanBroadcastWarga(
-    judul: "Undangan Rapat Program",
-    pengirim: "Sekretaris RW",
-    tanggal: "20/10/2025",
-    kategori: "Pemberitahuan",
-    konten:
-        "Rapat Program Kerja akan diadakan pada hari Rabu di Balai Warga. Kehadiran para ketua RT/RW sangat diharapkan.",
-    lampiranGambarUrl: null,
-    lampiranDokumen: ["Undangan_Rapat.pdf"],
-  ),
-];*/
 
 class DaftarBroadcastWargaScreen extends StatefulWidget {
   const DaftarBroadcastWargaScreen({super.key});
@@ -81,11 +19,25 @@ class _DaftarBroadcastWargaScreenState
   DateTime? _filterDate;
   final DateFormat _dateFormat = DateFormat('dd/MM/yyyy');
   final TextEditingController _searchController = TextEditingController();
+  final BroadcastService _broadcastService = BroadcastService();
+  late Future<List<BroadcastModel>> _broadcastsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBroadcasts();
+  }
+
+  void _loadBroadcasts() {
+    setState(() {
+      _broadcastsFuture = _broadcastService.getBroadcasts();
+    });
+  }
 
   bool get _isFilterActive => _filterDate != null;
 
-  List<KegiatanBroadcastWarga> _filterBroadcast() {
-    Iterable<KegiatanBroadcastWarga> result = dummyData;
+  List<BroadcastModel> _filterBroadcast(List<BroadcastModel> broadcasts) {
+    Iterable<BroadcastModel> result = broadcasts;
     final query = _searchQuery.toLowerCase();
 
     if (_searchQuery.isNotEmpty) {
@@ -98,12 +50,7 @@ class _DaftarBroadcastWargaScreenState
 
     if (_filterDate != null) {
       result = result.where((broadcast) {
-        try {
-          final broadcastDate = _dateFormat.parse(broadcast.tanggal);
-          return broadcastDate.isAtSameMomentAs(_filterDate!);
-        } catch (e) {
-          return false;
-        }
+        return DateUtils.isSameDay(broadcast.tanggal, _filterDate);
       });
     }
 
@@ -144,8 +91,8 @@ class _DaftarBroadcastWargaScreenState
     }
   }
 
-  void _navigateToDetail(BuildContext context, KegiatanBroadcastWarga data) {
-    context.pushNamed('WargaBroadcastDetail', extra: data);
+  void _navigateToDetail(BuildContext context, BroadcastModel data) {
+    context.goNamed('WargaBroadcastDetail', pathParameters: {'id': data.id.toString()});
   }
 
   Widget _buildFilterBar() {
@@ -163,7 +110,7 @@ class _DaftarBroadcastWargaScreenState
                   filled: true,
                   fillColor: Colors.white,
                   hintText:
-                      'Cari Berdasarkan Judul/Pengirim...', 
+                      'Cari Berdasarkan Judul/Pengirim...',
                   hintStyle: TextStyle(color: Colors.grey[500]),
                   prefixIcon: Icon(
                     Icons.search,
@@ -236,8 +183,7 @@ class _DaftarBroadcastWargaScreenState
     );
   }
 
-  //
-  Widget _buildBroadcastCard(KegiatanBroadcastWarga kegiatan) {
+  Widget _buildBroadcastCard(BroadcastModel kegiatan) {
     final Color detailColor = Colors.grey.shade700;
 
     return GestureDetector(
@@ -278,7 +224,7 @@ class _DaftarBroadcastWargaScreenState
                             style: TextStyle(color: Colors.grey),
                           ),
                           Text(
-                            "Tanggal : ${kegiatan.tanggal}",
+                            "Tanggal : ${_dateFormat.format(kegiatan.tanggal)}",
                             style: TextStyle(fontSize: 14, color: detailColor),
                           ),
                         ],
@@ -306,12 +252,8 @@ class _DaftarBroadcastWargaScreenState
 
   @override
   Widget build(BuildContext context) {
-    final filteredList = _filterBroadcast();
-    // const primaryColor = Colors.deepPurple;
-
     return Scaffold(
-      backgroundColor: Colors
-          .grey[50], 
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 20),
@@ -333,18 +275,37 @@ class _DaftarBroadcastWargaScreenState
         children: [
           _buildFilterBar(),
           Expanded(
-            child: filteredList.isEmpty
-                ? const Center(
-                    child: Text("Tidak ada Broadcast yang ditemukan."),
-                  )
-                : ListView.builder(
+            child: FutureBuilder<List<BroadcastModel>>(
+              future: _broadcastsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text("Error: ${snapshot.error}"));
+                } else if (snapshot.hasData) {
+                  final filteredList = _filterBroadcast(snapshot.data!);
+
+                  if (filteredList.isEmpty) {
+                    return const Center(
+                      child: Text("Tidak ada Broadcast yang ditemukan."),
+                    );
+                  }
+
+                  return ListView.builder(
                     padding: const EdgeInsets.only(bottom: 80),
                     itemCount: filteredList.length,
                     itemBuilder: (context, index) {
                       final kegiatan = filteredList[index];
                       return _buildBroadcastCard(kegiatan);
                     },
-                  ),
+                  );
+                } else {
+                  return const Center(
+                    child: Text("Tidak ada data broadcast."),
+                  );
+                }
+              },
+            ),
           ),
         ],
       ),

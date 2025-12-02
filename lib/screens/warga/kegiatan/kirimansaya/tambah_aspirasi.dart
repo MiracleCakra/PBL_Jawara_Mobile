@@ -1,19 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jawara_pintar_kel_5/models/kegiatan/aspirasi_model.dart';
+import 'package:jawara_pintar_kel_5/services/aspirasi_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class WargaTambahAspirasiScreen extends StatefulWidget {
   const WargaTambahAspirasiScreen({super.key});
 
   @override
-  State<WargaTambahAspirasiScreen> createState() => _WargaTambahAspirasiScreenState();
+  State<WargaTambahAspirasiScreen> createState() =>
+      _WargaTambahAspirasiScreenState();
 }
 
-class _WargaTambahAspirasiScreenState extends State<WargaTambahAspirasiScreen> {
+class _WargaTambahAspirasiScreenState
+    extends State<WargaTambahAspirasiScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _judulController = TextEditingController();
   final TextEditingController _isiController = TextEditingController();
-  
-  static const Color _primaryColor = Color(0xFF6366F1); 
+  final AspirasiService _aspirasiService = AspirasiService();
+  bool _isLoading = false;
+
+  static const Color _primaryColor = Color(0xFF6366F1);
 
   @override
   void dispose() {
@@ -22,37 +29,60 @@ class _WargaTambahAspirasiScreenState extends State<WargaTambahAspirasiScreen> {
     super.dispose();
   }
 
-  void _submitForm() {
+  Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      final newAspirasi = {
-        'id': DateTime.now().millisecondsSinceEpoch.toString(), 
-        'judul': _judulController.text,
-        'deskripsi': _isiController.text,
-        'isi': _isiController.text,
-        'status': 'Pending',
-        'pengirim': 'Saya (Aspirasi Baru)',
-        'tanggal': DateTime.now().toString(),
-        'type': 'new',
-      };
-      
-      // TODO: LOGIKA KIRIM DATA BARU KE API/BACKEND
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pesan Anda berhasil dikirim!'),
-          backgroundColor: Colors.grey,
-        ),
-      );
-      
-      context.pop(newAspirasi);
+      setState(() {
+        _isLoading = true;
+      });
+
+    final user = Supabase.instance.client.auth.currentUser;
+    final String currentUserId = user?.id ?? '-';
+    final String currentUserName = user?.userMetadata?['name'] ?? 'Warga'; 
+
+    final newAspirasi = AspirasiModel(
+      judul: _judulController.text,
+      isi: _isiController.text,
+      pengirim: currentUserName,
+      status: 'Pending',
+      tanggal: DateTime.now(),
+      userId: currentUserId, // Pakai ID asli
+    );
+
+      try {
+        await _aspirasiService.createAspiration(newAspirasi);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Aspirasi Anda berhasil dikirim!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          context.pop();
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Gagal mengirim aspirasi: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
     }
   }
 
   void _resetForm() {
-    setState(() {
-      _judulController.clear();
-      _isiController.clear();
-    });
+    _formKey.currentState?.reset();
+    _judulController.clear();
+    _isiController.clear();
   }
 
   @override
@@ -92,10 +122,14 @@ class _WargaTambahAspirasiScreenState extends State<WargaTambahAspirasiScreen> {
                   hintText: 'Masukkan judul pesan',
                   filled: true,
                   fillColor: Colors.grey.shade50,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                  enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey.shade300)),
                 ),
-                validator: (value) => value == null || value.isEmpty ? 'Judul tidak boleh kosong' : null,
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Judul tidak boleh kosong' : null,
               ),
               const SizedBox(height: 24),
 
@@ -107,15 +141,19 @@ class _WargaTambahAspirasiScreenState extends State<WargaTambahAspirasiScreen> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _isiController,
-                maxLines: 8, 
+                maxLines: 8,
                 decoration: InputDecoration(
                   hintText: 'Tulis isi pesan di sini...',
                   filled: true,
                   fillColor: Colors.grey.shade50,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                  enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey.shade300)),
                 ),
-                validator: (value) => value == null || value.isEmpty ? 'Isi pesan tidak boleh kosong' : null,
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Isi pesan tidak boleh kosong' : null,
               ),
               const SizedBox(height: 32),
 
@@ -125,27 +163,41 @@ class _WargaTambahAspirasiScreenState extends State<WargaTambahAspirasiScreen> {
                   Expanded(
                     flex: 3,
                     child: ElevatedButton(
-                      onPressed: _submitForm, 
+                      onPressed: _isLoading ? null : _submitForm,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: _primaryColor, 
+                        backgroundColor: _primaryColor,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
                       ),
-                      child: const Text('Kirim Pesan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text('Kirim Pesan',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 16)),
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     flex: 2,
                     child: OutlinedButton(
-                      onPressed: _resetForm,
+                      onPressed: _isLoading ? null : _resetForm,
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         side: BorderSide(color: Colors.grey.shade300),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
                       ),
-                      child: const Text('Reset', style: TextStyle(color: Colors.black87)),
+                      child: const Text('Reset',
+                          style: TextStyle(color: Colors.black87)),
                     ),
                   ),
                 ],

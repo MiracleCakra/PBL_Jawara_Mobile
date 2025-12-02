@@ -1,144 +1,258 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/broadcashwarga/broadcash_warga.dart';
-import 'package:jawara_pintar_kel_5/models/kegiatan/broadcah_model.dart';
+import 'package:intl/intl.dart';
 
+// Pastikan import ini sesuai dengan struktur foldermu
+import 'package:jawara_pintar_kel_5/models/kegiatan/broadcast_model.dart';
+// Import service yang sudah kamu buat
+import 'package:jawara_pintar_kel_5/services/broadcast_service.dart'; // Sesuaikan path ini jika beda
 
-class DetailBroadcastWargaScreen extends StatelessWidget {
-  final KegiatanBroadcastWarga broadcastData;
-  const DetailBroadcastWargaScreen({super.key, required this.broadcastData});
+class DetailBroadcastWargaScreen extends StatefulWidget {
+  // Kita ubah: menerima ID, bukan langsung datanya.
+  // Biar screen ini yang "kerja" ngambil data dari database.
+  final int broadcastId; 
+
+  const DetailBroadcastWargaScreen({super.key, required this.broadcastId});
+
+  // Warna statis biar bisa diakses dari widget lain di file ini
   static const Color primaryColor = Color(0xFF6366F1);
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-        backgroundColor: const Color(0xFFF8F9FB),
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          foregroundColor: Colors.black,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-            onPressed: () => context.pop(),
-          ),
-          title: const Text(
-            'Detail Broadcast',
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
-          ),
-          bottom: const PreferredSize(
-            preferredSize: Size.fromHeight(0.0),
-            child: Divider(height: 1, color: Colors.grey),
-          ),
+  State<DetailBroadcastWargaScreen> createState() => _DetailBroadcastWargaScreenState();
+}
+
+class _DetailBroadcastWargaScreenState extends State<DetailBroadcastWargaScreen> {
+  // Variabel untuk menampung proses pengambilan data
+  late Future<BroadcastModel> _futureBroadcast;
+  final BroadcastService _broadcastService = BroadcastService();
+
+  @override
+  void initState() {
+    super.initState();
+    // Saat layar dibuka, langsung panggil service
+    _fetchData();
+  }
+
+  void _fetchData() {
+    setState(() {
+      _futureBroadcast = _broadcastService.getBroadcastById(widget.broadcastId);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Helper format tanggal
+    final DateFormat dateFormat = DateFormat('dd/MM/yyyy HH:mm', 'id_ID'); 
+    // Catatan: Pastikan di main.dart sudah initializeDateFormatting('id_ID', null)
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FB),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        foregroundColor: Colors.black,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+          onPressed: () => context.pop(),
         ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. DETAIL UTAMA (Judul, Konten, Tanggal)
-              _SectionCard(
-                title: "Informasi Broadcast",
+        title: const Text(
+          'Detail Broadcast',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+        ),
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(0.0),
+          child: Divider(height: 1, color: Colors.grey),
+        ),
+      ),
+      // FutureBuilder adalah kunci untuk fetch data
+      body: FutureBuilder<BroadcastModel>(
+        future: _futureBroadcast,
+        builder: (context, snapshot) {
+          // 1. KONDISI LOADING
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          // 2. KONDISI ERROR
+          if (snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _IconRow(
-                    icon: Icons.title,
-                    label: "Judul Broadcast",
-                    value: broadcastData.judul,
-                  ),
-                  _IconRow(
-                    icon: Icons.calendar_today,
-                    label: "Tanggal Publikasi",
-                    value: broadcastData.tanggal, 
-                  ),
-                  _IconRow(
-                    icon: Icons.person,
-                    label: "Dibuat oleh",
-                    value: broadcastData.pengirim,
-                  ),
+                  const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                  const SizedBox(height: 16),
+                  Text('Terjadi kesalahan:\n${snapshot.error}', textAlign: TextAlign.center),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _fetchData,
+                    child: const Text("Coba Lagi"),
+                  )
                 ],
               ),
-              const SizedBox(height: 20),
+            );
+          }
 
-              // 2. ISI BROADCAST
-              _SectionCard(
-                title: "Isi Broadcast",
+          if (!snapshot.hasData) {
+            return const Center(child: Text("Data tidak ditemukan"));
+          }
+
+          final broadcastData = snapshot.data!;
+
+          return RefreshIndicator(
+            onRefresh: () async => _fetchData(),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              // Pakai physics ini biar bisa scroll walau konten pendek (buat refresh)
+              physics: const AlwaysScrollableScrollPhysics(), 
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 8),
-                  Text(
-                    broadcastData.konten,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      height: 1.6,
-                      color: Colors.black87,
-                    ),
-                    textAlign: TextAlign.justify,
-                  ),
-                  const SizedBox(height: 8),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // 3. LAMPIRAN GAMBAR
-              if (broadcastData.lampiranGambarUrl != null)
-                _SectionCard(
-                  title: 'Lampiran Gambar',
-                  children: [
-                    const SizedBox(height: 8),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.asset(
-                        broadcastData.lampiranGambarUrl!,
-                        height: 200,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
+                  // 1. DETAIL UTAMA
+                  _SectionCard(
+                    title: "Informasi Broadcast",
+                    children: [
+                      _IconRow(
+                        icon: Icons.title,
+                        label: "Judul Broadcast",
+                        value: broadcastData.judul,
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                  ],
-                ),
-              const SizedBox(height: 20),
+                      _IconRow(
+                        icon: Icons.calendar_today,
+                        label: "Tanggal Publikasi",
+                        value: dateFormat.format(broadcastData.tanggal),
+                      ),
+                      _IconRow(
+                        icon: Icons.category,
+                        label: "Kategori",
+                        value: broadcastData.kategori,
+                      ),
+                      _IconRow(
+                        icon: Icons.person,
+                        label: "Dibuat oleh",
+                        value: broadcastData.pengirim,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
 
-              // 4. LAMPIRAN DOKUMEN
-              if (broadcastData.lampiranDokumen.isNotEmpty)
-                _SectionCard(
-                  title: 'Lampiran Dokumen',
-                  children: [
-                    const SizedBox(height: 8),
-                    ...broadcastData.lampiranDokumen.map(
-                      (dokumen) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey.shade300),
-                            borderRadius: BorderRadius.circular(8),
-                            color: primaryColor.withOpacity(0.05), // Menggunakan warna tema
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.picture_as_pdf, color: Colors.red, size: 20),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  dokumen,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.black87,
-                                    fontSize: 15,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
+                  // 2. ISI BROADCAST
+                  _SectionCard(
+                    title: "Isi Broadcast",
+                    children: [
+                      const SizedBox(height: 8),
+                      Text(
+                        broadcastData.konten,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          height: 1.6,
+                          color: Colors.black87,
+                        ),
+                        textAlign: TextAlign.justify,
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // 3. LAMPIRAN GAMBAR
+                  if (broadcastData.lampiranGambarUrl != null && broadcastData.lampiranGambarUrl!.isNotEmpty)
+                    _SectionCard(
+                      title: 'Lampiran Gambar',
+                      children: [
+                        const SizedBox(height: 8),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            broadcastData.lampiranGambarUrl!,
+                            height: 200,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                height: 200,
+                                color: Colors.grey[200],
+                                child: const Center(child: CircularProgressIndicator()),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                height: 200,
+                                color: Colors.grey[200],
+                                child: const Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.broken_image, color: Colors.grey),
+                                    Text("Gagal memuat gambar"),
+                                  ],
                                 ),
-                              ),
-                              const Icon(Icons.download, color: primaryColor, size: 20),
-                            ],
+                              );
+                            },
                           ),
                         ),
-                      ),
+                        const SizedBox(height: 8),
+                      ],
                     ),
-                  ],
-                ),
-            ],
-          ),
-        ),
-      );
+                  if (broadcastData.lampiranGambarUrl != null) 
+                    const SizedBox(height: 20),
+
+                  // 4. LAMPIRAN DOKUMEN
+                  if (broadcastData.lampiranDokumen.isNotEmpty)
+                    _SectionCard(
+                      title: 'Lampiran Dokumen',
+                      children: [
+                        const SizedBox(height: 8),
+                        ...broadcastData.lampiranDokumen.map(
+                          (dokumen) => Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: InkWell(
+                              onTap: () {
+                                // TODO: Tambahkan logika download/buka file di sini
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text("Membuka dokumen: $dokumen")),
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(8),
+                                  color: DetailBroadcastWargaScreen.primaryColor.withOpacity(0.05),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.picture_as_pdf, color: Colors.red, size: 20),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        dokumen,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.black87,
+                                          fontSize: 15,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const Icon(Icons.download, color: DetailBroadcastWargaScreen.primaryColor, size: 20),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  // Tambahan padding bawah biar tidak mentok
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 }
 
 class _SectionCard extends StatelessWidget {
@@ -159,7 +273,7 @@ class _SectionCard extends StatelessWidget {
             color: Colors.grey.withOpacity(0.1),
             spreadRadius: 1,
             blurRadius: 5,
-            offset: const Offset(0, 3), 
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -201,6 +315,7 @@ class _IconRow extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
+              // Mengakses variabel static dari class utama
               color: DetailBroadcastWargaScreen.primaryColor.withOpacity(0.05),
               borderRadius: BorderRadius.circular(8),
             ),
