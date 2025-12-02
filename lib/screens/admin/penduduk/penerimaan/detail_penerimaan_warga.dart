@@ -18,9 +18,38 @@ class _DetailPenerimaanWargaPageState extends State<DetailPenerimaanWargaPage> {
   final supabase = Supabase.instance.client;
   static const Color _primaryColor = Color(0xFF4E46B4);
 
-  // Sample data for rumah
-  // final String _alamatRumah = 'Blok 5A';
-  // final String _statusKepemilikan = 'Pemilik';
+  List<Map<String, dynamic>> _anggotaKeluarga = [];
+  bool _isLoadingAnggota = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchAnggotaKeluarga();
+  }
+
+  Future<void> _fetchAnggotaKeluarga() async {
+    try {
+      setState(() => _isLoadingAnggota = true);
+
+      if (widget.penerimaan.namaKeluarga != null &&
+          widget.penerimaan.namaKeluarga!.isNotEmpty) {
+        final data = await supabase
+            .from('warga')
+            .select('id, nama, gender, status_penerimaan')
+            .eq('nama_keluarga', widget.penerimaan.namaKeluarga!);
+
+        setState(() {
+          _anggotaKeluarga = List<Map<String, dynamic>>.from(data);
+          _isLoadingAnggota = false;
+        });
+      } else {
+        setState(() => _isLoadingAnggota = false);
+      }
+    } catch (error) {
+      debugPrint('Error fetching anggota keluarga: $error');
+      setState(() => _isLoadingAnggota = false);
+    }
+  }
 
   void _handleApprove() async {
     await supabase
@@ -180,7 +209,6 @@ class _DetailPenerimaanWargaPageState extends State<DetailPenerimaanWargaPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Check if status is Pending or Ditolak
     final bool showActionButtons =
         widget.penerimaan.status.toLowerCase() == 'pending' ||
         widget.penerimaan.status.toLowerCase() == 'ditolak';
@@ -210,12 +238,10 @@ class _DetailPenerimaanWargaPageState extends State<DetailPenerimaanWargaPage> {
                 const SizedBox(height: 16),
                 _buildInfoCard(),
                 const SizedBox(height: 16),
-                // _buildRumahCard(),
-                // const SizedBox(height: 16),
+                _buildAnggotaKeluargaSection(),
+                const SizedBox(height: 16),
                 _buildFotoIdentitasCard(),
-                SizedBox(
-                  height: showActionButtons ? 80 : 16,
-                ), // Space for sticky footer only if buttons shown
+                SizedBox(height: showActionButtons ? 80 : 16),
               ],
             ),
           ),
@@ -308,6 +334,12 @@ class _DetailPenerimaanWargaPageState extends State<DetailPenerimaanWargaPage> {
             value: widget.penerimaan.jenisKelamin,
           ),
           _buildDivider(),
+          _buildInfoRow(
+            icon: Icons.home_outlined,
+            label: 'Rumah Saat Ini',
+            value: widget.penerimaan.alamatRumah ?? '-',
+          ),
+          _buildDivider(),
           _buildInfoRowWithBadge(
             icon: Icons.info_outline,
             label: 'Status Pendaftaran',
@@ -318,100 +350,133 @@ class _DetailPenerimaanWargaPageState extends State<DetailPenerimaanWargaPage> {
     );
   }
 
-  // Widget _buildRumahCard() {
-  //   return Container(
-  //     decoration: BoxDecoration(
-  //       color: Colors.white,
-  //       borderRadius: BorderRadius.circular(16),
-  //       boxShadow: [
-  //         BoxShadow(
-  //           color: Colors.black.withOpacity(0.05),
-  //           blurRadius: 10,
-  //           offset: const Offset(0, 2),
-  //         ),
-  //       ],
-  //     ),
-  //     padding: const EdgeInsets.all(20),
-  //     child: Column(
-  //       crossAxisAlignment: CrossAxisAlignment.start,
-  //       children: [
-  //         _buildInfoRow(
-  //           icon: Icons.home_outlined,
-  //           label: 'Alamat Rumah',
-  //           value: _alamatRumah,
-  //         ),
-  //         _buildDivider(),
-  //         _buildInfoRow(
-  //           icon: Icons.key_outlined,
-  //           label: 'Status Kepemilikan',
-  //           value: _statusKepemilikan,
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
+  Widget _buildAnggotaKeluargaSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 12),
+          child: Text(
+            'Anggota Keluarga:',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: Colors.grey[700],
+            ),
+          ),
+        ),
+        if (_isLoadingAnggota)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.all(20.0),
+              child: CircularProgressIndicator(),
+            ),
+          )
+        else if (_anggotaKeluarga.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Text(
+                'Tidak ada data anggota keluarga',
+                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+              ),
+            ),
+          )
+        else
+          ..._anggotaKeluarga.map((anggota) => _buildAnggotaCard(anggota)),
+      ],
+    );
+  }
 
-  Widget _buildStickyFooter() {
+  Widget _buildAnggotaCard(Map<String, dynamic> anggota) {
+    // Get status color
+    Color statusColor;
+    Color statusBgColor;
+    switch ((anggota['status_penerimaan'] ?? '').toLowerCase()) {
+      case 'diterima':
+        statusColor = const Color(0xFF16A34A);
+        statusBgColor = const Color(0xFFDCFCE7);
+        break;
+      case 'pending':
+        statusColor = const Color(0xFFF59E0B);
+        statusBgColor = const Color(0xFFFEF3C7);
+        break;
+      case 'ditolak':
+        statusColor = const Color(0xFFEF4444);
+        statusBgColor = const Color(0xFFFEE2E2);
+        break;
+      default:
+        statusColor = const Color(0xFF6B7280);
+        statusBgColor = const Color(0xFFF3F4F6);
+    }
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: SafeArea(
-        top: false,
-        child: Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: _handleReject,
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  side: const BorderSide(color: Colors.red, width: 1.5),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Tolak',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  anggota['nama'] ?? '-',
+                  style: const TextStyle(
                     fontSize: 16,
-                    color: Colors.red,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
                   ),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: _handleApprove,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: const Color(0xFF16A34A),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 0,
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
                 ),
-                child: const Text(
-                  'Setujui',
+                decoration: BoxDecoration(
+                  color: statusBgColor,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: statusColor.withOpacity(0.3)),
+                ),
+                child: Text(
+                  anggota['status_penerimaan'] ?? 'Pending',
                   style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                    color: Colors.white,
+                    color: statusColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildAnggotaInfoRow('NIK', anggota['id'] ?? '-'),
+          const SizedBox(height: 8),
+          _buildAnggotaInfoRow('Jenis Kelamin', anggota['gender'] ?? '-'),
+        ],
       ),
     );
   }
@@ -477,6 +542,71 @@ class _DetailPenerimaanWargaPageState extends State<DetailPenerimaanWargaPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStickyFooter() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: _handleReject,
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  side: const BorderSide(color: Colors.red, width: 1.5),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Tolak',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    color: Colors.red,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: _handleApprove,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: const Color(0xFF16A34A),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'Setujui',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -588,6 +718,35 @@ class _DetailPenerimaanWargaPageState extends State<DetailPenerimaanWargaPage> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
       child: Divider(color: Colors.grey[200], height: 1, thickness: 1),
+    );
+  }
+
+  Widget _buildAnggotaInfoRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 120,
+          child: Text(
+            '$label:',
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 13,
+              color: Colors.black87,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -88,7 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
         print(role);
         switch (role) {
           case "Admin":
-            context.go('/admin/dashboard', extra: {'role': role});
+            context.go('/admin/penduduk', extra: {'role': role});
             break;
           case "RW":
             context.go('/rw/penduduk', extra: {'role': role});

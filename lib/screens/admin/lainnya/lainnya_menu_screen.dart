@@ -1,262 +1,88 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
 import 'package:jawara_pintar_kel_5/screens/auth/auth_service.dart';
 
-class LainnyaScreen extends StatelessWidget {
-  LainnyaScreen({super.key});
+// Model menu item
+class MenuItem {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
 
-  final authService = AuthService();
+  MenuItem({required this.icon, required this.label, required this.onTap});
+}
+
+class LainnyaScreen extends StatefulWidget {
+  const LainnyaScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FB),
-      appBar: AppBar(
-        centerTitle: false,
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        title: const Text(
-          'Lainnya',
-          style: TextStyle(fontWeight: FontWeight.bold),
+  State<LainnyaScreen> createState() => _LainnyaScreenState();
+}
+
+class _LainnyaScreenState extends State<LainnyaScreen> {
+  final authService = AuthService();
+  double _opacity = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(milliseconds: 180), () {
+      if (mounted) setState(() => _opacity = 1);
+    });
+  }
+
+  // Quick Button (Menu Grid)
+  Widget quickButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    Color? iconColor,
+    Color? iconBackgroundColor,
+  }) {
+    final effectiveIconColor = iconColor ?? ConstantColors.primary;
+    final effectiveBackgroundColor =
+        iconBackgroundColor ?? ConstantColors.primary.withOpacity(0.15);
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.withOpacity(0.2), width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Pilih Menu",
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: Colors.black54,
-              ),
-            ),
-            const SizedBox(height: 12),
-            _buildAdminMenuCard(
-              icon: Icons.person_outline,
-              title: 'Manajemen Pengguna',
-              subtitle: 'Kelola peran dan akses pengguna aplikasi.',
-              gradientColors: const [Color(0xFF8B5CF6), Color(0xFFA855F7)],
-              onTap: () => context.push('/admin/lainnya/manajemen-pengguna'),
-            ),
-            const SizedBox(height: 16),
-            _buildAdminMenuCard(
-              icon: Icons.compare_arrows,
-              title: 'Channel Transfer',
-              subtitle: 'Pengaturan dan konfigurasi kanal data.',
-              gradientColors: const [Color(0xFFA855F7), Color(0xFFC084FC)],
-              onTap: () => context.push('/admin/lainnya/manajemen-channel'),
-            ),
-
-            const SizedBox(height: 25),
-            const Text(
-              "Akun",
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: Colors.black54,
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            _buildHeaderCard(
-              icon: Icons.person,
-              title: "Ningga",
-              subtitle: "ningga@gmail.com",
-              role: "Administrator",
-              gradientColors: const [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-              onTap: () {
-                context.push('/admin/lainnya/edit-profile');
-              },
-            ),
-
-            const SizedBox(height: 25),
-
-            _buildLogoutButton(context),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeaderCard({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required String role,
-    required List<Color> gradientColors,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: gradientColors,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(22),
-          boxShadow: [
-            BoxShadow(
-              color: gradientColors[0].withOpacity(0.35),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.all(22),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(50),
-                border: Border.all(
-                  color: gradientColors[0].withOpacity(0.5),
-                  width: 2,
-                ),
-              ),
-              child: Icon(icon, color: gradientColors[0], size: 30),
-            ),
-            const SizedBox(width: 18),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 13,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    child: Text(
-                      role,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.25),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.chevron_right,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAdminMenuCard({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required List<Color> gradientColors,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: gradientColors,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: gradientColors[0].withOpacity(0.35),
-              blurRadius: 16,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.all(20),
-        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.25),
-                borderRadius: BorderRadius.circular(14),
+                color: effectiveBackgroundColor,
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: Colors.white, size: 28),
+              child: Icon(icon, color: effectiveIconColor, size: 24),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
+            const SizedBox(height: 6),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1F2937),
               ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.25),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.chevron_right,
-                color: Colors.white,
-                size: 20,
-              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -264,26 +90,214 @@ class LainnyaScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLogoutButton(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.red.shade50,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.red.shade200, width: 1),
+  // Daftar menu items
+  List<MenuItem> get menuItems {
+    return [
+      MenuItem(
+        icon: Icons.person_outline,
+        label: 'Pengguna',
+        onTap: () => context.push('/admin/lainnya/manajemen-pengguna'),
       ),
-      child: ListTile(
-        leading: Icon(Icons.logout, color: Colors.red.shade600),
-        title: Text(
-          "Keluar",
-          style: TextStyle(
-            color: Colors.red.shade600,
-            fontWeight: FontWeight.bold,
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final allMenuItems = menuItems;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF9FAFB),
+      body: AnimatedOpacity(
+        opacity: _opacity,
+        duration: const Duration(milliseconds: 450),
+        curve: Curves.easeOut,
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              // Header Gradient
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(24, 30, 24, 80),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Color(0xFF3B82F6),
+                      Color(0xFF6366F1),
+                      Color(0xFF8B5CF6),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(30),
+                    bottomRight: Radius.circular(30),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Lainnya",
+                      style: GoogleFonts.poppins(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    const Text(
+                      "Pengaturan akun dan manajemen sistem",
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                    ),
+                  ],
+                ),
+              ),
+
+              Transform.translate(
+                offset: const Offset(0, -60),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Card Profil Pengguna
+                      InkWell(
+                        onTap: () =>
+                            context.push('/admin/lainnya/edit-profile'),
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.12),
+                                blurRadius: 18,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [
+                                      Color(0xFF6366F1),
+                                      Color(0xFF8B5CF6),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: const Icon(
+                                  Icons.person,
+                                  color: Colors.white,
+                                  size: 32,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Ningga',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFF1F2937),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'ningga@gmail.com',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: ConstantColors.primary
+                                            .withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        'Administrator',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: ConstantColors.primary,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(
+                                Icons.chevron_right,
+                                color: Colors.grey.shade400,
+                                size: 28,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 36),
+
+                      // Menu Section
+                      const Text(
+                        'Menu',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF374151),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Grid Menu
+                      Row(
+                        children: [
+                          Expanded(
+                            child: quickButton(
+                              icon: allMenuItems[0].icon,
+                              label: allMenuItems[0].label,
+                              onTap: allMenuItems[0].onTap,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: quickButton(
+                              icon: Icons.logout,
+                              label: 'Keluar',
+                              onTap: () {
+                                authService.signOut();
+                                context.go('/login');
+                              },
+                              iconColor: Colors.red,
+                              iconBackgroundColor: Colors.red.withOpacity(0.15),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 40),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-        onTap: () {
-          authService.signOut();
-          context.go('/login');
-        },
       ),
     );
   }

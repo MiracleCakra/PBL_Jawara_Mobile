@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
@@ -5,7 +6,7 @@ import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
 import 'package:jawara_pintar_kel_5/router.dart';
 import 'package:moon_design/moon_design.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:firebase_core/firebase_core.dart';
+
 import 'firebase_options.dart';
 import 'package:jawara_pintar_kel_5/providers/product_provider.dart';
 import 'package:jawara_pintar_kel_5/providers/marketplace/cart_provider.dart';
