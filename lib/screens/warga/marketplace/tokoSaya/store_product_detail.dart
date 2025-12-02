@@ -29,14 +29,8 @@ class _MyStoreProductDetailScreenState
   }
 
   (String, Color, IconData) _getVerificationStatus() {
-    if (currentProduct.rejectionReason != null &&
-        currentProduct.rejectionReason!.isNotEmpty) {
-      return ('Ditolak', rejectedColor, Icons.cancel_outlined);
-    } else if (currentProduct.isVerified) {
-      return ('Verified', verifiedColor, Icons.check_circle_outline);
-    } else {
-      return ('Menunggu Verifikasi', warningColor, Icons.pending_actions);
-    }
+    // Simplified status - will use backend verification status
+    return ('Active', verifiedColor, Icons.check_circle_outline);
   }
 
   Future<void> _navigateToEditForm(BuildContext context) async {
@@ -57,7 +51,7 @@ class _MyStoreProductDetailScreenState
         return AlertDialog(
           title: const Text('Hapus Produk?'),
           content: Text(
-              'Apakah kamu yakin ingin menghapus produk "${currentProduct.name}"? Tindakan ini tidak dapat dibatalkan.'),
+              'Apakah kamu yakin ingin menghapus produk "${currentProduct.nama ?? 'produk ini'}"? Tindakan ini tidak dapat dibatalkan.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
@@ -76,7 +70,7 @@ class _MyStoreProductDetailScreenState
     if (confirm == true) {
       // TODO: Panggil provider.deleteProduct(currentProduct.id) di sini
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${currentProduct.name} berhasil dihapus')),
+        SnackBar(content: Text('${currentProduct.nama ?? 'Produk'} berhasil dihapus')),
       );
      
       Navigator.pop(context, 'deleted'); 
@@ -84,8 +78,7 @@ class _MyStoreProductDetailScreenState
   }
 
 void _showActionBottomSheet(BuildContext context) {
-  final bool isRejected = currentProduct.rejectionReason != null &&
-      currentProduct.rejectionReason!.isNotEmpty;
+  final bool isRejected = false; // Simplified - rejection removed
 
   showModalBottomSheet(
     context: context,
@@ -139,7 +132,7 @@ void _showActionBottomSheet(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          currentProduct.name,
+          currentProduct.nama ?? 'Detail Produk',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.white,
@@ -156,7 +149,7 @@ void _showActionBottomSheet(BuildContext context) {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Image.asset(
-              currentProduct.imageUrl,
+              currentProduct.gambar ?? 'assets/images/placeholder.png',
               width: double.infinity,
               height: 250,
               fit: BoxFit.cover,
@@ -190,7 +183,7 @@ void _showActionBottomSheet(BuildContext context) {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(currentProduct.description,
+                  Text(currentProduct.deskripsi ?? 'Tidak ada deskripsi',
                       style: const TextStyle(fontSize: 16)),
                   const SizedBox(height: 20),
 
@@ -201,32 +194,31 @@ void _showActionBottomSheet(BuildContext context) {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            formatRupiah(currentProduct.price),
+                            formatRupiah(currentProduct.harga?.toInt() ?? 0),
                             style: const TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
                                 color: verifiedColor),
                           ),
-                          Text('Per ${currentProduct.unit}',
+                          Text('Per ${currentProduct.satuan ?? 'unit'}',
                               style: const TextStyle(color: Colors.grey)),
                         ],
                       ),
                       _buildDetailBadge(
-                          Icons.star, currentProduct.grade, primaryColor),
+                          Icons.star, currentProduct.grade ?? 'Grade A', primaryColor),
                     ],
                   ),
                   const SizedBox(height: 20),
 
                   _buildDetailRow(Icons.storage, 'Stok Tersedia',
-                      '${currentProduct.stock} ${currentProduct.unit}'),
+                      '${currentProduct.stok ?? 0} ${currentProduct.satuan ?? 'unit'}'),
                   _buildDetailRow(
                       Icons.date_range, 'Tanggal Posting', '01 Des 2025'),
 
-                  if (currentProduct.rejectionReason != null &&
-                      currentProduct.rejectionReason!.isNotEmpty)
+                  // rejectionReason removed
                     ...[
                       const SizedBox(height: 16),
-                      _buildRejectionCard(currentProduct.rejectionReason!),
+                      Container(), // Placeholder
                     ],
 
                   const SizedBox(height: 30),
@@ -238,9 +230,9 @@ void _showActionBottomSheet(BuildContext context) {
                   _buildPerformanceStat(
                       'Total Penjualan (Bulan Ini)', '5x'),
                   _buildPerformanceStat(
-                      'Rata-rata Rating', '${currentProduct.rating} / 5.0'),
+                      'Rata-rata Rating', '0.0 / 5.0'),
                   _buildPerformanceStat('Total Pendapatan (Produk Ini)',
-                      formatRupiah(currentProduct.price * 5)),
+                      formatRupiah((currentProduct.harga?.toInt() ?? 0) * 5)),
 
                   const SizedBox(height: 50),
                 ],

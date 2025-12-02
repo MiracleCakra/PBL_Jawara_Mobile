@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/kegiatanwarga/detailkegiatan.dart';
+import 'package:jawara_pintar_kel_5/models/kegiatan/kegiatan_model.dart';
+import 'package:jawara_pintar_kel_5/services/kegiatan_service.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/kegiatanwarga/filter_kegiatan_warga.dart';
 
 
@@ -15,76 +16,51 @@ class DaftarKegiatanWargaScreen extends StatefulWidget {
 class _DaftarKegiatanWargaScreenState extends State<DaftarKegiatanWargaScreen> {
   final TextEditingController _searchController = TextEditingController();
   final DateFormat logDateFormat = DateFormat('dd/MM/yyyy');
+  final KegiatanService _kegiatanService = KegiatanService();
+
+  late Future<List<KegiatanModel>> _kegiatanFuture;
 
   String _searchQuery = '';
   DateTime? _filterDate;
   String? _filterKategori;
 
+  @override
+  void initState() {
+    super.initState();
+    _loadKegiatan();
+  }
+
+  void _loadKegiatan() {
+    setState(() {
+      _kegiatanFuture = _kegiatanService.getKegiatan();
+    });
+  }
+
+
   bool get _isFilterActive => _filterDate != null || (_filterKategori != null && _filterKategori != 'Semua Kategori');
 
-
-  final List<Map<String, String>> _kegiatanList = [
-    {
-      'judul': 'Kerja Bakti Lingkungan',
-      'pj': 'Pak Habibi',
-      'tanggal': '12/10/2025',
-      'kategori': 'Sosial',
-      'lokasi': 'Balai Warga RW 01',
-      'deskripsi':
-          'Kerja bakti membersihkan lingkungan dari sampah dan selokan untuk menjaga kebersihan dan keamanan lingkungan.',
-      'dibuat_oleh': 'Admin Jawara',
-      'has_docs': 'true',
-    },
-    {
-      'judul': 'Pelatihan Keterampilan Digital',
-      'pj': 'Karang Taruna',
-      'tanggal': '25/10/2025',
-      'kategori': 'Pendidikan',
-      'lokasi': 'Aula Kecamatan',
-      'deskripsi':
-          'Pelatihan dasar desain grafis dan coding untuk remaja yang tertarik pada teknologi.',
-      'dibuat_oleh': 'Admin Jawara',
-      'has_docs': 'true',
-    },
-    {
-      'judul': 'Senam Pagi',
-      'pj': 'Puskesmas Keliling',
-      'tanggal': '15/10/2025',
-      'kategori': 'Kesehatan & Olahraga',
-      'lokasi': 'Lapangan Bola',
-      'deskripsi':
-          'Senam rutin untuk meningkatkan kebugaran warga dan mempererat tali silaturahmi.',
-      'dibuat_oleh': 'Admin Jawara',
-      'has_docs': 'false',
-    },
-  ];
-  List<Map<String, String>> _filterKegiatan() {
-    Iterable<Map<String, String>> result = _kegiatanList;
+  List<KegiatanModel> _filterKegiatan(List<KegiatanModel> kegiatanList) {
+    Iterable<KegiatanModel> result = kegiatanList;
 
     // Filter Pencarian Judul / PJ
     if (_searchQuery.isNotEmpty) {
       final query = _searchQuery.toLowerCase();
       result = result.where((kegiatan) {
-        final judul = kegiatan['judul']?.toLowerCase() ?? '';
-        final pj = kegiatan['pj']?.toLowerCase() ?? '';
+        final judul = kegiatan.judul.toLowerCase();
+        final pj = kegiatan.pj.toLowerCase();
         return judul.contains(query) || pj.contains(query);
       });
     }
 
     if (_filterDate != null) {
       result = result.where((kegiatan) {
-        try {
-          final kegiatanDate = logDateFormat.parse(kegiatan['tanggal']!);
-          return kegiatanDate.isAtSameMomentAs(_filterDate!);
-        } catch (_) {
-          return false;
-        }
+        return DateUtils.isSameDay(kegiatan.tanggal, _filterDate);
       });
     }
 
     if (_filterKategori != null && _filterKategori != 'Semua Kategori') {
       result = result.where((kegiatan) =>
-          kegiatan['kategori']?.toLowerCase() ==
+          kegiatan.kategori.toLowerCase() ==
           _filterKategori?.toLowerCase());
     }
 
@@ -206,9 +182,6 @@ class _DaftarKegiatanWargaScreenState extends State<DaftarKegiatanWargaScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredList = _filterKegiatan();
-    //const primaryColor = Colors.deepPurple;
-
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -227,64 +200,76 @@ class _DaftarKegiatanWargaScreenState extends State<DaftarKegiatanWargaScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
       ),
-
       body: Column(
         children: [
           _buildFilterBar(),
-
           Expanded(
-            child: filteredList.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.event_note,
-                            size: 60, color: Colors.grey.shade300),
-                        const SizedBox(height: 10),
-                        Text(
-                          _searchQuery.isNotEmpty ||
-                                  _filterDate != null ||
-                                  _filterKategori != null
-                              ? "Tidak ada kegiatan yang cocok dengan filter."
-                              : "Belum ada kegiatan yang ditambahkan.",
-                          style: TextStyle(color: Colors.grey.shade500),
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
+            child: FutureBuilder<List<KegiatanModel>>(
+              future: _kegiatanFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text("Error: ${snapshot.error}"));
+                } else if (snapshot.hasData) {
+                  final filteredList = _filterKegiatan(snapshot.data!);
+
+                  if (filteredList.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.event_note,
+                              size: 60, color: Colors.grey.shade300),
+                          const SizedBox(height: 10),
+                          Text(
+                            _searchQuery.isNotEmpty ||
+                                    _filterDate != null ||
+                                    _filterKategori != null
+                                ? "Tidak ada kegiatan yang cocok dengan filter."
+                                : "Belum ada kegiatan yang ditambahkan.",
+                            style: TextStyle(color: Colors.grey.shade500),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
                     padding: const EdgeInsets.only(bottom: 90),
                     itemCount: filteredList.length,
                     itemBuilder: (_, index) {
                       final kegiatan = filteredList[index];
                       return GestureDetector(
-                        onTap: () async {
-                          final result = await context.pushNamed<String>(
+                        onTap: () {
+                           context.goNamed(
                             'WargaKegiatanDetail',
-                            extra: kegiatan,
+                            pathParameters: {'id': kegiatan.id.toString()},
                           );
-                          if (result == 'deleted') {
-                            setState(() {
-                              _kegiatanList.removeWhere(
-                                (item) => item['judul'] == kegiatan['judul'],
-                              );
-                            });
-                          }
                         },
                         child: KegiatanCard(kegiatan: kegiatan),
                       );
                     },
-                  ),
+                  );
+                } else {
+                  return const Center(
+                    child: Text("Tidak ada data kegiatan."),
+                  );
+                }
+              },
+            ),
           ),
         ],
       ),
     );
   }
 }
-class KegiatanCard extends StatelessWidget {
-  final Map<String, String> kegiatan;
 
-  const KegiatanCard({super.key, required this.kegiatan});
+class KegiatanCard extends StatelessWidget {
+  final KegiatanModel kegiatan;
+  final DateFormat dateFormat = DateFormat('dd/MM/yyyy');
+
+  KegiatanCard({super.key, required this.kegiatan});
 
   @override
   Widget build(BuildContext context) {
@@ -305,7 +290,7 @@ class KegiatanCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    kegiatan['judul']!,
+                    kegiatan.judul,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
@@ -314,14 +299,14 @@ class KegiatanCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Penanggung Jawab : ${kegiatan['pj']}',
+                    'Penanggung Jawab : ${kegiatan.pj}',
                     style: TextStyle(
                       color: Colors.grey.shade700,
                       fontSize: 14,
                     ),
                   ),
                   Text(
-                    'Tanggal Pelaksanaan : ${kegiatan['tanggal']}',
+                    'Tanggal Pelaksanaan : ${dateFormat.format(kegiatan.tanggal)}',
                     style: TextStyle(
                       color: Colors.grey.shade700,
                       fontSize: 14,
@@ -338,7 +323,7 @@ class KegiatanCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      kegiatan['kategori']!,
+                      kegiatan.kategori,
                       style: const TextStyle(
                         color: categoryColor,
                         fontSize: 14,

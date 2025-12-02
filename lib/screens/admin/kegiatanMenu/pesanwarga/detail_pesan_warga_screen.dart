@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:jawara_pintar_kel_5/models/kegiatan/aspirasi_model.dart';
+import 'package:jawara_pintar_kel_5/services/aspirasi_service.dart';
 import 'edit_pesan_warga_screen.dart';
 
-class DetailPesanWargaScreen extends StatelessWidget {
-  final Map<String, String> pesan;
+class DetailPesanWargaScreen extends StatefulWidget {
+  final AspirasiModel pesan;
 
   const DetailPesanWargaScreen({super.key, required this.pesan});
+
+  @override
+  State<DetailPesanWargaScreen> createState() => _DetailPesanWargaScreenState();
+}
+
+class _DetailPesanWargaScreenState extends State<DetailPesanWargaScreen> {
+  bool _isLoading = false;
 
   // Widget menampilkan setiap field data
   Widget _buildDetailField(String label, String value, {int maxLines = 1}) {
@@ -38,179 +47,55 @@ class DetailPesanWargaScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildOptionTile({
-    required IconData icon,
-    required Color color,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: color, size: 24),
-            ),
-            const SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      // Warna merah untuk Hapus, hitam untuk Edit
-                      color: title.contains('Hapus') ? color : Colors.black),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  void _updateStatus(String newStatus) async {
+    setState(() {
+      _isLoading = true;
+    });
 
-  void _navigateToEdit(BuildContext context) async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => EditPesanWargaScreen(pesan: pesan)),
-    );
-
-    if (result != null && result is Map<String, String>) {
-      result['type'] = 'updated';
-      if (context.mounted) {
-        Navigator.pop(context, result);
+    final aspirasiService = AspirasiService();
+    try {
+      await aspirasiService.updateAspiration(
+        widget.pesan.copyWith(status: newStatus),
+      );
+      if (mounted) {
+        Navigator.pop(context, true); // Go back with a success flag
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memperbarui status: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
 
-  void _showActionBottomSheet(BuildContext context) {
-    const Color editColor = Color(0xFF5E65C0); // Warna Ungu konsisten
-    final Color deleteColor = Colors.red.shade600;
-
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (BuildContext bc) {
-        return Container(
-          padding: const EdgeInsets.only(top: 8.0, bottom: 20.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              // Judul "Opsi"
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 10),
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.only(top: 8.0),
-                        child: Text(
-                          'Opsi',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const Divider(height: 1, thickness: 1, color: Colors.grey),
-
-              //  OPSI EDIT DATA
-              _buildOptionTile(
-                icon: Icons.edit_rounded,
-                color: editColor,
-                title: 'Edit Data',
-                subtitle: 'Ubah status atau detail pesan warga',
-                onTap: () {
-                  Navigator.pop(bc); // Tutup BS
-                  _navigateToEdit(context);
-                },
-              ),
-              //  OPSI HAPUS DATA
-              _buildOptionTile(
-                icon: Icons.delete_forever,
-                color: deleteColor,
-                title: 'Hapus Data',
-                subtitle: 'Hapus pesan ini secara permanen',
-                onTap: () {
-                  Navigator.pop(bc); // Tutup BS
-                  _showDeleteDialog(context);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _showDeleteDialog(BuildContext context) {
-    final judul = pesan['judul'] ?? 'Pesan Warga';
-
+  void _showConfirmationDialog(String newStatus) {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Konfirmasi Hapus',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: Text('Konfirmasi ${newStatus == 'Diterima' ? 'Penerimaan' : 'Penolakan'}'),
         content: Text(
-          'Apakah kamu yakin ingin menghapus pesan "$judul"? Aksi ini tidak dapat dibatalkan.',
-        ),
-        actionsAlignment: MainAxisAlignment.center,
+            'Anda yakin ingin ${newStatus == 'Diterima' ? 'menerima' : 'menolak'} aspirasi ini?'),
         actions: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.grey,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
+          TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Batal', style: TextStyle(color: Colors.white)),
+            child: const Text('Batal'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
             onPressed: () {
               Navigator.pop(dialogContext);
-              Navigator.pop(context, {'status': 'deleted', 'judul': judul});
+              _updateStatus(newStatus);
             },
-            child: const Text(
-              'Hapus',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: newStatus == 'Diterima' ? Colors.green : Colors.red,
             ),
+            child: Text(newStatus == 'Diterima' ? 'Terima' : 'Tolak'),
           ),
         ],
       ),
@@ -219,11 +104,11 @@ class DetailPesanWargaScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String judul = pesan['judul'] ?? 'Tidak Ada Judul';
-    final String deskripsi = pesan['deskripsi'] ?? 'Tidak Ada Deskripsi';
-    final String status = pesan['status'] ?? 'N/A';
-    final String dibuatOleh = pesan['pengirim'] ?? 'N/A';
-    final String tanggalDibuat = pesan['tanggalDibuat'] ?? 'N/A';
+    final String judul = widget.pesan.judul;
+    final String deskripsi = widget.pesan.isi;
+    final String status = widget.pesan.status;
+    final String dibuatOleh = widget.pesan.pengirim;
+    final String tanggalDibuat = widget.pesan.tanggal.toString();
 
     return Scaffold(
       appBar: AppBar(
@@ -234,15 +119,7 @@ class DetailPesanWargaScreen extends StatelessWidget {
           'Detail Informasi / Aspirasi Warga',
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.black),
-            onPressed: () => _showActionBottomSheet(context),
-            tooltip: 'Aksi Pesan',
-          ),
-        ],
       ),
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -257,6 +134,30 @@ class DetailPesanWargaScreen extends StatelessWidget {
           ],
         ),
       ),
+      bottomNavigationBar: status == 'Pending'
+          ? Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : () => _showConfirmationDialog('Ditolak'),
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                      child: const Text('Tolak'),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : () => _showConfirmationDialog('Diterima'),
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                      child: const Text('Terima'),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : null,
     );
   }
 }

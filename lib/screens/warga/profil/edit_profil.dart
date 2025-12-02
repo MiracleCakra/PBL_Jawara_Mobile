@@ -1,6 +1,6 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:jawara_pintar_kel_5/models/marketplace/store_model.dart';
 
@@ -13,7 +13,7 @@ class EditStoreProfileScreen extends StatefulWidget {
 
 class _EditStoreProfileScreenState extends State<EditStoreProfileScreen> {
   // Menggunakan warna utama dari FormPembayaranScreen (0xFF4E46B4)
-  static const Color _formPrimaryColor = Color(0xFF4E46B4); 
+  static const Color _formPrimaryColor = Color(0xFF4E46B4);
   static const Color _textPrimaryColor = Color(0xFF1F2937);
 
   String _storeName = 'SSS, Sayur Segar Susanto';
@@ -45,7 +45,9 @@ class _EditStoreProfileScreenState extends State<EditStoreProfileScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) {
         return SafeArea(
           child: Padding(
@@ -53,18 +55,44 @@ class _EditStoreProfileScreenState extends State<EditStoreProfileScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 10), decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
                 ListTile(
-                  leading: CircleAvatar(backgroundColor: const Color(0xFFF4F3FF), child: const Icon(Icons.photo_library, color: _formPrimaryColor)),
-                  title: const Text('Ambil dari Galeri', style: TextStyle(fontWeight: FontWeight.w600)),
+                  leading: CircleAvatar(
+                    backgroundColor: const Color(0xFFF4F3FF),
+                    child: const Icon(
+                      Icons.photo_library,
+                      color: _formPrimaryColor,
+                    ),
+                  ),
+                  title: const Text(
+                    'Ambil dari Galeri',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   onTap: () {
                     Navigator.of(context).pop();
                     _pickImage(ImageSource.gallery);
                   },
                 ),
                 ListTile(
-                  leading: CircleAvatar(backgroundColor: const Color(0xFFF4F3FF), child: const Icon(Icons.camera_alt, color: _formPrimaryColor)),
-                  title: const Text('Ambil Foto Kamera', style: TextStyle(fontWeight: FontWeight.w600)),
+                  leading: CircleAvatar(
+                    backgroundColor: const Color(0xFFF4F3FF),
+                    child: const Icon(
+                      Icons.camera_alt,
+                      color: _formPrimaryColor,
+                    ),
+                  ),
+                  title: const Text(
+                    'Ambil Foto Kamera',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   onTap: () {
                     Navigator.of(context).pop();
                     _pickImage(ImageSource.camera);
@@ -84,13 +112,13 @@ class _EditStoreProfileScreenState extends State<EditStoreProfileScreen> {
       _formKey.currentState!.save();
 
       final updatedStore = StoreModel(
-        name: _storeName,
-        description: _storeDescription,
-        phone: _storePhone,
-        address: _storeAddress,
-        imageUrl: _pickedImage != null
+        nama: _storeName,
+        deskripsi: _storeDescription,
+        kontak: _storePhone,
+        alamat: _storeAddress,
+        logo: _pickedImage != null
             ? 'local:${_pickedImage!.path}'
-            : _storeImageUrl, 
+            : _storeImageUrl,
       );
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -103,7 +131,9 @@ class _EditStoreProfileScreenState extends State<EditStoreProfileScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Terdapat input yang belum valid. Mohon periksa lagi...'),
+          content: Text(
+            'Terdapat input yang belum valid. Mohon periksa lagi...',
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -123,7 +153,7 @@ class _EditStoreProfileScreenState extends State<EditStoreProfileScreen> {
         elevation: 0.5,
         foregroundColor: Colors.black,
       ),
-      
+
       body: Form(
         key: _formKey,
         child: ListView(
@@ -244,7 +274,10 @@ class _EditStoreProfileScreenState extends State<EditStoreProfileScreen> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: _formPrimaryColor, width: 2), // Warna fokus
+                borderSide: const BorderSide(
+                  color: _formPrimaryColor,
+                  width: 2,
+                ), // Warna fokus
               ),
             ),
           ),
@@ -258,15 +291,21 @@ class _EditStoreProfileScreenState extends State<EditStoreProfileScreen> {
     final imageWidget = _pickedImage != null
         ? Image.file(File(_pickedImage!.path), fit: BoxFit.cover)
         : (_storeImageUrl != null
-            ? Image.network(_storeImageUrl!, fit: BoxFit.cover)
-            : const Icon(Icons.store, size: 50, color: _formPrimaryColor)); // Warna ikon
+              ? Image.network(_storeImageUrl!, fit: BoxFit.cover)
+              : const Icon(
+                  Icons.store,
+                  size: 50,
+                  color: _formPrimaryColor,
+                )); // Warna ikon
 
     return Center(
       child: Stack(
         children: [
           CircleAvatar(
             radius: 50,
-            backgroundColor: _formPrimaryColor.withOpacity(0.2), // Warna background
+            backgroundColor: _formPrimaryColor.withOpacity(
+              0.2,
+            ), // Warna background
             child: ClipOval(
               child: SizedBox(width: 100, height: 100, child: imageWidget),
             ),

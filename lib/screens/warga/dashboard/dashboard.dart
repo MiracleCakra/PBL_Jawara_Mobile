@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
+import 'package:intl/intl.dart';
+import 'package:jawara_pintar_kel_5/models/kegiatan/broadcast_model.dart';
+import 'package:jawara_pintar_kel_5/models/kegiatan/kegiatan_model.dart';
+import 'package:jawara_pintar_kel_5/providers/product_provider.dart';
+import 'package:jawara_pintar_kel_5/services/broadcast_service.dart';
+import 'package:jawara_pintar_kel_5/services/kegiatan_service.dart';
+import 'package:jawara_pintar_kel_5/services/marketplace/review_service.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
-import 'package:jawara_pintar_kel_5/models/kegiatan/broadcah_model.dart';
+import 'package:provider/provider.dart';
 
 final List<Map<String, String>> dummyDataKegiatan = [
   {
@@ -94,7 +100,10 @@ class _HeaderSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 16),
+          padding: EdgeInsets.symmetric(
+            horizontal: horizontalPadding,
+            vertical: 16,
+          ),
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               colors: [Color(0xFF6A5AE0), Color(0xFF8EA3F5)],
@@ -102,7 +111,9 @@ class _HeaderSection extends StatelessWidget {
               end: Alignment.bottomCenter,
             ),
           ),
-          child: Column(children: const [_UserHeaderWidget(), SizedBox(height: 20)]),
+          child: Column(
+            children: const [_UserHeaderWidget(), SizedBox(height: 20)],
+          ),
         ),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
@@ -146,7 +157,10 @@ class _UserHeaderWidget extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("Selamat Datang,", style: TextStyle(color: Colors.white)),
+              const Text(
+                "Selamat Datang,",
+                style: TextStyle(color: Colors.white),
+              ),
               Text(
                 "Bapak Susanto",
                 style: TextStyle(
@@ -259,10 +273,16 @@ class _FinancialSummarySection extends StatelessWidget {
   Widget build(BuildContext context) {
     final horizontalPadding = isTablet ? 32.0 : 16.0;
 
-    final totalIncome = dummyFinancialData
-        .firstWhere((data) => data['label'] == 'Pemasukan Kas RT')['amount'] as int;
-    final totalExpense = dummyFinancialData
-        .firstWhere((data) => data['label'] == 'Pengeluaran Kas RT')['amount'] as int;
+    final totalIncome =
+        dummyFinancialData.firstWhere(
+              (data) => data['label'] == 'Pemasukan Kas RT',
+            )['amount']
+            as int;
+    final totalExpense =
+        dummyFinancialData.firstWhere(
+              (data) => data['label'] == 'Pengeluaran Kas RT',
+            )['amount']
+            as int;
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 0),
@@ -349,14 +369,20 @@ class _FinancialCard extends StatelessWidget {
                       color: color.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(icon, size: isBalanceCard ? 26 : 22, color: color),
+                    child: Icon(
+                      icon,
+                      size: isBalanceCard ? 26 : 22,
+                      color: color,
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       title,
                       style: TextStyle(
-                        fontWeight: isBalanceCard ? FontWeight.bold : FontWeight.w500,
+                        fontWeight: isBalanceCard
+                            ? FontWeight.bold
+                            : FontWeight.w500,
                         color: Colors.black54,
                         fontSize: isBalanceCard ? 16 : 14,
                       ),
@@ -385,15 +411,57 @@ class _FinancialCard extends StatelessWidget {
 }
 
 // ================= Horizontal Product List =================
-class _HorizontalProductList extends StatelessWidget {
-  _HorizontalProductList();
+class _HorizontalProductList extends StatefulWidget {
+  const _HorizontalProductList();
 
-  final List<ProductModel> products =
-      ProductModel.getSampleProducts().where((p) => p.isVerified).toList();
+  @override
+  State<_HorizontalProductList> createState() => _HorizontalProductListState();
+}
+
+class _HorizontalProductListState extends State<_HorizontalProductList> {
+  final Map<int, double> _productRatings = {};
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = context.read<ProductProvider>();
+      if (provider.products.isEmpty) {
+        provider.fetchAllProducts();
+      }
+    });
+  }
+
+  Future<void> _loadRating(int productId) async {
+    if (!_productRatings.containsKey(productId)) {
+      try {
+        final rating = await ReviewService().getAverageRating(productId);
+        if (mounted) {
+          setState(() {
+            _productRatings[productId] = rating;
+          });
+        }
+      } catch (e) {
+        // Ignore error, rating will remain null
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final isTablet = MediaQuery.of(context).size.width >= 600;
+    final products = context
+        .watch<ProductProvider>()
+        .products
+        .take(10)
+        .toList();
+
+    if (products.isEmpty) {
+      return SizedBox(
+        height: isTablet ? 240 : 190,
+        child: const Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return SizedBox(
       height: isTablet ? 240 : 190,
@@ -406,10 +474,10 @@ class _HorizontalProductList extends StatelessWidget {
           final gradeColor = p.grade == 'Grade A'
               ? const Color(0xFF6A5AE0)
               : p.grade == 'Grade B'
-                  ? Colors.orange.shade600
-                  : p.grade == 'Grade C'
-                      ? Colors.pink.shade700
-                      : Colors.grey;
+              ? Colors.orange.shade600
+              : p.grade == 'Grade C'
+              ? Colors.pink.shade700
+              : Colors.grey;
 
           return SizedBox(
             width: isTablet ? 170 : 140,
@@ -427,9 +495,11 @@ class _HorizontalProductList extends StatelessWidget {
                       child: Stack(
                         children: [
                           ClipRRect(
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(10),
+                            ),
                             child: Image.asset(
-                              p.imageUrl,
+                              p.gambar!,
                               fit: BoxFit.cover,
                               width: double.infinity,
                               errorBuilder: (_, __, ___) => Container(
@@ -448,7 +518,10 @@ class _HorizontalProductList extends StatelessWidget {
                             right: 0,
                             top: 0,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: gradeColor,
                                 borderRadius: const BorderRadius.only(
@@ -457,7 +530,7 @@ class _HorizontalProductList extends StatelessWidget {
                                 ),
                               ),
                               child: Text(
-                                p.grade.replaceAll('Grade ', ''),
+                                p.grade!.replaceAll('Grade ', ''),
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 10,
@@ -475,25 +548,44 @@ class _HorizontalProductList extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            p.name,
+                            p.nama!,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(fontWeight: FontWeight.w500),
                           ),
                           Text(
-                            formatRupiah(p.price),
+                            formatRupiah(p.harga!.toInt()),
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.green,
                             ),
                           ),
-                          Row(
-                            children: [
-                              const Icon(Icons.star, size: 12, color: Colors.amber),
-                              Text(
-                                " ${p.rating}",
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                            ],
+                          FutureBuilder<void>(
+                            future: _loadRating(p.productId!),
+                            builder: (context, snapshot) {
+                              final rating = _productRatings[p.productId];
+                              if (rating == null || rating == 0) {
+                                return const Text(
+                                  'Belum ada rating',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey,
+                                  ),
+                                );
+                              }
+                              return Row(
+                                children: [
+                                  const Icon(
+                                    Icons.star,
+                                    size: 12,
+                                    color: Colors.amber,
+                                  ),
+                                  Text(
+                                    " ${rating.toStringAsFixed(1)}",
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                ],
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -509,106 +601,139 @@ class _HorizontalProductList extends StatelessWidget {
   }
 }
 
-// ================= Latest Info List =================
-class _LatestInfoList extends StatelessWidget {
+class _LatestInfoList extends StatefulWidget {
   const _LatestInfoList();
 
-  Map<String, String>? _findKegiatanData(String title) {
-    try {
-      return dummyDataKegiatan.firstWhere((k) => k['judul'] == title);
-    } catch (e) {
-      return null;
-    }
+  @override
+  State<_LatestInfoList> createState() => _LatestInfoListState();
+}
+
+class _LatestInfoListState extends State<_LatestInfoList> {
+  final KegiatanService _kegiatanService = KegiatanService();
+  final BroadcastService _broadcastService = BroadcastService();
+  late Future<List<Map<String, dynamic>>> _latestInfoFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _latestInfoFuture = _fetchLatestInfo();
   }
 
-  KegiatanBroadcastWarga? _findBroadcastData(String title) {
-    final cleanedTitle = title.startsWith('"') ? title.substring(1) : title;
-
+  Future<List<Map<String, dynamic>>> _fetchLatestInfo() async {
     try {
-      return dummyData.firstWhere((b) => b.judul == cleanedTitle);
+      final kegiatanList = await _kegiatanService.getKegiatan();
+      final broadcastList = await _broadcastService.getBroadcasts();
+
+      List<Map<String, dynamic>> combinedList = [];
+
+      combinedList.addAll(
+        kegiatanList.map(
+          (k) => {'type': 'Kegiatan', 'data': k, 'date': k.tanggal},
+        ),
+      );
+
+      combinedList.addAll(
+        broadcastList.map(
+          (b) => {'type': 'Broadcast', 'data': b, 'date': b.tanggal},
+        ),
+      );
+
+      combinedList.sort(
+        (a, b) => (b['date'] as DateTime).compareTo(a['date'] as DateTime),
+      );
+
+      return combinedList.take(3).toList();
     } catch (e) {
-      return null;
+      throw Exception('Failed to load latest info: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> data = [
-      {
-        'id': 1,
-        'title': 'Pemberitahuan Kerja Bakti Lingkungan',
-        'date': '12/10/2025',
-        'type': 'Kegiatan',
-      },
-      {
-        'id': 2,
-        'title': 'Pengumuman Lomba Kebersihan',
-        'date': '23/10/2025',
-        'type': 'Broadcast',
-      },
-      {
-        'id': 3,
-        'title': 'Pelatihan Keterampilan Digital',
-        'date': '25/10/2025',
-        'type': 'Kegiatan',
-      },
-    ];
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: _latestInfoFuture,
 
-    return Column(
-      children: data.map((info) {
-        void handleTap() {
-          if (info['type'] == 'Kegiatan') {
-            final kegiatanData = _findKegiatanData(info['title']);
-            if (kegiatanData != null) {
-              context.pushNamed('WargaKegiatanDetail', extra: kegiatanData);
-            } else {
-              context.go("/warga/kegiatan");
-            }
-          } else if (info['type'] == 'Broadcast') {
-            final broadcastData = _findBroadcastData(info['title']);
-            if (broadcastData != null) {
-              context.pushNamed('WargaBroadcastDetail', extra: broadcastData);
-            } else {
-              context.go("/warga/kegiatan/broadcast");
-            }
-          } else {
-            context.go("/warga/kegiatan");
-          }
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text("Error: ${snapshot.error}"));
+        } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+          final latestInfo = snapshot.data!;
+
+          return Column(
+            children: latestInfo.map((info) {
+              final type = info['type'] as String;
+
+              final data = info['data'];
+
+              final title = type == 'Kegiatan'
+                  ? (data as KegiatanModel).judul
+                  : (data as BroadcastModel).judul;
+
+              final date = DateFormat(
+                'dd/MM/yyyy',
+              ).format(info['date'] as DateTime);
+
+              void handleTap() {
+                if (type == 'Kegiatan') {
+                  context.goNamed(
+                    'WargaKegiatanDetail',
+                    pathParameters: {
+                      'id': (data as KegiatanModel).id.toString(),
+                    },
+                  );
+                } else if (type == 'Broadcast') {
+                  context.goNamed(
+                    'WargaBroadcastDetail',
+                    pathParameters: {
+                      'id': (data as BroadcastModel).id.toString(),
+                    },
+                  );
+                }
+              }
+
+              return Card(
+                color: Colors.white.withOpacity(0.95),
+                margin: const EdgeInsets.only(bottom: 10),
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: const BorderSide(color: Colors.black12, width: 1),
+                ),
+                child: ListTile(
+                  onTap: handleTap,
+                  title: Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  subtitle: Text(
+                    "$type - $date",
+                    style: const TextStyle(fontSize: 12, color: Colors.black54),
+                  ),
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.deepPurple.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      type == "Kegiatan"
+                          ? Icons.calendar_today
+                          : Icons.campaign,
+
+                      color: Colors.deepPurple,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          );
+        } else {
+          return const Center(child: Text("Tidak ada informasi terbaru"));
         }
-
-        return Card(
-          color: Colors.white.withOpacity(0.95),
-          margin: const EdgeInsets.only(bottom: 10),
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: const BorderSide(color: Colors.black12, width: 1),
-          ),
-          child: ListTile(
-            onTap: handleTap,
-            title: Text(
-              info['title']!,
-              style: const TextStyle(fontWeight: FontWeight.w500),
-            ),
-            subtitle: Text(
-              "${info['type']} - ${info['date']}",
-              style: const TextStyle(fontSize: 12, color: Colors.black54),
-            ),
-            leading: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.deepPurple.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                info['type'] == "Kegiatan" ? Icons.calendar_today : Icons.campaign,
-                color: Colors.deepPurple,
-                size: 20,
-              ),
-            ),
-          ),
-        );
-      }).toList(),
+      },
     );
   }
 }

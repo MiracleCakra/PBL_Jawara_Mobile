@@ -65,6 +65,13 @@ class MarketplaceMenuWarga extends StatelessWidget {
                 ),
                 _buildMenuItem(
                   context,
+                  icon: Icons.receipt_long,
+                  label: 'Pesanan Saya',
+                  color: Colors.green,
+                  onTap: () => context.goNamed('MyOrders'),
+                ),
+                _buildMenuItem(
+                  context,
                   icon: Icons.shopping_bag_outlined,
                   label: 'Toko Saya',
                   color: _storeColor,

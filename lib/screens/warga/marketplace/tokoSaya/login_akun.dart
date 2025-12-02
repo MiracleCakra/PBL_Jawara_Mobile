@@ -162,11 +162,11 @@ class _WargaStoreLoginScreenState extends State<WargaStoreLoginScreen> {
 
             // Contoh data store yang bisa dikirim ke dashboard
             StoreModel myStore = StoreModel(
-              name: "SSS, Sayur Segar Susanto",
-              description:
+              nama: "SSS, Sayur Segar Susanto",
+              deskripsi:
                   "Menyediakan sayuran dan buah segar dari kebun lokal.",
-              phone: "081234567890",
-              address: "Jl. Anggrek No. 5, RT 001 / RW 001",
+              kontak: "081234567890",
+              alamat: "Jl. Anggrek No. 5, RT 001 / RW 001",
             );
 
             // Arahkan ke dashboard toko

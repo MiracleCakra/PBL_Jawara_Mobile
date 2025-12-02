@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jawara_pintar_kel_5/models/kegiatan/aspirasi_model.dart';
+import 'package:jawara_pintar_kel_5/services/aspirasi_service.dart';
 
 class WargaDetailAspirasiScreen extends StatelessWidget {
-  final Map<String, dynamic> data;
-
+  final AspirasiModel data;
   const WargaDetailAspirasiScreen({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
-    final String formattedDate = data['tanggal'] is DateTime
-        ? DateFormat('d MMMM yyyy').format(data['tanggal'])
-        : data['tanggal'].toString();
+    final String formattedDate = DateFormat('d MMMM yyyy').format(data.tanggal);
+    // TODO: Replace with actual user ID from authentication service
+    const String currentUserId = 'user-123';
+    final bool isOwner = data.userId == currentUserId;
+    final AspirasiService aspirasiService = AspirasiService();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
@@ -34,31 +37,29 @@ class WargaDetailAspirasiScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: [
           _buildHeader(data, formattedDate),
-          
           const SizedBox(height: 20),
           _SectionCard(
             title: "Informasi Pengirim",
             children: [
               _IconRow(
-                icon: Icons.person, 
-                label: "Nama Pengirim", 
-                value: data['pengirim'] ?? '-'
+                icon: Icons.person,
+                label: "Nama Pengirim",
+                value: data.pengirim,
               ),
               _IconRow(
-                icon: Icons.calendar_today, 
-                label: "Tanggal Dibuat", 
-                value: formattedDate
+                icon: Icons.calendar_today,
+                label: "Tanggal Dibuat",
+                value: formattedDate,
               ),
             ],
           ),
-
           const SizedBox(height: 20),
           _SectionCard(
             title: "Isi Pesan",
             children: [
               const SizedBox(height: 8),
               Text(
-                data['isi'] ?? '-',
+                data.isi,
                 style: const TextStyle(
                   fontSize: 15,
                   height: 1.6,
@@ -74,10 +75,10 @@ class WargaDetailAspirasiScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(Map<String, dynamic> data, String date) {
+  Widget _buildHeader(AspirasiModel data, String date) {
     Color statusColor;
     IconData statusIcon;
-    String statusText = data['status'] ?? 'Pending';
+    String statusText = data.status;
 
     if (statusText == 'Approved' || statusText == 'Diterima') {
       statusColor = Colors.deepPurple;
@@ -101,19 +102,19 @@ class WargaDetailAspirasiScreen extends StatelessWidget {
         children: [
           // Judul Besar
           Text(
-            data['judul'] ?? 'Tanpa Judul',
+            data.judul,
             style: const TextStyle(
-              fontSize: 24, 
-              fontWeight: FontWeight.bold,
-              color: Colors.black87
-            ),
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87),
           ),
           const SizedBox(height: 16),
-          
+
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: statusColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -126,10 +127,9 @@ class WargaDetailAspirasiScreen extends StatelessWidget {
                     Text(
                       statusText,
                       style: TextStyle(
-                        color: statusColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14
-                      ),
+                          color: statusColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14),
                     ),
                   ],
                 ),
@@ -159,14 +159,11 @@ class _SectionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title, 
-            style: const TextStyle(
-              fontWeight: FontWeight.bold, 
-              fontSize: 16,
-              color: Colors.black87
-            )
-          ),
+          Text(title,
+              style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.black87)),
           const SizedBox(height: 16),
           const Divider(height: 1, thickness: 0.5),
           const SizedBox(height: 16),
@@ -182,7 +179,8 @@ class _IconRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const _IconRow({required this.icon, required this.label, required this.value});
+  const _IconRow(
+      {required this.icon, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -204,22 +202,18 @@ class _IconRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  label, 
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 12,
-                    color: Colors.grey.shade500
-                  )
-                ),
+                Text(label,
+                    style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 12,
+                        color: Colors.grey.shade500)),
                 const SizedBox(height: 4),
                 Text(
                   value,
                   style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87
-                  ),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87),
                 ),
               ],
             ),

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jawara_pintar_kel_5/models/kegiatan/aspirasi_model.dart';
+import 'package:jawara_pintar_kel_5/services/aspirasi_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 const Color _primaryColor = Color.fromARGB(255, 50, 52, 182);
 const Color _deleteColor = Colors.red;
@@ -8,7 +11,7 @@ const Color _editColor = Colors.blue;
 
 
 class WargaDetailKirimanScreen extends StatefulWidget {
-  final Map<String, dynamic> data;
+  final AspirasiModel data;
 
   const WargaDetailKirimanScreen({super.key, required this.data});
 
@@ -17,6 +20,7 @@ class WargaDetailKirimanScreen extends StatefulWidget {
 }
 
 class _WargaDetailKirimanScreenState extends State<WargaDetailKirimanScreen> {
+  final AspirasiService _aspirasiService = AspirasiService();
 
   void _navigateToEdit(BuildContext context) async {
     final result = await context.pushNamed(
@@ -24,9 +28,10 @@ class _WargaDetailKirimanScreenState extends State<WargaDetailKirimanScreen> {
       extra: widget.data,
     );
 
-    if (result != null && result is Map<String, dynamic> && result['type'] == 'updated') {
-        // TODO: Lakukan logika refresh data di halaman detail jika perlu
-        setState(() {}); 
+    if (result == true) {
+      if (mounted) {
+        context.pop();
+      }
     }
   }
 
@@ -36,7 +41,7 @@ class _WargaDetailKirimanScreenState extends State<WargaDetailKirimanScreen> {
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: const Text("Konfirmasi Hapus"),
-          content: Text("Anda yakin ingin menghapus kiriman berjudul '${widget.data['judul']}'? Aksi ini tidak dapat dibatalkan."),
+          content: Text("Anda yakin ingin menghapus kiriman berjudul '${widget.data.judul}'? Aksi ini tidak dapat dibatalkan."),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
@@ -44,10 +49,20 @@ class _WargaDetailKirimanScreenState extends State<WargaDetailKirimanScreen> {
             ),
             TextButton(
               style: TextButton.styleFrom(foregroundColor: _deleteColor),
-              onPressed: () {
-                // TODO: LOGIKA HAPUS DATA DI BACKEND/LIST
-                Navigator.pop(dialogContext); 
-                context.pop({'status': 'deleted', 'judul': widget.data['judul']}); 
+              onPressed: () async {
+                try {
+                  await _aspirasiService.deleteAspiration(widget.data.id!);
+                  if (mounted) {
+                    Navigator.pop(dialogContext);
+                    context.pop(true);
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Gagal menghapus: $e')),
+                    );
+                  }
+                }
               },
               child: const Text("Hapus"),
             ),
@@ -241,13 +256,15 @@ class _WargaDetailKirimanScreenState extends State<WargaDetailKirimanScreen> {
   @override
   Widget build(BuildContext context) {
     final data = widget.data;
-    final String judul = data['judul'] ?? 'Tanpa Judul';
-    final String deskripsi = data['isi'] ?? data['deskripsi'] ?? 'Deskripsi tidak tersedia.';
-    final String status = data['status'] ?? 'Pending';
-    final String pengirim = data['pengirim'] ?? 'Warga (Pengirim Tidak Diketahui)';
-    final String tanggalStr = data['tanggal'].toString();
+    final String judul = data.judul;
+    final String deskripsi = data.isi;
+    final String status = data.status;
+    final String pengirim = data.pengirim;
+    final String tanggalStr = DateFormat('dd MMMM yyyy').format(data.tanggal);
 
-    final bool canModify = status == 'Pending';
+    final String currentUserId = Supabase.instance.client.auth.currentUser?.id ?? '';
+    final bool isOwner = data.userId == currentUserId;
+    final bool canModify = status == 'Pending' && isOwner;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),

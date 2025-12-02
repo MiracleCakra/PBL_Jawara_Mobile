@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
+import 'package:jawara_pintar_kel_5/providers/product_provider.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
 
 class MyStoreStockScreen extends StatefulWidget {
@@ -12,11 +14,43 @@ class MyStoreStockScreen extends StatefulWidget {
 
 class _MyStoreStockScreenState extends State<MyStoreStockScreen> {
   late List<ProductModel> products;
+  bool isLoading = true;
+  String? errorMessage;
 
   @override
   void initState() {
     super.initState();
-    products = ProductModel.getSampleProducts();
+    products = [];
+    _loadProducts();
+  }
+  
+  Future<void> _loadProducts() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+    
+    try {
+      final productProvider = Provider.of<ProductProvider>(context, listen: false);
+      // TODO: Get actual store_id from StoreProvider
+      // For now loading all products, you should use fetchProductsByStore(storeId)
+      await productProvider.fetchAllProducts();
+      
+      if (mounted) {
+        setState(() {
+          products = productProvider.products;
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading products: $e');
+      if (mounted) {
+        setState(() {
+          errorMessage = 'Gagal memuat produk: $e';
+          isLoading = false;
+        });
+      }
+    }
   }
 
   void _navigateToProductAdd() async {
@@ -36,20 +70,46 @@ class _MyStoreStockScreenState extends State<MyStoreStockScreen> {
         foregroundColor: Colors.black,
       ),
       backgroundColor: const Color(0xFFF7F7F7),
-      body: products.isEmpty
-      ? _buildEmptyStock()
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: products.length,
-              itemBuilder: (context, index) {
-                final product = products[index];
-                return _buildProductCard(context, product);
-              },
-            ),
-        floatingActionButton: FloatingActionButton(
+      body: isLoading
+          ? const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Memuat produk...'),
+                ],
+              ),
+            )
+          : errorMessage != null
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline, size: 60, color: Colors.red),
+                      const SizedBox(height: 16),
+                      Text(errorMessage!, textAlign: TextAlign.center),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _loadProducts,
+                        child: const Text('Coba Lagi'),
+                      ),
+                    ],
+                  ),
+                )
+              : products.isEmpty
+                  ? _buildEmptyStock()
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: products.length,
+                      itemBuilder: (context, index) {
+                        final product = products[index];
+                        return _buildProductCard(context, product);
+                      },
+                    ),
+      floatingActionButton: FloatingActionButton(
         onPressed: _navigateToProductAdd,
         backgroundColor: Colors.deepPurple,
-
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -89,19 +149,9 @@ class _MyStoreStockScreenState extends State<MyStoreStockScreen> {
       _ => Colors.grey,
     };
 
-    // Status produk
-    String statusText;
-    Color statusColor;
-    if (product.isVerified) {
-      statusText = 'Terverifikasi';
-      statusColor = Colors.green;
-    } else if (!product.isVerified && product.rejectionReason == null) {
-      statusText = 'Pending';
-      statusColor = Colors.orange;
-    } else {
-      statusText = 'Ditolak';
-      statusColor = Colors.red;
-    }
+    // Status produk (simplified - will use backend status)
+    String statusText = 'Active';
+    Color statusColor = Colors.green;
 
     return GestureDetector(
       onTap: () async {
@@ -117,7 +167,7 @@ class _MyStoreStockScreenState extends State<MyStoreStockScreen> {
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('${product.name} berhasil dihapus'),
+              content: Text('${product.nama ?? 'Produk'} berhasil dihapus'),
               backgroundColor: Colors.grey.shade800,
             ),
           );
@@ -135,7 +185,7 @@ class _MyStoreStockScreenState extends State<MyStoreStockScreen> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: Image.asset(
-                  product.imageUrl,
+                  product.gambar ?? 'assets/images/placeholder.png',
                   width: 60,
                   height: 60,
                   fit: BoxFit.cover,
@@ -158,32 +208,26 @@ class _MyStoreStockScreenState extends State<MyStoreStockScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      product.name,
+                      product.nama ?? 'Produk',
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     Text(
-                      'Harga: ${formatRupiah(product.price)}',
+                      'Harga: ${formatRupiah(product.harga?.toInt() ?? 0)}',
                       style: const TextStyle(fontSize: 13, color: Colors.green),
                     ),
                     Text(
-                      'Stok: ${product.stock} ${product.unit}',
+                      'Stok: ${product.stok ?? 0} ${product.satuan ?? 'unit'}',
                       style: const TextStyle(fontSize: 13),
                     ),
                     Row(
                       children: [
                         Text(
-                          'Grade: ${product.grade.replaceAll('Grade ', '')}',
+                          'Grade: ${product.grade?.replaceAll('Grade ', '') ?? 'A'}',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                             color: gradeColor,
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.star, size: 12, color: Colors.amber),
-                        Text(
-                          "${product.rating}",
-                          style: const TextStyle(fontSize: 12),
                         ),
                       ],
                     ),
@@ -206,11 +250,11 @@ class _MyStoreStockScreenState extends State<MyStoreStockScreen> {
                         ),
                       ),
                     ),
-                    if (product.rejectionReason != null)
+                    // rejectionReason check removed
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
-                          'Alasan ditolak: ${product.rejectionReason}',
+                          'Status: Active',
                           style: const TextStyle(
                             fontSize: 11,
                             color: Colors.redAccent,
