@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
-import 'package:jawara_pintar_kel_5/models/warga_tagihan_model.dart';
+import 'package:jawara_pintar_kel_5/models/keuangan/warga_tagihan_model.dart';
 
 class FormPembayaranScreen extends StatefulWidget {
   final WargaTagihanModel tagihan; // Sudah pakai WargaTagihanModel

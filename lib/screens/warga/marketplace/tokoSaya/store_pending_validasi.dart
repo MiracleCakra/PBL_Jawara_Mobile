@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jawara_pintar_kel_5/services/store_status_service.dart'; 
+
 
 class StorePendingValidationScreen extends StatelessWidget {
   const StorePendingValidationScreen({super.key});
@@ -32,7 +34,8 @@ class StorePendingValidationScreen extends StatelessWidget {
               ),
               const SizedBox(height: 30),
               ElevatedButton(
-                onPressed: () {
+                onPressed: () async{
+                  await StoreStatusService.setStoreStatus(2);
                   context.go('/warga/marketplace');
                 },
                 style: ElevatedButton.styleFrom(

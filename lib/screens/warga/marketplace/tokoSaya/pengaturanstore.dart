@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jawara_pintar_kel_5/services/store_status_service.dart';
 
 class MyStoreSettingsScreen extends StatelessWidget {
   const MyStoreSettingsScreen({super.key});
@@ -51,6 +52,44 @@ class MyStoreSettingsScreen extends StatelessWidget {
               context.go('/warga/marketplace');
             },
           ),
+          _buildSettingItem(
+          context,
+          icon: Icons.delete_forever,
+          title: "Hapus Akun",
+          color: errorColor,
+          showArrow: false,
+          onTap: () {
+            // Tampilkan konfirmasi sebelum hapus akun
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Konfirmasi Hapus Akun'),
+                content: const Text('Apakah Anda yakin ingin menghapus akun ini? Tindakan ini tidak dapat dibatalkan.'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context), // batal
+                    child: const Text('Batal'),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      Navigator.pop(context); 
+                      await StoreStatusService.setStoreStatus(0);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Akun berhasil dihapus.'),
+                          backgroundColor: Colors.grey.shade800,
+                        ),
+                      );
+
+                      context.goNamed('AuthStoreScreen');
+                    },
+                    child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
         ],
       ),
     );

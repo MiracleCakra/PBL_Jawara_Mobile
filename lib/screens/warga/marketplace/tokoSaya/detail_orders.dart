@@ -1,21 +1,114 @@
 import 'package:flutter/material.dart';
-import 'package:jawara_pintar_kel_5/models/order_model.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/order_model.dart';
+import 'package:jawara_pintar_kel_5/services/marketplace/order_service.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
 
-class MyStoreOrderDetail extends StatelessWidget {
+class MyStoreOrderDetail extends StatefulWidget {
   final OrderModel order;
 
   const MyStoreOrderDetail({super.key, required this.order});
 
-  static const Color primaryColor = Color(0xFF6A5AE0); // Ungu Tua
-  static const Color accentColor = Color(0xFF8EA3F5); // Ungu Muda
-  static const Color successColor = Color(0xFF4CAF50); // Hijau
+  @override
+  State<MyStoreOrderDetail> createState() => _MyStoreOrderDetailState();
+}
+
+class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
+  static const Color primaryColor = Color(0xFF6A5AE0);
+  static const Color accentColor = Color(0xFF8EA3F5);
+  static const Color successColor = Color(0xFF4CAF50);
   static const Color warningColor = Colors.orange;
   static const Color errorColor = Colors.red;
 
+  late String currentStatus;
+  List<Map<String, dynamic>> _orderItems = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    currentStatus = widget.order.orderStatus ?? 'null'; // Keep as 'null' string if no status
+    _loadOrderItems();
+  }
+
+  Future<void> _loadOrderItems() async {
+    if (widget.order.orderId == null) {
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+
+    try {
+      final orderService = OrderService();
+      final items = await orderService.getOrderWithItems(widget.order.orderId!);
+      
+      if (mounted) {
+        setState(() {
+          _orderItems = items;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading order items: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> updateOrderStatus(String newStatus) async {
+    if (widget.order.orderId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Order ID tidak valid"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      // Show loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
+      // Update status in database
+      final orderService = OrderService();
+      await orderService.updateOrderStatus(widget.order.orderId!, newStatus);
+
+      if (mounted) {
+        Navigator.pop(context); // Close loading dialog
+        
+        setState(() => currentStatus = newStatus);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Status berhasil diubah menjadi: $newStatus"),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Gagal mengubah status: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final statusColor = _getStatusColor(order.status);
+    final statusColor = _getStatusColor(currentStatus);
 
     return Scaffold(
       appBar: AppBar(
@@ -27,22 +120,24 @@ class MyStoreOrderDetail extends StatelessWidget {
         elevation: 0.5,
         foregroundColor: Colors.black,
       ),
-      backgroundColor: const Color(
-        0xFFF7F7F7,
-      ), 
+      backgroundColor: const Color(0xFFF7F7F7),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildStatusHeader(order.status, statusColor),
+            _buildStatusHeader(currentStatus, statusColor),
             const SizedBox(height: 16),
 
-            _buildSectionTitle(context, "Informasi Produk"),
+            _buildSectionTitle(context, "Informasi Pesanan"),
             _buildDetailCard(
               children: [
-                _buildRow("Nama Produk", order.productName, isTitleBold: true),
-                _buildRow("Jumlah", "${order.quantity} item"),
+                _buildRow(
+                  "Order ID",
+                  "#${widget.order.orderId}",
+                  isTitleBold: true,
+                ),
+                _buildRow("Total Item", "${widget.order.totalQty ?? 0} item"),
               ],
             ),
 
@@ -52,15 +147,15 @@ class MyStoreOrderDetail extends StatelessWidget {
             _buildDetailCard(
               children: [
                 _buildRow(
-                  "Nama Pembeli",
-                  order.customerName,
+                  "User ID",
+                  widget.order.userId ?? "N/A",
                   isValuePrimary: true,
                 ),
                 _buildRow(
                   "Alamat",
-                  order.deliveryAddress ?? "Alamat tidak tersedia",
+                  widget.order.alamat ?? "Alamat tidak tersedia",
                 ),
-                _buildRow("Tanggal Pesan", "24 Nov 2025"),
+                _buildRow("Tanggal Pesan", widget.order.createdAt?.toString().substring(0, 10) ?? "N/A"),
               ],
             ),
 
@@ -69,12 +164,15 @@ class MyStoreOrderDetail extends StatelessWidget {
             _buildSectionTitle(context, "Ringkasan Pembayaran"),
             _buildDetailCard(
               children: [
-                _buildRow("Subtotal Produk", formatRupiah(order.totalPrice)),
+                _buildRow(
+                  "Subtotal Produk",
+                  formatRupiah((widget.order.totalPrice ?? 0).toInt()),
+                ),
                 _buildRow("Biaya Admin", formatRupiah(1000)),
                 const Divider(height: 10),
                 _buildRow(
                   "Total Dibayar",
-                  formatRupiah(order.totalPrice + 1000),
+                  formatRupiah(((widget.order.totalPrice ?? 0) + 1000).toInt()),
                   valueStyle: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
@@ -87,7 +185,7 @@ class MyStoreOrderDetail extends StatelessWidget {
 
             const SizedBox(height: 30),
 
-            _buildActionButtons(context, order.status),
+            _buildActionButtons(currentStatus),
             const SizedBox(height: 20),
           ],
         ),
@@ -136,7 +234,7 @@ class MyStoreOrderDetail extends StatelessWidget {
       ),
       child: Center(
         child: Text(
-          "STATUS: ${status.toUpperCase()}",
+          "STATUS: ${_getStatusLabel(status)}",
           style: TextStyle(
             color: color,
             fontWeight: FontWeight.w900,
@@ -182,61 +280,117 @@ class MyStoreOrderDetail extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButtons(BuildContext context, String status) {
-    final lowerStatus = status.toLowerCase();
-
-    if (lowerStatus == 'pending') {
-      return SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Pesanan berhasil diproses!")),
-            );
-          },
-          icon: const Icon(Icons.check_circle_outline, color: Colors.white),
-          label: const Text("Proses Pesanan"),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: primaryColor,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
+  Widget _buildActionButtons(String status) {
+    final lower = status.toLowerCase();
+    
+    // Status: NULL (pesanan baru, belum direspons)
+    if (lower == 'null' || status == 'null' || status.isEmpty) {
+      return Column(
+        children: [
+          _button(
+            label: "Kirim Pesanan",
+            icon: Icons.local_shipping_outlined,
+            color: primaryColor,
+            onTap: () {
+              updateOrderStatus("pending");
+              Navigator.pop(context, "pending");
+            },
           ),
-        ),
+          const SizedBox(height: 12),
+          _button(
+            label: "Tolak Pesanan",
+            icon: Icons.cancel_outlined,
+            color: Colors.red,
+            onTap: () {
+              updateOrderStatus("canceled");
+              Navigator.pop(context, "canceled");
+            },
+          ),
+        ],
       );
     }
+    
+    // Status: pending (pesanan sedang diantar)
+    if (lower == 'pending') {
+      return _button(
+        label: "Pesanan Selesai",
+        icon: Icons.check_circle_outline,
+        color: successColor,
+        onTap: () {
+          updateOrderStatus("completed");
+          Navigator.pop(context, "completed");
+        },
+      );
+    }
+    
+    // Status: completed atau canceled (tidak ada aksi)
+    if (lower == 'completed' || lower == 'canceled') {
+      return const SizedBox.shrink();
+    }
+    
+    return _button(
+      label: "Tutup Detail",
+      icon: Icons.close,
+      color: Colors.deepPurple,
+      onTap: () => Navigator.pop(context),
+    );
+  }
 
+  Widget _button({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
     return SizedBox(
       width: double.infinity,
-      child: FilledButton(
-        onPressed: () => Navigator.pop(context),
-        style: FilledButton.styleFrom(
-          backgroundColor: primaryColor,
+      child: ElevatedButton.icon(
+        onPressed: onTap,
+        icon: Icon(icon, color: Colors.white),
+        label: Text(label),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
           ),
-        ),
-        child: const Text(
-          "Tutup Detail",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
       ),
     );
   }
 
   Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case "selesai":
-        return Colors.purple;
-      case "perlu dikirim":
-        return Colors.amber;
-      case "dikirim":
+    final lower = status.toLowerCase();
+    if (lower == 'null' || status == 'null' || status.isEmpty) {
+      return Colors.orange;
+    }
+    switch (lower) {
+      case "pending":
+        return Colors.blue;
+      case "completed":
         return Colors.green;
+      case "canceled":
+        return Colors.red;
       default:
         return Colors.grey;
+    }
+  }
+
+  String _getStatusLabel(String status) {
+    final lower = status.toLowerCase();
+    if (lower == 'null' || status == 'null' || status.isEmpty) {
+      return "PESANAN BARU";
+    }
+    switch (lower) {
+      case "pending":
+        return "SEDANG DIANTAR";
+      case "completed":
+        return "SELESAI";
+      case "canceled":
+        return "DITOLAK";
+      default:
+        return status.toUpperCase();
     }
   }
 }

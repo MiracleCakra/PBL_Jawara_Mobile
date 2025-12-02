@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:jawara_pintar_kel_5/models/iuran_model.dart';
+import 'package:jawara_pintar_kel_5/models/keuangan/iuran_model.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/detail_iuran_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/tambah_iuran_screen.dart';
 import 'package:moon_design/moon_design.dart';

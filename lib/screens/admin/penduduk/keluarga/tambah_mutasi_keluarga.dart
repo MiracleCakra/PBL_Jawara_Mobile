@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jawara_pintar_kel_5/widget/moon_result_modal.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; // NEW: Supabase import
 
 class TambahMutasiKeluargaPage extends StatefulWidget {
   const TambahMutasiKeluargaPage({super.key});
@@ -20,16 +21,41 @@ class _TambahMutasiKeluargaPageState extends State<TambahMutasiKeluargaPage> {
   String? _selectedJenisMutasi;
   String? _selectedKeluarga;
 
+  @override
+  void initState() {
+    super.initState();
+    _loadNamaKeluarga();
+  }
+
+  _loadNamaKeluarga() async {
+    try {
+      final supabase = Supabase.instance.client;
+      final response = await supabase.from('keluarga').select('nama_keluarga');
+      setState(() {
+        _keluargaOptions = response
+            .map((e) => (e['nama_keluarga'] ?? '').toString())
+            .where((s) => s.isNotEmpty)
+            .toList();
+      });
+    } catch (e) {
+      setState(() {
+        _keluargaOptions = [];
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memuat daftar keluarga: $e')),
+        );
+      }
+    }
+  }
+
   // Sample keluarga options
-  final List<String> _keluargaOptions = [
-    'Keluarga Hidayat',
-    'Keluarga Santoso',
-    'Keluarga Lestari',
-    'Keluarga Ijat',
-  ];
+  List<String> _keluargaOptions = [];
 
   // Jenis mutasi options
   final List<String> _jenisMutasiOptions = ['Keluar Wilayah', 'Pindah Rumah'];
+
+  bool _isSubmitting = false; // NEW: submission state
 
   @override
   void dispose() {
@@ -191,18 +217,58 @@ class _TambahMutasiKeluargaPageState extends State<TambahMutasiKeluargaPage> {
   }
 
   void _handleSubmit() async {
-    if (_formKey.currentState!.validate()) {
-      if (_tanggalMutasiController.text.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Tanggal mutasi harus dipilih'),
-            backgroundColor: Color(0xFFEF4444),
-          ),
-        );
-        return;
+    if (!_formKey.currentState!.validate()) return;
+
+    if (_tanggalMutasiController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tanggal mutasi harus dipilih'),
+          backgroundColor: Color(0xFFEF4444),
+        ),
+      );
+      return;
+    }
+
+    // Prevent duplicate submissions
+    if (_isSubmitting) return;
+    setState(() => _isSubmitting = true);
+
+    final jenisMutasi = _selectedJenisMutasi?.trim();
+    final namaKeluarga = _selectedKeluarga?.trim();
+    final alasan = _alasanMutasiController.text.trim();
+    final tanggal = _parseDate(_tanggalMutasiController.text);
+
+    if (jenisMutasi == null || namaKeluarga == null || tanggal == null) {
+      setState(() => _isSubmitting = false);
+      await showResultModal(
+        context,
+        type: ResultType.error,
+        title: 'Gagal',
+        description: 'Lengkapi semua kolom yang wajib diisi.',
+      );
+      return;
+    }
+
+    try {
+      final client = Supabase.instance.client;
+      // Insert new mutasi record. Adjust column names as needed.
+      final insertData = {
+        'jenis_mutasi': jenisMutasi,
+        'alasan_mutasi': alasan,
+        'tanggal_mutasi': tanggal.toIso8601String(),
+        'updated_at': DateTime.now().toIso8601String(),
+      };
+
+      final response = await client
+          .from('keluarga')
+          .update(insertData)
+          .eq('nama_keluarga', namaKeluarga)
+          .select();
+      // if response is empty or not proper, still treat as success due to backend behavior, else we can check returned record
+      if (response.isEmpty) {
+        throw Exception('Tidak ada response dari server');
       }
 
-      // TODO: Implement save logic
       await showResultModal(
         context,
         type: ResultType.success,
@@ -212,8 +278,17 @@ class _TambahMutasiKeluargaPageState extends State<TambahMutasiKeluargaPage> {
         autoProceed: true,
       );
 
-      // Kembali ke halaman daftar mutasi
       if (context.mounted) context.pop();
+    } catch (e) {
+      await showResultModal(
+        context,
+        type: ResultType.error,
+        title: 'Gagal',
+        description: 'Gagal menyimpan data mutasi: $e',
+        actionLabel: 'Tutup',
+      );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
@@ -507,7 +582,7 @@ class _TambahMutasiKeluargaPageState extends State<TambahMutasiKeluargaPage> {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: _handleSubmit,
+        onPressed: _isSubmitting ? null : _handleSubmit,
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16),
           backgroundColor: _primaryColor,
@@ -516,14 +591,23 @@ class _TambahMutasiKeluargaPageState extends State<TambahMutasiKeluargaPage> {
           ),
           elevation: 0,
         ),
-        child: const Text(
-          'Simpan',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        child: _isSubmitting
+            ? const SizedBox(
+                height: 18,
+                width: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : const Text(
+                'Simpan',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
       ),
     );
   }

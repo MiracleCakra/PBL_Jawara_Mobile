@@ -1,8 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:jawara_pintar_kel_5/models/store_model.dart';
+import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/store_model.dart';
+import 'package:jawara_pintar_kel_5/providers/marketplace/store_provider.dart';
+import 'package:jawara_pintar_kel_5/services/marketplace/store_service.dart';
 
 class EditStoreProfileScreen extends StatefulWidget {
   const EditStoreProfileScreen({super.key});
@@ -14,17 +17,76 @@ class EditStoreProfileScreen extends StatefulWidget {
 class _EditStoreProfileScreenState extends State<EditStoreProfileScreen> {
   static const Color primaryColor = Color(0xFF6A5AE0);
 
-  String _storeName = 'Toko Sayur Agus';
-  String _storeDescription =
-      'Menyediakan sayuran dan buah segar dari kebun lokal dengan pengiriman cepat ke seluruh RW.';
-  String _storePhone = '081234567890';
-  String _storeAddress = 'Jl. Anggrek No. 5, Blok C1';
-  String? _storeImageUrl; 
+  String _storeName = '';
+  String _storeDescription = '';
+  String _storePhone = '';
+  String _storeAddress = '';
+  String? _storeImageUrl;
+  int? _storeId;
+  bool _isLoading = true;
 
   final _formKey = GlobalKey<FormState>();
   XFile? _pickedImage;
-
   final ImagePicker _picker = ImagePicker();
+  
+  @override
+  void initState() {
+    super.initState();
+    _loadStoreData();
+  }
+  
+  Future<void> _loadStoreData() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      // Get warga.id from email
+      final authUser = Supabase.instance.client.auth.currentUser;
+      if (authUser?.email == null) {
+        throw Exception('User tidak login');
+      }
+      
+      final wargaResponse = await Supabase.instance.client
+          .from('warga')
+          .select('id')
+          .eq('email', authUser!.email!)
+          .maybeSingle();
+      
+      if (wargaResponse == null) {
+        throw Exception('Data warga tidak ditemukan');
+      }
+      
+      final userId = wargaResponse['id'].toString();
+      
+      // Get store data using service directly
+      final storeService = StoreService();
+      final store = await storeService.getStoreByUserId(userId);
+      
+      if (store != null && mounted) {
+        setState(() {
+          _storeId = store.storeId;
+          _storeName = store.nama ?? '';
+          _storeDescription = store.deskripsi ?? '';
+          _storePhone = store.kontak ?? '';
+          _storeAddress = store.alamat ?? '';
+          _storeImageUrl = store.logo;
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Toko tidak ditemukan');
+      }
+    } catch (e) {
+      print('Error loading store data: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal memuat data toko: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   Future<void> _pickImage(ImageSource source) async {
     final XFile? image = await _picker.pickImage(
@@ -65,35 +127,76 @@ class _EditStoreProfileScreenState extends State<EditStoreProfileScreen> {
     );
   }
 
-  void _saveChanges(BuildContext context) {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-
-      final updatedStore = StoreModel(
-        name: _storeName,
-        description: _storeDescription,
-        phone: _storePhone,
-        address: _storeAddress,
-        imageUrl: _pickedImage != null
-            ? 'local:${_pickedImage!.path}'
-            : _storeImageUrl,
-      );
-
+  void _saveChanges(BuildContext context) async {
+    if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Profil toko berhasil diperbarui!'),
-          backgroundColor: Color.fromARGB(255, 140, 140, 140),
+        SnackBar(
+          content: Text('Terdapat input yang belum valid. Mohon periksa lagi...'),
+          backgroundColor: Colors.grey.shade800,
         ),
       );
-
-      Navigator.pop(context, updatedStore);
-    } else {
+      return;
+    }
+    
+    if (_storeId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Terdapat input yang belum valid. Mohon periksa lagi...'),
+          content: Text('Data toko tidak valid'),
           backgroundColor: Colors.red,
         ),
       );
+      return;
+    }
+    
+    _formKey.currentState!.save();
+    
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+    
+    try {
+      final updatedStore = StoreModel(
+        storeId: _storeId,
+        nama: _storeName,
+        deskripsi: _storeDescription,
+        kontak: _storePhone,
+        alamat: _storeAddress,
+        logo: _pickedImage != null
+            ? 'local:${_pickedImage!.path}' // TODO: Upload to Supabase Storage
+            : _storeImageUrl,
+      );
+      
+      final storeProvider = Provider.of<StoreProvider>(context, listen: false);
+      await storeProvider.updateStore(_storeId!, updatedStore);
+      
+      if (mounted) {
+        Navigator.of(context).pop(); // Close loading dialog
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profil toko berhasil diperbarui!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop(); // Close loading dialog
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal menyimpan perubahan: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -110,13 +213,24 @@ class _EditStoreProfileScreenState extends State<EditStoreProfileScreen> {
         foregroundColor: Colors.black,
       ),
       backgroundColor: const Color(0xFFF7F7F7),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            _buildAvatarEdit(),
-            const SizedBox(height: 20),
+      body: _isLoading
+          ? const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Memuat data toko...'),
+                ],
+              ),
+            )
+          : Form(
+              key: _formKey,
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  _buildAvatarEdit(),
+                  const SizedBox(height: 20),
 
             _buildInputField(
               label: "Nama Toko",

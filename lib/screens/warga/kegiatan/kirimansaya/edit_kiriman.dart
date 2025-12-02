@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jawara_pintar_kel_5/models/kegiatan/aspirasi_model.dart';
+import 'package:jawara_pintar_kel_5/services/aspirasi_service.dart';
 
 class WargaEditKirimanScreen extends StatefulWidget {
-  final Map<String, dynamic> data;
+  final AspirasiModel data;
 
   const WargaEditKirimanScreen({super.key, required this.data});
 
@@ -14,14 +16,16 @@ class _WargaEditKirimanScreenState extends State<WargaEditKirimanScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _judulController;
   late final TextEditingController _isiController;
-  
+  final AspirasiService _aspirasiService = AspirasiService();
+  bool _isLoading = false;
+
   static const Color _primaryColor = Color(0xFF6366F1); 
 
   @override
   void initState() {
     super.initState();
-    _judulController = TextEditingController(text: widget.data['judul'] ?? '');
-    _isiController = TextEditingController(text: widget.data['deskripsi'] ?? widget.data['isi'] ?? '');
+    _judulController = TextEditingController(text: widget.data.judul);
+    _isiController = TextEditingController(text: widget.data.isi);
   }
 
   @override
@@ -31,34 +35,50 @@ class _WargaEditKirimanScreenState extends State<WargaEditKirimanScreen> {
     super.dispose();
   }
 
-  void _submitForm() {
+  Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      final updatedData = {
-        'id': widget.data['id'] ?? 'unknown',
-        'judul': _judulController.text,
-        'deskripsi': _isiController.text,
-        'isi': _isiController.text,
-        'status': 'Pending',
-        'type': 'updated',
-        'pengirim': widget.data['pengirim'], 
-        'tanggal': widget.data['tanggal'], 
-      };
-            
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Kiriman berhasil diperbarui!'),
-          backgroundColor: Color.fromARGB(255, 142, 143, 142),
-        ),
+      setState(() {
+        _isLoading = true;
+      });
+
+      final updatedAspirasi = widget.data.copyWith(
+        judul: _judulController.text,
+        isi: _isiController.text,
       );
-      context.pop(updatedData); 
+
+      try {
+        await _aspirasiService.updateAspiration(updatedAspirasi);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Kiriman berhasil diperbarui!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          context.pop(true);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Gagal memperbarui: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
     }
   }
 
   void _resetForm() {
-    setState(() {
-      _judulController.text = widget.data['judul'] ?? '';
-      _isiController.text = widget.data['deskripsi'] ?? widget.data['isi'] ?? '';
-    });
+    _judulController.text = widget.data.judul;
+    _isiController.text = widget.data.isi;
   }
 
   @override
@@ -132,21 +152,21 @@ class _WargaEditKirimanScreenState extends State<WargaEditKirimanScreen> {
                   Expanded(
                     flex: 3,
                     child: ElevatedButton(
-                      onPressed: _submitForm, 
+                      onPressed: _isLoading ? null : _submitForm, 
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _primaryColor, 
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
-                      child: const Text('Simpan Perubahan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      child: _isLoading ? const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white),) : const Text('Simpan Perubahan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     flex: 2,
                     child: OutlinedButton(
-                      onPressed: _resetForm, 
+                      onPressed: _isLoading ? null : _resetForm, 
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         side: BorderSide(color: Colors.grey.shade300),

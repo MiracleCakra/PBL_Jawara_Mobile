@@ -3,8 +3,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/product_model.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
+import 'package:provider/provider.dart';
+import 'package:jawara_pintar_kel_5/providers/product_provider.dart';
 
 class ShopHomeScreen extends StatefulWidget {
   const ShopHomeScreen({super.key});
@@ -34,6 +36,12 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
   void initState() {
     super.initState();
     _pageController = PageController();
+
+    // Always refresh products from Supabase when screen opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final productProvider = Provider.of<ProductProvider>(context, listen: false);
+      productProvider.fetchAllProducts(); // Always refresh
+    });
 
     _bannerTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
       if (_currentBanner < _banners.length - 1) {
@@ -141,7 +149,7 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
                     ClipRRect(
                       borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
                       child: Image.asset(
-                        p.imageUrl,
+                        p.gambar ?? 'assets/images/placeholder.png',
                         fit: BoxFit.cover,
                         width: double.infinity,
                         errorBuilder: (_, __, ___) => Container(
@@ -165,7 +173,7 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
                           ),
                         ),
                         child: Text(
-                          p.grade.replaceAll('Grade ', ''),
+                          p.grade?.replaceAll('Grade ', '') ?? 'A',
                           style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -178,12 +186,12 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(p.name, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w500)),
-                    Text(formatRupiah(p.price), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
-                    Row(
+                    Text(p.nama ?? 'Produk', overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w500)),
+                    Text(formatRupiah(p.harga?.toInt() ?? 0), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+                    const Row(
                       children: [
-                        const Icon(Icons.star, size: 12, color: Colors.amber),
-                        Text(" ${p.rating}", style: const TextStyle(fontSize: 12)),
+                        Icon(Icons.star, size: 12, color: Colors.amber),
+                        Text(" 0.0", style: TextStyle(fontSize: 12)),
                       ],
                     ),
                   ],
@@ -215,7 +223,9 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final allProducts = ProductModel.getSampleProducts().where((p) => p.isVerified).toList();
+    final productProvider = context.watch<ProductProvider>();
+    final allProducts = productProvider.products;
+    final isLoading = productProvider.isLoading;
 
     List<ProductModel> filteredProducts;
     if (_selectedGrade == null) {
@@ -278,7 +288,42 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
             child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [_categoryButton(grade: 'A'), _categoryButton(grade: 'B'), _categoryButton(grade: 'C')]),
           ),
           const SizedBox(height: 20),
-          if (filteredProducts.isEmpty && _selectedGrade != null)
+          if (isLoading)
+            const Padding(
+              padding: EdgeInsets.all(40.0),
+              child: Center(
+                child: Column(
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text('Memuat produk dari database...', style: TextStyle(color: Colors.grey)),
+                  ],
+                ),
+              ),
+            )
+          else if (allProducts.isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(40.0),
+              child: Center(
+                child: Column(
+                  children: [
+                    Icon(Icons.shopping_basket_outlined, size: 80, color: Colors.grey.shade300),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Belum ada produk',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Produk akan muncul di sini setelah ditambahkan ke database',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else if (filteredProducts.isEmpty && _selectedGrade != null)
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: Center(

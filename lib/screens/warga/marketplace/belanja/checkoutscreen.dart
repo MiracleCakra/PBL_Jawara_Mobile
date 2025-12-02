@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/keranjangScreen.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/order_model.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/order_item_model.dart';
+import 'package:jawara_pintar_kel_5/services/marketplace/order_service.dart';
+import 'package:jawara_pintar_kel_5/providers/marketplace/cart_provider.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
 
 class CheckoutScreen extends StatefulWidget {
@@ -16,13 +23,121 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   static const Color _greenFresh = Colors.orange;
 
   String _selectedPaymentMethod = 'COD';
-  String _selectedDeliveryOption = 'Ambil di Toko Warga'; 
-  final List<CartItem> _checkoutItems = initialCartItems;
+  String _selectedDeliveryOption = 'Ambil di Toko Warga';
+  
+  List<CartItem> _checkoutItems = [];
+  ProductModel? _buyNowProduct;
+  String? _userId;
+  bool _isLoading = true;
+  String _checkoutType = 'cart'; // 'cart' or 'buy_now'
 
   static const int _shippingFee = 5000;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadCheckoutData();
+    });
+  }
+
+  Future<void> _loadCheckoutData() async {
+    final extra = GoRouterState.of(context).extra;
+    
+    print('DEBUG Checkout: extra data = $extra');
+    
+    if (extra is Map<String, dynamic> && extra['type'] == 'buy_now') {
+      // Buy Now flow
+      print('DEBUG Checkout: Buy Now mode detected');
+      setState(() {
+        _checkoutType = 'buy_now';
+        _buyNowProduct = extra['product'] as ProductModel;
+        _userId = extra['userId'] as String;
+        _isLoading = false;
+      });
+      print('DEBUG Checkout: Buy Now product loaded: ${_buyNowProduct?.nama}');
+    } else {
+      // Cart flow - load cart items
+      print('DEBUG Checkout: Cart mode detected');
+      setState(() {
+        _checkoutType = 'cart';
+      });
+      
+      try {
+        final authUser = Supabase.instance.client.auth.currentUser;
+        if (authUser?.email == null) {
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+            });
+          }
+          return;
+        }
+        
+        // Get warga.id
+        final wargaResponse = await Supabase.instance.client
+            .from('warga')
+            .select('id')
+            .eq('email', authUser!.email!)
+            .maybeSingle();
+        
+        if (wargaResponse == null) {
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+            });
+          }
+          return;
+        }
+        
+        final userId = wargaResponse['id'] as String;
+        
+        // Load cart from provider
+        final cartProvider = Provider.of<CartProvider>(context, listen: false);
+        await cartProvider.fetchCartWithProducts(userId);
+        
+        print('DEBUG Checkout: Cart items count = ${cartProvider.cartItems.length}');
+        
+        if (mounted) {
+          setState(() {
+            _userId = userId;
+            _checkoutItems = cartProvider.cartItems.map((cartItem) {
+              print('DEBUG Checkout: Processing cart item: ${cartItem['produk']['nama']}');
+              final product = ProductModel.fromJson(cartItem['produk']);
+              final quantity = cartItem['qty'] as int? ?? 1; // Get actual quantity from database
+              print('DEBUG Checkout: Quantity = $quantity');
+              return CartItem(
+                product: product,
+                quantity: quantity,
+              );
+            }).toList();
+            _isLoading = false;
+          });
+          print('DEBUG Checkout: Final checkout items count = ${_checkoutItems.length}');
+        }
+      } catch (e) {
+        print('Error loading cart: $e');
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
+    }
+  }
+
   int get _subtotal {
+    if (_checkoutType == 'buy_now' && _buyNowProduct != null) {
+      return _buyNowProduct!.harga?.toInt() ?? 0;
+    }
     return _checkoutItems.fold(0, (sum, item) => sum + item.subtotal);
+  }
+  
+  int get _totalQuantity {
+    if (_checkoutType == 'buy_now') {
+      return 1;
+    }
+    return _checkoutItems.fold(0, (sum, item) => sum + item.quantity);
   }
   int get _finalTotal {
     final currentShipping = _selectedDeliveryOption == 'Ambil di Toko Warga'
@@ -33,9 +148,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_checkoutItems.isEmpty) {
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Checkout Pembayaran'),
+          backgroundColor: Colors.white,
+          elevation: 0.5,
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+    
+    if (_checkoutType == 'cart' && _checkoutItems.isEmpty) {
       return const Scaffold(
         body: Center(child: Text('Keranjang kosong. Tidak bisa Checkout.')),
+      );
+    }
+    
+    if (_checkoutType == 'buy_now' && _buyNowProduct == null) {
+      return const Scaffold(
+        body: Center(child: Text('Produk tidak ditemukan.')),
       );
     }
 
@@ -96,11 +228,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             _buildSectionCard(
               title: 'Rincian Pesanan',
               icon: Icons.receipt_long,
-              children: [
-                ..._checkoutItems
-                    .map((item) => _buildOrderSummaryItem(item))
-                    .toList(),
-              ],
+              children: _checkoutType == 'buy_now'
+                  ? [_buildBuyNowOrderItem()]
+                  : _checkoutItems.map((item) => _buildOrderSummaryItem(item)).toList(),
             ),
 
             _buildSectionCard(
@@ -191,6 +321,64 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
+  Widget _buildBuyNowOrderItem() {
+    if (_buyNowProduct == null) return const SizedBox();
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.asset(
+              _buyNowProduct!.gambar ?? 'assets/images/placeholder.png',
+              width: 50,
+              height: 50,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  width: 50,
+                  height: 50,
+                  color: Colors.grey.shade300,
+                  child: const Center(
+                    child: Icon(
+                      Icons.error_outline,
+                      size: 20,
+                      color: Colors.red,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${_buyNowProduct!.nama} (${_buyNowProduct!.grade ?? "Grade A"})',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  '1 x ${formatRupiah(_buyNowProduct!.harga?.toInt() ?? 0)}',
+                  style: const TextStyle(fontSize: 13, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            formatRupiah(_buyNowProduct!.harga?.toInt() ?? 0),
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildOrderSummaryItem(CartItem item) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
@@ -200,7 +388,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: Image.asset(
-              item.product.imageUrl,
+              item.product.gambar ?? 'assets/images/placeholder.png',
               width: 50,
               height: 50,
               fit: BoxFit.cover,
@@ -226,13 +414,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${item.product.name} (${item.product.grade})',
+                  '${item.product.nama} (${item.product.grade})',
                   style: const TextStyle(fontWeight: FontWeight.w600),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  '${item.quantity} x ${formatRupiah(item.product.price)}',
+                  '${item.quantity} x ${formatRupiah(item.product.harga?.toInt() ?? 0)}',
                   style: const TextStyle(fontSize: 13, color: Colors.grey),
                 ),
               ],
@@ -353,20 +541,91 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  void _processOrder(BuildContext context) {
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Pesanan berhasil dibuat! Menunggu pembayaran via: $_selectedPaymentMethod',
+  Future<void> _processOrder(BuildContext context) async {
+    if (_userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('User tidak terautentikasi'),
+          backgroundColor: Colors.red,
         ),
-        backgroundColor: Colors.grey.shade800,
-        duration: const Duration(seconds: 3),
-      ),
-    );
+      );
+      return;
+    }
 
-    Future.delayed(const Duration(seconds: 2), () {
-      context.go('/warga/marketplace/orders');
-    });
+    try {
+      // Show loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
+      final orderService = OrderService();
+      
+      // Create order
+      final newOrder = OrderModel(
+        userId: _userId,
+        totalPrice: _finalTotal.toDouble(),
+        orderStatus: null, // Status NULL = pesanan baru, menunggu konfirmasi penjual
+        alamat: 'Jl. Mawar No. 12, RT 01 / RW 01', // TODO: get from user profile
+        totalQty: _totalQuantity,
+        createdAt: DateTime.now(),
+      );
+      
+      final createdOrder = await orderService.createOrder(newOrder);
+      
+      // Create order items
+      if (_checkoutType == 'buy_now' && _buyNowProduct != null) {
+        await orderService.createOrderItem(OrderItemModel(
+          orderId: createdOrder.orderId,
+          productId: _buyNowProduct!.productId,
+          qty: 1,
+        ));
+      } else {
+        for (var item in _checkoutItems) {
+          await orderService.createOrderItem(OrderItemModel(
+            orderId: createdOrder.orderId,
+            productId: item.product.productId,
+            qty: item.quantity,
+          ));
+        }
+        
+        // Clear cart after successful order
+        if (_checkoutType == 'cart') {
+          final cartProvider = Provider.of<CartProvider>(context, listen: false);
+          await cartProvider.clearCart(_userId!);
+        }
+      }
+      
+      if (mounted) {
+        Navigator.pop(context); // Close loading dialog
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Pesanan berhasil dibuat! Order ID: ${createdOrder.orderId}',
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted) {
+            context.go('/warga/marketplace');
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal membuat pesanan: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

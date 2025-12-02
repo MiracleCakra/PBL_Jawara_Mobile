@@ -1,34 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jawara_pintar_kel_5/services/store_status_service.dart';
 
 class MarketplaceMenuWarga extends StatelessWidget {
   const MarketplaceMenuWarga({super.key});
 
-  static const Color _shopColor = Color(0xFF0072FF); 
+  static const Color _shopColor = Color(0xFF0072FF);
   static const Color _storeColor = Color(0xFF6366F1);
 
+  void _handleTokoTap(BuildContext context) async {
+    int status = await StoreStatusService.getStoreStatus();
 
-  void _checkStoreStatus(BuildContext context) {
-    const int storeStatus = 2; //  0, 1, atau 2
-
-    switch (storeStatus) {
+    switch (status) {
       case 2:
+        // Sudah punya toko, langsung ke dashboard toko
         context.goNamed('WargaMarketplaceStore');
         break;
-
       case 1:
+        // Menunggu validasi
         context.goNamed('StorePendingValidation');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Toko Anda masih menunggu persetujuan Admin.'), duration: Duration(seconds: 1)),
-        );
         break;
-
       case 0:
       default:
-        context.goNamed('WargaStoreRegister');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Anda harus mendaftar toko terlebih dahulu.'), duration: Duration(seconds: 1)),
-        );
+        // Belum punya toko, ke AuthStoreScreen
+        context.goNamed('AuthStoreScreen');
         break;
     }
   }
@@ -70,14 +65,20 @@ class MarketplaceMenuWarga extends StatelessWidget {
                 ),
                 _buildMenuItem(
                   context,
+                  icon: Icons.receipt_long,
+                  label: 'Pesanan Saya',
+                  color: Colors.green,
+                  onTap: () => context.goNamed('MyOrders'),
+                ),
+                _buildMenuItem(
+                  context,
                   icon: Icons.shopping_bag_outlined,
                   label: 'Toko Saya',
                   color: _storeColor,
-                  onTap: () => _checkStoreStatus(context),
+                  onTap: () => _handleTokoTap(context),
                 ),
               ],
             ),
-
             const SizedBox(height: 30),
           ],
         ),
@@ -135,54 +136,6 @@ class MarketplaceMenuWarga extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  /*Widget _buildInfoSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Ketentuan Marketplace',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 10),
-        _buildInfoItem(
-          icon: Icons.shield_outlined,
-          text: 'Semua produk harus diverifikasi oleh Admin RT/RW sebelum tayang.',
-        ),
-        _buildInfoItem(
-          icon: Icons.location_on_outlined,
-          text: 'Marketplace ini hanya berlaku untuk pembeli dan penjual di lingkungan RT/RW.',
-        ),
-        _buildInfoItem(
-          icon: Icons.handshake_outlined,
-          text: 'Pembayaran dilakukan secara langsung (COD) atau transfer antar warga.',
-        ),
-      ],
-    );
-  }*/
-
-  Widget _buildInfoItem({required IconData icon, required String text}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 18, color: Colors.grey.shade600),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
-            ),
-          ),
-        ],
       ),
     );
   }

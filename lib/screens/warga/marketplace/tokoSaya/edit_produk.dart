@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
-import 'package:jawara_pintar_kel_5/models/product_model.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah, unformatRupiah;
 
 class MyStoreProductEditScreen extends StatefulWidget {
@@ -32,12 +32,12 @@ class _MyStoreProductEditScreenState extends State<MyStoreProductEditScreen> {
   @override
   void initState() {
     super.initState();
-    _name = widget.product.name;
-    _description = widget.product.description;
-    _price = widget.product.price;
-    _stock = widget.product.stock;
-    _grade = widget.product.grade;
-    _unit = widget.product.unit;
+    _name = widget.product.nama ?? '';
+    _description = widget.product.deskripsi ?? '';
+    _price = widget.product.harga?.toInt() ?? 0;
+    _stock = widget.product.stok ?? 0;
+    _grade = widget.product.grade ?? 'Grade A';
+    _unit = widget.product.satuan ?? 'kg';
   }
 
   void _saveForm() {
@@ -47,23 +47,22 @@ class _MyStoreProductEditScreenState extends State<MyStoreProductEditScreen> {
       // TODO: Panggil provider.updateProduct(newProduct) di sini
 
       final updatedProduct = ProductModel(
-        id: widget.product.id,
-        name: _name,
-        description: _description,
-        imageUrl: widget.product.imageUrl,
+        productId: widget.product.productId,
+        nama: _name,
+        deskripsi: _description,
+        gambar: widget.product.gambar,
         grade: _grade,
-        price: _price,
-        rating: widget.product.rating,
-        isVerified: false,
-        stock: _stock,
-        unit: _unit,
-        rejectionReason: null,
+        harga: _price.toDouble(),
+        stok: _stock,
+        satuan: _unit,
+        storeId: widget.product.storeId,
+        createdAt: widget.product.createdAt,
       );
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text('${updatedProduct.name} berhasil diperbarui.'),
-            backgroundColor: Colors.grey.shade600),
+            content: Text('${updatedProduct.nama} berhasil diperbarui.'),
+            backgroundColor: Colors.grey.shade800),
       );
 
       context.pop(updatedProduct);
@@ -73,10 +72,8 @@ class _MyStoreProductEditScreenState extends State<MyStoreProductEditScreen> {
   @override
   Widget build(BuildContext context) {
     Widget? rejectionAlert;
-    if (widget.product.rejectionReason != null &&
-        widget.product.rejectionReason!.isNotEmpty) {
-      rejectionAlert = _buildRejectionCard(widget.product.rejectionReason!);
-    }
+    // Rejection reason tidak ada di model baru, gunakan dummy check
+    rejectionAlert = null;
 
     return Scaffold(
       appBar: AppBar(

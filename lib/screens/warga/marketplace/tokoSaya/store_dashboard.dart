@@ -1,8 +1,12 @@
 // lib/screens/my_store_dashboard_screen.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/product_model.dart';
-import 'package:jawara_pintar_kel_5/models/store_model.dart';
+import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/store_model.dart';
+import 'package:jawara_pintar_kel_5/providers/product_provider.dart';
+import 'package:jawara_pintar_kel_5/services/marketplace/store_service.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
 
 class MyStoreDashboardScreen extends StatefulWidget {
@@ -20,9 +24,10 @@ class _MyStoreDashboardScreenState extends State<MyStoreDashboardScreen> {
   static const Color warningColor = Color(0xFFFF9800);
 
 
-  late StoreModel storeData;
+  StoreModel? storeData;
+  bool _isLoading = true;
 
-  final int totalProducts = 12;
+  int totalProducts = 0;
   final int pendingOrders = 3;
   final double monthlyRevenue = 450000;
   final double storeRating = 4.9;
@@ -32,14 +37,67 @@ class _MyStoreDashboardScreenState extends State<MyStoreDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    storeData = widget.store ??
-        StoreModel(
-          name: "SSS, Sayur Segar Susanto",
-          description:
-              'Menyediakan sayuran dan buah segar dari kebun lokal dengan pengiriman cepat ke seluruh RW.',
-          phone: '081234567890',
-          address: 'Jl. Anggrek No. 5, Blok C1, RT 001 / RW 001',
+    _loadStoreData();
+  }
+
+  Future<void> _loadStoreData() async {
+    try {
+      final supabase = Supabase.instance.client;
+      final email = supabase.auth.currentUser?.email;
+      
+      if (email == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('User tidak terautentikasi')),
+          );
+        }
+        return;
+      }
+
+      // Get warga ID
+      final wargaResponse = await supabase
+          .from('warga')
+          .select('id')
+          .eq('email', email)
+          .single();
+      
+      final userId = wargaResponse['id'].toString();
+      
+      // Get store data
+      final storeService = StoreService();
+      final store = await storeService.getStoreByUserId(userId);
+      
+      if (store != null) {
+        // Get product count for this store
+        final productProvider = Provider.of<ProductProvider>(context, listen: false);
+        await productProvider.fetchAllProducts();
+        final storeProducts = productProvider.products.where((p) => p.storeId == store.storeId).toList();
+        
+        if (mounted) {
+          setState(() {
+            storeData = store;
+            totalProducts = storeProducts.length;
+            _isLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error loading store data: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memuat data toko: $e')),
         );
+      }
+    }
   }
 
   @override
@@ -47,7 +105,7 @@ class _MyStoreDashboardScreenState extends State<MyStoreDashboardScreen> {
     super.didUpdateWidget(oldWidget);
     if (widget.store != null && widget.store != oldWidget.store) {
       setState(() {
-        storeData = widget.store!;
+        storeData = widget.store;
       });
     }
   }
@@ -83,7 +141,11 @@ class _MyStoreDashboardScreenState extends State<MyStoreDashboardScreen> {
         elevation: 0.5,
         foregroundColor: Colors.black,
       ),
-      body: ListView(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : storeData == null
+              ? const Center(child: Text('Data toko tidak ditemukan'))
+              : ListView(
         padding: const EdgeInsets.all(16),
         children: [
           _buildStoreHeader(context),
@@ -142,7 +204,7 @@ class _MyStoreDashboardScreenState extends State<MyStoreDashboardScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          storeData.name,
+                          storeData?.nama ?? 'Toko Saya',
                           style: TextStyle(
                             fontSize: titleFontSize,
                             fontWeight: FontWeight.bold,
@@ -209,9 +271,9 @@ class _MyStoreDashboardScreenState extends State<MyStoreDashboardScreen> {
         const Divider(color: Colors.grey, height: 20),
         const Text('Informasi Detail Toko', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1F2937))),
         const SizedBox(height: 10),
-        _buildDetailItem(icon: Icons.description, label: 'Deskripsi', value: storeData.description),
-        _buildDetailItem(icon: Icons.phone, label: 'Nomor Kontak', value: storeData.phone),
-        _buildDetailItem(icon: Icons.location_on, label: 'Alamat', value: storeData.address),
+        _buildDetailItem(icon: Icons.description, label: 'Deskripsi', value: storeData?.deskripsi ?? 'Tidak ada deskripsi'),
+        _buildDetailItem(icon: Icons.phone, label: 'Nomor Kontak', value: storeData?.kontak ?? 'Tidak ada kontak'),
+        _buildDetailItem(icon: Icons.location_on, label: 'Alamat', value: storeData?.alamat ?? 'Tidak ada alamat'),
         const SizedBox(height: 10),
       ],
     );
@@ -241,7 +303,6 @@ class _MyStoreDashboardScreenState extends State<MyStoreDashboardScreen> {
         _buildStatItem(label: 'Penghasilan Bulan Ini', value: formatRupiah(monthlyRevenue.toInt()), icon: Icons.paid, color: successColor),
         Container(height: 60, width: 1, color: Colors.grey.shade200),
         _buildStatItem(label: 'Pesanan Baru', value: pendingOrders.toString(), icon: Icons.delivery_dining, color: warningColor, isRupiah: false, onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Menuju Daftar Pesanan'), duration: Duration(seconds: 1)));
         }),
       ]),
     );
@@ -295,7 +356,9 @@ class _MyStoreDashboardScreenState extends State<MyStoreDashboardScreen> {
   }
 
   Widget _buildProductList(BuildContext context) {
-    final List<ProductModel> recentProducts = ProductModel.getSampleProducts().where((p) => p.isVerified).take(3).toList();
+    final productProvider = context.watch<ProductProvider>();
+    final recentProducts = productProvider.products.take(5).toList(); // Show latest 5 products
+    
     if (recentProducts.isEmpty) {
       return Center(child: Padding(padding: const EdgeInsets.all(20), child: Column(children: [Icon(Icons.inbox_outlined, size: 40, color: Colors.grey.shade400), const SizedBox(height: 10), Text('Belum ada produk aktif.', style: TextStyle(color: Colors.grey.shade600))])));
     }
@@ -306,11 +369,11 @@ class _MyStoreDashboardScreenState extends State<MyStoreDashboardScreen> {
     final gradeColor = p.grade == 'Grade A' ? primaryColor : Colors.orange.shade600;
     return Card(margin: const EdgeInsets.only(bottom: 10), elevation: 2, color: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), child: ListTile(
       contentPadding: const EdgeInsets.all(8),
-      leading: ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.asset(p.imageUrl, width: 60, height: 60, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => Container(width: 60, height: 60, color: primaryColor.withOpacity(0.1), child: Center(child: Icon(Icons.shopping_bag_outlined, color: primaryColor))))),
-      title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+      leading: ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.asset(p.gambar ?? 'assets/images/placeholder.png', width: 60, height: 60, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => Container(width: 60, height: 60, color: primaryColor.withOpacity(0.1), child: Center(child: Icon(Icons.shopping_bag_outlined, color: primaryColor))))),
+      title: Text(p.nama ?? 'Produk', style: const TextStyle(fontWeight: FontWeight.bold)),
       subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(formatRupiah(p.price), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
-        Row(children: [Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: gradeColor, borderRadius: BorderRadius.circular(4)), child: Text(p.grade.replaceAll('Grade ', ''), style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold))), const SizedBox(width: 8), const Icon(Icons.star, color: Colors.amber, size: 14), Text("${p.rating}", style: const TextStyle(fontSize: 12))]),
+        Text(formatRupiah(p.harga?.toInt() ?? 0), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+        Row(children: [Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: gradeColor, borderRadius: BorderRadius.circular(4)), child: Text(p.grade?.replaceAll('Grade ', '') ?? 'A', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)))]),
       ]),
       onTap: () => context.pushNamed('MyStoreProductDetail', extra: p),
     ));
