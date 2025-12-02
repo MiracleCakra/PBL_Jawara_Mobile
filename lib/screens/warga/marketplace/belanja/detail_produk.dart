@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
 import 'package:jawara_pintar_kel_5/providers/marketplace/cart_provider.dart';
 import 'package:jawara_pintar_kel_5/services/marketplace/review_service.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
+import 'package:jawara_pintar_kel_5/widget/product_image.dart';
+import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class WargaProductDetailScreen extends StatefulWidget {
   final ProductModel product;
@@ -13,34 +14,37 @@ class WargaProductDetailScreen extends StatefulWidget {
   const WargaProductDetailScreen({super.key, required this.product});
 
   @override
-  State<WargaProductDetailScreen> createState() => _WargaProductDetailScreenState();
+  State<WargaProductDetailScreen> createState() =>
+      _WargaProductDetailScreenState();
 }
 
 class _WargaProductDetailScreenState extends State<WargaProductDetailScreen> {
   static const Color _primaryColor = Color(0xFF6A5AE0);
   static const Color _greenFresh = Color(0xFF4ADE80);
-  
+
   final _reviewService = ReviewService();
   List<Map<String, dynamic>> _reviews = [];
   bool _isLoadingReviews = true;
   double _averageRating = 0.0;
-  
+
   @override
   void initState() {
     super.initState();
     _loadReviews();
   }
-  
+
   Future<void> _loadReviews() async {
     try {
-      final reviews = await _reviewService.getReviewsWithUserInfo(widget.product.productId!);
-      
+      final reviews = await _reviewService.getReviewsWithUserInfo(
+        widget.product.productId!,
+      );
+
       // Calculate average rating
       double totalRating = 0;
       for (var review in reviews) {
         totalRating += (review['rating'] as int? ?? 0);
       }
-      
+
       setState(() {
         _reviews = reviews;
         _averageRating = reviews.isEmpty ? 0 : totalRating / reviews.length;
@@ -65,7 +69,7 @@ class _WargaProductDetailScreenState extends State<WargaProductDetailScreen> {
       ),
     );
   }
-  
+
   ProductModel get product => widget.product;
 
   Widget _buildAppBar(BuildContext context) {
@@ -107,30 +111,11 @@ class _WargaProductDetailScreenState extends State<WargaProductDetailScreen> {
           flexibleSpace: FlexibleSpaceBar(
             background: Hero(
               tag: 'product-${product.productId}',
-              child: Image.asset(
-                product.gambar ?? 'assets/images/placeholder.png',
+              child: ProductImage(
+                imagePath: product.gambar,
+                width: double.infinity,
+                height: double.infinity,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: Colors.grey.shade300,
-                    child: const Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.image_not_supported,
-                            size: 50,
-                            color: Colors.red,
-                          ),
-                          Text(
-                            'Aset Tidak Ditemukan!',
-                            style: TextStyle(color: Colors.red),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
               ),
             ),
           ),
@@ -212,9 +197,7 @@ class _WargaProductDetailScreenState extends State<WargaProductDetailScreen> {
                   const SizedBox(height: 25),
 
                   _buildRatingAndReviewSection(context),
-                  const SizedBox(
-                    height: 120,
-                  ),
+                  const SizedBox(height: 120),
                 ],
               ),
             ),
@@ -267,6 +250,7 @@ class _WargaProductDetailScreenState extends State<WargaProductDetailScreen> {
       ],
     );
   }
+
   Widget _buildRatingAndReviewSection(BuildContext context) {
     if (_isLoadingReviews) {
       return Container(
@@ -341,7 +325,7 @@ class _WargaProductDetailScreenState extends State<WargaProductDetailScreen> {
           ),
 
           const Divider(height: 20),
-          
+
           if (_reviews.isEmpty)
             const Center(
               child: Padding(
@@ -358,9 +342,13 @@ class _WargaProductDetailScreenState extends State<WargaProductDetailScreen> {
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
-            
+
             // Show first 2 reviews only
-            for (int i = 0; i < (_reviews.length > 2 ? 2 : _reviews.length); i++)
+            for (
+              int i = 0;
+              i < (_reviews.length > 2 ? 2 : _reviews.length);
+              i++
+            )
               _buildSingleReview(
                 _reviews[i]['user_name'] as String? ?? 'Pembeli',
                 _reviews[i]['review_text'] as String? ?? '',
@@ -369,12 +357,16 @@ class _WargaProductDetailScreenState extends State<WargaProductDetailScreen> {
               ),
           ],
         ],
-    ),
-  );
-}
+      ),
+    );
+  }
 
-
-  Widget _buildSingleReview(String name, String comment, double star, String? reply) {
+  Widget _buildSingleReview(
+    String name,
+    String comment,
+    double star,
+    String? reply,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Column(
@@ -393,11 +385,14 @@ class _WargaProductDetailScreenState extends State<WargaProductDetailScreen> {
               ),
               const Spacer(),
               Row(
-                children: List.generate(5, (i) => Icon(
-                  Icons.star,
-                  size: 14,
-                  color: i < star ? Colors.amber : Colors.grey.shade300,
-                )),
+                children: List.generate(
+                  5,
+                  (i) => Icon(
+                    Icons.star,
+                    size: 14,
+                    color: i < star ? Colors.amber : Colors.grey.shade300,
+                  ),
+                ),
               ),
             ],
           ),
@@ -406,7 +401,7 @@ class _WargaProductDetailScreenState extends State<WargaProductDetailScreen> {
             comment,
             style: const TextStyle(fontSize: 14, color: Colors.black87),
           ),
-          
+
           // Seller Reply
           if (reply != null && reply.isNotEmpty) ...[
             const SizedBox(height: 8),
@@ -436,7 +431,10 @@ class _WargaProductDetailScreenState extends State<WargaProductDetailScreen> {
                         const SizedBox(height: 2),
                         Text(
                           reply,
-                          style: const TextStyle(fontSize: 13, fontStyle: FontStyle.italic),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontStyle: FontStyle.italic,
+                          ),
                         ),
                       ],
                     ),
@@ -473,7 +471,10 @@ class _WargaProductDetailScreenState extends State<WargaProductDetailScreen> {
               height: 50,
               child: OutlinedButton.icon(
                 onPressed: () async {
-                  final cartProvider = Provider.of<CartProvider>(context, listen: false);
+                  final cartProvider = Provider.of<CartProvider>(
+                    context,
+                    listen: false,
+                  );
                   // Get warga.id (NIK) from warga table using email
                   final authUser = Supabase.instance.client.auth.currentUser;
                   if (authUser?.email == null) {
@@ -485,14 +486,14 @@ class _WargaProductDetailScreenState extends State<WargaProductDetailScreen> {
                     );
                     return;
                   }
-                  
+
                   // Query warga table to get warga.id (NIK)
                   final wargaResponse = await Supabase.instance.client
                       .from('warga')
                       .select('id')
                       .eq('email', authUser!.email!)
                       .maybeSingle();
-                  
+
                   if (wargaResponse == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -502,9 +503,9 @@ class _WargaProductDetailScreenState extends State<WargaProductDetailScreen> {
                     );
                     return;
                   }
-                  
+
                   final userId = wargaResponse['id'] as String;
-                  
+
                   if (product.productId == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -514,9 +515,12 @@ class _WargaProductDetailScreenState extends State<WargaProductDetailScreen> {
                     );
                     return;
                   }
-                  
-                  final success = await cartProvider.addToCart(userId, product.productId!);
-                  
+
+                  final success = await cartProvider.addToCart(
+                    userId,
+                    product.productId!,
+                  );
+
                   if (success) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -558,7 +562,8 @@ class _WargaProductDetailScreenState extends State<WargaProductDetailScreen> {
                   onPressed: () async {
                     // Beli Sekarang - langsung ke checkout tanpa masuk keranjang
                     try {
-                      final authUser = Supabase.instance.client.auth.currentUser;
+                      final authUser =
+                          Supabase.instance.client.auth.currentUser;
                       if (authUser?.email == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -568,16 +573,16 @@ class _WargaProductDetailScreenState extends State<WargaProductDetailScreen> {
                         );
                         return;
                       }
-                      
+
                       print('DEBUG BuyNow: User email = ${authUser!.email}');
-                      
+
                       // Query warga table to get warga.id (NIK)
                       final wargaResponse = await Supabase.instance.client
                           .from('warga')
                           .select('id')
                           .eq('email', authUser.email!)
                           .maybeSingle();
-                      
+
                       if (wargaResponse == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -587,21 +592,28 @@ class _WargaProductDetailScreenState extends State<WargaProductDetailScreen> {
                         );
                         return;
                       }
-                      
+
                       final userId = wargaResponse['id'] as String;
                       print('DEBUG BuyNow: User ID = $userId');
-                      print('DEBUG BuyNow: Product = ${product.nama}, ID = ${product.productId}');
-                      
+                      print(
+                        'DEBUG BuyNow: Product = ${product.nama}, ID = ${product.productId}',
+                      );
+
                       // Pass product to checkout with buy_now flag
                       final checkoutData = {
                         'type': 'buy_now',
                         'product': product,
                         'userId': userId,
                       };
-                      
-                      print('DEBUG BuyNow: Navigating to checkout with data: $checkoutData');
-                      
-                      context.push('/warga/marketplace/checkout', extra: checkoutData);
+
+                      print(
+                        'DEBUG BuyNow: Navigating to checkout with data: $checkoutData',
+                      );
+
+                      context.push(
+                        '/warga/marketplace/checkout',
+                        extra: checkoutData,
+                      );
                     } catch (e) {
                       print('DEBUG BuyNow: Error = $e');
                       ScaffoldMessenger.of(context).showSnackBar(

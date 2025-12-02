@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
 import 'package:jawara_pintar_kel_5/providers/product_provider.dart';
+import 'package:jawara_pintar_kel_5/services/marketplace/store_service.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
+import 'package:jawara_pintar_kel_5/widget/product_image.dart';
+import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MyStoreStockScreen extends StatefulWidget {
   const MyStoreStockScreen({super.key});
@@ -23,19 +26,45 @@ class _MyStoreStockScreenState extends State<MyStoreStockScreen> {
     products = [];
     _loadProducts();
   }
-  
+
   Future<void> _loadProducts() async {
     setState(() {
       isLoading = true;
       errorMessage = null;
     });
-    
+
     try {
-      final productProvider = Provider.of<ProductProvider>(context, listen: false);
-      // TODO: Get actual store_id from StoreProvider
-      // For now loading all products, you should use fetchProductsByStore(storeId)
-      await productProvider.fetchAllProducts();
-      
+      // Get user's store_id
+      final authUser = Supabase.instance.client.auth.currentUser;
+      if (authUser?.email == null) {
+        throw Exception('User tidak terautentikasi');
+      }
+
+      final wargaResponse = await Supabase.instance.client
+          .from('warga')
+          .select('id')
+          .eq('email', authUser!.email!)
+          .maybeSingle();
+
+      if (wargaResponse == null) {
+        throw Exception('Data warga tidak ditemukan');
+      }
+
+      final userId = wargaResponse['id'] as String;
+      final storeService = StoreService();
+      final store = await storeService.getStoreByUserId(userId);
+
+      if (store == null || store.storeId == null) {
+        throw Exception('Toko tidak ditemukan');
+      }
+
+      // Load only products from this store
+      final productProvider = Provider.of<ProductProvider>(
+        context,
+        listen: false,
+      );
+      await productProvider.fetchProductsByStore(store.storeId!);
+
       if (mounted) {
         setState(() {
           products = productProvider.products;
@@ -82,37 +111,35 @@ class _MyStoreStockScreenState extends State<MyStoreStockScreen> {
               ),
             )
           : errorMessage != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error_outline, size: 60, color: Colors.red),
-                      const SizedBox(height: 16),
-                      Text(errorMessage!, textAlign: TextAlign.center),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _loadProducts,
-                        child: const Text('Coba Lagi'),
-                      ),
-                    ],
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 60, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Text(errorMessage!, textAlign: TextAlign.center),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _loadProducts,
+                    child: const Text('Coba Lagi'),
                   ),
-                )
-              : products.isEmpty
-                  ? _buildEmptyStock()
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: products.length,
-                      itemBuilder: (context, index) {
-                        final product = products[index];
-                        return _buildProductCard(context, product);
-                      },
-                    ),
+                ],
+              ),
+            )
+          : products.isEmpty
+          ? _buildEmptyStock()
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: products.length,
+              itemBuilder: (context, index) {
+                final product = products[index];
+                return _buildProductCard(context, product);
+              },
+            ),
       floatingActionButton: FloatingActionButton(
         onPressed: _navigateToProductAdd,
         backgroundColor: Colors.deepPurple,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: const Icon(Icons.add, size: 30, color: Colors.white),
       ),
     );
@@ -184,22 +211,11 @@ class _MyStoreStockScreenState extends State<MyStoreStockScreen> {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.asset(
-                  product.gambar ?? 'assets/images/placeholder.png',
+                child: ProductImage(
+                  imagePath: product.gambar,
                   width: 60,
                   height: 60,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    width: 60,
-                    height: 60,
-                    color: gradeColor.withOpacity(0.1),
-                    child: Center(
-                      child: Icon(
-                        Icons.shopping_bag_outlined,
-                        color: gradeColor,
-                      ),
-                    ),
-                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -251,16 +267,16 @@ class _MyStoreStockScreenState extends State<MyStoreStockScreen> {
                       ),
                     ),
                     // rejectionReason check removed
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          'Status: Active',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Colors.redAccent,
-                          ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        'Status: Active',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.redAccent,
                         ),
                       ),
+                    ),
                   ],
                 ),
               ),

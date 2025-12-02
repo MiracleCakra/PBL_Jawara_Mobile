@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
+import 'package:jawara_pintar_kel_5/providers/product_provider.dart';
+import 'package:jawara_pintar_kel_5/services/marketplace/product_service.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
+import 'package:jawara_pintar_kel_5/widget/product_image.dart';
+import 'package:provider/provider.dart';
 
 class MyStoreProductDetailScreen extends StatefulWidget {
   final ProductModel product;
@@ -34,8 +38,10 @@ class _MyStoreProductDetailScreenState
   }
 
   Future<void> _navigateToEditForm(BuildContext context) async {
-    final result =
-        await context.pushNamed('MyStoreProductEdit', extra: currentProduct);
+    final result = await context.pushNamed(
+      'MyStoreProductEdit',
+      extra: currentProduct,
+    );
 
     if (result is ProductModel) {
       setState(() {
@@ -51,7 +57,8 @@ class _MyStoreProductDetailScreenState
         return AlertDialog(
           title: const Text('Hapus Produk?'),
           content: Text(
-              'Apakah kamu yakin ingin menghapus produk "${currentProduct.nama ?? 'produk ini'}"? Tindakan ini tidak dapat dibatalkan.'),
+            'Apakah kamu yakin ingin menghapus produk "${currentProduct.nama ?? 'produk ini'}"? Tindakan ini tidak dapat dibatalkan.',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
@@ -67,63 +74,102 @@ class _MyStoreProductDetailScreenState
       },
     );
 
-    if (confirm == true) {
-      // TODO: Panggil provider.deleteProduct(currentProduct.id) di sini
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${currentProduct.nama ?? 'Produk'} berhasil dihapus')),
+    if (confirm == true && mounted) {
+      // Show loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
       );
-     
-      Navigator.pop(context, 'deleted'); 
+
+      try {
+        // Delete from database
+        final productService = ProductService();
+        await productService.deleteProduct(currentProduct.productId!);
+
+        // Refresh provider
+        if (mounted) {
+          final productProvider = Provider.of<ProductProvider>(
+            context,
+            listen: false,
+          );
+          await productProvider.fetchAllProducts();
+        }
+
+        if (mounted) {
+          Navigator.pop(context); // Close loading
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '${currentProduct.nama ?? 'Produk'} berhasil dihapus dari database',
+              ),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pop(context, 'deleted');
+        }
+      } catch (e) {
+        if (mounted) {
+          Navigator.pop(context); // Close loading
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Gagal menghapus produk: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
     }
   }
 
-void _showActionBottomSheet(BuildContext context) {
-  final bool isRejected = false; // Simplified - rejection removed
+  void _showActionBottomSheet(BuildContext context) {
+    final bool isRejected = false; // Simplified - rejection removed
 
-  showModalBottomSheet(
-    context: context,
-    builder: (ctx) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          const Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Text(
-              'Aksi Produk',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text(
+                'Aksi Produk',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
             ),
-          ),
-          const Divider(height: 1),
+            const Divider(height: 1),
 
-          // Hanya tampilkan tombol edit jika produk tidak ditolak
-          if (!isRejected)
+            // Hanya tampilkan tombol edit jika produk tidak ditolak
+            if (!isRejected)
+              ListTile(
+                leading: const Icon(Icons.edit, color: primaryColor),
+                title: const Text('Edit Produk'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _navigateToEditForm(context);
+                },
+              ),
+
             ListTile(
-              leading: const Icon(Icons.edit, color: primaryColor),
-              title: const Text('Edit Produk'),
+              leading: const Icon(Icons.delete_forever, color: rejectedColor),
+              title: Text(
+                'Hapus Produk',
+                style: TextStyle(color: rejectedColor),
+              ),
               onTap: () {
                 Navigator.pop(ctx);
-                _navigateToEditForm(context);
+                _confirmDelete(context);
               },
             ),
-
-          ListTile(
-            leading: const Icon(Icons.delete_forever, color: rejectedColor),
-            title: Text('Hapus Produk',
-                style: TextStyle(color: rejectedColor)),
-            onTap: () {
-              Navigator.pop(ctx);
-              _confirmDelete(context);
-            },
-          ),
-          const SizedBox(height: 8),
-        ],
-      );
-    },
-  );
-}
-
+            const SizedBox(height: 8),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -148,19 +194,11 @@ void _showActionBottomSheet(BuildContext context) {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Image.asset(
-              currentProduct.gambar ?? 'assets/images/placeholder.png',
+            ProductImage(
+              imagePath: currentProduct.gambar,
               width: double.infinity,
               height: 250,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                height: 250,
-                color: primaryColor.withOpacity(0.1),
-                child: const Center(
-                  child: Icon(Icons.image_not_supported,
-                      size: 50, color: primaryColor),
-                ),
-              ),
             ),
             Container(
               padding: const EdgeInsets.all(12),
@@ -172,7 +210,9 @@ void _showActionBottomSheet(BuildContext context) {
                   Text(
                     statusText,
                     style: TextStyle(
-                        color: statusColor, fontWeight: FontWeight.bold),
+                      color: statusColor,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
@@ -183,8 +223,10 @@ void _showActionBottomSheet(BuildContext context) {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(currentProduct.deskripsi ?? 'Tidak ada deskripsi',
-                      style: const TextStyle(fontSize: 16)),
+                  Text(
+                    currentProduct.deskripsi ?? 'Tidak ada deskripsi',
+                    style: const TextStyle(fontSize: 16),
+                  ),
                   const SizedBox(height: 20),
 
                   Row(
@@ -196,43 +238,56 @@ void _showActionBottomSheet(BuildContext context) {
                           Text(
                             formatRupiah(currentProduct.harga?.toInt() ?? 0),
                             style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: verifiedColor),
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: verifiedColor,
+                            ),
                           ),
-                          Text('Per ${currentProduct.satuan ?? 'unit'}',
-                              style: const TextStyle(color: Colors.grey)),
+                          Text(
+                            'Per ${currentProduct.satuan ?? 'unit'}',
+                            style: const TextStyle(color: Colors.grey),
+                          ),
                         ],
                       ),
                       _buildDetailBadge(
-                          Icons.star, currentProduct.grade ?? 'Grade A', primaryColor),
+                        Icons.star,
+                        currentProduct.grade ?? 'Grade A',
+                        primaryColor,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 20),
 
-                  _buildDetailRow(Icons.storage, 'Stok Tersedia',
-                      '${currentProduct.stok ?? 0} ${currentProduct.satuan ?? 'unit'}'),
                   _buildDetailRow(
-                      Icons.date_range, 'Tanggal Posting', '01 Des 2025'),
+                    Icons.storage,
+                    'Stok Tersedia',
+                    '${currentProduct.stok ?? 0} ${currentProduct.satuan ?? 'unit'}',
+                  ),
+                  _buildDetailRow(
+                    Icons.date_range,
+                    'Tanggal Posting',
+                    '01 Des 2025',
+                  ),
 
                   // rejectionReason removed
-                    ...[
-                      const SizedBox(height: 16),
-                      Container(), // Placeholder
-                    ],
+                  ...[
+                    const SizedBox(height: 16),
+                    Container(), // Placeholder
+                  ],
 
                   const SizedBox(height: 30),
 
-                  const Text('Performa Produk',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Performa Produk',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                   const Divider(),
+                  _buildPerformanceStat('Total Penjualan (Bulan Ini)', '5x'),
+                  _buildPerformanceStat('Rata-rata Rating', '0.0 / 5.0'),
                   _buildPerformanceStat(
-                      'Total Penjualan (Bulan Ini)', '5x'),
-                  _buildPerformanceStat(
-                      'Rata-rata Rating', '0.0 / 5.0'),
-                  _buildPerformanceStat('Total Pendapatan (Produk Ini)',
-                      formatRupiah((currentProduct.harga?.toInt() ?? 0) * 5)),
+                    'Total Pendapatan (Produk Ini)',
+                    formatRupiah((currentProduct.harga?.toInt() ?? 0) * 5),
+                  ),
 
                   const SizedBox(height: 50),
                 ],
@@ -243,7 +298,6 @@ void _showActionBottomSheet(BuildContext context) {
       ),
     );
   }
-
 
   Widget _buildDetailBadge(IconData icon, String value, Color color) {
     return Container(
@@ -257,27 +311,40 @@ void _showActionBottomSheet(BuildContext context) {
         children: [
           Icon(icon, size: 18, color: color),
           const SizedBox(width: 5),
-          Text(value,
-              style: TextStyle(color: color, fontWeight: FontWeight.w600)),
+          Text(
+            value,
+            style: TextStyle(color: color, fontWeight: FontWeight.w600),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildDetailRow(IconData icon, String label, String value,
-      {Color color = Colors.black87}) {
+  Widget _buildDetailRow(
+    IconData icon,
+    String label,
+    String value, {
+    Color color = Colors.black87,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         children: [
           Icon(icon, color: primaryColor, size: 24),
           const SizedBox(width: 12),
-          Text(label,
-              style: const TextStyle(fontSize: 16, color: Colors.black87)),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 16, color: Colors.black87),
+          ),
           const Spacer(),
-          Text(value,
-              style: TextStyle(
-                  fontSize: 16, fontWeight: FontWeight.bold, color: color)),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
         ],
       ),
     );
@@ -307,8 +374,10 @@ void _showActionBottomSheet(BuildContext context) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Alasan Penolakan Admin:',
-              style: TextStyle(fontWeight: FontWeight.bold, color: rejectedColor)),
+          const Text(
+            'Alasan Penolakan Admin:',
+            style: TextStyle(fontWeight: FontWeight.bold, color: rejectedColor),
+          ),
           const SizedBox(height: 5),
           Text(reason, style: const TextStyle(color: Colors.black87)),
         ],

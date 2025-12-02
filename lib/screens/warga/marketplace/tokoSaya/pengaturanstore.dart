@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jawara_pintar_kel_5/services/marketplace/store_service.dart';
 import 'package:jawara_pintar_kel_5/services/store_status_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MyStoreSettingsScreen extends StatelessWidget {
   const MyStoreSettingsScreen({super.key});
@@ -53,42 +55,118 @@ class MyStoreSettingsScreen extends StatelessWidget {
             },
           ),
           _buildSettingItem(
-          context,
-          icon: Icons.delete_forever,
-          title: "Hapus Akun",
-          color: errorColor,
-          showArrow: false,
-          onTap: () {
-            showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: const Text('Konfirmasi Hapus Akun'),
-                content: const Text('Apakah Anda yakin ingin menghapus akun ini? Tindakan ini tidak dapat dibatalkan.'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context), // batal
-                    child: const Text('Batal'),
+            context,
+            icon: Icons.block,
+            title: "Ajukan Nonaktif Toko",
+            color: errorColor,
+            showArrow: false,
+            onTap: () async {
+              // Show confirmation dialog
+              showDialog(
+                context: context,
+                builder: (dialogContext) => AlertDialog(
+                  title: const Row(
+                    children: [
+                      Icon(Icons.warning_amber, color: Colors.orange),
+                      SizedBox(width: 12),
+                      Text('Ajukan Nonaktif Toko'),
+                    ],
                   ),
-                  TextButton(
-                    onPressed: () async {
-                      Navigator.pop(context); 
-                      await StoreStatusService.setStoreStatus(0);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Akun berhasil dihapus.'),
-                          backgroundColor: Colors.grey.shade800,
-                        ),
-                      );
+                  content: const Text(
+                    'Toko Anda akan dinonaktifkan dan menunggu validasi admin. Selama proses ini, Anda tidak dapat menjual produk.\n\nApakah Anda yakin?',
+                    style: TextStyle(fontSize: 15),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      child: const Text('Batal'),
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: () async {
+                        Navigator.pop(dialogContext);
 
-                      context.goNamed('AuthStoreScreen');
-                    },
-                    child: const Text('Hapus', style: TextStyle(color: Colors.red)),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
+                        // Show loading
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (context) =>
+                              const Center(child: CircularProgressIndicator()),
+                        );
+
+                        try {
+                          // Get user's store
+                          final authUser =
+                              Supabase.instance.client.auth.currentUser;
+                          if (authUser?.email == null) {
+                            throw Exception('User tidak terautentikasi');
+                          }
+
+                          final wargaResponse = await Supabase.instance.client
+                              .from('warga')
+                              .select('id')
+                              .eq('email', authUser!.email!)
+                              .maybeSingle();
+
+                          if (wargaResponse == null) {
+                            throw Exception('Data warga tidak ditemukan');
+                          }
+
+                          final userId = wargaResponse['id'] as String;
+                          final storeService = StoreService();
+                          final store = await storeService.getStoreByUserId(
+                            userId,
+                          );
+
+                          if (store == null || store.storeId == null) {
+                            throw Exception('Toko tidak ditemukan');
+                          }
+
+                          // Update store status to Nonaktif (pending admin validation)
+                          await Supabase.instance.client
+                              .from('store')
+                              .update({
+                                'verifikasi': 'Nonaktif',
+                                'alasan':
+                                    'Menunggu validasi admin untuk nonaktif',
+                              })
+                              .eq('store_id', store.storeId!);
+
+                          // Set store status to pending deactivation
+                          await StoreStatusService.setStoreStatus(1);
+
+                          // Close loading
+                          if (context.mounted) Navigator.pop(context);
+
+                          // Navigate to pending deactivation screen
+                          if (context.mounted) {
+                            context.goNamed('StorePendingDeactivation');
+                          }
+                        } catch (e) {
+                          // Close loading
+                          if (context.mounted) Navigator.pop(context);
+
+                          // Show error
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Gagal mengajukan nonaktif: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      child: const Text('Ya, Ajukan'),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         ],
       ),
     );
