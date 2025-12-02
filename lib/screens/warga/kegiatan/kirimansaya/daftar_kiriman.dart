@@ -1,21 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
-class PesanWarga {
-  final String id;
-  final String judul;
-  final String tanggalDibuat;
-  final String status;
-  final String deskripsi; 
-
-  PesanWarga({
-    required this.id,
-    required this.judul,
-    required this.tanggalDibuat,
-    required this.status,
-    required this.deskripsi,
-  });
-}
+import 'package:jawara_pintar_kel_5/models/kegiatan/aspirasi_model.dart';
+import 'package:jawara_pintar_kel_5/services/aspirasi_service.dart';
+import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class WargaPesanSayaScreen extends StatefulWidget {
   const WargaPesanSayaScreen({super.key});
@@ -31,14 +19,11 @@ class _WargaPesanSayaScreenState extends State<WargaPesanSayaScreen> {
   
   static const Color _primaryColor = Color(0xFF6366F1);
 
-  final List<PesanWarga> _allPesan = [
-    PesanWarga(id: 'p001', judul: 'Lampu Jalan Mati', tanggalDibuat: '25 November 2025', status: 'Pending', deskripsi: 'Lampu penerangan di depan Gang 3 mati total sejak kemarin malam.'),
-    PesanWarga(id: 'p002', judul: 'Sampah Menumpuk', tanggalDibuat: '20 November 2025', status: 'Diterima', deskripsi: 'Tumpukan sampah di depan pos kamling belum diangkut selama 3 hari.'),
-    PesanWarga(id: 'p003', judul: 'Usulan Lomba 17an', tanggalDibuat: '15 November 2025', status: 'Diterima', deskripsi: 'Saya mengusulkan agar tahun ini diadakan lomba makan kerupuk level pedas dan lomba balap karung pakai helm.'),
-  ];
+  final AspirasiService _aspirasiService = AspirasiService();
+  final String _currentUserId = Supabase.instance.client.auth.currentUser?.id ?? '';
 
-  List<PesanWarga> get _filteredPesan {
-    Iterable<PesanWarga> result = _allPesan;
+  List<AspirasiModel> _filterAspirasi(List<AspirasiModel> allPesan) {
+    Iterable<AspirasiModel> result = allPesan;
     if (_selectedStatus != null && _selectedStatus!.isNotEmpty) {
       result = result.where((pesan) => pesan.status == _selectedStatus);
     }
@@ -120,7 +105,7 @@ class _WargaPesanSayaScreenState extends State<WargaPesanSayaScreen> {
     );
   }
 
-  Widget _buildPesanCard(PesanWarga pesan) {
+  Widget _buildPesanCard(AspirasiModel pesan) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -136,13 +121,7 @@ class _WargaPesanSayaScreenState extends State<WargaPesanSayaScreen> {
           onTap: () {
             context.pushNamed(
               'warga_kirimanDetail', 
-              extra: {
-                'judul': pesan.judul,
-                'deskripsi': pesan.deskripsi,
-                'status': pesan.status,
-                'pengirim': 'Saya (Anda)',
-                'tanggal': pesan.tanggalDibuat,
-              },
+              extra: pesan,
             );
           },
           child: Padding(
@@ -169,7 +148,7 @@ class _WargaPesanSayaScreenState extends State<WargaPesanSayaScreen> {
                   children: [
                     const Icon(Icons.calendar_today_outlined, size: 14, color: Colors.grey),
                     const SizedBox(width: 6),
-                    Text(pesan.tanggalDibuat, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                    Text(DateFormat('dd MMMM yyyy').format(pesan.tanggal), style: const TextStyle(fontSize: 12, color: Colors.grey)),
                     const Spacer(),
                   ],
                 ),
@@ -183,7 +162,6 @@ class _WargaPesanSayaScreenState extends State<WargaPesanSayaScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredList = _filteredPesan;
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
       appBar: AppBar(
@@ -200,41 +178,39 @@ class _WargaPesanSayaScreenState extends State<WargaPesanSayaScreen> {
         children: [
           _buildFilterBar(),
           Expanded(
-            child: filteredList.isEmpty
-                ? const Center(child: Text("Belum ada riwayat kiriman."))
-                : ListView.builder(
+            child: StreamBuilder<List<AspirasiModel>>(
+              stream: _aspirasiService.getAspirationsByUserId(_currentUserId),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text("Error: ${snapshot.error}"));
+                }
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text("Belum ada riwayat kiriman."));
+                }
+                final filteredList = _filterAspirasi(snapshot.data!);
+                 if (filteredList.isEmpty) {
+                    return const Center(child: Text("Tidak ada kiriman yang cocok."));
+                  }
+                return ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     itemCount: filteredList.length,
                     itemBuilder: (context, index) {
                       final pesan = filteredList[index];
                       return _buildPesanCard(pesan);
                     },
-                  ),
+                  );
+              },
+            ),
           ),
         ],
       ),
       
       floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final newAspirasi = await context.pushNamed('warga_aspirasiForm');
-
-          if (newAspirasi != null && newAspirasi is Map<String, dynamic>) {
-            final newPesan = PesanWarga(
-              id: newAspirasi['id'],
-              judul: newAspirasi['judul'],
-              tanggalDibuat: newAspirasi['tanggal'],
-              status: newAspirasi['status'],
-              deskripsi: newAspirasi['deskripsi'],
-            );
-
-            setState(() {
-              _allPesan.insert(0, newPesan); 
-            });
-        
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Pesan baru berhasil ditambahkan ke riwayat!'))
-            );
-          }
+        onPressed: () {
+          context.pushNamed('warga_aspirasiForm');
         },
         backgroundColor: _primaryColor, 
         shape: RoundedRectangleBorder(

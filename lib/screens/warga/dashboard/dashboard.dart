@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/kegiatan/broadcah_model.dart';
-import 'package:jawara_pintar_kel_5/providers/product_provider.dart';
-import 'package:jawara_pintar_kel_5/services/marketplace/review_service.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
-import 'package:provider/provider.dart';
 
 final List<Map<String, String>> dummyDataKegiatan = [
   {
@@ -597,108 +594,118 @@ class _HorizontalProductListState extends State<_HorizontalProductList> {
   }
 }
 
-// ================= Latest Info List =================
-class _LatestInfoList extends StatelessWidget {
+class _LatestInfoList extends StatefulWidget {
   const _LatestInfoList();
 
-  Map<String, String>? _findKegiatanData(String title) {
-    try {
-      return dummyDataKegiatan.firstWhere((k) => k['judul'] == title);
-    } catch (e) {
-      return null;
-    }
+  @override
+  State<_LatestInfoList> createState() => _LatestInfoListState();
+}
+
+class _LatestInfoListState extends State<_LatestInfoList> {
+  final KegiatanService _kegiatanService = KegiatanService();
+  final BroadcastService _broadcastService = BroadcastService();
+  late Future<List<Map<String, dynamic>>> _latestInfoFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _latestInfoFuture = _fetchLatestInfo();
   }
 
-  KegiatanBroadcastWarga? _findBroadcastData(String title) {
-    final cleanedTitle = title.startsWith('"') ? title.substring(1) : title;
-
+  Future<List<Map<String, dynamic>>> _fetchLatestInfo() async {
     try {
-      return dummyData.firstWhere((b) => b.judul == cleanedTitle);
+      final kegiatanList = await _kegiatanService.getKegiatan();
+      final broadcastList = await _broadcastService.getBroadcasts();
+
+      List<Map<String, dynamic>> combinedList = [];
+
+      combinedList.addAll(kegiatanList.map((k) => {
+            'type': 'Kegiatan',
+            'data': k,
+            'date': k.tanggal,
+          }));
+
+      combinedList.addAll(broadcastList.map((b) => {
+            'type': 'Broadcast',
+            'data': b,
+            'date': b.tanggal,
+          }));
+
+      combinedList.sort((a, b) => (b['date'] as DateTime).compareTo(a['date'] as DateTime));
+      
+      return combinedList.take(3).toList();
     } catch (e) {
-      return null;
+      throw Exception('Failed to load latest info: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> data = [
-      {
-        'id': 1,
-        'title': 'Pemberitahuan Kerja Bakti Lingkungan',
-        'date': '12/10/2025',
-        'type': 'Kegiatan',
-      },
-      {
-        'id': 2,
-        'title': 'Pengumuman Lomba Kebersihan',
-        'date': '23/10/2025',
-        'type': 'Broadcast',
-      },
-      {
-        'id': 3,
-        'title': 'Pelatihan Keterampilan Digital',
-        'date': '25/10/2025',
-        'type': 'Kegiatan',
-      },
-    ];
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: _latestInfoFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text("Error: ${snapshot.error}"));
+        } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+          final latestInfo = snapshot.data!;
+          return Column(
+            children: latestInfo.map((info) {
+              final type = info['type'] as String;
+              final data = info['data'];
+              final title = type == 'Kegiatan'
+                  ? (data as KegiatanModel).judul
+                  : (data as BroadcastModel).judul;
+              final date =
+                  DateFormat('dd/MM/yyyy').format(info['date'] as DateTime);
 
-    return Column(
-      children: data.map((info) {
-        void handleTap() {
-          if (info['type'] == 'Kegiatan') {
-            final kegiatanData = _findKegiatanData(info['title']);
-            if (kegiatanData != null) {
-              context.pushNamed('WargaKegiatanDetail', extra: kegiatanData);
-            } else {
-              context.go("/warga/kegiatan");
-            }
-          } else if (info['type'] == 'Broadcast') {
-            final broadcastData = _findBroadcastData(info['title']);
-            if (broadcastData != null) {
-              context.pushNamed('WargaBroadcastDetail', extra: broadcastData);
-            } else {
-              context.go("/warga/kegiatan/broadcast");
-            }
-          } else {
-            context.go("/warga/kegiatan");
-          }
+              void handleTap() {
+                if (type == 'Kegiatan') {
+                  context.pushNamed('WargaKegiatanDetail', extra: data);
+                } else if (type == 'Broadcast') {
+                  context.pushNamed('WargaBroadcastDetail', extra: data);
+                }
+              }
+
+              return Card(
+                color: Colors.white.withOpacity(0.95),
+                margin: const EdgeInsets.only(bottom: 10),
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: const BorderSide(color: Colors.black12, width: 1),
+                ),
+                child: ListTile(
+                  onTap: handleTap,
+                  title: Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  subtitle: Text(
+                    "$type - $date",
+                    style: const TextStyle(fontSize: 12, color: Colors.black54),
+                  ),
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.deepPurple.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      type == "Kegiatan" ? Icons.calendar_today : Icons.campaign,
+                      color: Colors.deepPurple,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          );
+        } else {
+          return const Center(child: Text("Tidak ada informasi terbaru"));
         }
-
-        return Card(
-          color: Colors.white.withOpacity(0.95),
-          margin: const EdgeInsets.only(bottom: 10),
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: const BorderSide(color: Colors.black12, width: 1),
-          ),
-          child: ListTile(
-            onTap: handleTap,
-            title: Text(
-              info['title']!,
-              style: const TextStyle(fontWeight: FontWeight.w500),
-            ),
-            subtitle: Text(
-              "${info['type']} - ${info['date']}",
-              style: const TextStyle(fontSize: 12, color: Colors.black54),
-            ),
-            leading: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.deepPurple.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                info['type'] == "Kegiatan"
-                    ? Icons.calendar_today
-                    : Icons.campaign,
-                color: Colors.deepPurple,
-                size: 20,
-              ),
-            ),
-          ),
-        );
-      }).toList(),
+      },
     );
   }
 }

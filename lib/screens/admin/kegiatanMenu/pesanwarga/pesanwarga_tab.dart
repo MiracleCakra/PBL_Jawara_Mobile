@@ -1,59 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:jawara_pintar_kel_5/models/kegiatan/aspirasi_model.dart';
+import 'package:jawara_pintar_kel_5/services/aspirasi_service.dart';
 import 'detail_pesan_warga_screen.dart';
-
-class PesanWarga {
-  final String judul;
-  final String pengirim;
-  final String tanggalDibuat;
-  final String id;
-  String status;
-
-  PesanWarga({
-    required this.id,
-    required this.judul,
-    required this.pengirim,
-    required this.tanggalDibuat,
-    required this.status,
-  });
-}
-
-List<PesanWarga> allPesan = [
-  PesanWarga(
-    id: 'p001',
-    judul: 'Laporan Kebocoran Pipa',
-    pengirim: 'Bu Kartini',
-    tanggalDibuat: '15/10/2025',
-    status: 'Pending',
-  ),
-  PesanWarga(
-    id: 'p002',
-    judul: 'Pengaduan Parkir Liar',
-    pengirim: 'Pak Budi',
-    tanggalDibuat: '14/10/2025',
-    status: 'Diterima',
-  ),
-  PesanWarga(
-    id: 'p003',
-    judul: 'Permintaan Lampu Jalan',
-    pengirim: 'Bpk. Ahmad',
-    tanggalDibuat: '13/10/2025',
-    status: 'Ditolak',
-  ),
-  PesanWarga(
-    id: 'p004',
-    judul: 'Perbaikan Jalan Raya',
-    pengirim: 'Bpk. Mamat',
-    tanggalDibuat: '16/10/2025',
-    status: 'Pending',
-  ),
-  PesanWarga(
-    id: 'p005',
-    judul: 'Pembuatan Pos Ronda',
-    pengirim: 'Ibu Rina',
-    tanggalDibuat: '17/10/25',
-    status: 'Diterima',
-  ),
-];
 
 class PesanWargaScreen extends StatefulWidget {
   const PesanWargaScreen({super.key});
@@ -66,10 +14,11 @@ class _PesanWargaScreenState extends State<PesanWargaScreen> {
   String? _selectedStatus;
   String _searchText = '';
   final TextEditingController _searchController = TextEditingController();
+  final AspirasiService _aspirasiService = AspirasiService();
   bool get _isFilterActive => _selectedStatus != null && _selectedStatus!.isNotEmpty;
 
-  List<PesanWarga> get _filteredPesan {
-    Iterable<PesanWarga> result = allPesan;
+  List<AspirasiModel> _filterPesan(List<AspirasiModel> allPesan) {
+    Iterable<AspirasiModel> result = allPesan;
 
     if (_selectedStatus != null && _selectedStatus!.isNotEmpty) {
       result = result.where((pesan) => pesan.status == _selectedStatus);
@@ -122,59 +71,20 @@ class _PesanWargaScreenState extends State<PesanWargaScreen> {
     );
   }
     
-  Widget _buildPesanCard(PesanWarga pesan) {
+  Widget _buildPesanCard(AspirasiModel pesan) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
-        onTap: () async {
-          final result = await Navigator.push(
+        onTap: () {
+          Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => DetailPesanWargaScreen(
-                pesan: {
-                  'id': pesan.id,
-                  'judul': pesan.judul,
-                  'status': pesan.status,
-                  'pengirim': pesan.pengirim,
-                  'tanggalDibuat': pesan.tanggalDibuat,
-                  'deskripsi': '...',
-                },
+                pesan: pesan,
               ),
             ),
           );
-
-          if (result != null && result is Map<String, String>) {
-            if (result['status'] == 'deleted') {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Pesan "${result['judul']}" telah dihapus.'),
-                  backgroundColor: Colors.grey.shade800,
-                  duration: const Duration(seconds: 2),
-                ),
-              );
-              setState(() {
-                allPesan.removeWhere((p) => p.judul == result['judul']);
-              });
-            } else if (result['type'] == 'updated') {
-              setState(() {
-                final index = allPesan.indexWhere((p) => p.id == result['id']);
-                if (index != -1) {
-                  allPesan[index].status =
-                      result['status'] ?? allPesan[index].status;
-                }
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Status pesan "${result['judul']}" berhasil diperbarui menjadi ${result['status']}.',
-                  ),
-                  backgroundColor: Colors.grey.shade800,
-                  duration: const Duration(seconds: 2),
-                ),
-              );
-            }
-          }
         },
 
         child: Card(
@@ -207,7 +117,7 @@ class _PesanWargaScreenState extends State<PesanWargaScreen> {
                         ),
                       ),
                       Text(
-                        'Tanggal dibuat: ${pesan.tanggalDibuat}',
+                        'Tanggal dibuat: ${pesan.tanggal}',
                         style: TextStyle(
                           fontSize: 13,
                           color: Colors.grey.shade600,
@@ -329,8 +239,6 @@ class _PesanWargaScreenState extends State<PesanWargaScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final List<PesanWarga> filteredList = _filteredPesan;
-
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -354,14 +262,27 @@ class _PesanWargaScreenState extends State<PesanWargaScreen> {
         children: [
           _buildFilterBar(),
           Expanded(
-            child: filteredList.isEmpty
-                ? Center(child: Text("Tidak ada pesan yang ditemukan."))
-                : ListView.builder(
+            child: StreamBuilder<List<AspirasiModel>>(
+              stream: _aspirasiService.getAspirations(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text("Tidak ada pesan yang ditemukan."));
+                }
+                final filteredList = _filterPesan(snapshot.data!);
+                return ListView.builder(
                     padding: const EdgeInsets.only(bottom: 80),
                     itemCount: filteredList.length,
                     itemBuilder: (context, index) =>
                         _buildPesanCard(filteredList[index]),
-                  ),
+                  );
+              }
+            ),
           ),
         ],
       ),
