@@ -1,21 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/utils.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Model for House Data
 class Rumah {
-  final String address;
+  final String id;
+  final String alamat;
   final String status;
-  final String owner;
+  final String? pemilik;
+  final String? pemilikId;
   final int residents;
-  final String type;
+  final String? kepalaKeluarga;
 
   const Rumah({
-    required this.address,
+    required this.id,
+    required this.alamat,
     required this.status,
-    required this.owner,
+    this.pemilik,
+    this.pemilikId,
     required this.residents,
-    required this.type,
+    this.kepalaKeluarga,
   });
 
   bool get isDitempati => status.toLowerCase() == 'ditempati';
@@ -29,83 +33,127 @@ class DaftarRumahPage extends StatefulWidget {
 }
 
 class _DaftarRumahPageState extends State<DaftarRumahPage> {
+  late final SupabaseClient supabase;
   static const Color _primaryColor = Color(0xFF4E46B4);
 
   final TextEditingController _addressController = TextEditingController();
   String? _selectedStatus;
 
+  List<Rumah> _allRumah = [];
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch data when the page is initialized
+    supabase = Supabase.instance.client;
+    fetchDaftarRumah();
+  }
+
+  fetchDaftarRumah() async {
+    try {
+      // -- TAMBAHKAN PRINT UNTUK DEBUGGING --
+      debugPrint(
+        "Mencoba memuat data rumah. Status login: ${supabase.auth.currentUser?.email ?? 'Tidak Login'}",
+      );
+      // ------------------------------------
+      final response = await Supabase.instance.client
+          .from('rumah')
+          .select('*, keluarga!keluarga_id(nama_keluarga, kepala_keluarga_id)');
+
+      // Map data from Supabase to List<PenerimaanWarga>
+      setState(() {
+        _allRumah = response.map<Rumah>((item) {
+          return Rumah(
+            id: item['id'],
+            alamat: item['alamat'] ?? '',
+            status: item['status'] ?? '',
+            // pemilik: item['keluarga'] ?? '',
+            pemilik: item['keluarga'] != null
+                ? item['keluarga']['nama_keluarga']
+                : 'Tidak Diketahui', // Ambil nama dari tabel keluarga
+            pemilikId: item['keluarga_id'],
+            residents: item['jumlah_penghuni'] ?? 0,
+          );
+        }).toList();
+      });
+      print("Data fetched successfully: $_allRumah");
+    } catch (e) {
+      debugPrint("Gagal memuat data warga: $e");
+    }
+  }
+
   // Sample data
-  final List<Rumah> _allRumah = const [
-    Rumah(
-      address: 'Jl. Merbabu',
-      status: 'Tersedia',
-      owner: 'Keluarga Besar Mojokerto',
-      residents: 4,
-      type: 'Permanen',
-    ),
-    Rumah(
-      address: 'Malang',
-      status: 'Ditempati',
-      owner: 'Keluarga Ahmad',
-      residents: 5,
-      type: 'Semi Permanen',
-    ),
-    Rumah(
-      address: 'Griyashanta L.203',
-      status: 'Tersedia',
-      owner: 'Keluarga Santoso',
-      residents: 0,
-      type: 'Permanen',
-    ),
-    Rumah(
-      address: 'werwer',
-      status: 'Tersedia',
-      owner: 'Tidak Ada',
-      residents: 0,
-      type: 'Darurat',
-    ),
-    Rumah(
-      address: 'Jl. Baru bangun',
-      status: 'Ditempati',
-      owner: 'Keluarga Budi',
-      residents: 6,
-      type: 'Permanen',
-    ),
-    Rumah(
-      address: 'fasda',
-      status: 'Tersedia',
-      owner: 'Tidak Ada',
-      residents: 0,
-      type: 'Semi Permanen',
-    ),
-    Rumah(
-      address: 'Bogor Raya Permai FJ 2 no 11',
-      status: 'Ditempati',
-      owner: 'Keluarga Rahman',
-      residents: 3,
-      type: 'Permanen',
-    ),
-    Rumah(
-      address: 'malang',
-      status: 'Ditempati',
-      owner: 'Keluarga Siti',
-      residents: 4,
-      type: 'Semi Permanen',
-    ),
-    Rumah(
-      address: 'Quis consequatur nob',
-      status: 'Tersedia',
-      owner: 'Tidak Ada',
-      residents: 0,
-      type: 'Permanen',
-    ),
-  ];
+  // final List<Rumah> _allRumah = const [
+  //   Rumah(
+  //     alamat: 'Jl. Merbabu',
+  //     status: 'Tersedia',
+  //     pemilik: 'Keluarga Besar Mojokerto',
+  //     residents: 4,
+  //     type: 'Permanen',
+  //   ),
+  //   Rumah(
+  //     alamat: 'Malang',
+  //     status: 'Ditempati',
+  //     pemilik: 'Keluarga Ahmad',
+  //     residents: 5,
+  //     type: 'Semi Permanen',
+  //   ),
+  //   Rumah(
+  //     alamat: 'Griyashanta L.203',
+  //     status: 'Tersedia',
+  //     pemilik: 'Keluarga Santoso',
+  //     residents: 0,
+  //     type: 'Permanen',
+  //   ),
+  //   Rumah(
+  //     alamat: 'werwer',
+  //     status: 'Tersedia',
+  //     pemilik: 'Tidak Ada',
+  //     residents: 0,
+  //     type: 'Darurat',
+  //   ),
+  //   Rumah(
+  //     alamat: 'Jl. Baru bangun',
+  //     status: 'Ditempati',
+  //     pemilik: 'Keluarga Budi',
+  //     residents: 6,
+  //     type: 'Permanen',
+  //   ),
+  //   Rumah(
+  //     alamat: 'fasda',
+  //     status: 'Tersedia',
+  //     pemilik: 'Tidak Ada',
+  //     residents: 0,
+  //     type: 'Semi Permanen',
+  //   ),
+  //   Rumah(
+  //     alamat: 'Bogor Raya Permai FJ 2 no 11',
+  //     status: 'Ditempati',
+  //     pemilik: 'Keluarga Rahman',
+  //     residents: 3,
+  //     type: 'Permanen',
+  //   ),
+  //   Rumah(
+  //     alamat: 'malang',
+  //     status: 'Ditempati',
+  //     pemilik: 'Keluarga Siti',
+  //     residents: 4,
+  //     type: 'Semi Permanen',
+  //   ),
+  //   Rumah(
+  //     alamat: 'Quis consequatur nob',
+  //     status: 'Tersedia',
+  //     pemilik: 'Tidak Ada',
+  //     residents: 0,
+  //     type: 'Permanen',
+  //   ),
+  // ];
 
   List<Rumah> get _filteredRumah {
     return _allRumah.where((rumah) {
       final matchesAddress =
           _addressController.text.isEmpty ||
-          rumah.address.toLowerCase().contains(
+          rumah.alamat.toLowerCase().contains(
             _addressController.text.toLowerCase(),
           );
       final matchesStatus =
@@ -450,7 +498,18 @@ class _RumahCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () => context.pushNamed('rumahDetail', extra: rumah),
+          onTap: () async {
+            // Await the result from detail route; refresh list if item deleted (returned true)
+            final result = await context.pushNamed('rumahDetail', extra: rumah);
+            if (result == true) {
+              // Call parent's fetch function by finding ancestor state and invoking it,
+              // or if you prefer, use a state management solution; simple approach below:
+              // findState is the page State and call fetchDaftarRumah.
+              final state = context
+                  .findAncestorStateOfType<_DaftarRumahPageState>();
+              state?.fetchDaftarRumah();
+            }
+          }, // modified
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -461,7 +520,7 @@ class _RumahCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        rumah.address,
+                        rumah.alamat,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -488,7 +547,7 @@ class _RumahCard extends StatelessWidget {
                 _InfoRow(
                   icon: Icons.person_outline,
                   label: 'Pemilik',
-                  value: rumah.owner,
+                  value: rumah.pemilik ?? '-',
                 ),
               ],
             ),

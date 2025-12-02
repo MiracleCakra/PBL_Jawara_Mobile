@@ -1,4 +1,4 @@
-name: Firebase App Distribution
+name: CD - Build and Firebase App Distribution
 
 on:
   push:
@@ -24,6 +24,13 @@ jobs:
       - name: Build APK
         run: flutter build apk --release
 
+      # Read release notes from markdown file
+      - name: Read release notes
+        id: read_release_notes
+        run: |
+          RELEASE_NOTES=$(cat release_notes.md)
+          echo "RELEASE_NOTES=$RELEASE_NOTES" >> $GITHUB_ENV
+
       # Distribute to Firebase
       - name: Distribute to Firebase
         uses: logickoder/firebase-distribution@v1
@@ -32,9 +39,4 @@ jobs:
           file: 'build/app/outputs/flutter-apk/**/*.apk'
           appId: ${{ secrets.FIREBASE_ANDROID_APP_ID }}  # Firebase Android App ID
           groups: 'pbl-jawara'
-          releaseNotes: |
-            🚀 New features:
-            - Implementation CI/CD
-
-            🐛 Bug fixes:
-            - Fixed issue with versioning and distribution
+          releaseNotes: ${{ env.RELEASE_NOTES }}  # Menggunakan release notes dari file Markdown

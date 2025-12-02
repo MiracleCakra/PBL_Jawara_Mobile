@@ -5,6 +5,7 @@ import 'package:jawara_pintar_kel_5/widget/form/section_card.dart';
 import 'package:jawara_pintar_kel_5/widget/form/labeled_text_field.dart';
 import 'package:jawara_pintar_kel_5/widget/form/labeled_dropdown.dart';
 import 'package:jawara_pintar_kel_5/widget/moon_result_modal.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class EditRumahPage extends StatefulWidget {
   final Rumah rumah;
@@ -19,13 +20,47 @@ class _EditRumahPageState extends State<EditRumahPage> {
   static const Color _primaryColor = Color(0xFF4E46B4);
 
   late final TextEditingController _alamatController;
+  late final TextEditingController _residentsController;
   String? _selectedStatus;
+  String? _selectedKeluarga;
+  List<Map<dynamic, dynamic>> _keluargaList = []; // Store keluarga names
 
   @override
   void initState() {
     super.initState();
-    _alamatController = TextEditingController(text: widget.rumah.address);
+    _alamatController = TextEditingController(text: widget.rumah.alamat);
+    _residentsController = TextEditingController(
+      text: widget.rumah.residents.toString(),
+    );
     _selectedStatus = widget.rumah.status;
+    _selectedKeluarga = widget.rumah.pemilik == null
+        ? null
+        : widget.rumah.pemilikId;
+
+    fetchNamaKeluarga();
+  }
+
+  fetchNamaKeluarga() async {
+    final supabase = Supabase.instance.client;
+    final response = await supabase
+        .from('keluarga')
+        .select('id, nama_keluarga');
+
+    try {
+      setState(() {
+        _keluargaList = List<Map<dynamic, dynamic>>.from(
+          response.map(
+            (item) => {
+              'id': item['id'],
+              'nama_keluarga': item['nama_keluarga'],
+            },
+          ),
+        );
+      });
+    } catch (e) {
+      // Handle error or show message
+      debugPrint('Error fetching keluarga: $e');
+    }
   }
 
   @override
@@ -34,20 +69,41 @@ class _EditRumahPageState extends State<EditRumahPage> {
     super.dispose();
   }
 
-  void _handleSave() {
-    // Validation
+  void _handleSave() async {
     if (_alamatController.text.trim().isEmpty) {
       _showErrorModal('Alamat rumah tidak boleh kosong');
       return;
     }
-
     if (_selectedStatus == null || _selectedStatus!.isEmpty) {
       _showErrorModal('Status rumah harus dipilih');
       return;
     }
+    if (_selectedStatus == 'Ditempati' &&
+        (_selectedKeluarga == null || _selectedKeluarga!.isEmpty)) {
+      _showErrorModal('Keluarga harus dipilih untuk status Ditempati');
+      return;
+    }
 
-    // TODO: Save to backend/database
-    _showSuccessModal();
+    try {
+      final supabase = Supabase.instance.client;
+      await supabase
+          .from('rumah')
+          .update({
+            'alamat': _alamatController.text.trim(),
+            'status': _selectedStatus,
+            'keluarga_id': _selectedStatus == 'Tersedia'
+                ? null
+                : _selectedKeluarga,
+            'jumlah_penghuni': _selectedStatus == 'Tersedia'
+                ? 0
+                : _residentsController.text.trim(),
+          })
+          .eq('id', widget.rumah.id);
+      _showSuccessModal();
+    } catch (e) {
+      _showErrorModal('Gagal memperbarui data rumah: $e');
+      debugPrint('Error updating rumah: $e');
+    }
   }
 
   void _showErrorModal(String message) {
@@ -97,7 +153,7 @@ class _EditRumahPageState extends State<EditRumahPage> {
               LabeledTextField(
                 label: 'Alamat Rumah',
                 controller: _alamatController,
-                hint: widget.rumah.address,
+                hint: widget.rumah.alamat,
                 keyboardType: TextInputType.streetAddress,
               ),
               const SizedBox(height: 8),
@@ -114,10 +170,36 @@ class _EditRumahPageState extends State<EditRumahPage> {
                 onChanged: (value) {
                   setState(() {
                     _selectedStatus = value;
+                    _selectedKeluarga = null; // Reset keluarga selection
                   });
                 },
                 hint: 'Pilih status rumah',
               ),
+              // Show keluarga dropdown only if the status is "Ditempati"
+              if (_selectedStatus == 'Ditempati')
+                LabeledDropdown(
+                  label: 'Keluarga',
+                  value: _selectedKeluarga,
+                  items: _keluargaList.map((keluarga) {
+                    return DropdownMenuItem(
+                      value: keluarga['id'],
+                      child: Text(keluarga['nama_keluarga']),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedKeluarga = value.toString();
+                    });
+                  },
+                  hint: 'Pilih keluarga',
+                ),
+              if (_selectedStatus == 'Ditempati')
+                LabeledTextField(
+                  label: 'Jumlah Penghuni',
+                  controller: _residentsController,
+                  keyboardType: TextInputType.number,
+                  hint: widget.rumah.residents.toString(),
+                ),
             ],
           ),
           const SizedBox(height: 16),

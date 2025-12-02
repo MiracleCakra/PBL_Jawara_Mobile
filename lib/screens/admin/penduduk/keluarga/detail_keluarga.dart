@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/penduduk/keluarga/daftar_keluarga.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Model for Anggota Keluarga
 class AnggotaKeluarga {
@@ -64,45 +65,95 @@ class MutasiKeluarga {
   });
 }
 
-class DetailKeluargaPage extends StatelessWidget {
+class DetailKeluargaPage extends StatefulWidget {
   final Keluarga keluarga;
-
   const DetailKeluargaPage({super.key, required this.keluarga});
 
-  // Sample anggota keluarga data
-  List<AnggotaKeluarga> get _anggotaKeluarga {
-    // This would come from API/database in real implementation
-    return const [
-      AnggotaKeluarga(
-        nama: 'Habibie Ed Dien',
-        nik: '2341123456756789',
-        peran: 'Kepala Keluarga',
-        jenisKelamin: 'Laki-laki',
-        tanggalLahir: '-',
-        status: 'Aktif',
-      ),
-      AnggotaKeluarga(
-        nama: 'Cukurukuk',
-        nik: '123456789123456',
-        peran: 'Anak',
-        jenisKelamin: 'Laki-laki',
-        tanggalLahir: '27 Feb 1999 00',
-        status: 'Aktif',
-      ),
-    ];
+  @override
+  State<DetailKeluargaPage> createState() => _DetailKeluargaPage();
+}
+
+class _DetailKeluargaPage extends State<DetailKeluargaPage> {
+  late final SupabaseClient supabase;
+
+  // DetailKeluargaPage({super.key, required this.keluarga});
+
+  List<AnggotaKeluarga> _allAnggotaKeluarga = [];
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch data when the page is initialized
+    supabase = Supabase.instance.client;
+    fetchAnggotaKeluarga();
   }
+
+  fetchAnggotaKeluarga() async {
+    try {
+      // -- TAMBAHKAN PRINT UNTUK DEBUGGING --
+      debugPrint(
+        "Mencoba memuat data Anggota Keluarga. Status login: ${supabase.auth.currentUser?.email ?? 'Tidak Login'}",
+      );
+      // ------------------------------------
+      final response = await Supabase.instance.client
+          .from('keluarga_warga')
+          .select(
+            '*, warga!warga_id(nama, gender, tanggal_lahir, status_penduduk)',
+          );
+
+      // Map data from Supabase to List<PenerimaanWarga>
+      setState(() {
+        _allAnggotaKeluarga = response.map<AnggotaKeluarga>((item) {
+          return AnggotaKeluarga(
+            nama: item['warga']['nama'],
+            nik: item['warga_id'],
+            peran: item['peran'],
+            jenisKelamin: item['warga']['gender'],
+            tanggalLahir: item['warga']['tanggal_lahir'],
+            status: item['warga']['status_penduduk'],
+          );
+        }).toList();
+      });
+      print("Data fetched successfully: $_allAnggotaKeluarga");
+    } catch (e) {
+      debugPrint("Gagal memuat data warga: $e");
+    }
+  }
+
+  // Sample anggota keluarga data
+  // List<AnggotaKeluarga> get _anggotaKeluarga {
+  //   // This would come from API/database in real implementation
+  //   return const [
+  //     AnggotaKeluarga(
+  //       nama: 'Habibie Ed Dien',
+  //       nik: '2341123456756789',
+  //       peran: 'Kepala Keluarga',
+  //       jenisKelamin: 'Laki-laki',
+  //       tanggalLahir: '-',
+  //       status: 'Aktif',
+  //     ),
+  //     AnggotaKeluarga(
+  //       nama: 'Cukurukuk',
+  //       nik: '123456789123456',
+  //       peran: 'Anak',
+  //       jenisKelamin: 'Laki-laki',
+  //       tanggalLahir: '27 Feb 1999 00',
+  //       status: 'Aktif',
+  //     ),
+  //   ];
+  // }
 
   // Sample mutasi keluarga data
   List<MutasiKeluarga> get _mutasiKeluarga {
     // This would come from API/database in real implementation
-    return const [
+    return [
       MutasiKeluarga(
-        keluarga: 'Keluarga Ijat',
-        alamatLama: 'i',
-        alamatBaru: '-',
-        tanggalMutasi: '15 Oktober 2025',
-        jenisMutasi: 'Keluar Wilayah',
-        alasan: 'Karena mau keluar',
+        keluarga: widget.keluarga.namaKeluarga,
+        alamatLama: widget.keluarga.alamatLama ?? '-',
+        alamatBaru: widget.keluarga.alamat,
+        tanggalMutasi: widget.keluarga.tanggalMutasi ?? '-',
+        jenisMutasi: widget.keluarga.jenisMutasi ?? '',
+        alasan: widget.keluarga.alasanMutasi ?? '-',
       ),
     ];
   }
@@ -157,33 +208,33 @@ class DetailKeluargaPage extends StatelessWidget {
           _buildInfoRow(
             icon: Icons.family_restroom,
             label: 'Nama Keluarga',
-            value: keluarga.namaKeluarga,
+            value: widget.keluarga.namaKeluarga,
           ),
           _buildDivider(),
           _buildInfoRow(
             icon: Icons.person,
             label: 'Kepala Keluarga',
-            value: keluarga.kepalaKeluarga,
+            value: widget.keluarga.kepalaKeluarga,
           ),
           _buildDivider(),
           _buildInfoRow(
             icon: Icons.home_outlined,
             label: 'Rumah Saat Ini',
-            value: keluarga.alamat,
+            value: widget.keluarga.alamat,
           ),
           _buildDivider(),
           _buildInfoRow(
             icon: Icons.key_outlined,
             label: 'Status Kepemilikan',
-            value: 'Pemilik', // This would come from data
+            value: widget.keluarga.pemilik, // This would come from data
           ),
           _buildDivider(),
           _buildInfoRowWithBadge(
             icon: Icons.info_outline,
             label: 'Status Keluarga',
-            status: keluarga.status,
-            statusColor: keluarga.statusColor,
-            statusBackgroundColor: keluarga.statusBackgroundColor,
+            status: widget.keluarga.status,
+            statusColor: widget.keluarga.statusColor,
+            statusBackgroundColor: widget.keluarga.statusBackgroundColor,
           ),
         ],
       ),
@@ -205,7 +256,7 @@ class DetailKeluargaPage extends StatelessWidget {
             ),
           ),
         ),
-        ..._anggotaKeluarga.map((anggota) => _buildAnggotaCard(anggota)),
+        ..._allAnggotaKeluarga.map((anggota) => _buildAnggotaCard(anggota)),
       ],
     );
   }
