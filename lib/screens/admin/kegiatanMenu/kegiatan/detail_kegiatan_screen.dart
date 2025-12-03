@@ -358,7 +358,8 @@ class _DetailKegiatanScreenState extends State<DetailKegiatanScreen> {
                       color: Colors.grey.shade200,
                     ),
                     child: Image.network(
-                      'https://placehold.co/600x400/CCCCCC/333333?text=FOTO+DOKUMENTASI',
+                      _currentKegiatan.gambarDokumentasi ??
+                          'https://placehold.co/600x400/CCCCCC/333333?text=Tidak+Ada+Dokumentasi',
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
                         return Center(

@@ -1,9 +1,12 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:jawara_pintar_kel_5/models/kegiatan/kegiatan_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class KegiatanService {
   final SupabaseClient _supabase = Supabase.instance.client;
   final String _tableName = 'kegiatan';
+  final String _bucketName = 'kegiatan_images';
 
   Stream<List<KegiatanModel>> getKegiatanStream() {
     return _supabase
@@ -86,6 +89,37 @@ class KegiatanService {
       await _supabase.from(_tableName).delete().eq('id', id);
     } catch (e) {
       throw Exception('Error deleting kegiatan: $e');
+    }
+  }
+
+  Future<String> uploadKegiatanImage({
+    File? file,
+    Uint8List? bytes,
+    required String fileName,
+  }) async {
+    try {
+      final String path = 'dokumentasi/$fileName';
+
+      if (kIsWeb) {
+        if (bytes == null) throw Exception("Bytes kosong untuk upload Web");
+        await _supabase.storage.from(_bucketName).uploadBinary(
+          path,
+          bytes,
+          fileOptions: const FileOptions(contentType: 'image/jpeg'), // Sesuaikan tipe konten
+        );
+      } else {
+        if (file == null) throw Exception("File kosong untuk upload Mobile");
+        await _supabase.storage.from(_bucketName).upload(
+          path,
+          file,
+          fileOptions: const FileOptions(contentType: 'image/jpeg'),
+        );
+      }
+
+      final String publicUrl = _supabase.storage.from(_bucketName).getPublicUrl(path);
+      return publicUrl;
+    } catch (e) {
+      throw Exception('Gagal upload gambar: $e');
     }
   }
 }
