@@ -5,6 +5,14 @@ class KegiatanService {
   final SupabaseClient _supabase = Supabase.instance.client;
   final String _tableName = 'kegiatan';
 
+  Stream<List<KegiatanModel>> getKegiatanStream() {
+    return _supabase
+        .from(_tableName)
+        .stream(primaryKey: ['id'])
+        .order('tanggal', ascending: false)
+        .map((maps) => maps.map((map) => KegiatanModel.fromMap(map)).toList());
+  }
+
   /// Fetch semua kegiatan
   Future<List<KegiatanModel>> getKegiatan() async {
     try {

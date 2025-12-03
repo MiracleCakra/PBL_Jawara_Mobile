@@ -17,9 +17,7 @@ class _DaftarKegiatanScreenState extends State<DaftarKegiatanScreen> {
   final KegiatanService _kegiatanService = KegiatanService();
   final DateFormat logDateFormat = DateFormat('dd/MM/yyyy');
 
-  late Future<List<KegiatanModel>> _kegiatanFuture;
-  List<KegiatanModel> _allKegiatan = [];
-
+  late Stream<List<KegiatanModel>> _kegiatanStream;
   String _searchQuery = '';
   DateTime? _filterDate;
   String? _filterKategori;
@@ -31,17 +29,17 @@ class _DaftarKegiatanScreenState extends State<DaftarKegiatanScreen> {
   @override
   void initState() {
     super.initState();
-    _loadKegiatan();
+    _kegiatanStream = _kegiatanService.getKegiatanStream();
   }
 
-  void _loadKegiatan() {
-    setState(() {
-      _kegiatanFuture = _kegiatanService.getKegiatan();
+  void _refreshData(){
+    setState((){
+      _kegiatanStream = _kegiatanService.getKegiatanStream();
     });
   }
 
-  List<KegiatanModel> _filterKegiatan() {
-    Iterable<KegiatanModel> result = _allKegiatan;
+  List<KegiatanModel> _filterKegiatan(List<KegiatanModel> allKegiatan) {
+    Iterable<KegiatanModel> result = allKegiatan;
 
     if (_searchQuery.isNotEmpty) {
       final query = _searchQuery.toLowerCase();
@@ -67,7 +65,7 @@ class _DaftarKegiatanScreenState extends State<DaftarKegiatanScreen> {
   }
 
   void _showFilterModal(BuildContext context) async {
-    final result = await showModalBottomSheet<Map<String, dynamic>?>(
+    final result = await showModalBottomSheet<Map<String, dynamic>?>( 
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -102,15 +100,8 @@ class _DaftarKegiatanScreenState extends State<DaftarKegiatanScreen> {
 
   void _navigateToAddKegiatan(BuildContext context) async {
     final result = await context.push<bool>('/admin/kegiatan/tambah');
-
     if (result == true) {
-      _loadKegiatan();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Kegiatan baru berhasil ditambahkan!'),
-          backgroundColor: Colors.green.shade600,
-        ),
-      );
+      _refreshData();
     }
   }
 
@@ -219,8 +210,8 @@ class _DaftarKegiatanScreenState extends State<DaftarKegiatanScreen> {
         children: [
           _buildFilterBar(),
           Expanded(
-            child: FutureBuilder<List<KegiatanModel>>(
-              future: _kegiatanFuture,
+            child: StreamBuilder<List<KegiatanModel>>(
+              stream: _kegiatanStream,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -248,8 +239,7 @@ class _DaftarKegiatanScreenState extends State<DaftarKegiatanScreen> {
                   );
                 }
 
-                _allKegiatan = snapshot.data!;
-                final filteredList = _filterKegiatan();
+                final filteredList = _filterKegiatan(snapshot.data!);
 
                 if (filteredList.isEmpty) {
                   return Center(
@@ -279,8 +269,8 @@ class _DaftarKegiatanScreenState extends State<DaftarKegiatanScreen> {
                           '/admin/kegiatan/detail',
                           extra: kegiatan,
                         );
-                        if (result == 'deleted' || result == 'updated') {
-                          _loadKegiatan();
+                        if (result == 'refresh') {
+                          _refreshData();
                         }
                       },
                       child: KegiatanCard(kegiatan: kegiatan),

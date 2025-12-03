@@ -5,6 +5,14 @@ class BroadcastService {
   final SupabaseClient _supabase = Supabase.instance.client;
   final String _tableName = 'broadcast';
 
+  Stream<List<BroadcastModel>> getBroadcastsStream() {
+    return _supabase
+        .from(_tableName)
+        .stream(primaryKey: ['id'])
+        .order('tanggal', ascending: false)
+        .map((maps) => maps.map((map) => BroadcastModel.fromMap(map)).toList());
+  }
+
   /// Fetch semua broadcast
   Future<List<BroadcastModel>> getBroadcasts() async {
     try {

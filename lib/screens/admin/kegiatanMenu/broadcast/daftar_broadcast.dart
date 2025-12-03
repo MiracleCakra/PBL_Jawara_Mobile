@@ -16,63 +16,23 @@ class DaftarBroadcastScreen extends StatefulWidget {
 
 class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
   final BroadcastService _broadcastService = BroadcastService();
-  List<BroadcastModel> _allBroadcasts = [];
-  List<BroadcastModel> _filteredBroadcasts = [];
-  bool _isLoading = true;
-
+  late Stream<List<BroadcastModel>> _broadcastStream;
   String _searchQuery = '';
   DateTime? _filterDate;
   final DateFormat _dateFormat = DateFormat('dd/MM/yyyy');
   final TextEditingController _searchController = TextEditingController();
-
   bool get _isFilterActive => _filterDate != null;
 
   @override
   void initState() {
     super.initState();
-    _fetchBroadcasts();
+    _broadcastStream = _broadcastService.getBroadcastsStream();
   }
 
-  Future<void> _fetchBroadcasts() async {
+  void _refreshData() {
     setState(() {
-      _isLoading = true;
-    });
-    try {
-      final broadcasts = await _broadcastService.getBroadcasts();
-      setState(() {
-        _allBroadcasts = broadcasts;
-        _filteredBroadcasts = broadcasts;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
-  void _filterBroadcasts() {
-    setState(() {
-      _filteredBroadcasts = _allBroadcasts.where((broadcast) {
-        final query = _searchQuery.toLowerCase();
-        final judul = broadcast.judul.toLowerCase();
-        final pengirim = broadcast.pengirim.toLowerCase();
-
-        final matchesSearch = query.isEmpty ||
-            judul.contains(query) ||
-            pengirim.contains(query);
-
-        final matchesDate = _filterDate == null ||
-            DateUtils.isSameDay(broadcast.tanggal, _filterDate);
-
-        return matchesSearch && matchesDate;
-      }).toList();
+      // Kita panggil ulang service-nya agar mengambil data terbaru dari database/API
+      _broadcastStream = _broadcastService.getBroadcastsStream();
     });
   }
 
@@ -89,7 +49,10 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
           ),
           child: Padding(
             padding: EdgeInsets.only(
-                top: 20, bottom: MediaQuery.of(modalContext).viewInsets.bottom),
+              top: 20,
+              bottom: MediaQuery.of(modalContext).viewInsets.bottom,
+            ),
+
             child: SizedBox(
               height: MediaQuery.of(context).size.height * 0.75,
               child: BroadcastFilterScreen(initialDate: _filterDate),
@@ -104,14 +67,11 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
         _filterDate = result['date'] as DateTime?;
         _searchController.clear();
         _searchQuery = '';
-        _filterBroadcasts();
       });
     }
   }
 
   void _navigateToDetail(BuildContext context, BroadcastModel data) {
-    // Navigasi ke detail screen.
-    // Asumsikan DetailBroadcastScreen dapat menerima BroadcastModel
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -121,43 +81,37 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
   }
 
   void _navigateToAddBroadcast() async {
-    final result = await Navigator.push(
+    await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const TambahBroadcastScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const TambahBroadcastScreen()),
     );
-    if (result == true) {
-      _fetchBroadcasts(); // Refresh list after adding
-    }
+    _refreshData();
   }
 
   void _navigateToEditBroadcast(BroadcastModel broadcast) async {
-    final result = await Navigator.push(
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => EditBroadcastScreen(broadcast: broadcast),
       ),
     );
-    if (result == true) {
-      _fetchBroadcasts(); // Refresh list after editing
-    }
+    _refreshData();
   }
 
-  Future<void> _deleteBroadcast(BroadcastModel broadcast) async {
-    try {
-      await _broadcastService.deleteBroadcast(broadcast.id!);
-      setState(() {
-        _allBroadcasts.removeWhere((item) => item.id == broadcast.id);
-        _filterBroadcasts();
-      });
+Future<void> _deleteBroadcast(BroadcastModel broadcast) async {
+  try {
+    await _broadcastService.deleteBroadcast(broadcast.id!);
+    _refreshData(); 
+    if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Broadcast "${broadcast.judul}" telah dihapus.'),
           backgroundColor: Colors.green,
         ),
       );
-    } catch (e) {
+    }
+  } catch (e) {
+    if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Gagal menghapus broadcast: ${e.toString()}'),
@@ -166,6 +120,7 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
       );
     }
   }
+}
 
   Widget _buildFilterBar() {
     return Padding(
@@ -178,8 +133,9 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
               child: TextField(
                 controller: _searchController,
                 onChanged: (value) {
-                  _searchQuery = value;
-                  _filterBroadcasts();
+                  setState(() {
+                    _searchQuery = value;
+                  });
                 },
                 decoration: InputDecoration(
                   filled: true,
@@ -202,15 +158,29 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
                   isDense: true,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+
+                    borderSide: BorderSide(
+                      color: Colors.grey.shade300,
+
+                      width: 1,
+                    ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+
+                    borderSide: BorderSide(
+                      color: Colors.grey.shade300,
+
+                      width: 1,
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFF4E46B4), width: 1.5),
+
+                    borderSide: const BorderSide(
+                      color: Color(0xFF4E46B4),
+                      width: 1.5,
+                    ),
                   ),
                 ),
                 style: const TextStyle(fontSize: 15),
@@ -257,7 +227,11 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         child: Card(
           elevation: 1,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+
           color: Colors.white,
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -282,7 +256,13 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
                             broadcast.pengirim,
                             style: TextStyle(fontSize: 14, color: detailColor),
                           ),
-                          const Text(' • ', style: TextStyle(color: Colors.grey)),
+
+                          const Text(
+                            ' • ',
+
+                            style: TextStyle(color: Colors.grey),
+                          ),
+
                           Text(
                             "Tanggal : ${_dateFormat.format(broadcast.tanggal)}",
                             style: TextStyle(fontSize: 14, color: detailColor),
@@ -310,16 +290,21 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
                       _deleteBroadcast(broadcast);
                     }
                   },
-                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                    const PopupMenuItem<String>(
-                      value: 'edit',
-                      child: Text('Edit'),
-                    ),
-                    const PopupMenuItem<String>(
-                      value: 'delete',
-                      child: Text('Delete'),
-                    ),
-                  ],
+                  itemBuilder: (BuildContext context) =>
+                      <PopupMenuEntry<String>>[
+                        const PopupMenuItem<String>(
+                          value: 'edit',
+
+                          child: Text('Edit'),
+                        ),
+
+                        const PopupMenuItem<String>(
+                          value: 'delete',
+
+                          child: Text('Delete'),
+                        ),
+                      ],
+
                   icon: const Icon(Icons.more_vert, color: Colors.grey),
                 ),
               ],
@@ -357,30 +342,67 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
         children: [
           _buildFilterBar(),
           Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _filteredBroadcasts.isEmpty
-                    ? const Center(
-                        child: Text("Tidak ada Broadcast yang ditemukan."),
-                      )
-                    : RefreshIndicator(
-                        onRefresh: _fetchBroadcasts,
-                        child: ListView.builder(
-                          padding: const EdgeInsets.only(bottom: 80),
-                          itemCount: _filteredBroadcasts.length,
-                          itemBuilder: (context, index) {
-                            final broadcast = _filteredBroadcasts[index];
-                            return _buildBroadcastCard(broadcast);
-                          },
-                        ),
-                      ),
+            child: StreamBuilder<List<BroadcastModel>>(
+              stream: _broadcastStream,
+
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(
+                    child: Text("Tidak ada Broadcast yang ditemukan."),
+                  );
+                }
+
+                final allBroadcasts = snapshot.data!;
+
+                final filteredBroadcasts = allBroadcasts.where((broadcast) {
+                  final query = _searchQuery.toLowerCase();
+
+                  final judul = broadcast.judul.toLowerCase();
+
+                  final pengirim = broadcast.pengirim.toLowerCase();
+
+                  final matchesSearch =
+                      query.isEmpty ||
+                      judul.contains(query) ||
+                      pengirim.contains(query);
+
+                  final matchesDate =
+                      _filterDate == null ||
+                      DateUtils.isSameDay(broadcast.tanggal, _filterDate);
+
+                  return matchesSearch && matchesDate;
+                }).toList();
+
+                return ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 80),
+
+                  itemCount: filteredBroadcasts.length,
+
+                  itemBuilder: (context, index) {
+                    final broadcast = filteredBroadcasts[index];
+
+                    return _buildBroadcastCard(broadcast);
+                  },
+                );
+              },
+            ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _navigateToAddBroadcast,
         backgroundColor: primaryColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15.0),
+        ),
         child: const Icon(Icons.add, color: Colors.white, size: 30),
       ),
     );
