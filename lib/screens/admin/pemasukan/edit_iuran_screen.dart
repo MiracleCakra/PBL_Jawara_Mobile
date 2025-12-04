@@ -270,6 +270,23 @@ class _EditIuranScreenState extends State<EditIuranScreen> {
                           return;
                         }
 
+                        IuranModel updatedIuran = IuranModel(
+                          no: widget.iuran.no,
+                          namaIuran: _namaController.text,
+                          jenisIuran: _selectedJenis,
+                          nominal:
+                              double.tryParse(_nominalController.text) ?? 0.0,
+                        );
+
+                        updatedIuran.editIuran(
+                          updatedIuran.no!,
+                          updatedIuran.namaIuran,
+                          updatedIuran.jenisIuran == 'Iuran Bulanan'
+                              ? JenisIuran.bulanan
+                              : JenisIuran.khusus,
+                          updatedIuran.nominal,
+                        );
+
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(

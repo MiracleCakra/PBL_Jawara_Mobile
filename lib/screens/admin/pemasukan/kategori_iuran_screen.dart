@@ -26,8 +26,19 @@ class _KategoriIuranScreenState extends State<KategoriIuranScreen> {
   @override
   void initState() {
     super.initState();
-    _iuranList = IuranModel.getSampleData();
+    _fetchIuranData();
+  }
+
+  // Fetch Iuran data by creating an instance of IuranModel
+  void _fetchIuranData() async {
+    IuranModel iuranModel = IuranModel(
+      namaIuran: '',
+      jenisIuran: '',
+      nominal: 0.0,
+    );
+    _iuranList = await iuranModel.fetchIuran();
     _filteredIuranList = _iuranList;
+    setState(() {});
   }
 
   @override

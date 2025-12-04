@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:jawara_pintar_kel_5/models/keuangan/tagihan_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class DetailTagihanScreen extends StatefulWidget {
   final TagihanModel tagihan;
@@ -17,6 +18,48 @@ class _DetailTagihanScreenState extends State<DetailTagihanScreen> {
   void dispose() {
     _alasanController.dispose();
     super.dispose();
+  }
+
+  // Method to approve payment
+  Future<void> _approvePayment() async {
+    try {
+      // Make the request to approve the payment
+      await Supabase.instance.client
+          .from('tagihan_iuran')
+          .update({'status_pembayaran': 'Terverifikasi'})
+          .eq('id', widget.tagihan.kodeTagihan);
+    } catch (e) {
+      // Handle any exceptions or errors
+      debugPrint('Error approving payment: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Terjadi kesalahan saat menyetujui pembayaran'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  // Method to reject payment
+  Future<void> _rejectPayment() async {
+    try {
+      await Supabase.instance.client
+          .from('tagihan_iuran')
+          .update({
+            'status_pembayaran': 'Ditolak',
+            'alasan_penolakan':
+                _alasanController.text, // Store rejection reason
+          })
+          .eq('id', widget.tagihan.kodeTagihan);
+    } catch (e) {
+      debugPrint('Error rejecting payment: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Terjadi kesalahan saat menolak pembayaran'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   String _formatCurrency(double amount) {
@@ -222,7 +265,7 @@ class _DetailTagihanScreenState extends State<DetailTagihanScreen> {
                     _buildDetailRow(
                       Icons.location_on_outlined,
                       'Alamat',
-                      'Blok A49',
+                      widget.tagihan.alamat ?? 'Alamat tidak tersedia',
                       const Color(0xFFEF4444),
                     ),
                     _buildDivider(),
@@ -434,14 +477,16 @@ class _DetailTagihanScreenState extends State<DetailTagihanScreen> {
           'Apakah Anda yakin ingin menyetujui pembayaran ini?',
         ),
         actions: [
+          // Cancel button - Just close the dialog
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Batal'),
           ),
+          // Approve button - Call _approvePayment and close the dialog
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
-              _approvePayment();
+              Navigator.pop(context); // Close the dialog
+              _approvePayment(); // Call the approve payment method
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF6366F1),
@@ -474,7 +519,10 @@ class _DetailTagihanScreenState extends State<DetailTagihanScreen> {
         content: const Text('Apakah Anda yakin ingin menolak pembayaran ini?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              _rejectPayment();
+              Navigator.pop(context);
+            },
             child: const Text('Batal'),
           ),
           ElevatedButton(
@@ -488,25 +536,5 @@ class _DetailTagihanScreenState extends State<DetailTagihanScreen> {
         ],
       ),
     );
-  }
-
-  void _approvePayment() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Pembayaran berhasil disetujui'),
-        backgroundColor: Color(0xFF6366F1),
-      ),
-    );
-    Navigator.pop(context);
-  }
-
-  void _rejectPayment() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Pembayaran ditolak: ${_alasanController.text}'),
-        backgroundColor: Colors.red,
-      ),
-    );
-    Navigator.pop(context);
   }
 }
