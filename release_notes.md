@@ -1,20 +1,22 @@
-# Release Notes - Version 1.4.0
+# Release Notes - Version 1.5.0
 
 ## 🚀 New Features:
 
-* **Admin UI Revamp (Full Frontend Update)**:
+* **Admin Financial Menu Enhancements**:
 
-  * Redesigned all admin menu pages with a more consistent and modern UI.
-  * Updated color schemes, layout structure, and component styling across all menus.
-  * improved visual hierarchy and spacing for better readability and user experience.
+  * Updated the financial menu UI for the admin role.
+  * Removed “Other Income” and “Expense List” buttons.
+  * Added new actions: “Add Income” and “Add Expense”.
+  * Improved navigation structure within the financial management pages.
 
-* **Navigation & Layout**:
+* **Citizen Role Improvements**:
 
-  * Updated sidebar and topbar design for better navigation flow.
-  * Enhanced page transitions and interaction feedback for all admin pages.
+  * Added a new submission request feature in the Family List screen.
+  * Citizens can now send requests directly through the family member list.
 
 * **Responsive Design Improvements:**
-  * Optimized all admin screens to improve layout scaling on various Android device sizes.
+
+  * Optimized all admin screens for various Android device sizes.
   * Implemented adaptive UI widgets to prevent overflow and layout shifting.
 
 ## 🐛 Bug Fixes:

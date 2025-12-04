@@ -47,9 +47,22 @@ class LaporanDetailScreen extends StatelessWidget {
             const SizedBox(height: 8),
             _infoTile(
               context,
-              label: 'Jenis Pemasukan',
-              value: data.jenisPemasukan,
+              label: isPemasukkan ? 'Jenis Pemasukan' : 'Jenis Pengeluaran',
+              value: isPemasukkan
+                  ? (data.jenisPemasukan ?? '-')
+                  : (data.jenisPengeluaran ?? '-'),
               icon: Icons.category_outlined,
+            ),
+            const SizedBox(height: 8),
+            _infoTile(
+              context,
+              label: isPemasukkan
+                  ? 'Kategori Pemasukan'
+                  : 'Kategori Pengeluaran',
+              value: isPemasukkan
+                  ? (data.kategoriPemasukan ?? '-')
+                  : (data.kategoriPengeluaran ?? '-'),
+              icon: Icons.label_outlined,
             ),
             const SizedBox(height: 8),
             _infoTile(

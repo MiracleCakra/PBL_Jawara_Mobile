@@ -6,14 +6,13 @@ import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
 import 'package:jawara_pintar_kel_5/router.dart';
 import 'package:moon_design/moon_design.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
 import 'firebase_options.dart';
 import 'package:jawara_pintar_kel_5/providers/product_provider.dart';
 import 'package:jawara_pintar_kel_5/providers/marketplace/cart_provider.dart';
 import 'package:jawara_pintar_kel_5/providers/marketplace/store_provider.dart';
 import 'package:jawara_pintar_kel_5/providers/marketplace/order_provider.dart';
 import 'package:jawara_pintar_kel_5/providers/marketplace/review_provider.dart';
-
+ 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
