@@ -30,7 +30,7 @@ class _PemasukanScreenState extends State<PemasukanScreen>
       vsync: this,
       initialIndex: widget.initialTab,
     );
-    _iuranList = IuranModel.getSampleData();
+    // _iuranList = IuranModel.getSampleData();
     _filteredIuranList = _iuranList;
 
     // Show info dialog automatically after first frame

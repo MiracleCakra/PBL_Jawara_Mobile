@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 class TagihanModel {
   final String namaKeluarga;
   final String statusKeluarga;
@@ -6,6 +9,7 @@ class TagihanModel {
   final double nominal;
   final DateTime periode;
   final String status;
+  final String? alamat;
 
   TagihanModel({
     required this.namaKeluarga,
@@ -15,100 +19,32 @@ class TagihanModel {
     required this.nominal,
     required this.periode,
     required this.status,
+    this.alamat,
   });
 
-  static List<TagihanModel> getSampleData() {
-    return [
-      TagihanModel(
-        namaKeluarga: 'Keluarga Habibie Ed Dien',
-        statusKeluarga: 'Aktif',
-        iuran: 'Mingguan',
-        kodeTagihan: 'IR17545BA501',
-        nominal: 10.00,
-        periode: DateTime(2025, 10, 8),
-        status: 'Belum Dibayar',
-      ),
-      TagihanModel(
-        namaKeluarga: 'Keluarga Habibie Ed Dien',
-        statusKeluarga: 'Aktif',
-        iuran: 'Mingguan',
-        kodeTagihan: 'IR18570ZKX01',
-        nominal: 10.00,
-        periode: DateTime(2025, 10, 15),
-        status: 'Menunggu Bukti',
-      ),
-      TagihanModel(
-        namaKeluarga: 'Keluarga Habibie Ed Dien',
-        statusKeluarga: 'Aktif',
-        iuran: 'Mingguan',
-        kodeTagihan: 'IR223936NM01',
-        nominal: 10.00,
-        periode: DateTime(2025, 9, 30),
-        status: 'Menunggu Verifikasi',
-      ),
-      TagihanModel(
-        namaKeluarga: 'Keluarga Mara Nunez',
-        statusKeluarga: 'Aktif',
-        iuran: 'Mingguan',
-        kodeTagihan: 'IR223936ZJQ2',
-        nominal: 10.00,
-        periode: DateTime(2025, 9, 30),
-        status: 'Diterima',
-      ),
-      TagihanModel(
-        namaKeluarga: 'Keluarga Habibie Ed Dien',
-        statusKeluarga: 'Aktif',
-        iuran: 'Agustusan',
-        kodeTagihan: 'IR224406901',
-        nominal: 15.00,
-        periode: DateTime(2025, 10, 10),
-        status: 'Ditolak',
-      ),
-      TagihanModel(
-        namaKeluarga: 'Keluarga Mara Nunez',
-        statusKeluarga: 'Aktif',
-        iuran: 'Agustusan',
-        kodeTagihan: 'IR224406BC02',
-        nominal: 15.00,
-        periode: DateTime(2025, 10, 10),
-        status: 'Belum Dibayar',
-      ),
-      TagihanModel(
-        namaKeluarga: 'Keluarga Raudhil Firdaus Naufal',
-        statusKeluarga: 'Aktif',
-        iuran: 'Agustusan',
-        kodeTagihan: 'IR224432PP01',
-        nominal: 15.00,
-        periode: DateTime(2025, 9, 30),
-        status: 'Belum Dibayar',
-      ),
-      TagihanModel(
-        namaKeluarga: 'Keluarga varizky naldiba rimra',
-        statusKeluarga: 'Aktif',
-        iuran: 'Bersih Desa',
-        kodeTagihan: 'IR224432KE02',
-        nominal: 15.00,
-        periode: DateTime(2025, 9, 30),
-        status: 'Belum Dibayar',
-      ),
-      TagihanModel(
-        namaKeluarga: 'Keluarga Anti Micin',
-        statusKeluarga: 'Aktif',
-        iuran: 'Kerja Bakti',
-        kodeTagihan: 'IR121530BS01',
-        nominal: 10.00,
-        periode: DateTime(2025, 10, 9),
-        status: 'Belum Dibayar',
-      ),
-      TagihanModel(
-        namaKeluarga: 'Keluarga Mara Nunez',
-        statusKeluarga: 'Aktif',
-        iuran: 'Harian',
-        kodeTagihan: 'IR121530WV02',
-        nominal: 10.00,
-        periode: DateTime(2025, 10, 9),
-        status: 'Belum Dibayar',
-      ),
-    ];
+  Future<List<TagihanModel>> fetchTagihan() async {
+    try {
+      final response = await Supabase.instance.client
+          .from('tagihan_iuran')
+          .select(
+            '*, keluarga!id_keluarga(nama_keluarga, status_keluarga), iuran!id_iuran(nama, nominal), rumah!id_rumah(alamat)',
+          );
+      debugPrint('Tagihan fetched successfully: $response');
+      return response.map<TagihanModel>((item) {
+        return TagihanModel(
+          namaKeluarga: item['keluarga']['nama_keluarga'] as String,
+          statusKeluarga: item['keluarga']['status_keluarga'] as String,
+          iuran: item['iuran']['nama'] as String,
+          kodeTagihan: item['id'].toString(),
+          nominal: (item['iuran']['nominal'] as num).toDouble(),
+          periode: DateTime.parse(item['tgl_tagihan'] as String),
+          status: item['status_pembayaran'] as String,
+          alamat: item['rumah']['alamat'] as String?,
+        );
+      }).toList();
+    } catch (e) {
+      debugPrint('Error fetching tagihan: $e');
+      return Future.value(<TagihanModel>[]);
+    }
   }
 }

@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 class TransaksiModel {
   final String id;
   final String tipeTransaksi; // 'Pemasukan' atau 'Pengeluaran'

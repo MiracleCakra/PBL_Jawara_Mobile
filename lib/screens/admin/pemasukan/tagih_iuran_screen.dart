@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jawara_pintar_kel_5/models/keuangan/iuran_model.dart';
 import 'package:moon_design/moon_design.dart';
 
 class TagihIuranScreen extends StatefulWidget {
@@ -9,8 +10,33 @@ class TagihIuranScreen extends StatefulWidget {
 }
 
 class _TagihIuranScreenState extends State<TagihIuranScreen> {
-  String? _selectedJenisIuran;
+  IuranOption? _selectedJenisIuran;
   DateTime _selectedDate = DateTime.now();
+  List<IuranOption> _jenisIuranOptions =
+      []; // Store fetched options as IuranOption
+  IuranModel iuranModel = IuranModel(
+    namaIuran: '',
+    jenisIuran: '',
+    nominal: 0.0,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchJenisIuran();
+  }
+
+  // Fetch 'id' and 'nama' from Supabase
+  Future<void> _fetchJenisIuran() async {
+    List<IuranOption> options = await iuranModel.fetchNamaIuran();
+    setState(() {
+      _jenisIuranOptions = options;
+      if (_jenisIuranOptions.isNotEmpty) {
+        _selectedJenisIuran =
+            _jenisIuranOptions[0]; // Set default selection if options are available
+      }
+    });
+  }
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -55,6 +81,11 @@ class _TagihIuranScreenState extends State<TagihIuranScreen> {
       );
       return;
     }
+
+    iuranModel.saveTagihanForAllFamilies(
+      _selectedJenisIuran!.id.toString(),
+      _selectedDate,
+    );
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -117,135 +148,62 @@ class _TagihIuranScreenState extends State<TagihIuranScreen> {
                       borderRadius: BorderRadius.circular(8),
                       color: Colors.white,
                     ),
-                    child: DropdownButtonFormField<String>(
-                      value: _selectedJenisIuran,
-                      hint: Text(
-                        '-- Pilih Iuran --',
-                        style: TextStyle(color: Colors.grey[400], fontSize: 15),
-                      ),
-                      decoration: const InputDecoration(
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                      ),
-                      icon: Icon(
-                        Icons.keyboard_arrow_down,
-                        color: Colors.grey[600],
-                      ),
-                      items: [
-                        DropdownMenuItem<String>(
-                          value: 'Agustusan',
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.flag_outlined,
-                                color: Color(0xFFEF4444),
-                                size: 20,
+                    child: _jenisIuranOptions.isEmpty
+                        ? const Center(
+                            child: CircularProgressIndicator(),
+                          ) // Show loading until data is fetched
+                        : DropdownButtonFormField<IuranOption>(
+                            value: _selectedJenisIuran,
+                            hint: Text(
+                              '-- Pilih Iuran --',
+                              style: TextStyle(
+                                color: Colors.grey[400],
+                                fontSize: 15,
                               ),
-                              const SizedBox(width: 12),
-                              const Text(
-                                'Agustusan',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.black87,
+                            ),
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                            ),
+                            icon: Icon(
+                              Icons.keyboard_arrow_down,
+                              color: Colors.grey[600],
+                            ),
+                            items: _jenisIuranOptions.map((IuranOption option) {
+                              return DropdownMenuItem<IuranOption>(
+                                value: option,
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons
+                                          .category, // You can use different icons here
+                                      color: Color(
+                                        0xFF6366F1,
+                                      ), // Use a default color for now
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      option.nama,
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ],
+                              );
+                            }).toList(),
+                            onChanged: (IuranOption? newValue) {
+                              setState(() {
+                                _selectedJenisIuran = newValue;
+                              });
+                            },
                           ),
-                        ),
-                        DropdownMenuItem<String>(
-                          value: 'Mingguan',
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.calendar_today,
-                                color: Color(0xFF3B82F6),
-                                size: 20,
-                              ),
-                              const SizedBox(width: 12),
-                              const Text(
-                                'Mingguan',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        DropdownMenuItem<String>(
-                          value: 'Bersih Desa',
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.cleaning_services_outlined,
-                                color: Color(0xFF10B981),
-                                size: 20,
-                              ),
-                              const SizedBox(width: 12),
-                              const Text(
-                                'Bersih Desa',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                      selectedItemBuilder: (BuildContext context) {
-                        return ['Agustusan', 'Mingguan', 'Bersih Desa'].map((
-                          String value,
-                        ) {
-                          IconData icon;
-                          Color color;
-
-                          switch (value) {
-                            case 'Agustusan':
-                              icon = Icons.flag_outlined;
-                              color = const Color(0xFFEF4444);
-                              break;
-                            case 'Mingguan':
-                              icon = Icons.calendar_today;
-                              color = const Color(0xFF3B82F6);
-                              break;
-                            case 'Bersih Desa':
-                              icon = Icons.cleaning_services_outlined;
-                              color = const Color(0xFF10B981);
-                              break;
-                            default:
-                              icon = Icons.payment;
-                              color = Colors.grey;
-                          }
-
-                          return Row(
-                            children: [
-                              Icon(icon, color: color, size: 20),
-                              const SizedBox(width: 12),
-                              Text(
-                                value,
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ],
-                          );
-                        }).toList();
-                      },
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          _selectedJenisIuran = newValue;
-                        });
-                      },
-                    ),
                   ),
                   const SizedBox(height: 20),
 

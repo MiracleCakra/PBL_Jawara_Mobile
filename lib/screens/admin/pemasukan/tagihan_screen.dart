@@ -15,6 +15,16 @@ class _TagihanScreenState extends State<TagihanScreen> {
   List<TagihanModel> _tagihanList = [];
   List<TagihanModel> _filteredTagihanList = [];
 
+  TagihanModel tagihanModel = TagihanModel(
+    namaKeluarga: '',
+    statusKeluarga: '',
+    iuran: '',
+    kodeTagihan: '',
+    nominal: 0.0,
+    periode: DateTime.now(),
+    status: '',
+  );
+
   // Filter state
   String? _selectedStatusPembayaran;
   String? _selectedStatusKeluarga;
@@ -25,7 +35,7 @@ class _TagihanScreenState extends State<TagihanScreen> {
   @override
   void initState() {
     super.initState();
-    _tagihanList = TagihanModel.getSampleData();
+    _loadTagihan();
     _filteredTagihanList = _tagihanList;
   }
 
@@ -33,6 +43,14 @@ class _TagihanScreenState extends State<TagihanScreen> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadTagihan() async {
+    final fetchedTagihan = await tagihanModel.fetchTagihan();
+    setState(() {
+      _tagihanList = fetchedTagihan;
+      _filteredTagihanList = fetchedTagihan;
+    });
   }
 
   void _filterTagihan(String query) {

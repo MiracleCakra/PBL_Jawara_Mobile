@@ -1,32 +1,50 @@
-# Release Notes - Version 1.4.0
+# Release Notes - Version 1.5.2
 
-## 🚀 New Features:
+🚀 **New Features**:
 
-* **Admin UI Revamp (Full Frontend Update)**:
+* **Iuran and Tagihan Features**:
 
-  * Redesigned all admin menu pages with a more consistent and modern UI.
-  * Updated color schemes, layout structure, and component styling across all menus.
-  * improved visual hierarchy and spacing for better readability and user experience.
+  * Implemented new iuran and tagihan management functionality.
+  * **iuran_model**: Manages iuran data and operations with Supabase integration.
 
-* **Navigation & Layout**:
+    * Fetch, save, and edit iuran data.
+    * Fetch iuran names for tagihan creation.
+    * Save tagihan for all families.
+  * **tagihan_model**: Manages tagihan data and operations with Supabase integration.
 
-  * Updated sidebar and topbar design for better navigation flow.
-  * Enhanced page transitions and interaction feedback for all admin pages.
+    * Fetch tagihan data for streamlined management.
 
-* **Responsive Design Improvements:**
-  * Optimized all admin screens to improve layout scaling on various Android device sizes.
-  * Implemented adaptive UI widgets to prevent overflow and layout shifting.
+* **Detail Tagihan Screen**:
 
-## 🐛 Bug Fixes:
+  * Added functionality for approving and rejecting payments via Supabase integration.
 
-* Resolved multiple UI alignment issues across admin menus.
-* Fixed overflow text and misaligned widgets on small devices.
-* Corrected inconsistent spacing, padding, and button sizes.
-* Fixed icon rendering issues on the admin dashboard.
+* **Edit Iuran Screen**:
 
-## 🔧 Miscellaneous:
+  * Improved screen to allow real-time editing of iuran data synced with Supabase.
 
-* Refactored UI code across admin pages for cleaner structure and easier maintenance.
-* Updated global theme (typography, color palette, and spacing).
+* **Kategori Iuran Screen**:
 
-<!-- For more details, visit our [documentation](https://link-to-docs.com). -->
+  * Now dynamically fetches iuran data from Supabase for up-to-date information.
+
+* **Tagih Iuran Screen**:
+
+  * Optimized process to tagih iuran for all families with improved backend support.
+
+* **Tagihan Screen**:
+
+  * Updated to fetch tagihan data directly from Supabase for better data consistency.
+
+* **Tambah Iuran Screen**:
+
+  * Enhanced for adding new iuran data to Supabase, improving user experience.
+
+🐛 **Bug Fixes**:
+
+* Fixed multiple alignment issues across various admin and management screens.
+* Corrected misaligned widgets on smaller devices.
+* Resolved overflow text and inconsistent spacing in certain areas.
+
+🔧 **Miscellaneous**:
+
+* Refactored code across iuran and tagihan-related pages for better structure and easier maintenance.
+* Updated Supabase integration for better data handling and improved system performance.

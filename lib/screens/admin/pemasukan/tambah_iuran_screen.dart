@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jawara_pintar_kel_5/models/keuangan/iuran_model.dart';
 
 class TambahIuranScreen extends StatefulWidget {
   const TambahIuranScreen({super.key});
@@ -29,6 +30,18 @@ class _TambahIuranScreenState extends State<TambahIuranScreen> {
       );
       return;
     }
+    IuranModel iuranModel = IuranModel(
+      namaIuran: _namaController.text,
+      jenisIuran: _selectedKategori,
+      nominal: double.tryParse(_jumlahController.text) ?? 0.0,
+    );
+    iuranModel.saveIuran(
+      _namaController.text,
+      _selectedKategori == 'Iuran Bulanan'
+          ? JenisIuran.bulanan
+          : JenisIuran.khusus,
+      double.tryParse(_jumlahController.text) ?? 0.0,
+    );
 
     // Tampilkan snackbar sukses
     ScaffoldMessenger.of(context).showSnackBar(
