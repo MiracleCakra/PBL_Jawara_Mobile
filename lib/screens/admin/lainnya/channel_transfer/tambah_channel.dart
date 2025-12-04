@@ -1,7 +1,11 @@
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+import 'package:jawara_pintar_kel_5/models/keuangan/channel_transfer_model.dart';
+import 'package:jawara_pintar_kel_5/services/channel_transfer_service.dart';
 
 class TambahChannelPage extends StatefulWidget {
   const TambahChannelPage({super.key});
@@ -12,6 +16,8 @@ class TambahChannelPage extends StatefulWidget {
 
 class _TambahChannelPageState extends State<TambahChannelPage> {
   final Color primary = const Color(0xFF4E46B4);
+  final _channelService = ChannelTransferService();
+  bool _isLoading = false;
 
   // Controllers
   final _namaChannelCtl = TextEditingController();
@@ -21,7 +27,7 @@ class _TambahChannelPageState extends State<TambahChannelPage> {
 
   // Dropdown state & QR image
   String? _tipeChannel;
-  File? _qrImageFile;
+  XFile? _qrImageFile;
 
   @override
   void dispose() {
@@ -44,11 +50,73 @@ class _TambahChannelPageState extends State<TambahChannelPage> {
   }
 
   Future<void> _pickImage() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (picked != null) {
-      setState(() {
-        _qrImageFile = File(picked.path);
-      });
+    final ImagePicker picker = ImagePicker();
+    try {
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        final size = await image.length();
+        if (size > 2 * 1024 * 1024) {
+           if (!mounted) return;
+           ScaffoldMessenger.of(context).showSnackBar(
+             const SnackBar(content: Text("Ukuran gambar maksimal 2MB")),
+           );
+           return;
+        }
+        setState(() {
+          _qrImageFile = image;
+        });
+      }
+    } catch (e) {
+      debugPrint("Gagal pick image: $e");
+    }
+  }
+
+  Future<void> _saveData() async {
+    if (_namaChannelCtl.text.isEmpty || _tipeChannel == null || _nomorRekeningCtl.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mohon lengkapi data wajib (Nama, Tipe, No. Rek)')),
+      );
+      return;
+    }
+    setState(() => _isLoading = true);
+    try {
+      String? qrImageUrl;
+      if (_tipeChannel == 'QRIS' && _qrImageFile != null) {
+        final bytes = await _qrImageFile!.readAsBytes();
+        final fileName = '${DateTime.now().millisecondsSinceEpoch}_${_qrImageFile!.name}';
+        
+        qrImageUrl = await _channelService.uploadQrImage(
+          bytes: bytes,
+          file: kIsWeb ? null : File(_qrImageFile!.path),
+          fileName: fileName,
+        );
+      }
+
+      final newChannel = ChannelTransferModel(
+        nama: _namaChannelCtl.text,
+        tipe: _tipeChannel!,
+        norek: _nomorRekeningCtl.text,
+        pemilik: _namaPemilikCtl.text,
+        catatan: _catatanCtl.text,
+        qrisImg: qrImageUrl,
+      );
+
+      await _channelService.createChannel(newChannel);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Channel berhasil disimpan!'), backgroundColor: Colors.green),
+        );
+        context.pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal menyimpan: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -80,7 +148,6 @@ class _TambahChannelPageState extends State<TambahChannelPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Nama Channel
               _buildTextField(
                 label: 'Nama Channel',
                 controller: _namaChannelCtl,
@@ -88,7 +155,6 @@ class _TambahChannelPageState extends State<TambahChannelPage> {
               ),
               const SizedBox(height: 16),
 
-              // Tipe
               _buildDropdownField(
                 label: 'Tipe',
                 value: _tipeChannel,
@@ -107,7 +173,6 @@ class _TambahChannelPageState extends State<TambahChannelPage> {
               ),
               const SizedBox(height: 16),
 
-              // Nomor Rekening / Akun
               _buildTextField(
                 label: 'Nomor Rekening / Akun',
                 controller: _nomorRekeningCtl,
@@ -116,7 +181,6 @@ class _TambahChannelPageState extends State<TambahChannelPage> {
               ),
               const SizedBox(height: 16),
 
-              // Nama Pemilik
               _buildTextField(
                 label: 'Nama Pemilik',
                 controller: _namaPemilikCtl,
@@ -124,7 +188,6 @@ class _TambahChannelPageState extends State<TambahChannelPage> {
               ),
               const SizedBox(height: 16),
 
-              // Catatan
               _buildTextField(
                 label: 'Catatan',
                 controller: _catatanCtl,
@@ -171,7 +234,9 @@ class _TambahChannelPageState extends State<TambahChannelPage> {
                               )
                             : ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
-                                child: Image.file(_qrImageFile!, fit: BoxFit.cover),
+                                child: kIsWeb 
+                                  ? Image.network(_qrImageFile!.path, fit: BoxFit.cover) // Di web path = blob url
+                                  : Image.file(File(_qrImageFile!.path), fit: BoxFit.cover),
                               ),
                       ),
                     ),
@@ -211,11 +276,10 @@ class _TambahChannelPageState extends State<TambahChannelPage> {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      onPressed: () {
-                        // TODO: Backend logic untuk menyimpan data + file QR (opsional)
-                        context.pop();
-                      },
-                      child: const Text('Simpan', style: TextStyle(fontWeight: FontWeight.w600)),
+                      onPressed: _isLoading ? null : _saveData,
+                      child: _isLoading 
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : const Text('Simpan', style: TextStyle(fontWeight: FontWeight.w600)),
                     ),
                   ),
                 ],
