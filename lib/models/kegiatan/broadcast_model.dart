@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 
 class BroadcastModel {
@@ -9,8 +8,8 @@ class BroadcastModel {
   final DateTime tanggal;
   final String kategori;
   final String konten;
-  final String? lampiranGambarUrl;
-  final List<String> lampiranDokumen;
+  final String? lampiranGambarUrl; // URL Gambar
+  final String? lampiranDokumenUrl; // URL Dokumen (PDF) - Diubah dari List jadi String?
   final DateTime? createdAt;
 
   BroadcastModel({
@@ -21,7 +20,7 @@ class BroadcastModel {
     required this.kategori,
     required this.konten,
     this.lampiranGambarUrl,
-    this.lampiranDokumen = const [],
+    this.lampiranDokumenUrl,
     this.createdAt,
   });
 
@@ -33,7 +32,7 @@ class BroadcastModel {
     String? kategori,
     String? konten,
     String? lampiranGambarUrl,
-    List<String>? lampiranDokumen,
+    String? lampiranDokumenUrl,
     DateTime? createdAt,
   }) {
     return BroadcastModel(
@@ -44,7 +43,7 @@ class BroadcastModel {
       kategori: kategori ?? this.kategori,
       konten: konten ?? this.konten,
       lampiranGambarUrl: lampiranGambarUrl ?? this.lampiranGambarUrl,
-      lampiranDokumen: lampiranDokumen ?? this.lampiranDokumen,
+      lampiranDokumenUrl: lampiranDokumenUrl ?? this.lampiranDokumenUrl,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -58,88 +57,34 @@ class BroadcastModel {
       'kategori': kategori,
       'konten': konten,
       'lampiranGambarUrl': lampiranGambarUrl,
-      'lampiranDokumen': lampiranDokumen,
+      'lampiranDokumen': lampiranDokumenUrl, // Map ke kolom text di DB
     };
   }
 
-    factory BroadcastModel.fromMap(Map<String, dynamic> map) {
-    List<String> doks = [];
-    final dynamic lampiranData = map['lampiranDokumen'];
-
-    if (lampiranData is List) {
-      // Case 1: Already a list (correct jsonb type)
-      doks = List<String>.from(lampiranData.map((item) => item.toString()));
-    } else if (lampiranData is String) {
-      // Case 2: It's a string.
-      if (lampiranData.startsWith('[') && lampiranData.endsWith(']')) {
-        // It looks like a JSON array string
-        try {
-          final decoded = json.decode(lampiranData);
-          if (decoded is List) {
-            doks = List<String>.from(decoded.map((item) => item.toString()));
-          } 
-        } catch (e) {
-          // It looked like a JSON array but wasn't. Ignore.
-        }
-      } else if (lampiranData.isNotEmpty) {
-        // Case 3: It's a non-empty, non-JSON-array string. Treat as a single item.
-        doks = [lampiranData];
-      }
+  factory BroadcastModel.fromMap(Map<String, dynamic> map) {
+    // Helper buat handle dokumen yang mungkin null atau string kosong
+    String? docUrl;
+    if (map['lampiranDokumen'] != null && map['lampiranDokumen'].toString().isNotEmpty) {
+       docUrl = map['lampiranDokumen'].toString();
     }
-    // Case 4 (null) is handled by initializing doks = []
 
     return BroadcastModel(
       id: map['id']?.toInt(),
       judul: map['judul'] ?? '',
       pengirim: map['pengirim'] ?? '',
-      tanggal: DateTime.parse(map['tanggal']),
+      tanggal: DateTime.tryParse(map['tanggal'].toString()) ?? DateTime.now(),
       kategori: map['kategori'] ?? '',
       konten: map['konten'] ?? '',
       lampiranGambarUrl: map['lampiranGambarUrl'] as String?,
-      lampiranDokumen: doks,
+      lampiranDokumenUrl: docUrl, // Mapping langsung ke String
       createdAt: map['created_at'] == null
           ? null
-          : DateTime.parse(map['created_at']),
+          : DateTime.tryParse(map['created_at'].toString()),
     );
   }
-
 
   String toJson() => json.encode(toMap());
 
   factory BroadcastModel.fromJson(String source) =>
       BroadcastModel.fromMap(json.decode(source));
-
-  @override
-  String toString() {
-    return 'BroadcastModel(id: $id, judul: $judul, pengirim: $pengirim, tanggal: $tanggal, kategori: $kategori, konten: $konten, lampiranGambarUrl: $lampiranGambarUrl, lampiranDokumen: $lampiranDokumen, createdAt: $createdAt)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-  
-    return other is BroadcastModel &&
-      other.id == id &&
-      other.judul == judul &&
-      other.pengirim == pengirim &&
-      other.tanggal == tanggal &&
-      other.kategori == kategori &&
-      other.konten == konten &&
-      other.lampiranGambarUrl == lampiranGambarUrl &&
-      listEquals(other.lampiranDokumen, lampiranDokumen) &&
-      other.createdAt == createdAt;
-  }
-
-  @override
-  int get hashCode {
-    return id.hashCode ^
-      judul.hashCode ^
-      pengirim.hashCode ^
-      tanggal.hashCode ^
-      kategori.hashCode ^
-      konten.hashCode ^
-      lampiranGambarUrl.hashCode ^
-      lampiranDokumen.hashCode ^
-      createdAt.hashCode;
-  }
 }

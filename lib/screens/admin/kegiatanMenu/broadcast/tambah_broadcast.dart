@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart'; 
 import 'package:file_picker/file_picker.dart'; 
 import 'package:jawara_pintar_kel_5/models/kegiatan/broadcast_model.dart';
@@ -15,10 +17,9 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _judulController = TextEditingController();
   final TextEditingController _isiController = TextEditingController();
-  List<XFile> _selectedPhotos = [];
-  List<PlatformFile> _selectedDocuments = [];
+  XFile? _selectedPhoto; 
+  PlatformFile? _selectedDocument;
   bool _isLoading = false;
-
   final BroadcastService _broadcastService = BroadcastService();
 
   @override
@@ -29,15 +30,15 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
   }
   
 
-  // Foto (Max 10) - UI Only
-  Future<void> _pickPhotos() async {
-    // This part is UI only for now. No actual upload will be implemented.
+  // Foto
+  Future<void> _pickPhoto() async {
     final ImagePicker picker = ImagePicker();
     try {
-      final List<XFile> images = await picker.pickMultiImage();
-      if (images.isNotEmpty) {
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        // Validasi size manual bisa ditambahkan disini (readAsBytes lalu length)
         setState(() {
-          _selectedPhotos = images.take(10).toList();
+          _selectedPhoto = image;
         });
       }
     } catch (e) {
@@ -48,18 +49,23 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
     }
   }
 
-  // Dokumen - UI Only
-  Future<void> _pickDocuments() async {
-    // This part is UI only for now. No actual upload will be implemented.
+  Future<void> _pickDocument() async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf'],
-        allowMultiple: true,
+        allowMultiple: false,
+        withData: true, // PENTING: Supaya bytes terbaca di Web
       );
       if (result != null) {
+        final file = result.files.single;
+        if (file.size > 5 * 1024 * 1024) { // 5MB Limit
+           if (!mounted) return;
+           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("File max 5MB")));
+           return;
+        }
         setState(() {
-          _selectedDocuments = result.files.take(10).toList();
+          _selectedDocument = file;
         });
       }
     } catch (e) {
@@ -70,81 +76,92 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
     }
   }
 
-  // Simpan Broadcast
   void _simpanBroadcast() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
-
-      // NOTE: File upload is not implemented in the service.
-      // These lists are currently for UI demonstration only.
-      final newBroadcast = BroadcastModel(
-        judul: _judulController.text,
-        konten: _isiController.text,
-        pengirim: 'Admin RT', // Hardcoded as per original logic
-        kategori: 'Pemberitahuan', // Hardcoded for simplicity
-        tanggal: DateTime.now(),
-        lampiranDokumen: _selectedDocuments.map((f) => f.name).toList(),
-        // lampiranGambarUrl should be handled by a file upload service
-      );
+      setState(() => _isLoading = true);
 
       try {
+        String? imageUrl;
+        String? docUrl;
+
+        if (_selectedPhoto != null) {
+          final bytes = await _selectedPhoto!.readAsBytes();
+          final fileName = '${DateTime.now().millisecondsSinceEpoch}_${_selectedPhoto!.name}';
+          
+          // Upload platform-aware
+          if (kIsWeb) {
+            imageUrl = await _broadcastService.uploadFile(
+              bytes: bytes,
+              file: null,
+              fileName: fileName,
+              folderName: 'images',
+              contentType: 'image/jpeg',
+            );
+          } else {
+            imageUrl = await _broadcastService.uploadFile(
+              bytes: bytes,
+              file: File(_selectedPhoto!.path),
+              fileName: fileName,
+              folderName: 'images',
+              contentType: 'image/jpeg',
+            );
+          }
+        }
+
+        if (_selectedDocument != null) {
+          final fileName = '${DateTime.now().millisecondsSinceEpoch}_${_selectedDocument!.name}';
+          
+          docUrl = await _broadcastService.uploadFile(
+            bytes: _selectedDocument!.bytes,
+            file: kIsWeb ? null : File(_selectedDocument!.path!),
+            fileName: fileName,
+            folderName: 'documents',
+            contentType: 'application/pdf',
+          );
+        }
+
+        final newBroadcast = BroadcastModel(
+          judul: _judulController.text,
+          konten: _isiController.text,
+          pengirim: 'Admin Jawara',
+          kategori: 'Pemberitahuan',
+          tanggal: DateTime.now(),
+          lampiranGambarUrl: imageUrl,
+          lampiranDokumenUrl: docUrl,
+        );
+
         await _broadcastService.createBroadcast(newBroadcast);
         
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Broadcast "${newBroadcast.judul}" berhasil dibuat!'),
-            backgroundColor: Colors.green,
-          ),
+          const SnackBar(content: Text('Broadcast berhasil dibuat!'), backgroundColor: Colors.green),
         );
-        Navigator.pop(context, true); // Return true on success
+        Navigator.pop(context, true);
 
       } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal menyimpan broadcast: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Gagal: $e'), backgroundColor: Colors.red),
         );
       } finally {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
   }
 
-  // batal
   void _batalForm() {
     Navigator.pop(context);
   }
 
   // WidgetArea Upload File
-  Widget _buildUploadArea(String label, String helpText, VoidCallback onTap, int count) {
-    String buttonText;
-    bool isDocument = label == 'Dokumen';
-        if (count > 0) {
-        buttonText = isDocument ? '$count dokumen terpilih' : '$count foto terpilih';
-    } else {
-        buttonText = isDocument ? 'Upload Dokumen pdf' : 'Upload Foto png/jpg';
-    }
-
-
+  Widget _buildUploadArea(String label, String helpText, VoidCallback onTap, bool isSelected, String? fileName) {
+    // ... UI Sama ...
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
+        Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         const SizedBox(height: 4),
-        Text(
-          helpText,
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
-        ),
+        Text(helpText, style: const TextStyle(fontSize: 12, color: Colors.grey)),
         const SizedBox(height: 8),
         InkWell(
           onTap: onTap,
@@ -154,24 +171,46 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
             decoration: BoxDecoration(
               color: Colors.grey.shade200,
               borderRadius: BorderRadius.circular(10.0),
-              border: count > 0 ? Border.all(color: Colors.green, width: 2) : null, 
+              border: isSelected ? Border.all(color: Colors.green, width: 2) : null, 
             ),
             child: Center(
-              child: Text(
-                buttonText, 
-                style: TextStyle(
-                  color: count > 0 ? Colors.green : Colors.grey.shade700, 
-                  fontWeight: FontWeight.w500
-                ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(isSelected ? Icons.check : Icons.upload_file, color: isSelected ? Colors.green : Colors.grey),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      isSelected ? (fileName ?? 'File Terpilih') : 'Upload $label', 
+                      style: TextStyle(
+                        color: isSelected ? Colors.green : Colors.grey.shade700, 
+                        fontWeight: FontWeight.w500
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
         ),
+        if (isSelected) 
+           Padding(
+             padding: const EdgeInsets.only(top: 4.0),
+             child: InkWell(
+               onTap: () {
+                 setState(() {
+                   if (label == 'Foto') _selectedPhoto = null;
+                   if (label == 'Dokumen') _selectedDocument = null;
+                 });
+               },
+               child: const Text("Hapus", style: TextStyle(color: Colors.red, fontSize: 12)),
+             ),
+           ),
         const SizedBox(height: 24),
       ],
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -249,17 +288,18 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
               //foto
               _buildUploadArea(
                 'Foto',
-                'Maksimal 10 gambar (.png / .jpg), ukuran maksimal 5MB per gambar.',
-                _pickPhotos,
-                _selectedPhotos.length, 
+                'Maksimal 1 gambar (.png / .jpg), max 5MB.',
+                _pickPhoto,
+                _selectedPhoto != null,
+                _selectedPhoto?.name,
               ),
 
-              //dokumen
               _buildUploadArea(
                 'Dokumen',
-                'Maksimal 10 file (pdf), ukuran maksimal 5MB per file.',
-                _pickDocuments,
-                _selectedDocuments.length,
+                'Maksimal 1 file PDF, max 5MB.',
+                _pickDocument,
+                _selectedDocument != null,
+                _selectedDocument?.name,
               ),
 
               const SizedBox(height: 16),

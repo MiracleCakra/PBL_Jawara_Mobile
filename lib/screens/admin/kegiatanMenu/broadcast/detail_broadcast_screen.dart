@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:jawara_pintar_kel_5/models/kegiatan/broadcast_model.dart';
 import 'package:jawara_pintar_kel_5/services/broadcast_service.dart';
 import 'edit_broadcast_screen.dart';
 
 class DetailBroadcastScreen extends StatefulWidget {
   final BroadcastModel broadcastModel;
-
   const DetailBroadcastScreen({super.key, required this.broadcastModel});
 
   @override
@@ -15,7 +16,42 @@ class DetailBroadcastScreen extends StatefulWidget {
 
 class _DetailBroadcastScreenState extends State<DetailBroadcastScreen> {
   final BroadcastService _broadcastService = BroadcastService();
+  late BroadcastModel _displayData;
   bool _isDeleting = false;
+  bool _isRefreshing = false;
+
+  @override initState(){
+    super.initState();
+    _displayData = widget.broadcastModel;
+  }
+
+  Future<void> _refreshData() async {
+    setState(() => _isRefreshing = true);
+    try {
+      // Ambil data fresh berdasarkan ID
+      final freshData = await _broadcastService.getBroadcastById(_displayData.id!);
+      if (mounted) {
+        setState(() {
+          _displayData = freshData; // Update tampilan dengan data baru
+        });
+      }
+    } catch (e) {
+      debugPrint("Gagal refresh data: $e");
+    } finally {
+      if (mounted) setState(() => _isRefreshing = false);
+    }
+  }
+
+  Future<void> _launchUrl(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tidak dapat membuka file')),
+        );
+      }
+    }
+  }
 
   Widget _buildDetailField(String label, String value) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,13 +97,18 @@ class _DetailBroadcastScreenState extends State<DetailBroadcastScreen> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) =>
-            EditBroadcastScreen(broadcast: widget.broadcastModel),
+        builder: (_) => EditBroadcastScreen(broadcast: _displayData), // Kirim data yg skrg
       ),
     );
 
+    // 4. Cek hasil balikan: Kalau true (berhasil edit), kita refresh
     if (result == true && mounted) {
-      Navigator.pop(context, true);
+      _refreshData(); // <--- INI KUNCINYA
+      
+      // Opsional: Kalau mau tampilkan snackbar sukses
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Data berhasil diperbarui"), backgroundColor: Colors.green),
+      );
     }
   }
 
@@ -105,7 +146,9 @@ class _DetailBroadcastScreenState extends State<DetailBroadcastScreen> {
                     backgroundColor: Colors.green,
                   ),
                 );
-                Navigator.pop(context, true); 
+                if (context.canPop()) {
+                  context.pop(true);
+                }
               } catch (e) {
                 setState(() {
                   _isDeleting = false;
@@ -231,6 +274,7 @@ class _DetailBroadcastScreenState extends State<DetailBroadcastScreen> {
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('dd/MM/yyyy');
+    final data = _displayData;
 
     return Scaffold(
       appBar: AppBar(
@@ -244,6 +288,8 @@ class _DetailBroadcastScreenState extends State<DetailBroadcastScreen> {
           child: Divider(height: 1, color: Colors.grey),
         ),
         actions: [
+          if (_isRefreshing)
+            const Center(child: Padding(padding: EdgeInsets.only(right: 16), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))),
           IconButton(
             icon: const Icon(Icons.more_vert, color: Colors.black),
             onPressed: () => _showActionBottomSheet(context),
@@ -253,78 +299,69 @@ class _DetailBroadcastScreenState extends State<DetailBroadcastScreen> {
       ),
       body: _isDeleting
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildDetailField('Judul Broadcast', widget.broadcastModel.judul),
-                  _buildDetailArea('Isi Broadcast', widget.broadcastModel.konten),
-                  _buildDetailField('Tanggal Publikasi', dateFormat.format(widget.broadcastModel.tanggal)),
-                  _buildDetailField('Dibuat oleh', widget.broadcastModel.pengirim),
-                  if (widget.broadcastModel.lampiranGambarUrl != null && widget.broadcastModel.lampiranGambarUrl!.isNotEmpty)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Lampiran Gambar',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 16)),
-                        const SizedBox(height: 8),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            widget.broadcastModel.lampiranGambarUrl!,
-                            height: 200,
-                            fit: BoxFit.cover,
-                            loadingBuilder: (context, child, progress) {
-                              return progress == null
-                                  ? child
-                                  : const Center(child: CircularProgressIndicator());
-                            },
-                            errorBuilder: (context, error, stacktrace) {
-                              return const Icon(Icons.error, color: Colors.red);
-                            },
+          : RefreshIndicator( // Tambahin fitur tarik buat refresh manual juga
+              onRefresh: _refreshData,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildDetailField('Judul Broadcast', data.judul),
+                    _buildDetailArea('Isi Broadcast', data.konten),
+                    _buildDetailField('Tanggal Publikasi', dateFormat.format(data.tanggal)),
+                    _buildDetailField('Dibuat oleh', data.pengirim),
+                    
+                    if (data.lampiranGambarUrl != null) ...[
+                      const Text('Lampiran Gambar',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          data.lampiranGambarUrl!,
+                          height: 200,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Text('Gagal memuat gambar'),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
+                    if (data.lampiranDokumenUrl != null) ...[
+                      const Text('Lampiran Dokumen',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      const SizedBox(height: 8),
+                      InkWell(
+                        onTap: () => _launchUrl(data.lampiranDokumenUrl!),
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.blue.shade200),
+                            borderRadius: BorderRadius.circular(8),
+                            color: Colors.blue.shade50,
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-                    ),
-                  if (widget.broadcastModel.lampiranDokumen.isNotEmpty)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Lampiran Dokumen',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                        const SizedBox(height: 8),
-                        ...widget.broadcastModel.lampiranDokumen.map(
-                          (dokumen) => Container(
-                            margin: const EdgeInsets.only(bottom: 8),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey.shade300),
-                              borderRadius: BorderRadius.circular(8),
-                              color: Colors.grey.shade100,
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.link, color: Colors.blue),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    dokumen,
-                                    style: const TextStyle(fontWeight: FontWeight.w500),
-                                  ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.picture_as_pdf, color: Colors.red),
+                              const SizedBox(width: 12),
+                              const Expanded(
+                                child: Text(
+                                  "Lihat Dokumen PDF",
+                                  style: TextStyle(
+                                      color: Colors.blue, fontWeight: FontWeight.bold),
                                 ),
-                              ],
-                            ),
+                              ),
+                              const Icon(Icons.open_in_new, color: Colors.blue, size: 20),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 16),
-                      ],
-                    ),
-                ],
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
     );

@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -33,6 +36,9 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
   ];
 
   DateTime? _selectedDate;
+  File? _selectedImageFile; // Untuk Mobile
+  Uint8List? _selectedImageBytes; // Untuk Web
+  String? _selectedImageName; // Nama file
 
   @override
   void dispose() {
@@ -42,6 +48,48 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
     _deskripsiController.dispose();
     _tanggalController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+      withData: true, // PENTING BUAT WEB: Biar bytes-nya ke-load
+    );
+
+    if (result != null && result.files.isNotEmpty) {
+      final PlatformFile file = result.files.first;
+
+      // Validasi Ukuran (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Ukuran gambar melebihi batas 5MB!')),
+          );
+        }
+        return;
+      }
+
+      setState(() {
+        _selectedImageName = file.name;
+
+        if (kIsWeb) {
+          _selectedImageBytes = file.bytes; // Web pakai bytes
+        } else {
+          if (file.path != null) {
+            _selectedImageFile = File(file.path!); // Mobile pakai File Path
+          }
+        }
+      });
+    }
+  }
+
+  void _removeImage() {
+    setState(() {
+      _selectedImageFile = null;
+      _selectedImageBytes = null;
+      _selectedImageName = null;
+    });
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -67,19 +115,31 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
       setState(() {
         _isLoading = true;
       });
-
-      final newKegiatan = KegiatanModel(
-        judul: _namaController.text,
-        kategori: _selectedKategori!,
-        tanggal: _selectedDate!,
-        lokasi: _lokasiController.text,
-        pj: _pjController.text,
-        deskripsi: _deskripsiController.text,
-        dibuatOleh: 'Admin', // Default value
-        hasDocs: false, // Default value
-      );
-
       try {
+        String? imageUrl;
+        if (_selectedImageBytes != null || _selectedImageFile != null) {
+          final String uniqueFileName =
+              '${DateTime.now().millisecondsSinceEpoch}_${_selectedImageName ?? 'image.jpg'}';
+
+          imageUrl = await _kegiatanService.uploadKegiatanImage(
+            file: _selectedImageFile,
+            bytes: _selectedImageBytes,
+            fileName: uniqueFileName,
+          );
+        }
+
+        final newKegiatan = KegiatanModel(
+          judul: _namaController.text,
+          kategori: _selectedKategori!,
+          tanggal: _selectedDate!,
+          lokasi: _lokasiController.text,
+          pj: _pjController.text,
+          deskripsi: _deskripsiController.text,
+          dibuatOleh: 'Admin', // Default value
+          hasDocs: imageUrl != null,
+          gambarDokumentasi: imageUrl,
+        );
+
         await _kegiatanService.createKegiatan(newKegiatan);
         if (mounted) {
           context.pop(true); // Return true on success
@@ -222,8 +282,10 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
                     'Tanggal',
                     _tanggalController,
                     'Pilih tanggal pelaksanaan',
-                    suffixIcon:
-                        const Icon(Icons.calendar_today, color: Colors.grey),
+                    suffixIcon: const Icon(
+                      Icons.calendar_today,
+                      color: Colors.grey,
+                    ),
                     isRequired: true,
                   ),
                   _buildTextField(
@@ -245,6 +307,87 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
                     isRequired: false,
                   ),
                   const SizedBox(height: 16),
+                  const Text(
+                    'Upload Dokumentasi',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Maksimal 1 gambar (.png / .jpg), ukuran maksimal 5MB.',
+                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                  ),
+                  const SizedBox(height: 8),
+                  if (_selectedImageBytes != null || _selectedImageFile != null)
+                    Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8.0),
+                          child: kIsWeb
+                              ? Image.memory(
+                                  // Web: Tampilkan dari memori (bytes)
+                                  _selectedImageBytes!,
+                                  width: double.infinity,
+                                  height: 200,
+                                  fit: BoxFit.cover,
+                                )
+                              : Image.file(
+                                  // Mobile: Tampilkan dari file path
+                                  _selectedImageFile!,
+                                  width: double.infinity,
+                                  height: 200,
+                                  fit: BoxFit.cover,
+                                ),
+                        ),
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: GestureDetector(
+                            onTap: _removeImage,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.black54,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              padding: const EdgeInsets.all(4),
+                              child: const Icon(
+                                Icons.close,
+                                size: 20,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    InkWell(
+                      onTap: _pickImage,
+                      child: Container(
+                        height: 150,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(8.0),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.add_a_photo,
+                              size: 40,
+                              color: Colors.grey.shade400,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Ketuk untuk upload foto',
+                              style: TextStyle(color: Colors.grey.shade700),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 32),
                   Padding(
                     padding: const EdgeInsets.only(bottom: 16.0),
                     child: Row(
@@ -263,7 +406,9 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
                             child: const Text(
                               'Batal',
                               style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold),
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
@@ -274,8 +419,7 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: simpanColor,
                               foregroundColor: Colors.white,
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 14),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -283,7 +427,9 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
                             child: const Text(
                               'Simpan',
                               style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold),
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
@@ -298,9 +444,7 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
           if (_isLoading)
             Container(
               color: Colors.black.withOpacity(0.5),
-              child: const Center(
-                child: CircularProgressIndicator(),
-              ),
+              child: const Center(child: CircularProgressIndicator()),
             ),
         ],
       ),
