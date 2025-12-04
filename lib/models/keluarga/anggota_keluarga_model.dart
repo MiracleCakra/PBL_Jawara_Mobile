@@ -3,16 +3,18 @@ class Anggota {
   final String nama;
   final String? tempatLahir;
   final DateTime? tanggalLahir;
-  final String? jenisKelamin;      
+  final String? jenisKelamin;
   final String? agama;
   final String? golonganDarah;
   final String? telepon;
+  final String? email;
   final String? pendidikanTerakhir;
   final String? pekerjaan;
   final String? peranKeluarga;
   final String? statusPenduduk;
+  final String? statusHidup;
   final String? namaKeluarga;
-  final String? status;  // Aktif/Nonaktif utk list
+  final String? status; // Aktif/Nonaktif utk list
   final String? fotoKtp;
 
   Anggota({
@@ -24,10 +26,12 @@ class Anggota {
     this.agama,
     this.golonganDarah,
     this.telepon,
+    this.email,
     this.pendidikanTerakhir,
     this.pekerjaan,
     this.peranKeluarga,
     this.statusPenduduk,
+    this.statusHidup,
     this.namaKeluarga,
     this.status = "Aktif",
     this.fotoKtp,
@@ -45,10 +49,12 @@ class Anggota {
       agama: json['agama'],
       golonganDarah: json['golongan_darah'],
       telepon: json['telepon'],
+      email: json['email'],
       pendidikanTerakhir: json['pendidikan_terakhir'],
       pekerjaan: json['pekerjaan'],
       peranKeluarga: json['peran_keluarga'],
       statusPenduduk: json['status_penduduk'],
+      statusHidup: json['status_hidup'],
       namaKeluarga: json['nama_keluarga'],
       status: json['status'] ?? "Aktif",
       fotoKtp: json['foto_ktp'],
@@ -65,10 +71,12 @@ class Anggota {
       'agama': agama,
       'golongan_darah': golonganDarah,
       'telepon': telepon,
+      'email': email,
       'pendidikan_terakhir': pendidikanTerakhir,
       'pekerjaan': pekerjaan,
       'peran_keluarga': peranKeluarga,
       'status_penduduk': statusPenduduk,
+      'status_hidup': statusHidup,
       'nama_keluarga': namaKeluarga,
       'status': status,
       'foto_ktp': fotoKtp,
@@ -111,6 +119,7 @@ class Anggota {
     );
   }
 }
+
 final List<Anggota> dummyAnggota = [
   Anggota(
     nik: "3512345678900001",

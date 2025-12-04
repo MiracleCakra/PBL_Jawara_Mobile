@@ -1,28 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-
-// Pastikan import ini sesuai dengan struktur foldermu
+import 'package:url_launcher/url_launcher.dart';
 import 'package:jawara_pintar_kel_5/models/kegiatan/broadcast_model.dart';
-// Import service yang sudah kamu buat
-import 'package:jawara_pintar_kel_5/services/broadcast_service.dart'; // Sesuaikan path ini jika beda
+import 'package:jawara_pintar_kel_5/services/broadcast_service.dart';
 
 class DetailBroadcastWargaScreen extends StatefulWidget {
-  // Kita ubah: menerima ID, bukan langsung datanya.
-  // Biar screen ini yang "kerja" ngambil data dari database.
-  final int broadcastId; 
-
+  final int broadcastId;
   const DetailBroadcastWargaScreen({super.key, required this.broadcastId});
-
-  // Warna statis biar bisa diakses dari widget lain di file ini
   static const Color primaryColor = Color(0xFF6366F1);
 
   @override
-  State<DetailBroadcastWargaScreen> createState() => _DetailBroadcastWargaScreenState();
+  State<DetailBroadcastWargaScreen> createState() =>
+      _DetailBroadcastWargaScreenState();
 }
 
-class _DetailBroadcastWargaScreenState extends State<DetailBroadcastWargaScreen> {
-  // Variabel untuk menampung proses pengambilan data
+class _DetailBroadcastWargaScreenState
+    extends State<DetailBroadcastWargaScreen> {
   late Future<BroadcastModel> _futureBroadcast;
   final BroadcastService _broadcastService = BroadcastService();
 
@@ -39,11 +33,21 @@ class _DetailBroadcastWargaScreenState extends State<DetailBroadcastWargaScreen>
     });
   }
 
+  // Helper Buka URL
+  Future<void> _launchUrl(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tidak dapat membuka file')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Helper format tanggal
-    final DateFormat dateFormat = DateFormat('dd/MM/yyyy HH:mm', 'id_ID'); 
-    // Catatan: Pastikan di main.dart sudah initializeDateFormatting('id_ID', null)
+    final DateFormat dateFormat = DateFormat('dd/MM/yyyy HH:mm', 'id_ID');
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
@@ -68,12 +72,9 @@ class _DetailBroadcastWargaScreenState extends State<DetailBroadcastWargaScreen>
       body: FutureBuilder<BroadcastModel>(
         future: _futureBroadcast,
         builder: (context, snapshot) {
-          // 1. KONDISI LOADING
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-
-          // 2. KONDISI ERROR
           if (snapshot.hasError) {
             return Center(
               child: Column(
@@ -81,33 +82,32 @@ class _DetailBroadcastWargaScreenState extends State<DetailBroadcastWargaScreen>
                 children: [
                   const Icon(Icons.error_outline, color: Colors.red, size: 48),
                   const SizedBox(height: 16),
-                  Text('Terjadi kesalahan:\n${snapshot.error}', textAlign: TextAlign.center),
+                  Text(
+                    'Terjadi kesalahan:\n${snapshot.error}',
+                    textAlign: TextAlign.center,
+                  ),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _fetchData,
                     child: const Text("Coba Lagi"),
-                  )
+                  ),
                 ],
               ),
             );
           }
 
-          if (!snapshot.hasData) {
-            return const Center(child: Text("Data tidak ditemukan"));
-          }
-
+          if (!snapshot.hasData)
+            return const Center(child: Text("Data kosong"));
           final broadcastData = snapshot.data!;
 
           return RefreshIndicator(
             onRefresh: () async => _fetchData(),
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
-              // Pakai physics ini biar bisa scroll walau konten pendek (buat refresh)
-              physics: const AlwaysScrollableScrollPhysics(), 
+              physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 1. DETAIL UTAMA
                   _SectionCard(
                     title: "Informasi Broadcast",
                     children: [
@@ -135,7 +135,6 @@ class _DetailBroadcastWargaScreenState extends State<DetailBroadcastWargaScreen>
                   ),
                   const SizedBox(height: 20),
 
-                  // 2. ISI BROADCAST
                   _SectionCard(
                     title: "Isi Broadcast",
                     children: [
@@ -154,8 +153,7 @@ class _DetailBroadcastWargaScreenState extends State<DetailBroadcastWargaScreen>
                   ),
                   const SizedBox(height: 20),
 
-                  // 3. LAMPIRAN GAMBAR
-                  if (broadcastData.lampiranGambarUrl != null && broadcastData.lampiranGambarUrl!.isNotEmpty)
+                  if (broadcastData.lampiranGambarUrl != null)
                     _SectionCard(
                       title: 'Lampiran Gambar',
                       children: [
@@ -167,24 +165,12 @@ class _DetailBroadcastWargaScreenState extends State<DetailBroadcastWargaScreen>
                             height: 200,
                             width: double.infinity,
                             fit: BoxFit.cover,
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
-                              return Container(
-                                height: 200,
-                                color: Colors.grey[200],
-                                child: const Center(child: CircularProgressIndicator()),
-                              );
-                            },
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
                                 height: 200,
                                 color: Colors.grey[200],
-                                child: const Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.broken_image, color: Colors.grey),
-                                    Text("Gagal memuat gambar"),
-                                  ],
+                                child: const Center(
+                                  child: Text("Gagal memuat gambar"),
                                 ),
                               );
                             },
@@ -193,57 +179,59 @@ class _DetailBroadcastWargaScreenState extends State<DetailBroadcastWargaScreen>
                         const SizedBox(height: 8),
                       ],
                     ),
-                  if (broadcastData.lampiranGambarUrl != null) 
+
+                  if (broadcastData.lampiranGambarUrl != null)
                     const SizedBox(height: 20),
 
-                  // 4. LAMPIRAN DOKUMEN
-                  if (broadcastData.lampiranDokumen.isNotEmpty)
+                  // 4. LAMPIRAN DOKUMEN (UPDATE - Single URL)
+                  if (broadcastData.lampiranDokumenUrl != null)
                     _SectionCard(
                       title: 'Lampiran Dokumen',
                       children: [
                         const SizedBox(height: 8),
-                        ...broadcastData.lampiranDokumen.map(
-                          (dokumen) => Padding(
-                            padding: const EdgeInsets.only(bottom: 8.0),
-                            child: InkWell(
-                              onTap: () {
-                                // TODO: Tambahkan logika download/buka file di sini
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text("Membuka dokumen: $dokumen")),
-                                );
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey.shade300),
-                                  borderRadius: BorderRadius.circular(8),
-                                  color: DetailBroadcastWargaScreen.primaryColor.withOpacity(0.05),
+                        InkWell(
+                          onTap: () =>
+                              _launchUrl(broadcastData.lampiranDokumenUrl!),
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(8),
+                              color: DetailBroadcastWargaScreen.primaryColor
+                                  .withOpacity(0.05),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.picture_as_pdf,
+                                  color: Colors.red,
+                                  size: 24,
                                 ),
-                                child: Row(
-                                  children: [
-                                    const Icon(Icons.picture_as_pdf, color: Colors.red, size: 20),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Text(
-                                        dokumen,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.black87,
-                                          fontSize: 15,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
+                                const SizedBox(width: 12),
+                                const Expanded(
+                                  child: Text(
+                                    "Download / Lihat Dokumen",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                      fontSize: 15,
                                     ),
-                                    const Icon(Icons.download, color: DetailBroadcastWargaScreen.primaryColor, size: 20),
-                                  ],
+                                  ),
                                 ),
-                              ),
+                                Icon(
+                                  Icons.download,
+                                  color:
+                                      DetailBroadcastWargaScreen.primaryColor,
+                                  size: 24,
+                                ),
+                              ],
                             ),
                           ),
                         ),
+                        const SizedBox(height: 8),
                       ],
                     ),
-                  // Tambahan padding bawah biar tidak mentok
+
                   const SizedBox(height: 40),
                 ],
               ),
@@ -303,7 +291,11 @@ class _IconRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const _IconRow({required this.icon, required this.label, required this.value});
+  const _IconRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -319,7 +311,11 @@ class _IconRow extends StatelessWidget {
               color: DetailBroadcastWargaScreen.primaryColor.withOpacity(0.05),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, color: DetailBroadcastWargaScreen.primaryColor, size: 20),
+            child: Icon(
+              icon,
+              color: DetailBroadcastWargaScreen.primaryColor,
+              size: 20,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -345,7 +341,7 @@ class _IconRow extends StatelessWidget {
                 ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );

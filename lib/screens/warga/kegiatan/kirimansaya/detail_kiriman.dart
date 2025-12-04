@@ -23,14 +23,14 @@ class _WargaDetailKirimanScreenState extends State<WargaDetailKirimanScreen> {
   final AspirasiService _aspirasiService = AspirasiService();
 
   void _navigateToEdit(BuildContext context) async {
-    final result = await context.pushNamed(
+    final result = await context.pushNamed<bool>(
       'warga_kirimanEdit',
       extra: widget.data,
     );
 
     if (result == true) {
       if (mounted) {
-        context.pop();
+        context.pop(true);
       }
     }
   }

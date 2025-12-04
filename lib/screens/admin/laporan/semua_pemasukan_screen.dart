@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:jawara_pintar_kel_5/models/keuangan/laporan_keuangan_model.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/laporan/detail_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/laporan/pemasukan_lain_tambah_screen.dart';
 import 'package:jawara_pintar_kel_5/utils.dart'
     show formatDate, formatRupiah, openDateTimePicker;
 import 'package:moon_design/moon_design.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/laporan/detail_screen.dart';
 
 class SemuaPemasukanScreen extends StatefulWidget {
   const SemuaPemasukanScreen({super.key});
@@ -33,31 +34,43 @@ class _SemuaPemasukanScreenState extends State<SemuaPemasukanScreen> {
       tanggal: DateTime(2024, 1, 1),
       nama: "Pemasukan 1",
       nominal: 100000,
+      jenisPemasukan: 'Pemasukan Halal',
+      kategoriPemasukan: 'Donasi',
     ),
     LaporanKeuanganModel(
       tanggal: DateTime(2024, 1, 3),
       nama: "Pemasukan 2",
       nominal: 300000,
+      jenisPemasukan: 'Pemasukan Hibah',
+      kategoriPemasukan: 'Dana Bantuan Pemerintah',
     ),
     LaporanKeuanganModel(
       tanggal: DateTime(2024, 1, 5),
       nama: "Pemasukan 3",
       nominal: 400000,
+      jenisPemasukan: 'Pemasukan Halal',
+      kategoriPemasukan: 'Sumbangan Swadaya',
     ),
     LaporanKeuanganModel(
       tanggal: DateTime(2024, 1, 7),
       nama: "Pemasukan 4",
       nominal: 500000,
+      jenisPemasukan: 'Pemasukan Usaha',
+      kategoriPemasukan: 'Hasil Usaha Kampung',
     ),
     LaporanKeuanganModel(
       tanggal: DateTime(2024, 1, 9),
       nama: "Pemasukan 5",
       nominal: 600000,
+      jenisPemasukan: 'Pemasukan Lainnya',
+      kategoriPemasukan: 'Pendapatan Lainnya',
     ),
     LaporanKeuanganModel(
       tanggal: DateTime(2024, 1, 10),
       nama: "Pemasukan 6",
       nominal: 700000,
+      jenisPemasukan: 'Pemasukan Halal',
+      kategoriPemasukan: 'Donasi',
     ),
   ];
 
@@ -86,6 +99,30 @@ class _SemuaPemasukanScreenState extends State<SemuaPemasukanScreen> {
             fontWeight: FontWeight.w700,
           ),
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final result = await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const PemasukanLainTambahScreen(),
+            ),
+          );
+          if (result != null && result is Map<String, dynamic>) {
+            setState(() {
+              fakeData.add(
+                LaporanKeuanganModel(
+                  tanggal: result['tanggal'] ?? DateTime.now(),
+                  nama: result['nama'] ?? '',
+                  nominal: (result['nominal'] ?? 0).toInt(),
+                  jenisPemasukan: result['jenisPemasukan'] ?? '-',
+                  kategoriPemasukan: result['kategoriPemasukan'] ?? '',
+                ),
+              );
+            });
+          }
+        },
+        backgroundColor: const Color(0xFF6366F1),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
       body: Column(
         children: [
@@ -432,7 +469,7 @@ class _SemuaPemasukanScreenState extends State<SemuaPemasukanScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    item.jenisPemasukan,
+                    item.jenisPemasukan ?? '-',
                     style: MoonTokens.light.typography.body.text12.copyWith(
                       color: Colors.grey[600],
                     ),

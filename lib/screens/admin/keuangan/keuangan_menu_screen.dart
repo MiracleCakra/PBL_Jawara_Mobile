@@ -24,6 +24,7 @@ class Keuangan extends StatefulWidget {
 
 class _KeuanganState extends State<Keuangan> {
   int _selectedYear = DateTime.now().year;
+  int? _selectedMonth;
   double _opacity = 0;
   int _selectedSegment = 0; // 0: Pemasukan, 1: Pengeluaran
 
@@ -33,6 +34,24 @@ class _KeuanganState extends State<Keuangan> {
     Future.delayed(const Duration(milliseconds: 180), () {
       if (mounted) setState(() => _opacity = 1);
     });
+  }
+
+  String _getMonthName(int month) {
+    const monthNames = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agt',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
+    return monthNames[month - 1];
   }
 
   Widget _buildSegmentButton(String label, int index) {
@@ -224,18 +243,91 @@ class _KeuanganState extends State<Keuangan> {
           Expanded(
             child: SingleChildScrollView(
               child: Column(
-                // Kembali ke Column standar
                 children: List.generate(10, (index) {
                   final year = DateTime.now().year - index;
                   return MoonMenuItem(
                     onTap: () {
-                      setState(() {
-                        _selectedYear = year;
-                      });
                       Navigator.pop(context);
+                      // Setelah memilih tahun, buka modal bulan
+                      _showMonthPicker(context, year);
                     },
                     label: Text('$year'),
                     trailing: year == _selectedYear
+                        ? const Icon(
+                            MoonIcons.generic_check_alternative_32_light,
+                          )
+                        : null,
+                  );
+                }),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<dynamic> _showMonthPicker(BuildContext context, int year) {
+    const monthNames = [
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
+    ];
+
+    return showMoonModalBottomSheet(
+      context: context,
+      enableDrag: true,
+      height: MediaQuery.of(context).size.height * 0.7,
+      builder: (BuildContext context) => Column(
+        children: [
+          Column(
+            children: [
+              Container(
+                height: 4,
+                width: 40,
+                margin: EdgeInsets.symmetric(vertical: 8),
+                decoration: ShapeDecoration(
+                  color: context.moonColors!.beerus,
+                  shape: MoonSquircleBorder(
+                    borderRadius: BorderRadius.circular(
+                      16,
+                    ).squircleBorderRadius(context),
+                  ),
+                ),
+              ),
+              Text(
+                'Pilih Bulan - $year',
+                style: MoonTokens.light.typography.heading.text14.copyWith(
+                  color: ConstantColors.foreground2,
+                ),
+              ),
+            ],
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: List.generate(12, (index) {
+                  final monthIndex = index + 1;
+                  return MoonMenuItem(
+                    onTap: () {
+                      setState(() {
+                        _selectedYear = year;
+                        _selectedMonth = monthIndex;
+                      });
+                      Navigator.pop(context);
+                    },
+                    label: Text(monthNames[index]),
+                    trailing:
+                        _selectedYear == year && _selectedMonth == monthIndex
                         ? const Icon(
                             MoonIcons.generic_check_alternative_32_light,
                           )
@@ -390,16 +482,6 @@ class _KeuanganState extends State<Keuangan> {
         onTap: () => context.push('/admin/pemasukan/tagihan'),
       ),
       MenuItem(
-        icon: Icons.attach_money_outlined,
-        label: 'Pemasukan Lain',
-        onTap: () => context.push('/admin/pemasukan/pemasukan-lain'),
-      ),
-      MenuItem(
-        icon: Icons.list_alt_outlined,
-        label: 'Daftar Pengeluaran',
-        onTap: () => context.push('/admin/pengeluaran/daftar'),
-      ),
-      MenuItem(
         icon: Icons.trending_down_outlined,
         label: 'Laporan Pemasukan',
         onTap: () => context.push('/admin/laporan/semua-pemasukan'),
@@ -429,8 +511,7 @@ class _KeuanganState extends State<Keuangan> {
     final row1Items = allMenuItems.sublist(0, 2);
     final row2Items = allMenuItems.sublist(2, 4);
     final row3Items = allMenuItems.sublist(4, 6);
-    final row4Items = allMenuItems.sublist(6, 8);
-    final row5Items = [allMenuItems[8]];
+    final row4Items = [allMenuItems[6]];
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
@@ -606,29 +687,6 @@ class _KeuanganState extends State<Keuangan> {
                             ),
                           ),
                           const SizedBox(width: 12),
-                          Expanded(
-                            child: quickButton(
-                              icon: row4Items[1].icon,
-                              label: row4Items[1].label,
-                              onTap: row4Items[1].onTap,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // Baris 5 Menu
-                      Row(
-                        children: [
-                          Expanded(
-                            child: quickButton(
-                              icon: row5Items[0].icon,
-                              label: row5Items[0].label,
-                              onTap: row5Items[0].onTap,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
                           const Expanded(child: SizedBox()),
                         ],
                       ),
@@ -646,16 +704,18 @@ class _KeuanganState extends State<Keuangan> {
                               color: Color(0xFF374151),
                             ),
                           ),
-                          // Dropdown Tahun
+                          // Dropdown Tahun dan Bulan
                           SizedBox(
-                            width: 100,
+                            width: 140,
                             child: MoonDropdown(
                               show: false,
                               content: const SizedBox.shrink(),
                               child: MoonTextInput(
                                 textInputSize: MoonTextInputSize.md,
                                 readOnly: true,
-                                hintText: _selectedYear.toString(),
+                                hintText: _selectedMonth != null
+                                    ? '${_getMonthName(_selectedMonth!)} $_selectedYear'
+                                    : _selectedYear.toString(),
                                 onTap: () => bottomSheetBuilder(context),
                                 trailing: Icon(
                                   MoonIcons
