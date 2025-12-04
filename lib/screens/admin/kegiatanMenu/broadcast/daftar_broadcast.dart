@@ -71,13 +71,16 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
     }
   }
 
-  void _navigateToDetail(BuildContext context, BroadcastModel data) {
-    Navigator.push(
+  void _navigateToDetail(BuildContext context, BroadcastModel data) async {
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => DetailBroadcastScreen(broadcastModel: data),
       ),
     );
+    if (result == true) {
+      _refreshData();
+    }
   }
 
   void _navigateToAddBroadcast() async {
@@ -101,6 +104,13 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
 Future<void> _deleteBroadcast(BroadcastModel broadcast) async {
   try {
     await _broadcastService.deleteBroadcast(broadcast.id!);
+    setState(() {
+      _broadcastStream = Stream.empty();
+    });
+    await Future.delayed(const Duration(milliseconds: 100));
+    setState(() {
+      _broadcastStream = _broadcastService.getBroadcastsStream();
+    });
     _refreshData(); 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
