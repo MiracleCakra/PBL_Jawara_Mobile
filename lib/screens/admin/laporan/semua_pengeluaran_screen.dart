@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:jawara_pintar_kel_5/models/keuangan/laporan_keuangan_model.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/laporan/detail_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/laporan/pengeluaran_tambah.dart';
 import 'package:jawara_pintar_kel_5/utils.dart'
     show formatDate, formatRupiah, openDateTimePicker;
 import 'package:moon_design/moon_design.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/laporan/detail_screen.dart';
 
 class SemuaPengeluaranScreen extends StatefulWidget {
   const SemuaPengeluaranScreen({super.key});
@@ -33,31 +34,43 @@ class _SemuaPengeluaranScreenState extends State<SemuaPengeluaranScreen> {
       tanggal: DateTime(2024, 1, 1),
       nama: "Pengeluaran 1",
       nominal: 100000,
+      jenisPengeluaran: 'Pengeluaran Rutin',
+      kategoriPengeluaran: 'Operasional',
     ),
     LaporanKeuanganModel(
       tanggal: DateTime(2024, 1, 3),
       nama: "Pengeluaran 2",
       nominal: 300000,
+      jenisPengeluaran: 'Pengeluaran Proyek',
+      kategoriPengeluaran: 'Pembangunan',
     ),
     LaporanKeuanganModel(
       tanggal: DateTime(2024, 1, 5),
       nama: "Pengeluaran 3",
       nominal: 400000,
+      jenisPengeluaran: 'Pengeluaran Rutin',
+      kategoriPengeluaran: 'Pemeliharaan',
     ),
     LaporanKeuanganModel(
       tanggal: DateTime(2024, 1, 7),
       nama: "Pengeluaran 4",
       nominal: 500000,
+      jenisPengeluaran: 'Pengeluaran Sosial',
+      kategoriPengeluaran: 'Kegiatan Sosial',
     ),
     LaporanKeuanganModel(
       tanggal: DateTime(2024, 1, 9),
       nama: "Pengeluaran 5",
       nominal: 600000,
+      jenisPengeluaran: 'Pengeluaran Rutin',
+      kategoriPengeluaran: 'Administrasi',
     ),
     LaporanKeuanganModel(
       tanggal: DateTime(2024, 1, 10),
       nama: "Pengeluaran 6",
       nominal: 700000,
+      jenisPengeluaran: 'Pengeluaran Rutin',
+      kategoriPengeluaran: 'Operasional',
     ),
   ];
 
@@ -109,6 +122,28 @@ class _SemuaPengeluaranScreenState extends State<SemuaPengeluaranScreen> {
                   ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final result = await Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const PengeluaranTambahScreen()),
+          );
+          if (result != null && result is Map<String, dynamic>) {
+            setState(() {
+              fakeData.add(
+                LaporanKeuanganModel(
+                  tanggal: result['tanggal'] ?? DateTime.now(),
+                  nama: result['nama'] ?? '',
+                  nominal: (result['nominal'] ?? 0).toInt(),
+                  jenisPengeluaran: result['jenisPengeluaran'] ?? '-',
+                  kategoriPengeluaran: result['kategoriPengeluaran'] ?? '',
+                ),
+              );
+            });
+          }
+        },
+        backgroundColor: const Color(0xFF6366F1),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
@@ -435,7 +470,7 @@ class _SemuaPengeluaranScreenState extends State<SemuaPengeluaranScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    item.jenisPemasukan,
+                    item.jenisPengeluaran ?? '-',
                     style: MoonTokens.light.typography.body.text12.copyWith(
                       color: Colors.grey[600],
                     ),

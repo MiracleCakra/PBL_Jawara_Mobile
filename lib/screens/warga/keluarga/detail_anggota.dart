@@ -35,7 +35,8 @@ class DetailAnggotaKeluargaPage extends StatelessWidget {
               ),
               title: const Text('Edit Data'),
               subtitle: const Text('Ubah informasi anggota keluarga'),
-              onTap: () => context.pushNamed("EditAnggotaKeluarga", extra: data),
+              onTap: () =>
+                  context.pushNamed("EditAnggotaKeluarga", extra: data),
             ),
             const SizedBox(height: 16),
           ],
@@ -62,7 +63,7 @@ class DetailAnggotaKeluargaPage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.more_vert),
             onPressed: () => _showOptionsBottomSheet(context, data),
-          )
+          ),
         ],
       ),
       body: ListView(
@@ -71,37 +72,97 @@ class DetailAnggotaKeluargaPage extends StatelessWidget {
           _buildHeader(data),
           const SizedBox(height: 20),
 
-          // FOTO KTP SECTION
-          _FotoKtpCard(fotoUrl: data.fotoKtp),
-
-          const SizedBox(height: 20),
           _SectionCard(
             title: "Data Diri",
             children: [
               _IconRow(icon: Icons.person, label: "Nama", value: data.nama),
+              _IconRow(icon: Icons.badge, label: "NIK", value: data.nik),
+              _IconRow(
+                icon: Icons.phone,
+                label: "Nomor Telepon",
+                value: data.telepon ?? "-",
+              ),
+              _IconRow(
+                icon: Icons.email,
+                label: "Email (Opsional)",
+                value: data.email ?? "-",
+              ),
+              _IconRow(
+                icon: Icons.location_city,
+                label: "Tempat Lahir",
+                value: data.tempatLahir ?? "-",
+              ),
               _IconRow(
                 icon: Icons.event,
-                label: "Tempat, Tanggal Lahir",
-                value: "${data.tempatLahir ?? '-'}, $formattedDate",
+                label: "Tanggal Lahir",
+                value: formattedDate,
               ),
-              _IconRow(icon: Icons.phone, label: "Telepon", value: data.telepon ?? "-"),
-              _IconRow(icon: Icons.people, label: "Jenis Kelamin", value: data.jenisKelamin ?? "-"),
-              _IconRow(icon: Icons.bloodtype, label: "Golongan Darah", value: data.golonganDarah ?? "-"),
-              _IconRow(icon: Icons.self_improvement, label: "Agama", value: data.agama ?? "-"),
             ],
           ),
 
           const SizedBox(height: 20),
           _SectionCard(
-            title: "Informasi Kependudukan",
+            title: "Atribut Personal",
             children: [
-              _IconRow(icon: Icons.school, label: "Pendidikan", value: data.pendidikanTerakhir ?? "-"),
-              _IconRow(icon: Icons.work, label: "Pekerjaan", value: data.pekerjaan ?? "-"),
-              _IconRow(icon: Icons.family_restroom, label: "Peran Keluarga", value: data.peranKeluarga ?? "-"),
-              _IconRow(icon: Icons.verified, label: "Status Penduduk", value: data.statusPenduduk ?? "-"),
-              _IconRow(icon: Icons.groups, label: "Nama Keluarga", value: data.namaKeluarga ?? "-"),
+              _IconRow(
+                icon: Icons.people,
+                label: "Jenis Kelamin",
+                value: data.jenisKelamin ?? "-",
+              ),
+              _IconRow(
+                icon: Icons.self_improvement,
+                label: "Agama",
+                value: data.agama ?? "-",
+              ),
+              _IconRow(
+                icon: Icons.bloodtype,
+                label: "Golongan Darah",
+                value: data.golonganDarah ?? "-",
+              ),
             ],
           ),
+
+          const SizedBox(height: 20),
+          _SectionCard(
+            title: "Peran & Latar Belakang",
+            children: [
+              _IconRow(
+                icon: Icons.family_restroom,
+                label: "Peran Keluarga",
+                value: data.peranKeluarga ?? "-",
+              ),
+              _IconRow(
+                icon: Icons.school,
+                label: "Pendidikan Terakhir",
+                value: data.pendidikanTerakhir ?? "-",
+              ),
+              _IconRow(
+                icon: Icons.work,
+                label: "Pekerjaan",
+                value: data.pekerjaan ?? "-",
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+          _SectionCard(
+            title: "Status",
+            children: [
+              _IconRow(
+                icon: Icons.favorite,
+                label: "Status Hidup",
+                value: data.statusHidup ?? "-",
+              ),
+              _IconRow(
+                icon: Icons.verified,
+                label: "Status Kependudukan",
+                value: data.statusPenduduk ?? "-",
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+          _FotoKKCard(fotoUrl: data.namaKeluarga),
         ],
       ),
     );
@@ -113,7 +174,9 @@ class DetailAnggotaKeluargaPage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(12)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Row(
         children: [
           CircleAvatar(
@@ -130,69 +193,79 @@ class DetailAnggotaKeluargaPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("Nama Lengkap",
-                    style: TextStyle(fontSize: 12, color: Colors.grey)),
-                Text(data.nama,
-                    style: const TextStyle(
-                        fontSize: 20, fontWeight: FontWeight.bold)),
-                Text("NIK: ${data.nik}",
-                    style: const TextStyle(
-                        fontSize: 12, color: Colors.black54)),
+                const Text(
+                  "Nama Lengkap",
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                Text(
+                  data.nama,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  "NIK: ${data.nik}",
+                  style: const TextStyle(fontSize: 12, color: Colors.black54),
+                ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
   }
 }
 
-// ================= FOTO KTP CARD ================= 
+// ================= FOTO KK CARD =================
 
-class _FotoKtpCard extends StatelessWidget {
+class _FotoKKCard extends StatelessWidget {
   final String? fotoUrl;
 
-  const _FotoKtpCard({required this.fotoUrl});
+  const _FotoKKCard({required this.fotoUrl});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(12)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Foto KTP / Identitas",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 12),
+          const Text(
+            "Foto Kartu Keluarga",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const Divider(height: 20),
 
           // Jika tidak ada foto
           if (fotoUrl == null || fotoUrl!.isEmpty)
             Container(
-              height: 180,
+              height: 160,
               decoration: BoxDecoration(
                 color: Colors.grey.shade200,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Center(
-                child: Text("Tidak ada foto KTP"),
-              ),
+              child: const Center(child: Text("Tidak ada foto kartu keluarga")),
             )
           else
             GestureDetector(
               onTap: () {
                 Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) =>
-                            _ImagePreviewPage(imageUrl: fotoUrl!)));
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => _ImagePreviewPage(imageUrl: fotoUrl!),
+                  ),
+                );
               },
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Image.network(
                   fotoUrl!,
-                  height: 180,
+                  height: 160,
                   width: double.infinity,
                   fit: BoxFit.cover,
                 ),
@@ -219,16 +292,12 @@ class _ImagePreviewPage extends StatelessWidget {
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
       ),
-      body: Center(
-        child: InteractiveViewer(
-          child: Image.network(imageUrl),
-        ),
-      ),
+      body: Center(child: InteractiveViewer(child: Image.network(imageUrl))),
     );
   }
 }
 
-// ================= SECTION CARD ================= 
+// ================= SECTION CARD =================
 
 class _SectionCard extends StatelessWidget {
   final String title;
@@ -240,11 +309,17 @@ class _SectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
           const Divider(height: 20),
           ...children,
         ],
@@ -253,14 +328,18 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
-// ================= ROW DENGAN ICON ================= 
+// ================= ROW DENGAN ICON =================
 
 class _IconRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
 
-  const _IconRow({required this.icon, required this.label, required this.value});
+  const _IconRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -274,11 +353,14 @@ class _IconRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(
+                  label,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
                 Text(value),
               ],
             ),
-          )
+          ),
         ],
       ),
     );

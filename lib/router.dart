@@ -62,7 +62,7 @@ import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/detail_pemasukan_lai
 // Pemasukan
 import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/kategori_iuran_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/pemasukan_lain_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/pemasukan_lain_tambah_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/laporan/pemasukan_lain_tambah_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/pemasukan_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/tagih_iuran_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/tagihan_screen.dart';
