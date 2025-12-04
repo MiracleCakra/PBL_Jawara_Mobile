@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jawara_pintar_kel_5/models/keuangan/channel_transfer_model.dart';
+import 'package:jawara_pintar_kel_5/services/channel_transfer_service.dart'; // Sesuaikan path
 
 class ChannelTransferScreen extends StatefulWidget {
   const ChannelTransferScreen({super.key});
@@ -12,40 +14,51 @@ class _ChannelTransferScreenState extends State<ChannelTransferScreen> {
   final Color primary = const Color(0xFF4E46B4);
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
+  final ChannelTransferService _channelService = ChannelTransferService();
+  late Stream<List<ChannelTransferModel>> _channelStream;
+  
   String _query = '';
+  String? _selectedTypeFilter;
 
-  final List<Map<String, String>> _channels = [
-    {
-      'name': 'Transfer BCA',
-      'type': 'Bank',
-      'account': '4391061615',
-      'owner': 'Rafa Fadil Aras',
-      'notes': 'Transfer hanya dari bank yang sama',
-    },
-    {
-      'name': 'QRIS RT.08',
-      'type': 'QRIS',
-      'account': '9876538291',
-      'owner': 'RT8Karangploso',
-      'notes': 'Scan QRIS RT.08',
-    },
-    {
-      'name': 'Gopay Ketua RT 8',
-      'type': 'e-wallet',
-      'account': '081234567890',
-      'owner': 'Budi Santoso',
-      'notes': '-',
-    },
-  ];
+  void _refreshData() {
+    setState(() {
+      _channelStream = const Stream.empty();
+    });
+
+    Future.delayed(const Duration(milliseconds: 50), () {
+      setState(() {
+        _channelStream = _channelService.getChannelsStream(); 
+      });
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _channelStream = _channelService.getChannelsStream();
+  }
+
+  List<ChannelTransferModel> _applyFilter(List<ChannelTransferModel> data) {
+    return data.where((channel) {
+      final searchLower = _query.toLowerCase();
+      final matchesSearch = channel.nama.toLowerCase().contains(searchLower) ||
+          channel.pemilik.toLowerCase().contains(searchLower);
+      final matchesType = _selectedTypeFilter == null || 
+          channel.tipe.toLowerCase() == _selectedTypeFilter!.toLowerCase();
+
+      return matchesSearch && matchesType;
+    }).toList();
+  }
 
   void _openFilter() {
-    String? channelType;
+    String? tempType = _selectedTypeFilter;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (c) {
         final bottom = MediaQuery.of(c).viewInsets.bottom;
         return Padding(
@@ -71,20 +84,24 @@ class _ChannelTransferScreenState extends State<ChannelTransferScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      const Text('Filter Channel Transfer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                      const Text('Filter Channel Transfer',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 16),
-                      const Text('Tipe Channel', style: TextStyle(fontWeight: FontWeight.w600)),
+                      const Text('Tipe Channel',
+                          style: TextStyle(fontWeight: FontWeight.w600)),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
-                        value: channelType,
+                        value: tempType,
                         isExpanded: true,
                         decoration: _dropdownDecoration(),
                         items: const [
                           DropdownMenuItem(value: 'Bank', child: Text('Bank')),
                           DropdownMenuItem(value: 'QRIS', child: Text('QRIS')),
-                          DropdownMenuItem(value: 'e-wallet', child: Text('E-Wallet')),
+                          DropdownMenuItem(
+                              value: 'e-wallet', child: Text('E-Wallet')),
                         ],
-                        onChanged: (v) => setModalState(() => channelType = v),
+                        onChanged: (v) => setModalState(() => tempType = v),
                       ),
                       const SizedBox(height: 20),
                       Row(
@@ -93,16 +110,19 @@ class _ChannelTransferScreenState extends State<ChannelTransferScreen> {
                             child: OutlinedButton(
                               style: OutlinedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(vertical: 14),
-                                side: const BorderSide(color: Color.fromRGBO(78, 70, 180, 0.12)),
+                                side: const BorderSide(
+                                    color: Color.fromRGBO(78, 70, 180, 0.12)),
                                 backgroundColor: const Color(0xFFF4F3FF),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
                               ),
                               onPressed: () {
                                 setModalState(() {
-                                  channelType = null;
+                                  tempType = null;
                                 });
                               },
-                              child: const Text('Reset Filter', style: TextStyle(fontWeight: FontWeight.w600)),
+                              child: const Text('Reset Filter',
+                                  style: TextStyle(fontWeight: FontWeight.w600)),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -112,12 +132,17 @@ class _ChannelTransferScreenState extends State<ChannelTransferScreen> {
                                 backgroundColor: const Color(0xFF4E46B4),
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
                               ),
                               onPressed: () {
+                                setState(() {
+                                  _selectedTypeFilter = tempType;
+                                });
                                 Navigator.pop(context);
                               },
-                              child: const Text('Terapkan', style: TextStyle(fontWeight: FontWeight.w600)),
+                              child: const Text('Terapkan',
+                                  style: TextStyle(fontWeight: FontWeight.w600)),
                             ),
                           ),
                         ],
@@ -153,15 +178,6 @@ class _ChannelTransferScreenState extends State<ChannelTransferScreen> {
     );
   }
 
-  List<Map<String, String>> get _filtered {
-    if (_query.isEmpty) return _channels;
-    return _channels
-        .where((e) =>
-            (e['name']?.toLowerCase().contains(_query.toLowerCase()) ?? false) ||
-            (e['owner']?.toLowerCase().contains(_query.toLowerCase()) ?? false))
-        .toList();
-  }
-
   @override
   void dispose() {
     _searchFocusNode.dispose();
@@ -192,8 +208,9 @@ class _ChannelTransferScreenState extends State<ChannelTransferScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          context.push('/admin/lainnya/manajemen-channel/tambah');
+        onPressed: () async {
+          await context.push('/admin/lainnya/manajemen-channel/tambah');
+          _refreshData();
         },
         backgroundColor: primary,
         foregroundColor: Colors.white,
@@ -226,26 +243,50 @@ class _ChannelTransferScreenState extends State<ChannelTransferScreen> {
               onFilterTap: _openFilter,
             ),
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: ListView.separated(
-                  padding: const EdgeInsets.only(bottom: 16, top: 8),
-                  itemCount: _filtered.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final channel = _filtered[index];
-                    return _ChannelCard(
-                      channel: channel,
-                      primary: primary,
-                      onTap: () {
-                        context.push(
-                          '/admin/lainnya/channel-transfer/detail',
-                          extra: channel,
+              child: StreamBuilder<List<ChannelTransferModel>>(
+                stream: _channelStream,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  
+                  if (snapshot.hasError) {
+                    return Center(child: Text("Error: ${snapshot.error}"));
+                  }
+
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Center(child: Text("Belum ada channel transfer."));
+                  }
+
+                  final filteredList = _applyFilter(snapshot.data!);
+
+                  if (filteredList.isEmpty) {
+                    return const Center(child: Text("Tidak ada data yang cocok."));
+                  }
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: ListView.separated(
+                      padding: const EdgeInsets.only(bottom: 80, top: 8),
+                      itemCount: filteredList.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        final channel = filteredList[index];
+                        return _ChannelCard(
+                          channel: channel, // Kirim object model
+                          primary: primary,
+                          onTap: () async {
+                            await context.push(
+                              '/admin/lainnya/channel-transfer/detail',
+                              extra: channel,
+                            );
+                            _refreshData();
+                          },
                         );
                       },
-                    );
-                  },
-                ),
+                    ),
+                  );
+                },
               ),
             ),
           ],
@@ -291,9 +332,9 @@ class _SearchFilterBar extends StatelessWidget {
                 onTap: () => focusNode.requestFocus(),
                 decoration: InputDecoration(
                   prefixIcon: Icon(Icons.search, size: 20, color: Colors.grey[600]),
-                  hintText: 'Cari Berdasarkan Nama Pengguna...',
+                  hintText: 'Cari Nama Channel / Pemilik...',
                   hintStyle: TextStyle(color: Colors.grey[500]),
-                  border: InputBorder.none, // Hapus border default TextField
+                  border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
                 ),
               ),
@@ -310,7 +351,6 @@ class _SearchFilterBar extends StatelessWidget {
                 padding: const EdgeInsets.all(10.0),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  // --- Tambahkan garis tepi tegas di sini ---
                   border: Border.all(color: Colors.grey.shade400, width: 1.0),
                   boxShadow: const [
                     BoxShadow(color: Color.fromRGBO(0, 0, 0, 0.03), blurRadius: 8),
@@ -327,7 +367,7 @@ class _SearchFilterBar extends StatelessWidget {
 }
 
 class _ChannelCard extends StatelessWidget {
-  final Map<String, String> channel;
+  final ChannelTransferModel channel;
   final Color primary;
   final VoidCallback? onTap;
 
@@ -342,9 +382,9 @@ class _ChannelCard extends StatelessWidget {
       case 'bank':
         return const Color(0xFF4E46B4);
       case 'qris':
-        return const Color(0xFF4E46B4);
+        return Colors.orange.shade700;
       case 'e-wallet':
-        return const Color(0xFF4E46B4);
+        return Colors.green.shade700;
       default:
         return const Color(0xFF4E46B4);
     }
@@ -379,7 +419,7 @@ class _ChannelCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      channel['name'] ?? '-',
+                      channel.nama, // Panggil properti model
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -388,7 +428,7 @@ class _ChannelCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      channel['owner'] ?? '-',
+                      channel.pemilik, // Panggil properti model
                       style: TextStyle(fontSize: 14, color: Colors.grey[700]),
                     ),
                   ],
@@ -397,11 +437,11 @@ class _ChannelCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: _getTypeColor(channel['type'] ?? ''),
+                  color: _getTypeColor(channel.tipe),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  channel['type'] ?? '-',
+                  channel.tipe,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,

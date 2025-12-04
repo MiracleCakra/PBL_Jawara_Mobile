@@ -1,21 +1,53 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jawara_pintar_kel_5/models/keuangan/channel_transfer_model.dart'; // Sesuaikan path model
+import 'package:jawara_pintar_kel_5/services/channel_transfer_service.dart'; // Sesuaikan path service
 
-class DetailChannelPage extends StatelessWidget {
-  final Map<String, String> channelData;
+class DetailChannelPage extends StatefulWidget {
+  final ChannelTransferModel channel; // Ganti Map jadi Model
+  const DetailChannelPage({super.key, required this.channel});
+  @override
+  State<DetailChannelPage> createState() => _DetailChannelPageState();
+}
 
-  const DetailChannelPage({super.key, required this.channelData});
+class _DetailChannelPageState extends State<DetailChannelPage> {
+  final ChannelTransferService _service = ChannelTransferService();
+  bool _isDeleting = false;
 
   void _navigateToEdit(BuildContext context) {
-    context.push('/admin/lainnya/channel-transfer/edit', extra: channelData);
+    context.push('/admin/lainnya/channel-transfer/edit', extra: widget.channel);
+  }
+
+  Future<void> _deleteChannel() async {
+    setState(() => _isDeleting = true);
+    try {
+      await _service.deleteChannel(widget.channel.id!);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Channel "${widget.channel.nama}" telah dihapus.'),
+            backgroundColor: const Color(0xFF2E2B32),
+          ),
+        );
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isDeleting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal menghapus: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _showDeleteDialog(BuildContext context) {
-    final namaChannel = channelData['name'] ?? 'Channel Transfer';
-
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -25,7 +57,7 @@ class DetailChannelPage extends StatelessWidget {
             style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
           ),
           content: Text(
-            'Apakah Anda yakin ingin menghapus channel "$namaChannel"? Aksi ini tidak dapat dibatalkan.',
+            'Apakah Anda yakin ingin menghapus channel "${widget.channel.nama}"? Aksi ini tidak dapat dibatalkan.',
           ),
           actionsAlignment: MainAxisAlignment.center,
           actions: [
@@ -40,16 +72,13 @@ class DetailChannelPage extends StatelessWidget {
                   vertical: 12,
                 ),
               ),
-              onPressed: () {
-                Navigator.pop(context);
-              },
+              onPressed: () => Navigator.pop(dialogContext),
               child: const Text('Batal', style: TextStyle(color: Colors.white)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
                 foregroundColor: Colors.white,
-                side: const BorderSide(color: Colors.red),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -59,22 +88,13 @@ class DetailChannelPage extends StatelessWidget {
                 ),
               ),
               onPressed: () {
-                Navigator.pop(context);
-                context.pop();
-                
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Channel "$namaChannel" telah dihapus.'),
-                    backgroundColor: const Color(0xFF2E2B32),
-                  ),
-                );
+                // PERBAIKAN DISINI:
+                Navigator.pop(dialogContext); // 1. Tutup Dialog SECARA LANGSUNG
+                _deleteChannel(); // 2. Baru jalankan proses hapus di background
               },
               child: const Text(
                 'Hapus',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -90,62 +110,60 @@ class DetailChannelPage extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (BuildContext bc) {
-        return Container(
-          padding: const EdgeInsets.only(top: 8.0, bottom: 20.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              // Judul "Opsi"
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  child: Column(
-                    children: [
-                      // Handle Bar
-                      Container(
-                        width: 40,
-                        height: 5,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[300],
-                          borderRadius: BorderRadius.circular(10),
+        return SafeArea(
+          child: Container(
+            padding: const EdgeInsets.only(top: 8.0, bottom: 20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Opsi',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Opsi',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              const Divider(height: 1, thickness: 1, color: Colors.grey),
-
-              _buildOptionTile(
-                icon: Icons.edit_rounded,
-                color: const Color(0xFF4E46B4),
-                title: 'Edit Data',
-                subtitle: 'Ubah detail channel transfer',
-                onTap: () {
-                  Navigator.pop(bc);
-                  _navigateToEdit(context);
-                },
-              ),
-              _buildOptionTile(
-                icon: Icons.delete_forever,
-                color: Colors.red.shade600,
-                title: 'Hapus Data',
-                subtitle: 'Hapus channel ini secara permanen',
-                onTap: () {
-                  Navigator.pop(bc);
-                  _showDeleteDialog(context);
-                },
-              ),
-            ],
+                const Divider(height: 1, thickness: 1, color: Colors.grey),
+                _buildOptionTile(
+                  icon: Icons.edit_rounded,
+                  color: const Color(0xFF4E46B4),
+                  title: 'Edit Data',
+                  subtitle: 'Ubah detail channel transfer',
+                  onTap: () {
+                    Navigator.pop(bc);
+                    _navigateToEdit(context);
+                  },
+                ),
+                _buildOptionTile(
+                  icon: Icons.delete_forever,
+                  color: Colors.red.shade600,
+                  title: 'Hapus Data',
+                  subtitle: 'Hapus channel ini secara permanen',
+                  onTap: () {
+                    Navigator.pop(bc);
+                    _showDeleteDialog(context);
+                  },
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -165,7 +183,6 @@ class DetailChannelPage extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
         child: Row(
           children: [
-            // Ikon dengan latar belakang ringan
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
@@ -181,9 +198,10 @@ class DetailChannelPage extends StatelessWidget {
                 Text(
                   title,
                   style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: title.contains('Hapus') ? color : Colors.black), 
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: title.contains('Hapus') ? color : Colors.black,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -197,8 +215,6 @@ class DetailChannelPage extends StatelessWidget {
       ),
     );
   }
-
-  // --- WIDGET DETAIL STANDAR ---
 
   Widget _buildDetailItem({required String label, required String value}) {
     return Column(
@@ -214,11 +230,8 @@ class DetailChannelPage extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          value,
-          style: TextStyle(
-            fontSize: 15,
-            color: Colors.grey.shade700,
-          ),
+          value.isEmpty ? '-' : value,
+          style: TextStyle(fontSize: 15, color: Colors.grey.shade700),
         ),
       ],
     );
@@ -226,6 +239,7 @@ class DetailChannelPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final data = widget.channel;
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7FB),
       appBar: AppBar(
@@ -278,18 +292,19 @@ class DetailChannelPage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
                           child: _buildDetailItem(
                             label: 'Nama Channel',
-                            value: channelData['name'] ?? '-',
+                            value: data.nama,
                           ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
                           child: _buildDetailItem(
                             label: 'Tipe Channel',
-                            value: channelData['type'] ?? '-',
+                            value: data.tipe,
                           ),
                         ),
                       ],
@@ -297,18 +312,74 @@ class DetailChannelPage extends StatelessWidget {
                     const SizedBox(height: 20),
                     _buildDetailItem(
                       label: 'Nomor Rekening / Akun',
-                      value: channelData['account'] ?? '-',
+                      value: data.norek,
                     ),
                     const SizedBox(height: 20),
                     _buildDetailItem(
                       label: 'Nama Pemilik',
-                      value: channelData['owner'] ?? '-',
+                      value: data.pemilik,
                     ),
                     const SizedBox(height: 20),
-                    _buildDetailItem(
-                      label: 'Catatan',
-                      value: channelData['notes'] ?? '-',
-                    ),
+                    _buildDetailItem(label: 'Catatan', value: data.catatan),
+
+                    // --- TAMPILKAN QRIS JIKA ADA ---
+                    if (data.qrisImg != null && data.qrisImg!.isNotEmpty) ...[
+                      const SizedBox(height: 20),
+                      const Divider(),
+                      const SizedBox(height: 10),
+                      const Text(
+                        "QR Code / QRIS",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Center(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            data.qrisImg!,
+                            height: 250,
+                            fit: BoxFit.contain,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                height: 250,
+                                width: 250,
+                                color: Colors.grey[100],
+                                child: const Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                height: 200,
+                                width: double.infinity,
+                                color: Colors.grey[200],
+                                child: const Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.broken_image,
+                                      color: Colors.grey,
+                                      size: 40,
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      "Gagal memuat gambar QR",
+                                      style: TextStyle(color: Colors.grey),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
