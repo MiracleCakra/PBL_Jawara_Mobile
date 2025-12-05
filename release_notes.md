@@ -1,50 +1,47 @@
-# Release Notes - Version 1.5.2
+# Release Notes - Version 1.6.1
 
 🚀 **New Features**:
 
-* **Iuran and Tagihan Features**:
+* **Registration Update**:
 
-  * Implemented new iuran and tagihan management functionality.
-  * **iuran_model**: Manages iuran data and operations with Supabase integration.
+  * Added personal data fields and status kependudukan to the registration flow for more complete resident data.
 
-    * Fetch, save, and edit iuran data.
-    * Fetch iuran names for tagihan creation.
-    * Save tagihan for all families.
-  * **tagihan_model**: Manages tagihan data and operations with Supabase integration.
+  * **Anggota Keluarga**
 
-    * Fetch tagihan data for streamlined management.
+    * Add Family Member
+    * Added new fields for personal data and population status.
+    * Improved validation and data handling.
 
-* **Detail Tagihan Screen**:
+  * **Family Member Details**
 
-  * Added functionality for approving and rejecting payments via Supabase integration.
+    * Updated detail view to display personal data and population status accurately.
 
-* **Edit Iuran Screen**:
+* **Edit Family Member**:
 
-  * Improved screen to allow real-time editing of iuran data synced with Supabase.
+  * Enabled editing of personal data and population status.
+  * Improved form logic and data synchronization.
 
-* **Kategori Iuran Screen**:
+* **Transfer channel**:
 
-  * Now dynamically fetches iuran data from Supabase for up-to-date information.
+  * Added a new Transfer Channel Selection feature on the Detail Tagihan screen.
+  * Users can now choose the preferred transfer/payment channel.
+  
+* **UI Improvement: Status Dropdown in Citizen Messages**:
 
-* **Tagih Iuran Screen**:
-
-  * Optimized process to tagih iuran for all families with improved backend support.
-
-* **Tagihan Screen**:
-
-  * Updated to fetch tagihan data directly from Supabase for better data consistency.
-
-* **Tambah Iuran Screen**:
-
-  * Enhanced for adding new iuran data to Supabase, improving user experience.
+  * Improved the status dropdown UI in the Citizen Messages page.
 
 🐛 **Bug Fixes**:
 
-* Fixed multiple alignment issues across various admin and management screens.
-* Corrected misaligned widgets on smaller devices.
-* Resolved overflow text and inconsistent spacing in certain areas.
+* Fixed incorrect route in detail penerimaan warga, ensuring correct navigation.
+* Improved the Edit Profil screen: Fixed UI issues.
+* Fixed and refined the Keluar / Logout menu so it behaves correctly.
+* Resolved multiple alignment, spacing, and overflow issues in admin and management screens.
 
 🔧 **Miscellaneous**:
 
-* Refactored code across iuran and tagihan-related pages for better structure and easier maintenance.
-* Updated Supabase integration for better data handling and improved system performance.
+* Refactored multiple screens related to iuran, tagihan, and family member management for cleaner and more maintainable code.
+* Improved UI consistency across several pages, including updated layouts, spacing, and component alignment.
+* Enhanced stability of navigation flows, including fixing incorrect routes in citizen payment details.
+* Improved dropdown behavior and styling, including the status dropdown on the Citizen Messages page.
+* Updated payment-related components, including support improvements for the new transfer channel selection feature.
+* General performance optimizations and cleanup for smoother user experience.

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:jawara_pintar_kel_5/models/kegiatan/aspirasi_model.dart';
 import 'package:jawara_pintar_kel_5/services/aspirasi_service.dart';
-import 'edit_pesan_warga_screen.dart';
 
 class DetailPesanWargaScreen extends StatefulWidget {
   final AspirasiModel pesan;
@@ -62,9 +61,9 @@ class _DetailPesanWargaScreenState extends State<DetailPesanWargaScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memperbarui status: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal memperbarui status: $e')));
       }
     } finally {
       if (mounted) {
@@ -79,9 +78,12 @@ class _DetailPesanWargaScreenState extends State<DetailPesanWargaScreen> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text('Konfirmasi ${newStatus == 'Diterima' ? 'Penerimaan' : 'Penolakan'}'),
+        title: Text(
+          'Konfirmasi ${newStatus == 'Diterima' ? 'Penerimaan' : 'Penolakan'}',
+        ),
         content: Text(
-            'Anda yakin ingin ${newStatus == 'Diterima' ? 'menerima' : 'menolak'} aspirasi ini?'),
+          'Anda yakin ingin ${newStatus == 'Diterima' ? 'menerima' : 'menolak'} aspirasi ini?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
@@ -93,7 +95,9 @@ class _DetailPesanWargaScreenState extends State<DetailPesanWargaScreen> {
               _updateStatus(newStatus);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: newStatus == 'Diterima' ? Colors.green : Colors.red,
+              backgroundColor: newStatus == 'Diterima'
+                  ? Colors.green
+                  : Colors.red,
             ),
             child: Text(newStatus == 'Diterima' ? 'Terima' : 'Tolak'),
           ),
@@ -116,7 +120,7 @@ class _DetailPesanWargaScreenState extends State<DetailPesanWargaScreen> {
         elevation: 0,
         foregroundColor: Colors.black,
         title: const Text(
-          'Detail Informasi / Aspirasi Warga',
+          'Detail Pesan Warga',
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
         ),
       ),
@@ -135,31 +139,73 @@ class _DetailPesanWargaScreenState extends State<DetailPesanWargaScreen> {
         ),
       ),
       bottomNavigationBar: status == 'Pending'
-          ? Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : () => _showConfirmationDialog('Ditolak'),
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                      child: const Text('Tolak'),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : () => _showConfirmationDialog('Diterima'),
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                      child: const Text('Terima'),
-                    ),
+          ? Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, -2),
                   ),
                 ],
+              ),
+              child: SafeArea(
+                top: false,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: _isLoading
+                            ? null
+                            : () => _showConfirmationDialog('Ditolak'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: const BorderSide(color: Colors.red, width: 1.5),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Tolak',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                            color: Colors.red,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _isLoading
+                            ? null
+                            : () => _showConfirmationDialog('Diterima'),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          backgroundColor: const Color(0xFF16A34A),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'Diterima',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             )
           : null,
     );
   }
 }
-
- 

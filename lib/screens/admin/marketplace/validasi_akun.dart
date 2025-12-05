@@ -390,31 +390,22 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: unguColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.storefront,
-                        color: unguColor,
-                        size: 28,
+                    const Text(
+                      'Detail Toko',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Text(
-                        'Detail Pendaftaran Toko',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
                     ),
                   ],
                 ),
+                const Divider(),
                 const SizedBox(height: 20),
                 _buildDetailRow('ID Pendaftaran', item.id),
                 _buildDetailRow('Nama Toko', item.storeName),
@@ -434,17 +425,20 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
                   Row(
                     children: [
                       Expanded(
-                        child: OutlinedButton.icon(
+                        child: ElevatedButton.icon(
                           onPressed: () {
                             Navigator.pop(context);
                             _handleReject(item);
                           },
                           icon: const Icon(Icons.close, size: 18),
                           label: const Text('Tolak'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.red,
-                            side: const BorderSide(color: Colors.red),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
                         ),
                       ),
@@ -461,23 +455,13 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
                             backgroundColor: unguColor,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
                         ),
                       ),
                     ],
-                  )
-                else
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey.shade300,
-                        foregroundColor: Colors.black87,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: const Text('Tutup'),
-                    ),
                   ),
               ],
             ),
@@ -513,8 +497,8 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
               color: Color(0xFF1F2937),
               fontWeight: FontWeight.w600,
             ),
-            maxLines: isMultiline ? null : 1,
-            overflow: isMultiline ? null : TextOverflow.ellipsis,
+            maxLines: isMultiline ? 5 : 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -580,7 +564,7 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('Toko "${item.storeName}" telah ditolak'),
-                  backgroundColor: Colors.red,
+                  backgroundColor: Colors.grey.shade800,
                 ),
               );
             },

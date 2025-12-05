@@ -52,6 +52,7 @@ import 'package:jawara_pintar_kel_5/screens/admin/lainnya/pengguna/edit_pengguna
 import 'package:jawara_pintar_kel_5/screens/admin/lainnya/pengguna/tambah_pengguna.dart';
 // ========================= LAPORAN =========================
 import 'package:jawara_pintar_kel_5/screens/admin/laporan/cetak_laporan_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/laporan/pemasukan_lain_tambah_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/laporan/semua_pemasukan_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/laporan/semua_pengeluaran_screen.dart';
 // Layout
@@ -63,7 +64,6 @@ import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/detail_pemasukan_lai
 // Pemasukan
 import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/kategori_iuran_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/pemasukan_lain_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/laporan/pemasukan_lain_tambah_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/pemasukan_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/tagih_iuran_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/tagihan_screen.dart';
@@ -171,7 +171,9 @@ import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/tambah_pr
 // Profil
 import 'package:jawara_pintar_kel_5/screens/warga/profil/profil_menu.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/profil/profil_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/profil/edit_profil.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/profil/pusat_bantuan.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/profil/pengaturan_akun.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/profil/reset_pw_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/profil/tentang_apk.dart';
 
@@ -1253,8 +1255,13 @@ final router = GoRouter(
                           path: 'bayar',
                           name: 'FormPembayaranWarga',
                           builder: (context, state) {
-                            final tagihan = state.extra as WargaTagihanModel;
-                            return FormPembayaranScreen(tagihan: tagihan);
+                            final data = state.extra as Map<String, dynamic>;
+                            final tagihan = data['tagihan'] as WargaTagihanModel;
+                            final channel = data['channel'] as Map<String, String>?;
+                            return FormPembayaranScreen(
+                              tagihan: tagihan,
+                              channel: channel,
+                            );
                           },
                         ),
                       ],
@@ -1619,12 +1626,12 @@ final router = GoRouter(
                 ),
                 GoRoute(
                   path: 'edit-data',
-                  builder: (context, state) => const EditStoreProfileScreen(),
+                  builder: (context, state) => const WargaEditDataDiriScreen(),
                 ),
                 GoRoute(
                   path: 'pengaturan',
                   name: 'WargaPengaturanAkun',
-                  builder: (context, state) => const MyStoreSettingsScreen(),
+                  builder: (context, state) => const PengaturanAkunScreen(),
                   routes: [
                     GoRoute(
                       path: 'ganti-password',

@@ -34,28 +34,49 @@ class _EditAnggotaPageState extends State<EditAnggotaPage> {
   String? _statusPenduduk;
   String? _statusHidup;
 
+  // Rumah Saat Ini
+  String? _rumahSaatIni;
+  final TextEditingController _rumahManualCtl = TextEditingController();
+  bool _isRumahManual = false;
+
   bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
-    final a = widget.anggota;
+    try {
+      final a = widget.anggota;
 
-    _nikCtl = TextEditingController(text: a.nik);
-    _namaCtl = TextEditingController(text: a.nama);
-    _tempatLahirCtl = TextEditingController(text: a.tempatLahir ?? "");
-    _teleponCtl = TextEditingController(text: a.telepon ?? "");
-    _emailCtl.text = a.email ?? "";
+      _nikCtl = TextEditingController(text: a.nik ?? '');
+      _namaCtl = TextEditingController(text: a.nama ?? '');
+      _tempatLahirCtl = TextEditingController(text: a.tempatLahir ?? "");
+      _teleponCtl = TextEditingController(text: a.telepon ?? "");
+      _emailCtl.text = a.email ?? "";
 
-    _tanggalLahir = a.tanggalLahir;
-    _jenisKelamin = a.jenisKelamin;
-    _agama = a.agama;
-    _golDarah = a.golonganDarah;
-    _pendidikan = a.pendidikanTerakhir;
-    _pekerjaan = a.pekerjaan;
-    _peranKeluarga = a.peranKeluarga;
-    _statusPenduduk = a.statusPenduduk;
-    _statusHidup = a.statusHidup;
+      _tanggalLahir = a.tanggalLahir;
+      _jenisKelamin = a.jenisKelamin;
+      _agama = a.agama;
+      _golDarah = a.golonganDarah;
+      _pendidikan = a.pendidikanTerakhir;
+      _pekerjaan = a.pekerjaan;
+      _peranKeluarga = a.peranKeluarga;
+      _statusPenduduk = a.statusPenduduk;
+      _statusHidup = a.statusHidup;
+      _rumahSaatIni = a.rumahSaatIni;
+
+      // Set manual mode if rumahSaatIni doesn't match predefined options
+      if (_rumahSaatIni != null &&
+          _rumahSaatIni != 'Blok A No. 1' &&
+          _rumahSaatIni != 'Blok A No. 2' &&
+          _rumahSaatIni != 'Blok B No. 1') {
+        _isRumahManual = true;
+        _rumahManualCtl.text = _rumahSaatIni!;
+        _rumahSaatIni = null;
+      }
+    } catch (e) {
+      debugPrint('Error initializing edit form: $e');
+      // Jika ada error, tetap lanjut dengan nilai default
+    }
   }
 
   Future<void> _updateAnggota() async {
@@ -94,6 +115,7 @@ class _EditAnggotaPageState extends State<EditAnggotaPage> {
     _tempatLahirCtl.dispose();
     _teleponCtl.dispose();
     _emailCtl.dispose();
+    _rumahManualCtl.dispose();
     super.dispose();
   }
 
@@ -159,6 +181,58 @@ class _EditAnggotaPageState extends State<EditAnggotaPage> {
                 placeholder: "Pilih Tanggal",
                 onDateSelected: (d) => setState(() => _tanggalLahir = d),
               ),
+              const SizedBox(height: 8),
+              if (!_isRumahManual)
+                LabeledDropdown<String>(
+                  label: "Rumah Saat ini",
+                  value: _rumahSaatIni,
+                  onChanged: (v) {
+                    setState(() {
+                      if (v == 'manual') {
+                        _isRumahManual = true;
+                        _rumahSaatIni = null;
+                      } else {
+                        _rumahSaatIni = v;
+                      }
+                    });
+                  },
+                  items: const [
+                    DropdownMenuItem(
+                      value: null,
+                      child: Text('-- Pilih Rumah --'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Blok A No. 1',
+                      child: Text('Blok A No. 1'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Blok A No. 2',
+                      child: Text('Blok A No. 2'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Blok B No. 1',
+                      child: Text('Blok B No. 1'),
+                    ),
+                    DropdownMenuItem(value: 'manual', child: Text('Lainnya')),
+                  ],
+                )
+              else ...[
+                LabeledTextField(
+                  label: "Rumah Saat Ini",
+                  controller: _rumahManualCtl,
+                  hint: "Masukkan rumah saat ini",
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _isRumahManual = false;
+                      _rumahManualCtl.clear();
+                    });
+                  },
+                  child: const Text('Kembali ke pilihan dropdown'),
+                ),
+              ],
             ],
           ),
           SectionCard(

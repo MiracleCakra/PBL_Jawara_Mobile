@@ -16,6 +16,7 @@ class Anggota {
   final String? namaKeluarga;
   final String? status; // Aktif/Nonaktif utk list
   final String? fotoKtp;
+  final String? rumahSaatIni;
 
   Anggota({
     required this.nik,
@@ -35,6 +36,7 @@ class Anggota {
     this.namaKeluarga,
     this.status = "Aktif",
     this.fotoKtp,
+    this.rumahSaatIni,
   });
 
   factory Anggota.fromJson(Map<String, dynamic> json) {
@@ -58,6 +60,7 @@ class Anggota {
       namaKeluarga: json['nama_keluarga'],
       status: json['status'] ?? "Aktif",
       fotoKtp: json['foto_ktp'],
+      rumahSaatIni: json['rumah_saat_ini'],
     );
   }
 
@@ -80,6 +83,7 @@ class Anggota {
       'nama_keluarga': namaKeluarga,
       'status': status,
       'foto_ktp': fotoKtp,
+      'rumah_saat_ini': rumahSaatIni,
     };
   }
 
@@ -99,6 +103,7 @@ class Anggota {
     String? namaKeluarga,
     String? status,
     String? fotoKtp,
+    String? rumahSaatIni,
   }) {
     return Anggota(
       nik: nik ?? this.nik,
@@ -116,6 +121,7 @@ class Anggota {
       namaKeluarga: namaKeluarga ?? this.namaKeluarga,
       status: status ?? this.status,
       fotoKtp: fotoKtp ?? this.fotoKtp,
+      rumahSaatIni: rumahSaatIni ?? this.rumahSaatIni,
     );
   }
 }
