@@ -1,16 +1,17 @@
 import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
+
 import 'package:dotted_border/dotted_border.dart';
+import 'package:flutter/material.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:jawara_pintar_kel_5/models/keuangan/warga_tagihan_model.dart';
 
 class FormPembayaranScreen extends StatefulWidget {
-  final WargaTagihanModel tagihan; // Sudah pakai WargaTagihanModel
+  final WargaTagihanModel tagihan;
+  final Map<String, String>? channel; // Data channel transfer yang dipilih
 
-  const FormPembayaranScreen({super.key, required this.tagihan});
+  const FormPembayaranScreen({super.key, required this.tagihan, this.channel});
 
   @override
   State<FormPembayaranScreen> createState() => _FormPembayaranScreenState();
@@ -50,81 +51,83 @@ class _FormPembayaranScreenState extends State<FormPembayaranScreen> {
   }
 
   Future<void> _scanStrukWithOCR(File imageFile) async {
-  final inputImage = InputImage.fromFile(imageFile);
-  final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
+    final inputImage = InputImage.fromFile(imageFile);
+    final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
 
-  try {
-    final recognizedText = await textRecognizer.processImage(inputImage);
-    String scannedText = recognizedText.text;
-    debugPrint("Hasil OCR: $scannedText");
+    try {
+      final recognizedText = await textRecognizer.processImage(inputImage);
+      String scannedText = recognizedText.text;
+      debugPrint("Hasil OCR: $scannedText");
 
-    if (scannedText.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Tidak ada teks yang terdeteksi pada gambar."),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
+      if (scannedText.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text("Tidak ada teks yang terdeteksi pada gambar."),
+            backgroundColor: Colors.grey.shade800,
+          ),
+        );
+        return;
+      }
 
-    final regExp = RegExp(r'\d{1,3}(?:[.,]\d{3})*');
-    final match = regExp.firstMatch(scannedText);
+      final regExp = RegExp(r'\d{1,3}(?:[.,]\d{3})*');
+      final match = regExp.firstMatch(scannedText);
 
-    if (match == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Nominal tidak dapat ditemukan di struk."),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
+      if (match == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text("Nominal tidak dapat ditemukan di struk."),
+            backgroundColor: Colors.grey.shade800,
+          ),
+        );
+        return;
+      }
 
-    String scannedAmountStr = match.group(0)!.replaceAll('.', '').replaceAll(',', '');
-    double scannedAmount = double.tryParse(scannedAmountStr) ?? 0;
+      String scannedAmountStr = match
+          .group(0)!
+          .replaceAll('.', '')
+          .replaceAll(',', '');
+      double scannedAmount = double.tryParse(scannedAmountStr) ?? 0;
 
-    setState(() {
-      _isNominalValid = scannedAmount == widget.tagihan.nominal * 1000;
-    });
+      setState(() {
+        _isNominalValid = scannedAmount == widget.tagihan.nominal * 1000;
+      });
 
-    if (_isNominalValid) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Nominal struk sesuai dengan tagihan ✅"),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } else {
+      if (_isNominalValid) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text("Nominal struk sesuai dengan tagihan ✅"),
+            backgroundColor: Colors.grey.shade800,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Nominal struk tidak sesuai! Tagihan: ${_formatCurrency(widget.tagihan.nominal)}",
+            ),
+            backgroundColor: Colors.grey.shade800,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('OCR Error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            "Nominal struk tidak sesuai! Tagihan: ${_formatCurrency(widget.tagihan.nominal)}",
-          ),
-          backgroundColor: Colors.red,
+          content: const Text("Terjadi kesalahan saat memproses gambar."),
+          backgroundColor: Colors.grey.shade800,
         ),
       );
+    } finally {
+      textRecognizer.close();
     }
-  } catch (e) {
-    debugPrint('OCR Error: $e');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Terjadi kesalahan saat memproses gambar."),
-        backgroundColor: Colors.red,
-      ),
-    );
-  } finally {
-    textRecognizer.close();
   }
-}
-
 
   void _submitPayment() async {
     if (_imageFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Mohon upload bukti transfer terlebih dahulu"),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: const Text("Mohon upload bukti transfer terlebih dahulu"),
+          backgroundColor: Colors.grey.shade800,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -133,9 +136,9 @@ class _FormPembayaranScreenState extends State<FormPembayaranScreen> {
 
     if (!_isNominalValid) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Nominal struk tidak sesuai tagihan!"),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: const Text("Nominal struk tidak sesuai tagihan!"),
+          backgroundColor: Colors.grey.shade800,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -159,7 +162,10 @@ class _FormPembayaranScreenState extends State<FormPembayaranScreen> {
           children: [
             Icon(Icons.check_circle, color: Colors.green, size: 60),
             SizedBox(height: 12),
-            Text("Berhasil Dikirim", style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              "Berhasil Dikirim",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ],
         ),
         content: const Text(
@@ -169,12 +175,15 @@ class _FormPembayaranScreenState extends State<FormPembayaranScreen> {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(ctx); // Tutup Dialog
-              Navigator.pop(context, true); // Kembali ke DetailTagihan
+              Navigator.pop(ctx);
+              Navigator.pop(context, true);
             },
             child: const Text(
               "OK, Mengerti",
-              style: TextStyle(color: Color(0xFF4E46B4), fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Color(0xFF4E46B4),
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -184,13 +193,21 @@ class _FormPembayaranScreenState extends State<FormPembayaranScreen> {
 
   String _formatCurrency(double amount) {
     final realAmount = amount * 1000;
-    return NumberFormat.currency(locale: 'id', symbol: 'Rp ', decimalDigits: 0).format(realAmount);
+    return NumberFormat.currency(
+      locale: 'id',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    ).format(realAmount);
   }
 
   @override
   Widget build(BuildContext context) {
     final totalBayar = widget.tagihan.nominal * 1000;
-    final currencyFormatter = NumberFormat.currency(locale: 'id', symbol: 'Rp ', decimalDigits: 0);
+    final currencyFormatter = NumberFormat.currency(
+      locale: 'id',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
@@ -201,7 +218,10 @@ class _FormPembayaranScreenState extends State<FormPembayaranScreen> {
         ),
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: BackButton(color: Colors.black, onPressed: () => Navigator.pop(context)),
+        leading: BackButton(
+          color: Colors.black,
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -219,37 +239,79 @@ class _FormPembayaranScreenState extends State<FormPembayaranScreen> {
                 ),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
-                  BoxShadow(color: const Color(0xFF4E46B4).withOpacity(0.4), blurRadius: 12, offset: const Offset(0, 6)),
+                  BoxShadow(
+                    color: const Color(0xFF4E46B4).withOpacity(0.4),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
                 ],
               ),
               child: Column(
                 children: [
-                  const Text("Silakan transfer ke:", style: TextStyle(color: Colors.white70, fontSize: 13)),
+                  const Text(
+                    "Silakan transfer ke:",
+                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
-                        child: const Text("BRI", style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF00529C))),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          widget.channel?['type']?.toUpperCase() ?? "BRI",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF00529C),
+                          ),
+                        ),
                       ),
                       const SizedBox(width: 12),
-                      const Text(
-                        "1234-5678-9012-3456",
-                        style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1),
+                      Text(
+                        widget.channel?['account'] ?? "1234-5678-9012-3456",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 8),
-                  const Text("a.n Bendahara RW 05 (Budi Santoso)", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
-                  const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Divider(color: Colors.white24)),
+                  Text(
+                    "a.n ${widget.channel?['owner'] ?? 'Bendahara RW 05 (Budi Santoso)'}",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Divider(color: Colors.white24),
+                  ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text("Total Bayar:", style: TextStyle(color: Colors.white)),
-                      Text(currencyFormatter.format(totalBayar),
-                          style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                      const Text(
+                        "Total Bayar:",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      Text(
+                        currencyFormatter.format(totalBayar),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -257,7 +319,10 @@ class _FormPembayaranScreenState extends State<FormPembayaranScreen> {
             ),
 
             const SizedBox(height: 24),
-            const Text("Bukti Transfer", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const Text(
+              "Bukti Transfer",
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
             const SizedBox(height: 12),
 
             GestureDetector(
@@ -271,19 +336,40 @@ class _FormPembayaranScreenState extends State<FormPembayaranScreen> {
                 child: Container(
                   height: 250,
                   width: double.infinity,
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: _imageFile != null
                       ? Stack(
                           children: [
                             ClipRRect(
                               borderRadius: BorderRadius.circular(12),
-                              child: SizedBox(width: double.infinity, height: double.infinity, child: Image.file(_imageFile!, fit: BoxFit.cover)),
+                              child: SizedBox(
+                                width: double.infinity,
+                                height: double.infinity,
+                                child: Image.file(
+                                  _imageFile!,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
                             ),
                             Positioned(
                               bottom: 10,
                               right: 10,
-                              child: Container(padding: const EdgeInsets.all(8), decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle), child: const Icon(Icons.edit, color: Colors.white, size: 20)),
-                            )
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: const BoxDecoration(
+                                  color: Colors.black54,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.edit,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              ),
+                            ),
                           ],
                         )
                       : Column(
@@ -291,13 +377,32 @@ class _FormPembayaranScreenState extends State<FormPembayaranScreen> {
                           children: [
                             Container(
                               padding: const EdgeInsets.all(16),
-                              decoration: const BoxDecoration(color: Color(0xFFF4F3FF), shape: BoxShape.circle),
-                              child: const Icon(Icons.camera_alt, size: 40, color: Color(0xFF4E46B4)),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFF4F3FF),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.camera_alt,
+                                size: 40,
+                                color: Color(0xFF4E46B4),
+                              ),
                             ),
                             const SizedBox(height: 16),
-                            const Text("Ketuk untuk upload Struk", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF4E46B4))),
+                            const Text(
+                              "Ketuk untuk upload Struk",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF4E46B4),
+                              ),
+                            ),
                             const SizedBox(height: 4),
-                            Text("Format JPG/PNG, Max 2MB", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                            Text(
+                              "Format JPG/PNG, Max 2MB",
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                              ),
+                            ),
                           ],
                         ),
                 ),
@@ -305,7 +410,10 @@ class _FormPembayaranScreenState extends State<FormPembayaranScreen> {
             ),
 
             const SizedBox(height: 24),
-            const Text("Catatan (Opsional)", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const Text(
+              "Catatan (Opsional)",
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
             const SizedBox(height: 8),
             TextField(
               controller: _noteController,
@@ -314,9 +422,18 @@ class _FormPembayaranScreenState extends State<FormPembayaranScreen> {
                 filled: true,
                 fillColor: Colors.white,
                 contentPadding: const EdgeInsets.all(16),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey[300]!)),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey[300]!)),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF4E46B4))),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFF4E46B4)),
+                ),
               ),
               maxLines: 3,
             ),
@@ -327,20 +444,45 @@ class _FormPembayaranScreenState extends State<FormPembayaranScreen> {
 
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(color: Colors.white, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))]),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
         child: SafeArea(
           child: ElevatedButton(
             onPressed: _isLoading ? null : _submitPayment,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4E46B4),
-              disabledBackgroundColor: const Color(0xFF4E46B4).withOpacity(0.6),
+              backgroundColor: const Color(0xFF6366F1),
+              disabledBackgroundColor: const Color(0xFF6366F1).withOpacity(0.6),
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               elevation: 0,
             ),
             child: _isLoading
-                ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                : const Text("Kirim Bukti Pembayaran", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2.5,
+                    ),
+                  )
+                : const Text(
+                    "Kirim Bukti Pembayaran",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
           ),
         ),
       ),
@@ -351,7 +493,9 @@ class _FormPembayaranScreenState extends State<FormPembayaranScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) {
         return SafeArea(
           child: Padding(
@@ -359,18 +503,38 @@ class _FormPembayaranScreenState extends State<FormPembayaranScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 10), decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
                 ListTile(
-                  leading: const CircleAvatar(backgroundColor: Color(0xFFF4F3FF), child: Icon(Icons.photo_library, color: Color(0xFF4E46B4))),
-                  title: const Text('Ambil dari Galeri', style: TextStyle(fontWeight: FontWeight.w600)),
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFFF4F3FF),
+                    child: Icon(Icons.photo_library, color: Color(0xFF4E46B4)),
+                  ),
+                  title: const Text(
+                    'Ambil dari Galeri',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   onTap: () {
                     Navigator.of(context).pop();
                     _pickImage(ImageSource.gallery);
                   },
                 ),
                 ListTile(
-                  leading: const CircleAvatar(backgroundColor: Color(0xFFF4F3FF), child: Icon(Icons.camera_alt, color: Color(0xFF4E46B4))),
-                  title: const Text('Ambil Foto Kamera', style: TextStyle(fontWeight: FontWeight.w600)),
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFFF4F3FF),
+                    child: Icon(Icons.camera_alt, color: Color(0xFF4E46B4)),
+                  ),
+                  title: const Text(
+                    'Ambil Foto Kamera',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   onTap: () {
                     Navigator.of(context).pop();
                     _pickImage(ImageSource.camera);

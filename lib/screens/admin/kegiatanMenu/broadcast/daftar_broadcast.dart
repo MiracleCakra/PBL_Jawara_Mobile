@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:jawara_pintar_kel_5/models/kegiatan/broadcast_model.dart';
 import 'package:jawara_pintar_kel_5/services/broadcast_service.dart';
-import 'tambah_broadcast.dart';
-import 'edit_broadcast_screen.dart';
-import 'detail_broadcast_screen.dart';
+
 import 'broadcast_filter_screen.dart';
+import 'detail_broadcast_screen.dart';
+import 'edit_broadcast_screen.dart';
+import 'tambah_broadcast.dart';
 
 class DaftarBroadcastScreen extends StatefulWidget {
   const DaftarBroadcastScreen({super.key});
@@ -101,36 +102,36 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
     _refreshData();
   }
 
-Future<void> _deleteBroadcast(BroadcastModel broadcast) async {
-  try {
-    await _broadcastService.deleteBroadcast(broadcast.id!);
-    setState(() {
-      _broadcastStream = Stream.empty();
-    });
-    await Future.delayed(const Duration(milliseconds: 100));
-    setState(() {
-      _broadcastStream = _broadcastService.getBroadcastsStream();
-    });
-    _refreshData(); 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Broadcast "${broadcast.judul}" telah dihapus.'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    }
-  } catch (e) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Gagal menghapus broadcast: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+  Future<void> _deleteBroadcast(BroadcastModel broadcast) async {
+    try {
+      await _broadcastService.deleteBroadcast(broadcast.id!);
+      setState(() {
+        _broadcastStream = Stream.empty();
+      });
+      await Future.delayed(const Duration(milliseconds: 100));
+      setState(() {
+        _broadcastStream = _broadcastService.getBroadcastsStream();
+      });
+      _refreshData();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Broadcast "${broadcast.judul}" telah dihapus.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal menghapus broadcast: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
-}
 
   Widget _buildFilterBar() {
     return Padding(
@@ -258,13 +259,22 @@ Future<void> _deleteBroadcast(BroadcastModel broadcast) async {
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          Text(
-                            broadcast.pengirim,
-                            style: TextStyle(fontSize: 14, color: detailColor),
+                          Flexible(
+                            child: Text(
+                              broadcast.pengirim,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: detailColor,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
 
                           const Text(
@@ -288,6 +298,8 @@ Future<void> _deleteBroadcast(BroadcastModel broadcast) async {
                           fontSize: 13,
                           color: Colors.grey.shade600,
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),

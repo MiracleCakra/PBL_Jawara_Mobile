@@ -41,6 +41,11 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
   String? _pendidikan;
   String? _pekerjaan;
 
+  // Rumah Saat Ini
+  String? _rumahSaatIni;
+  final _rumahManualCtl = TextEditingController();
+  bool _isRumahManual = false;
+
   File? _fotoKtpFile;
   bool _isSaving = false;
 
@@ -175,6 +180,7 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
     _tempatLahirCtl.dispose();
     _teleponCtl.dispose();
     _emailCtl.dispose();
+    _rumahManualCtl.dispose();
     super.dispose();
   }
 
@@ -248,6 +254,58 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
                 },
                 placeholder: 'Pilih Tanggal',
               ),
+              const SizedBox(height: 8),
+              if (!_isRumahManual)
+                LabeledDropdown<String>(
+                  label: 'Rumah Saat Ini',
+                  value: _rumahSaatIni,
+                  onChanged: (v) {
+                    setState(() {
+                      if (v == 'manual') {
+                        _isRumahManual = true;
+                        _rumahSaatIni = null;
+                      } else {
+                        _rumahSaatIni = v;
+                      }
+                    });
+                  },
+                  items: const [
+                    DropdownMenuItem(
+                      value: null,
+                      child: Text('-- Pilih Rumah --'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Blok A No. 1',
+                      child: Text('Blok A No. 1'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Blok A No. 2',
+                      child: Text('Blok A No. 2'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Blok B No. 1',
+                      child: Text('Blok B No. 1'),
+                    ),
+                    DropdownMenuItem(value: 'manual', child: Text('Lainnya')),
+                  ],
+                )
+              else ...[
+                LabeledTextField(
+                  label: 'Rumah Saat Ini',
+                  controller: _rumahManualCtl,
+                  hint: 'Masukkan rumah saat ini',
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _isRumahManual = false;
+                      _rumahManualCtl.clear();
+                    });
+                  },
+                  child: const Text('Kembali ke pilihan dropdown'),
+                ),
+              ],
             ],
           ),
 

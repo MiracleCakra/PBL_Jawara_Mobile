@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 class ProfilMenuWarga extends StatelessWidget {
   const ProfilMenuWarga({super.key});
 
-  static const Color _primaryColor = Color(0xFF4E46B4); 
+  static const Color _primaryColor = Color(0xFF4E46B4);
   static const Color _secondaryColor = Color(0xFF6366F1);
   static const Color _accentColor = Color(0xFF3B82F6);
   static const Color _logoutColor = Color(0xFFEF4444);
@@ -25,9 +25,7 @@ class ProfilMenuWarga extends StatelessWidget {
             child: const Text('Batal', style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _logoutColor,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: _logoutColor),
             onPressed: () {
               context.replace('/login');
             },
@@ -90,7 +88,7 @@ class ProfilMenuWarga extends StatelessWidget {
                   context,
                   icon: Icons.settings,
                   label: 'Pengaturan Akun',
-                  color:_accentColor,
+                  color: _accentColor,
                   onTap: () => context.push('/warga/profil/pengaturan'),
                 ),
                 _buildMenuItem(
@@ -105,31 +103,18 @@ class ProfilMenuWarga extends StatelessWidget {
                   icon: Icons.info_outline,
                   label: 'Tentang Aplikasi',
                   color: _primaryColor.withOpacity(0.7),
-                  onTap: () => context.push('/warga/profil/about'), 
+                  onTap: () => context.push('/warga/profil/about'),
+                ),
+                _buildMenuItem(
+                  context,
+                  icon: Icons.logout,
+                  label: 'Keluar',
+                  color: _logoutColor,
+                  onTap: () => _onLogout(context),
                 ),
               ],
             ),
             const SizedBox(height: 30),
-
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () => _onLogout(context),
-                icon: const Icon(Icons.logout, color: Colors.white),
-                label: const Text(
-                  'Keluar',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _logoutColor,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 0,
-                ),
-              ),
-            ),
           ],
         ),
       ),
@@ -157,7 +142,7 @@ class ProfilMenuWarga extends StatelessWidget {
           CircleAvatar(
             radius: 30,
             backgroundColor: _primaryColor.withOpacity(0.15),
-            child: Icon(Icons.person, size: 36, color:_primaryColor),
+            child: Icon(Icons.person, size: 36, color: _primaryColor),
           ),
           const SizedBox(width: 16),
           // Detail Profil
@@ -177,17 +162,11 @@ class ProfilMenuWarga extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   'NIK: $noKtp',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
                 Text(
                   alamat,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
               ],
             ),
