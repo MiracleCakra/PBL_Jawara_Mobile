@@ -26,7 +26,9 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
   @override
   void initState() {
     super.initState();
-    currentStatus = widget.order.orderStatus ?? 'null'; // Keep as 'null' string if no status
+    currentStatus =
+        widget.order.orderStatus ??
+        'null'; // Keep as 'null' string if no status
     _loadOrderItems();
   }
 
@@ -41,7 +43,7 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
     try {
       final orderService = OrderService();
       final items = await orderService.getOrderWithItems(widget.order.orderId!);
-      
+
       if (mounted) {
         setState(() {
           _orderItems = items;
@@ -70,32 +72,28 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
     }
 
     try {
-      // Show loading
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(child: CircularProgressIndicator()),
-      );
-
       // Update status in database
       final orderService = OrderService();
       await orderService.updateOrderStatus(widget.order.orderId!, newStatus);
 
       if (mounted) {
-        Navigator.pop(context); // Close loading dialog
-        
         setState(() => currentStatus = newStatus);
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Status berhasil diubah menjadi: $newStatus"),
+            content: Text("Status berhasil diubah: $newStatus"),
             backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
           ),
         );
+
+        // Return to previous screen with update flag
+        if (newStatus == 'completed') {
+          Navigator.pop(context, 'completed');
+        }
       }
     } catch (e) {
       if (mounted) {
-        Navigator.pop(context); // Close loading dialog
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text("Gagal mengubah status: $e"),
@@ -155,7 +153,10 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
                   "Alamat",
                   widget.order.alamat ?? "Alamat tidak tersedia",
                 ),
-                _buildRow("Tanggal Pesan", widget.order.createdAt?.toString().substring(0, 10) ?? "N/A"),
+                _buildRow(
+                  "Tanggal Pesan",
+                  widget.order.createdAt?.toString().substring(0, 10) ?? "N/A",
+                ),
               ],
             ),
 
@@ -192,7 +193,6 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
       ),
     );
   }
-
 
   Widget _buildSectionTitle(BuildContext context, String title) {
     return Padding(
@@ -282,7 +282,7 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
 
   Widget _buildActionButtons(String status) {
     final lower = status.toLowerCase();
-    
+
     // Status: NULL (pesanan baru, belum direspons)
     if (lower == 'null' || status == 'null' || status.isEmpty) {
       return Column(
@@ -309,7 +309,7 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
         ],
       );
     }
-    
+
     // Status: pending (pesanan sedang diantar)
     if (lower == 'pending') {
       return _button(
@@ -322,12 +322,12 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
         },
       );
     }
-    
+
     // Status: completed atau canceled (tidak ada aksi)
     if (lower == 'completed' || lower == 'canceled') {
       return const SizedBox.shrink();
     }
-    
+
     return _button(
       label: "Tutup Detail",
       icon: Icons.close,

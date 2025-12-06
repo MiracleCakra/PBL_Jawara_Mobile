@@ -75,48 +75,51 @@ class _MyStoreProductDetailScreenState
     );
 
     if (confirm == true && mounted) {
-      // Show loading
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(child: CircularProgressIndicator()),
-      );
-
       try {
         // Delete from database
         final productService = ProductService();
         await productService.deleteProduct(currentProduct.productId!);
 
-        // Refresh provider
+        // Refresh provider in background
         if (mounted) {
           final productProvider = Provider.of<ProductProvider>(
             context,
             listen: false,
           );
-          await productProvider.fetchAllProducts();
+          productProvider.fetchAllProducts();
         }
 
         if (mounted) {
-          Navigator.pop(context); // Close loading
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                '${currentProduct.nama ?? 'Produk'} berhasil dihapus dari database',
+                '${currentProduct.nama ?? 'Produk'} berhasil dihapus',
               ),
               backgroundColor: Colors.green,
+              duration: const Duration(seconds: 2),
             ),
           );
           Navigator.pop(context, 'deleted');
         }
       } catch (e) {
         if (mounted) {
-          Navigator.pop(context); // Close loading
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Gagal menghapus produk: $e'),
-              backgroundColor: Colors.red,
+              content: Text(
+                e.toString().contains('Produk memiliki riwayat pesanan')
+                    ? 'Produk memiliki pesanan, stok diatur ke 0'
+                    : 'Gagal menghapus produk: $e',
+              ),
+              backgroundColor:
+                  e.toString().contains('Produk memiliki riwayat pesanan')
+                  ? Colors.orange
+                  : Colors.red,
+              duration: const Duration(seconds: 3),
             ),
           );
+          if (e.toString().contains('Produk memiliki riwayat pesanan')) {
+            Navigator.pop(context, 'updated');
+          }
         }
       }
     }
