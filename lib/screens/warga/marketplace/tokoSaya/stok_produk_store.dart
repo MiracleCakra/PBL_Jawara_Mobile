@@ -28,10 +28,13 @@ class _MyStoreStockScreenState extends State<MyStoreStockScreen> {
   }
 
   Future<void> _loadProducts() async {
-    setState(() {
-      isLoading = true;
-      errorMessage = null;
-    });
+    // Only show loading on first load
+    if (products.isEmpty) {
+      setState(() {
+        isLoading = true;
+        errorMessage = null;
+      });
+    }
 
     try {
       // Get user's store_id
@@ -83,7 +86,11 @@ class _MyStoreStockScreenState extends State<MyStoreStockScreen> {
   }
 
   void _navigateToProductAdd() async {
-    await context.pushNamed('MyStoreProductAdd');
+    final result = await context.pushNamed('MyStoreProductAdd');
+    if (result != null) {
+      // Refresh data silently without loading animation
+      _loadProducts();
+    }
   }
 
   @override
@@ -187,17 +194,11 @@ class _MyStoreStockScreenState extends State<MyStoreStockScreen> {
           extra: product,
         );
 
-        if (result == 'deleted') {
-          setState(() {
-            products.remove(product);
-          });
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${product.nama ?? 'Produk'} berhasil dihapus'),
-              backgroundColor: Colors.grey.shade800,
-            ),
-          );
+        if (result == 'deleted' ||
+            result == 'deactivated' ||
+            result == 'updated') {
+          // Refresh data silently without loading animation
+          _loadProducts();
         }
       },
       child: Card(

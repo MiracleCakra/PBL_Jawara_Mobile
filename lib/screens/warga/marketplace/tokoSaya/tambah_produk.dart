@@ -29,6 +29,7 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
   File? _imageFile;
   String? _predictedCategory;
   bool _isProcessingCV = false;
+  bool _isUploading = false; // Add this flag for upload state
 
   // Grade Produk
   String _selectedGrade = 'Grade A';
@@ -160,21 +161,12 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
       return;
     }
 
-    // Show loading
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Mengupload gambar...', style: TextStyle(color: Colors.white)),
-          ],
-        ),
-      ),
-    );
+    // Set uploading state
+    setState(() {
+      _isUploading = true;
+    });
+
+    print('DEBUG: Start uploading, _isUploading = $_isUploading');
 
     // Upload image to Supabase Storage first
     String? imageUrl;
@@ -186,10 +178,10 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
       );
 
       if (imageUrl == null) {
-        // Close loading dialog
-        if (mounted) Navigator.of(context).pop();
-
         if (mounted) {
+          setState(() {
+            _isUploading = false;
+          });
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
@@ -208,8 +200,11 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
         return;
       }
     } catch (e) {
-      // Close loading dialog
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+      }
 
       if (mounted) {
         String errorMessage = 'Gagal mengupload gambar: $e';
@@ -256,191 +251,241 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
       context,
       listen: false,
     );
-    final savedProduct = await productProvider.createProduct(newProduct);
 
-    // Close loading dialog
-    if (mounted) Navigator.of(context).pop();
+    try {
+      final savedProduct = await productProvider.createProduct(newProduct);
 
-    if (savedProduct != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Produk berhasil ditambahkan ke database!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      context.goNamed('WargaMarketplaceStoreStock');
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Gagal menambahkan produk: ${productProvider.errorMessage}',
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+        print('DEBUG: Done saving, _isUploading = $_isUploading');
+      }
+
+      if (savedProduct != null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Produk berhasil ditambahkan!'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+
+          Navigator.of(context).pop('added');
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Gagal menambahkan produk: ${productProvider.errorMessage}',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Tambah Produk Baru',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        foregroundColor: Colors.black,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildImagePicker(),
-              if (_isProcessingCV)
-                const Padding(
-                  padding: EdgeInsets.only(top: 8.0, bottom: 12.0),
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
+    return Stack(
+      children: [
+        Scaffold(
+          appBar: AppBar(
+            title: const Text(
+              'Tambah Produk Baru',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            backgroundColor: Colors.white,
+            elevation: 0.5,
+            foregroundColor: Colors.black,
+          ),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildImagePicker(),
+                  if (_isProcessingCV)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 8.0, bottom: 12.0),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: primaryColor,
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Menganalisis gambar...',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (_predictedCategory != null && !_isProcessingCV)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0, bottom: 12.0),
+                      child: Text(
+                        'Kategori Prediksi CV: $_predictedCategory',
+                        style: const TextStyle(
                           color: primaryColor,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(width: 8),
-                      Text(
-                        'Menganalisis gambar...',
-                        style: TextStyle(color: Colors.grey),
+                    ),
+                  const SizedBox(height: 12),
+
+                  const _InputLabel("Nama Produk"),
+                  _ThemedTextFormField(
+                    controller: _nameController,
+                    validator: _validateRequired,
+                  ),
+                  const SizedBox(height: 12),
+
+                  const _InputLabel("Deskripsi Produk"),
+                  _ThemedTextFormField(
+                    controller: _descController,
+                    maxLines: 3,
+                    validator: _validateRequired,
+                  ),
+                  const SizedBox(height: 12),
+
+                  const _InputLabel("Harga"),
+                  _ThemedTextFormField(
+                    controller: _priceController,
+                    keyboardType: TextInputType.number,
+                    validator: _validatePrice,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Stok & Satuan
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const _InputLabel("Stok"),
+                            _ThemedTextFormField(
+                              controller: _stockController,
+                              keyboardType: TextInputType.number,
+                              validator: _validateStock,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const _InputLabel("Satuan"),
+                            _ThemedDropdownFormField<String>(
+                              value: _selectedUnit,
+                              items: _availableUnits
+                                  .map(
+                                    (unit) => DropdownMenuItem(
+                                      value: unit,
+                                      child: Text(unit),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (val) {
+                                if (val != null)
+                                  setState(() => _selectedUnit = val);
+                              },
+                              validator: _validateRequired,
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                ),
-              if (_predictedCategory != null && !_isProcessingCV)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0, bottom: 12.0),
-                  child: Text(
-                    'Kategori Prediksi CV: $_predictedCategory',
-                    style: const TextStyle(
-                      color: primaryColor,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  const SizedBox(height: 12),
+
+                  const _InputLabel("Grade Kualitas"),
+                  _ThemedDropdownFormField<String>(
+                    value: _selectedGrade,
+                    items: _grades
+                        .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                        .toList(),
+                    onChanged: (val) {
+                      if (val != null) setState(() => _selectedGrade = val);
+                    },
+                    validator: _validateRequired,
                   ),
-                ),
-              const SizedBox(height: 12),
+                  const SizedBox(height: 30),
 
-              const _InputLabel("Nama Produk"),
-              _ThemedTextFormField(
-                controller: _nameController,
-                validator: _validateRequired,
-              ),
-              const SizedBox(height: 12),
-
-              const _InputLabel("Deskripsi Produk"),
-              _ThemedTextFormField(
-                controller: _descController,
-                maxLines: 3,
-                validator: _validateRequired,
-              ),
-              const SizedBox(height: 12),
-
-              const _InputLabel("Harga"),
-              _ThemedTextFormField(
-                controller: _priceController,
-                keyboardType: TextInputType.number,
-                validator: _validatePrice,
-              ),
-              const SizedBox(height: 12),
-
-              // Stok & Satuan
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const _InputLabel("Stok"),
-                        _ThemedTextFormField(
-                          controller: _stockController,
-                          keyboardType: TextInputType.number,
-                          validator: _validateStock,
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: _isUploading ? null : _saveProduct,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const _InputLabel("Satuan"),
-                        _ThemedDropdownFormField<String>(
-                          value: _selectedUnit,
-                          items: _availableUnits
-                              .map(
-                                (unit) => DropdownMenuItem(
-                                  value: unit,
-                                  child: Text(unit),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (val) {
-                            if (val != null)
-                              setState(() => _selectedUnit = val);
-                          },
-                          validator: _validateRequired,
+                      ),
+                      child: const Text(
+                        'Tambah Produk',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-
-              const _InputLabel("Grade Kualitas"),
-              _ThemedDropdownFormField<String>(
-                value: _selectedGrade,
-                items: _grades
-                    .map((g) => DropdownMenuItem(value: g, child: Text(g)))
-                    .toList(),
-                onChanged: (val) {
-                  if (val != null) setState(() => _selectedGrade = val);
-                },
-                validator: _validateRequired,
-              ),
-              const SizedBox(height: 30),
-
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: _saveProduct,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+            ),
+          ),
+        ),
+        // Loading overlay when uploading
+        if (_isUploading)
+          Container(
+            color: Colors.black54,
+            child: const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                   ),
-                  child: const Text(
-                    'Tambah Produk',
+                  SizedBox(height: 16),
+                  Text(
+                    'Menyimpan produk...',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+      ],
     );
   }
 

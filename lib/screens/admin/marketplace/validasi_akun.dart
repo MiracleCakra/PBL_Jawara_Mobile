@@ -2,46 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/store_model.dart';
+import 'package:jawara_pintar_kel_5/providers/marketplace/store_provider.dart';
+import 'package:jawara_pintar_kel_5/services/marketplace/store_service.dart';
+import 'package:provider/provider.dart';
 
 const Color unguColor = Color(0xFF6366F1);
-
-class StoreRegistration {
-  final String id;
-  final String storeName;
-  final String ownerName;
-  final String email;
-  final String phone;
-  final String address;
-  final String description;
-  final String timeSubmitted;
-  final String status; // 'Pending', 'Disetujui', 'Ditolak'
-
-  const StoreRegistration({
-    required this.id,
-    required this.storeName,
-    required this.ownerName,
-    required this.email,
-    required this.phone,
-    required this.address,
-    required this.description,
-    required this.timeSubmitted,
-    required this.status,
-  });
-
-  StoreRegistration copyWith({String? status}) {
-    return StoreRegistration(
-      id: id,
-      storeName: storeName,
-      ownerName: ownerName,
-      email: email,
-      phone: phone,
-      address: address,
-      description: description,
-      timeSubmitted: timeSubmitted,
-      status: status ?? this.status,
-    );
-  }
-}
 
 class Debouncer {
   final int milliseconds;
@@ -63,101 +30,73 @@ class ValidasiAkunTokoScreen extends StatefulWidget {
 }
 
 class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
-  List<StoreRegistration> _allRegistrations = [
-    const StoreRegistration(
-      id: 'S001',
-      storeName: 'SSS, Sayur Segar Susanto',
-      ownerName: 'Susanto',
-      email: 'susanto@email.com',
-      phone: '081234567890',
-      address: 'Jl. Anggrek No. 5, RT 001 / RW 001',
-      description:
-          'Menyediakan sayuran dan buah segar dari kebun lokal dengan pengiriman cepat ke seluruh RW.',
-      timeSubmitted: '10 menit lalu',
-      status: 'Pending',
-    ),
-    const StoreRegistration(
-      id: 'S002',
-      storeName: 'Sayur Ibu Dewi',
-      ownerName: 'Dewi Lestari',
-      email: 'dewi.lestari@email.com',
-      phone: '082345678901',
-      address: 'Jl. Mawar No. 12, RT 002 / RW 001',
-      description: 'Sayur lengkap dengan harga terjangkau, melayani COD.',
-      timeSubmitted: '10 jam lalu',
-      status: 'Disetujui',
-    ),
-    const StoreRegistration(
-      id: 'S003',
-      storeName: 'Toko Sayur Segar Pak Budi',
-      ownerName: 'Budi Santoso',
-      email: 'budi.santoso@email.com',
-      phone: '083456789012',
-      address: 'Jl. Melati No. 8, RT 003 / RW 001',
-      description:
-          'Menjual berbagai macam sayuran segar lokal dengan kualitas terbaik.',
-      timeSubmitted: '2 jam lalu',
-      status: 'Pending',
-    ),
-    const StoreRegistration(
-      id: 'S004',
-      storeName: 'Toko Sayur Murah',
-      ownerName: 'Ahmad Rifai',
-      email: 'ahmad.rifai@email.com',
-      phone: '084567890123',
-      address: 'Jl. Kenanga No. 3, RT 004 / RW 001',
-      description: 'Penyedia sayur dengan harga murah dan kualitas terjamin.',
-      timeSubmitted: '3 jam lalu',
-      status: 'Ditolak',
-    ),
-  ];
-
-  List<StoreRegistration> _filteredRegistrations = [];
+  List<StoreModel> _filteredStores = [];
   String _currentSearchQuery = '';
   String _currentFilterStatus = 'Semua';
   bool isFilterActive = false;
+  bool _isLoading = false;
 
   final Debouncer _debouncer = Debouncer(milliseconds: 300);
 
   @override
   void initState() {
     super.initState();
-    _filterList();
+    _loadStores();
   }
 
-  void _refreshListAfterAction(String registrationId, String newStatus) {
-    setState(() {
-      final index = _allRegistrations.indexWhere(
-        (item) => item.id == registrationId,
-      );
-      if (index != -1) {
-        _allRegistrations[index] = _allRegistrations[index].copyWith(
-          status: newStatus,
-        );
-        _filterList();
-      }
-    });
+  Future<void> _loadStores() async {
+    setState(() => _isLoading = true);
+
+    final storeProvider = Provider.of<StoreProvider>(context, listen: false);
+    await storeProvider.fetchAllStores();
+
+    _filterList();
+
+    setState(() => _isLoading = false);
   }
 
   void _filterList() {
+    final storeProvider = Provider.of<StoreProvider>(context, listen: false);
+    final allStores = storeProvider.stores;
+
     setState(() {
-      _filteredRegistrations = _allRegistrations.where((item) {
+      _filteredStores = allStores.where((store) {
         bool statusMatch =
             _currentFilterStatus == 'Semua' ||
-            item.status == _currentFilterStatus;
+            (store.verifikasi?.toLowerCase() ==
+                _currentFilterStatus.toLowerCase());
 
         bool searchMatch =
             _currentSearchQuery.isEmpty ||
-            item.storeName.toLowerCase().contains(
-              _currentSearchQuery.toLowerCase(),
-            ) ||
-            item.ownerName.toLowerCase().contains(
-              _currentSearchQuery.toLowerCase(),
-            );
+            (store.nama?.toLowerCase().contains(
+                  _currentSearchQuery.toLowerCase(),
+                ) ??
+                false) ||
+            (store.kontak?.toLowerCase().contains(
+                  _currentSearchQuery.toLowerCase(),
+                ) ??
+                false);
 
         return statusMatch && searchMatch;
       }).toList();
     });
+  }
+
+  String _getTimeAgo(DateTime? createdAt) {
+    if (createdAt == null) return 'Tidak diketahui';
+
+    final now = DateTime.now();
+    final difference = now.difference(createdAt);
+
+    if (difference.inMinutes < 60) {
+      return '${difference.inMinutes} menit lalu';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours} jam lalu';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} hari lalu';
+    } else {
+      return DateFormat('dd MMM yyyy').format(createdAt);
+    }
   }
 
   void _onSearchChanged(String query) {
@@ -170,7 +109,7 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
   }
 
   void _openFilterModal() {
-    final List<String> options = ['Semua', 'Pending', 'Disetujui', 'Ditolak'];
+    final List<String> options = ['Semua', 'Pending', 'Diterima', 'Ditolak'];
     String? tempSelectedStatus = _currentFilterStatus;
 
     showModalBottomSheet(
@@ -226,26 +165,27 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
     );
   }
 
-  Widget _buildRegistrationCard(BuildContext context, StoreRegistration item) {
+  Widget _buildRegistrationCard(BuildContext context, StoreModel store) {
     Color statusColor;
     Color statusBgColor;
 
-    switch (item.status) {
-      case 'Pending':
+    final status = (store.verifikasi ?? 'Pending').toLowerCase();
+    switch (status) {
+      case 'pending':
         statusColor = Colors.yellow.shade800;
         statusBgColor = Colors.yellow.shade100;
         break;
-      case 'Ditolak':
+      case 'ditolak':
         statusColor = Colors.red.shade800;
         statusBgColor = Colors.red.shade100;
         break;
-      case 'Disetujui':
+      case 'diterima':
         statusColor = Colors.purple.shade800;
         statusBgColor = Colors.purple.shade100;
         break;
       default:
-        statusColor = Colors.red.shade800;
-        statusBgColor = Colors.red.shade100;
+        statusColor = Colors.grey.shade800;
+        statusBgColor = Colors.grey.shade100;
         break;
     }
 
@@ -257,7 +197,7 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
-          _showDetailDialog(context, item);
+          _showDetailDialog(context, store);
         },
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -284,7 +224,7 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          item.storeName,
+                          store.nama ?? 'Nama Toko',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -295,7 +235,7 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Pemilik: ${item.ownerName}',
+                          'ID: ${store.storeId ?? '-'}',
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.grey.shade600,
@@ -314,7 +254,7 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      item.status,
+                      store.verifikasi ?? 'Pending',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -332,7 +272,7 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
                   Icon(Icons.phone, size: 16, color: Colors.grey.shade600),
                   const SizedBox(width: 6),
                   Text(
-                    item.phone,
+                    store.kontak ?? '-',
                     style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
                   ),
                   const SizedBox(width: 16),
@@ -344,7 +284,7 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      item.address,
+                      store.alamat ?? '-',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey.shade700,
@@ -365,7 +305,7 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    item.timeSubmitted,
+                    _getTimeAgo(store.createdAt),
                     style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
                   ),
                 ],
@@ -377,7 +317,26 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
     );
   }
 
-  void _showDetailDialog(BuildContext context, StoreRegistration item) {
+  void _showDetailDialog(BuildContext context, StoreModel store) async {
+    // Fetch warga info
+    String ownerName = '-';
+    String ownerEmail = '-';
+
+    if (store.userId != null) {
+      try {
+        final storeService = StoreService();
+        final wargaInfo = await storeService.getWargaByUserId(store.userId!);
+        if (wargaInfo != null) {
+          ownerName = wargaInfo['nama'] ?? '-';
+          ownerEmail = wargaInfo['email'] ?? '-';
+        }
+      } catch (e) {
+        print('Error fetching warga info: $e');
+      }
+    }
+
+    if (!context.mounted) return;
+
     showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -407,28 +366,32 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
                 ),
                 const Divider(),
                 const SizedBox(height: 20),
-                _buildDetailRow('ID Pendaftaran', item.id),
-                _buildDetailRow('Nama Toko', item.storeName),
-                _buildDetailRow('Pemilik', item.ownerName),
-                _buildDetailRow('Email', item.email),
-                _buildDetailRow('No. HP', item.phone),
-                _buildDetailRow('Alamat', item.address),
+                _buildDetailRow('ID Toko', store.storeId?.toString() ?? '-'),
+                _buildDetailRow('Nama Toko', store.nama ?? '-'),
+                _buildDetailRow('Pemilik', ownerName),
+                _buildDetailRow('Email', ownerEmail),
+                _buildDetailRow('NIK', store.userId ?? '-'),
+                _buildDetailRow('No. HP', store.kontak ?? '-'),
+                _buildDetailRow('Alamat', store.alamat ?? '-'),
                 _buildDetailRow(
                   'Deskripsi',
-                  item.description,
+                  store.deskripsi ?? '-',
                   isMultiline: true,
                 ),
-                _buildDetailRow('Waktu Daftar', item.timeSubmitted),
-                _buildDetailRow('Status', item.status),
+                _buildDetailRow('Waktu Daftar', _getTimeAgo(store.createdAt)),
+                _buildDetailRow('Status', store.verifikasi ?? 'Pending'),
+                if (store.alasan != null && store.alasan!.isNotEmpty)
+                  _buildDetailRow('Alasan', store.alasan!, isMultiline: true),
                 const SizedBox(height: 20),
-                if (item.status == 'Pending')
+                if (store.verifikasi == null ||
+                    store.verifikasi!.toLowerCase() == 'pending')
                   Row(
                     children: [
                       Expanded(
                         child: ElevatedButton.icon(
                           onPressed: () {
                             Navigator.pop(context);
-                            _handleReject(item);
+                            _handleReject(store);
                           },
                           icon: const Icon(Icons.close, size: 18),
                           label: const Text('Tolak'),
@@ -447,7 +410,7 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
                         child: ElevatedButton.icon(
                           onPressed: () {
                             Navigator.pop(context);
-                            _handleApprove(item);
+                            _handleApprove(store);
                           },
                           icon: const Icon(Icons.check, size: 18),
                           label: const Text('Setujui'),
@@ -505,14 +468,14 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
     );
   }
 
-  void _handleApprove(StoreRegistration item) {
+  void _handleApprove(StoreModel store) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: const Text('Setujui Pendaftaran'),
         content: Text(
-          'Apakah Anda yakin ingin menyetujui pendaftaran toko "${item.storeName}"?',
+          'Apakah Anda yakin ingin menyetujui pendaftaran toko "${store.nama}"?',
         ),
         actions: [
           TextButton(
@@ -521,15 +484,9 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
             child: const Text('Batal'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              _refreshListAfterAction(item.id, 'Disetujui');
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Toko "${item.storeName}" telah disetujui'),
-                  backgroundColor: Colors.grey.shade800,
-                ),
-              );
+              await _updateStoreStatus(store, 'Diterima', null);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: unguColor,
@@ -542,14 +499,34 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
     );
   }
 
-  void _handleReject(StoreRegistration item) {
+  void _handleReject(StoreModel store) {
+    final TextEditingController alasanController = TextEditingController();
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: const Text('Tolak Pendaftaran'),
-        content: Text(
-          'Apakah Anda yakin ingin menolak pendaftaran toko "${item.storeName}"?',
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Apakah Anda yakin ingin menolak pendaftaran toko "${store.nama}"?',
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: alasanController,
+              decoration: InputDecoration(
+                labelText: 'Alasan Penolakan',
+                hintText: 'Masukkan alasan penolakan',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              maxLines: 3,
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -558,14 +535,21 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
             child: const Text('Batal'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
+              if (alasanController.text.trim().isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Alasan penolakan harus diisi'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
               Navigator.pop(context);
-              _refreshListAfterAction(item.id, 'Ditolak');
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Toko "${item.storeName}" telah ditolak'),
-                  backgroundColor: Colors.grey.shade800,
-                ),
+              await _updateStoreStatus(
+                store,
+                'Ditolak',
+                alasanController.text.trim(),
               );
             },
             style: ElevatedButton.styleFrom(
@@ -577,6 +561,51 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _updateStoreStatus(
+    StoreModel store,
+    String status,
+    String? alasan,
+  ) async {
+    if (store.storeId == null) return;
+
+    setState(() => _isLoading = true);
+
+    final storeProvider = Provider.of<StoreProvider>(context, listen: false);
+    final success = await storeProvider.updateVerificationStatus(
+      store.storeId!,
+      status,
+      alasan: alasan,
+    );
+
+    if (success) {
+      await _loadStores();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Toko "${store.nama}" telah ${status == 'Diterima' ? 'disetujui' : 'ditolak'}',
+            ),
+            backgroundColor: status == 'Diterima' ? Colors.green : Colors.red,
+          ),
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              storeProvider.errorMessage ?? 'Gagal memperbarui status toko',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+
+    setState(() => _isLoading = false);
   }
 
   Widget _buildFilterBar() {
@@ -663,31 +692,61 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildFilterBar(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-            child: Text(
-              'Daftar Validasi (${_filteredRegistrations.length} data)',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildFilterBar(),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                  child: Text(
+                    'Daftar Validasi (${_filteredStores.length} data)',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: _filteredStores.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.store_mall_directory_outlined,
+                                size: 80,
+                                color: Colors.grey.shade400,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Tidak ada data toko',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey.shade600,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: _loadStores,
+                          child: ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: _filteredStores.length,
+                            itemBuilder: (context, index) {
+                              return _buildRegistrationCard(
+                                context,
+                                _filteredStores[index],
+                              );
+                            },
+                          ),
+                        ),
+                ),
+              ],
             ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _filteredRegistrations.length,
-              itemBuilder: (context, index) {
-                return _buildRegistrationCard(
-                  context,
-                  _filteredRegistrations[index],
-                );
-              },
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
