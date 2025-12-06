@@ -49,7 +49,7 @@ class AboutAppScreen extends StatelessWidget {
               children: [
                 _buildInfoRow('Nama Aplikasi', 'Jawara Pintar'),
                 const Divider(height: 1, thickness: 0.5, color: Color(0xFFE5E7EB)),
-                _buildInfoRow('Versi', '1.0.0 (Build 20251127)', isBold: true),
+                _buildInfoRow('Versi', '1.6.1 (Build 20251206)', isBold: true),
                 const Divider(height: 1, thickness: 0.5, color: Color(0xFFE5E7EB)),
                 _buildInfoRow('Dibuat oleh', 'Kelompok 2 TI-3G'),
               ],

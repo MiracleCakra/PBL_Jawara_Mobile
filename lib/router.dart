@@ -1626,7 +1626,10 @@ final router = GoRouter(
                 ),
                 GoRoute(
                   path: 'edit-data',
-                  builder: (context, state) => const WargaEditDataDiriScreen(),
+                  builder: (context, state) {
+                    final initialData = state.extra as Map<String, dynamic>? ?? {};
+                    return WargaEditDataDiriScreen(initialData: initialData);
+                  },
                 ),
                 GoRoute(
                   path: 'pengaturan',

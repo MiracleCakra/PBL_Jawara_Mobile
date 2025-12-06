@@ -42,6 +42,42 @@ class WargaService {
     }
   }
 
+  Future<String> uploadFotoKtp({
+    File? file,
+    Uint8List? bytes,
+    required String fileName,
+    String? contentType,
+  }) async {
+    try {
+      const String bucketName = 'pfp';
+      final String path = 'foto_ktp/$fileName';
+      final FileOptions fileOptions = FileOptions(
+        contentType: contentType,
+        upsert: true,
+      );
+
+      if (bytes != null) {
+        await _supabase.storage.from(bucketName).uploadBinary(
+          path,
+          bytes,
+          fileOptions: fileOptions,
+        );
+      } else if (file != null) {
+        await _supabase.storage.from(bucketName).upload(
+          path,
+          file,
+          fileOptions: fileOptions,
+        );
+      } else {
+        throw Exception("Gagal: Data file tidak ditemukan (Bytes & File null)");
+      }
+
+      return _supabase.storage.from(bucketName).getPublicUrl(path);
+    } catch (e) {
+      throw Exception('Gagal upload foto KTP ($fileName): $e');
+    }
+  }
+
   /// Fetch warga berdasarkan Email
   Future<Warga?> getWargaByEmail(String email) async {
     try {
@@ -50,7 +86,7 @@ class WargaService {
           .select('''
             id, nama, tanggal_lahir, tempat_lahir, telepon, gender, 
             gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, foto_profil, email,
-            keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga)
+            keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga, rumah:alamat_rumah(alamat))
           ''')
           .eq('email', email)
           .maybeSingle();
@@ -70,7 +106,7 @@ class WargaService {
           .select('''
             id, nama, tanggal_lahir, tempat_lahir, telepon, gender, 
             gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, foto_profil, email,
-            keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga)
+            keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga, rumah:alamat_rumah(alamat))
           ''')
           .order('nama');
 
@@ -89,7 +125,7 @@ class WargaService {
           .select('''
             id, nama, tanggal_lahir, tempat_lahir, telepon, gender, 
             gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, foto_profil, email,
-            keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga)
+            keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga, rumah:alamat_rumah(alamat))
           ''')
           .eq('nik', nik)
           .single();
@@ -108,7 +144,7 @@ class WargaService {
           .select('''
             id, nama, tanggal_lahir, tempat_lahir, telepon, gender, 
             gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, foto_profil, email,
-            keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga)
+            keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga, rumah:alamat_rumah(alamat))
           ''')
           .eq('keluarga_id', keluargaId)
           .order('nama');
@@ -133,7 +169,7 @@ class WargaService {
           .select('''
             id, nama, tanggal_lahir, tempat_lahir, telepon, gender, 
             gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, foto_profil, email,
-            keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga)
+            keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga, rumah:alamat_rumah(alamat))
           ''');
 
       if (gender != null && gender.isNotEmpty) {
@@ -178,7 +214,7 @@ class WargaService {
           .select('''
             id, nama, tanggal_lahir, tempat_lahir, telepon, gender, 
             gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, foto_profil, email,
-            keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga)
+            keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga, rumah:alamat_rumah(alamat))
           ''')
           .single();
 
@@ -198,7 +234,7 @@ class WargaService {
           .select('''
             id, nama, tanggal_lahir, tempat_lahir, telepon, gender, 
             gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, foto_profil, email,
-            keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga)
+            keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga, rumah:alamat_rumah(alamat))
           ''')
           .single();
 
@@ -240,7 +276,7 @@ class WargaService {
           .select('''
             id, nama, tanggal_lahir, tempat_lahir, telepon, gender, 
             gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, foto_profil, email,
-            keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga)
+            keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga, rumah:alamat_rumah(alamat))
           ''')
           .eq('id', id)
           .single();

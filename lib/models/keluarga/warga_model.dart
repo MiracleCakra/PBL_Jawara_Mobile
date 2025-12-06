@@ -190,7 +190,9 @@ class Keluarga {
       id: json['id'] ?? '',
       namaKeluarga: json['nama_keluarga'] ?? '',
       kepaluKepalaId: json['kepala_keluarga_id'],
-      alamatRumah: json['alamat_rumah'],
+      alamatRumah: (json['rumah'] != null && json['rumah']['alamat'] != null)
+          ? json['rumah']['alamat']
+          : json['alamat_rumah'],
       statusKepemilikan: json['status_kepemilikan'],
       statusKeluarga: json['status_keluarga'],
     );
