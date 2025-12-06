@@ -44,7 +44,7 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gagal memilih foto.')),
+        SnackBar(content: const Text('Gagal memilih foto.'), backgroundColor: Colors.grey.shade800),
       );
     }
   }
@@ -61,7 +61,7 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
         final file = result.files.single;
         if (file.size > 5 * 1024 * 1024) { // 5MB Limit
            if (!mounted) return;
-           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("File max 5MB")));
+           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: const Text("File max 5MB"), backgroundColor: Colors.grey.shade800));
            return;
         }
         setState(() {
@@ -71,7 +71,7 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
     } catch (e) {
        if (!mounted) return;
        ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gagal memilih dokumen.')),
+        SnackBar(content: const Text('Gagal memilih dokumen.'), backgroundColor: Colors.grey.shade800),
       );
     }
   }
@@ -134,14 +134,14 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
         
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Broadcast berhasil dibuat!'), backgroundColor: Colors.green),
+          SnackBar(content: const Text('Broadcast berhasil dibuat!'), backgroundColor: Colors.grey.shade800),
         );
         Navigator.pop(context, true);
 
       } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Gagal: $e'), backgroundColor: Colors.grey.shade800),
         );
       } finally {
         setState(() => _isLoading = false);

@@ -63,7 +63,7 @@ class _DetailPesanWargaScreenState extends State<DetailPesanWargaScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Gagal memperbarui status: $e')));
+        ).showSnackBar(SnackBar(content: Text('Gagal memperbarui status: $e'), backgroundColor: Colors.grey.shade800));
       }
     } finally {
       if (mounted) {

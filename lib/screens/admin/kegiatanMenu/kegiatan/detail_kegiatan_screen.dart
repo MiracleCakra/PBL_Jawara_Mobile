@@ -64,9 +64,9 @@ class _DetailKegiatanScreenState extends State<DetailKegiatanScreen> {
     if (result != null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Data berhasil diperbarui'),
-            backgroundColor: Colors.green,
+            backgroundColor: Colors.grey.shade800,
             duration: Duration(seconds: 1),
           ),
         );
@@ -136,7 +136,7 @@ class _DetailKegiatanScreenState extends State<DetailKegiatanScreen> {
                         content: Text(
                           'Kegiatan "$judulKegiatan" telah dihapus.',
                         ),
-                        backgroundColor: const Color(0xFF2E2B32),
+                        backgroundColor: Colors.grey.shade800,
                       ),
                     );
                     context.pop('refresh'); 
@@ -149,7 +149,7 @@ class _DetailKegiatanScreenState extends State<DetailKegiatanScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text('Gagal menghapus kegiatan: $e'),
-                        backgroundColor: Colors.red,
+                        backgroundColor: Colors.grey.shade800,
                       ),
                     );
                   }

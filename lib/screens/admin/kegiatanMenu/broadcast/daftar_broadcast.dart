@@ -92,47 +92,6 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
     _refreshData();
   }
 
-  void _navigateToEditBroadcast(BroadcastModel broadcast) async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => EditBroadcastScreen(broadcast: broadcast),
-      ),
-    );
-    _refreshData();
-  }
-
-  Future<void> _deleteBroadcast(BroadcastModel broadcast) async {
-    try {
-      await _broadcastService.deleteBroadcast(broadcast.id!);
-      setState(() {
-        _broadcastStream = Stream.empty();
-      });
-      await Future.delayed(const Duration(milliseconds: 100));
-      setState(() {
-        _broadcastStream = _broadcastService.getBroadcastsStream();
-      });
-      _refreshData();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Broadcast "${broadcast.judul}" telah dihapus.'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal menghapus broadcast: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
   Widget _buildFilterBar() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -304,31 +263,11 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
                     ],
                   ),
                 ),
-                PopupMenuButton<String>(
-                  onSelected: (value) {
-                    if (value == 'edit') {
-                      _navigateToEditBroadcast(broadcast);
-                    } else if (value == 'delete') {
-                      _deleteBroadcast(broadcast);
-                    }
-                  },
-                  itemBuilder: (BuildContext context) =>
-                      <PopupMenuEntry<String>>[
-                        const PopupMenuItem<String>(
-                          value: 'edit',
-
-                          child: Text('Edit'),
-                        ),
-
-                        const PopupMenuItem<String>(
-                          value: 'delete',
-
-                          child: Text('Delete'),
-                        ),
-                      ],
-
-                  icon: const Icon(Icons.more_vert, color: Colors.grey),
-                ),
+                const Icon(
+              Icons.chevron_right,
+              color: Colors.grey,
+              size: 28,
+            ),
               ],
             ),
           ),

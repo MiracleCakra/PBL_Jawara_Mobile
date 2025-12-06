@@ -1,25 +1,24 @@
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:moon_design/moon_design.dart';
+import 'package:jawara_pintar_kel_5/models/keluarga/warga_model.dart';
+import 'package:jawara_pintar_kel_5/services/warga_service.dart';
 
 const Color _primaryColorApp = Color(0xFF6A5AE0);
 const Color _backgroundColor = Color(0xFFF7F7F7);
 const Color _primaryTextColor = Color(0xFF1F2937);
 
 class WargaEditDataDiriScreen extends StatefulWidget {
-  final Map<String, dynamic> initialData; 
+  final Map<String, dynamic> initialData;
 
   const WargaEditDataDiriScreen({
     super.key,
-    this.initialData = const {
-      'nama': 'Susanto',
-      'nik': '3200101234567890',
-      'email': 'Sasanto@gmail.com',
-      'telepon': '081234567890',
-      'gender': 'Pria',
-      'status': 'Aktif',
-      'alamat': 'Blok C No. 5, RT 001 / RW 001, Kelurahan jiwiri',
-    },
+    this.initialData = const {},
   });
 
   @override
@@ -28,74 +27,221 @@ class WargaEditDataDiriScreen extends StatefulWidget {
 
 class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
   final _formKey = GlobalKey<FormState>();
+  final WargaService _wargaService = WargaService();
+  final ImagePicker _picker = ImagePicker();
 
-  // Kontroler untuk field yang DAPAT diedit
-  late final TextEditingController _namaController;
-  late final TextEditingController _emailController;
+  // Controllers for editable fields
   late final TextEditingController _phoneController;
-  late final TextEditingController _alamatController;
   
-  // Data yang tidak dapat diubah (ReadOnly)
-  late final String _nik;
-  late final String _gender;
-  late final String _status;
+  // Dropdown values
+  Gender? _selectedGender;
+  GolonganDarah? _selectedBloodType;
+  String? _selectedAgama;
+
+  final List<String> _agamaList = [
+    'Islam',
+    'Kristen',
+    'Katolik',
+    'Hindu',
+    'Buddha',
+    'Khonghucu'
+  ];
+
+  // Data
+  Warga? _currentWarga;
+  bool _isLoading = false;
+  late String _nik = ''; 
+
+  // Images
+  File? _imageFile;
+  Uint8List? _imageBytes;
+  File? _ktpFile;
+  Uint8List? _ktpBytes;
 
   @override
   void initState() {
     super.initState();
-    _namaController = TextEditingController(text: widget.initialData['nama']);
-    _emailController = TextEditingController(text: widget.initialData['email']);
     _phoneController = TextEditingController(text: widget.initialData['telepon']);
-    _alamatController = TextEditingController(text: widget.initialData['alamat']);
     
-    _nik = widget.initialData['nik'];
-    _gender = widget.initialData['gender'];
-    _status = widget.initialData['status'];
+    _nik = widget.initialData['nik'] ?? widget.initialData['id'] ?? '';
+
+    _fetchFullWargaData();
+  }
+
+  Future<void> _fetchFullWargaData() async {
+    try {
+      if (_nik.isNotEmpty && _nik != '-') {
+         final warga = await _wargaService.getWargaById(_nik);
+         if (mounted) {
+           setState(() {
+             _currentWarga = warga;
+             if (_phoneController.text.isEmpty) _phoneController.text = warga.telepon ?? '';
+             _selectedGender = warga.gender;
+             _selectedBloodType = warga.golDarah;
+             
+             // Set agama if matches list, otherwise null
+             if (warga.agama != null && _agamaList.contains(warga.agama)) {
+                _selectedAgama = warga.agama;
+             }
+           });
+         }
+      }
+    } catch (e) {
+      debugPrint("Error fetching full warga data: $e");
+    }
   }
 
   @override
   void dispose() {
-    _namaController.dispose();
-    _emailController.dispose();
     _phoneController.dispose();
-    _alamatController.dispose();
     super.dispose();
   }
 
-  // --- Fungsi Simpan Data (Simulasi) ---
-  void _saveData() async {
-    if (_formKey.currentState!.validate()) {
-      // 1. Tampilkan loading
-      setState(() => _isLoading = true);
+  Future<void> _pickImage() async {
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+      );
 
-      // 2. Simulasi proses simpan ke backend
-      await Future.delayed(const Duration(seconds: 2));
-
-      // 3. Matikan loading
-      setState(() => _isLoading = false);
-
-      if (mounted) {
-        // 4. Tampilkan notifikasi berhasil
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Data diri berhasil diperbarui! 🎉'),
-            backgroundColor: Colors.green.shade700,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        // 5. Kembali ke halaman detail
-        context.pop();
+      if (pickedFile != null) {
+        final bytes = await pickedFile.readAsBytes();
+        setState(() {
+          _imageFile = File(pickedFile.path); 
+          _imageBytes = bytes; 
+        });
       }
+    } catch (e) {
+      debugPrint("Error picking profile image: $e");
     }
   }
 
-  bool _isLoading = false;
+  Future<void> _pickKtpImage() async {
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+      );
+
+      if (pickedFile != null) {
+        final bytes = await pickedFile.readAsBytes();
+        setState(() {
+          _ktpFile = File(pickedFile.path);
+          _ktpBytes = bytes;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error picking KTP image: $e");
+    }
+  }
+
+  Future<void> _saveData() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (_currentWarga == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: const Text('Data warga belum dimuat sempurna. Mohon tunggu.'), backgroundColor: Colors.grey.shade800),
+        );
+        return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      // 1. Upload Profile Picture
+      String? fotoUrl = _currentWarga?.fotoProfil;
+      if (_imageBytes != null) { 
+        final fileName = 'pfp_${_currentWarga!.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        fotoUrl = await _wargaService.uploadFotoProfil(
+          file: kIsWeb ? null : _imageFile,
+          bytes: _imageBytes,
+          fileName: fileName,
+          contentType: 'image/jpeg',
+        );
+      }
+
+      // 2. Upload KTP
+      String? fotoKtpUrl = _currentWarga?.fotoKtp;
+      if (_ktpBytes != null) {
+         final fileName = 'ktp_${_currentWarga!.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+         fotoKtpUrl = await _wargaService.uploadFotoKtp(
+            file: kIsWeb ? null : _ktpFile, 
+            bytes: _ktpBytes, 
+            fileName: fileName, 
+            contentType: 'image/jpeg'
+         );
+      }
+
+      // 3. Update Data
+      final updatedWarga = Warga(
+        id: _currentWarga!.id,
+        nama: _currentWarga!.nama, // Disabled
+        email: _currentWarga!.email, // Disabled
+        telepon: _phoneController.text, // Editable
+        pekerjaan: _currentWarga!.pekerjaan, // Disabled
+        fotoProfil: fotoUrl, // Editable
+        tanggalLahir: _currentWarga!.tanggalLahir, // Disabled
+        tempatLahir: _currentWarga!.tempatLahir, // Disabled
+        gender: _selectedGender, // Editable
+        golDarah: _selectedBloodType, // Editable
+        pendidikanTerakhir: _currentWarga!.pendidikanTerakhir, // Disabled
+        statusPenduduk: _currentWarga!.statusPenduduk, // Disabled
+        statusHidupWafat: _currentWarga!.statusHidupWafat, // Disabled
+        keluargaId: _currentWarga!.keluargaId,
+        agama: _selectedAgama, // Editable (Dropdown)
+        fotoKtp: fotoKtpUrl, // Editable
+      );
+
+      await _wargaService.updateWarga(_currentWarga!.id, updatedWarga);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Profil berhasil diperbarui!'),
+            backgroundColor: Colors.grey.shade800,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        context.pop(true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal menyimpan: $e'), backgroundColor: Colors.grey.shade800),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading || _currentWarga == null) {
+      return const Scaffold(
+        backgroundColor: _backgroundColor,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    // Providers for Images
+    ImageProvider? imageProvider;
+    if (_imageBytes != null) {
+      imageProvider = MemoryImage(_imageBytes!);
+    } else if (_currentWarga?.fotoProfil != null) {
+      imageProvider = NetworkImage(_currentWarga!.fotoProfil!);
+    }
+
+    ImageProvider? ktpProvider;
+    if (_ktpBytes != null) {
+        ktpProvider = MemoryImage(_ktpBytes!);
+    } else if (_currentWarga?.fotoKtp != null) {
+        ktpProvider = NetworkImage(_currentWarga!.fotoKtp!);
+    }
+
     return Scaffold(
       backgroundColor: _backgroundColor,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         surfaceTintColor: Colors.transparent,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
@@ -123,87 +269,178 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.only(right: 16, left: 16, top: 16),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- Identitas (Nama: EDITABLE) ---
+              
+              // --- Foto Profil (Editable) ---
+              Center(
+                child: Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 50,
+                      backgroundColor: _primaryColorApp.withOpacity(0.1),
+                      backgroundImage: imageProvider,
+                      child: imageProvider == null
+                          ? Text(
+                              _currentWarga?.nama.isNotEmpty == true ? _currentWarga!.nama[0].toUpperCase() : 'A',
+                              style: const TextStyle(fontSize: 32, color: _primaryColorApp, fontWeight: FontWeight.bold),
+                            )
+                          : null,
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: InkWell(
+                        onTap: _pickImage,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: _primaryColorApp,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 3),
+                          ),
+                          child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // --- Identitas ---
               _buildInputGroup(
                 title: 'Identitas',
                 children: [
-                  _buildEditableField(
-                    label: 'Nama Lengkap',
-                    controller: _namaController,
-                    validator: (value) => value!.isEmpty ? 'Nama tidak boleh kosong' : null,
+                  // Nama (Disabled)
+                  _buildReadOnlyField(label: 'Nama Lengkap', value: _currentWarga?.nama ?? '-'),
+                  // NIK (Disabled)
+                  _buildReadOnlyField(label: 'NIK', value: _currentWarga?.id ?? '-'),
+                  // Jenis Kelamin (Editable)
+                  _buildDropdownField<Gender>(
+                    label: 'Jenis Kelamin',
+                    value: _selectedGender,
+                    items: Gender.values,
+                    itemLabel: (g) => g.value,
+                    onChanged: (val) => setState(() => _selectedGender = val),
                   ),
-                  _buildReadOnlyField(label: 'NIK', value: _nik), // READ ONLY
-                  _buildReadOnlyField(label: 'Jenis Kelamin', value: _gender), // READ ONLY
+                  // Golongan Darah (Editable)
+                  _buildDropdownField<GolonganDarah>(
+                    label: 'Golongan Darah',
+                    value: _selectedBloodType,
+                    items: GolonganDarah.values,
+                    itemLabel: (g) => g.value,
+                    onChanged: (val) => setState(() => _selectedBloodType = val),
+                  ),
+                  // Agama (Editable Dropdown)
+                  _buildDropdownField<String>(
+                    label: 'Agama',
+                    value: _selectedAgama,
+                    items: _agamaList,
+                    itemLabel: (val) => val,
+                    onChanged: (val) => setState(() => _selectedAgama = val),
+                  ),
                 ],
               ),
               const SizedBox(height: 24),
 
-              // --- Kontak & Akun (EDITABLE) ---
+              // --- Kontak & Akun ---
               _buildInputGroup(
                 title: 'Kontak & Akun',
                 children: [
+                   // Email (Disabled)
+                  _buildReadOnlyField(label: 'Email', value: _currentWarga?.email ?? '-'),
+                   // Telepon (Editable)
                   _buildEditableField(
-                    label: 'Email',
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (value) {
-                      if (value!.isEmpty) return 'Email tidak boleh kosong';
-                      if (!value.contains('@') || !value.contains('.')) return 'Format email tidak valid';
-                      return null;
-                    },
-                  ),
-                  _buildEditableField(
-                    label: 'No Telepone',
+                    label: 'Nomor Telepon', 
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
-                    validator: (value) => value!.isEmpty ? 'Nomor telepon tidak boleh kosong' : null,
                   ),
                 ],
               ),
               const SizedBox(height: 24),
 
-              // --- Detail Tempat Tinggal (Alamat: EDITABLE) ---
+              // --- Detail Tempat Tinggal ---
               _buildInputGroup(
                 title: 'Detail Tempat Tinggal',
                 children: [
-                  _buildEditableField(
-                    label: 'Alamat',
-                    controller: _alamatController,
-                    maxLines: 3,
-                    validator: (value) => value!.isEmpty ? 'Alamat tidak boleh kosong' : null,
-                  ),
-                  _buildReadOnlyField(label: 'Status Warga', value: _status), // READ ONLY
+                  _buildReadOnlyField(label: 'Alamat', value: _currentWarga?.keluarga?.alamatRumah ?? '-', maxLines: 3),
+                  _buildReadOnlyField(label: 'Status Warga', value: _currentWarga?.statusPenduduk?.value ?? '-'),
                 ],
               ),
+              const SizedBox(height: 24),
+
+              // --- Dokumen KTP (Editable) ---
+              _buildInputGroup(
+                title: 'Dokumen',
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Foto KTP',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: _primaryTextColor),
+                      ),
+                      const SizedBox(height: 12),
+                      InkWell(
+                        onTap: _pickKtpImage,
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          width: double.infinity,
+                          height: 200,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade300, width: 1),
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: ktpProvider != null
+                              ? Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    Image(image: ktpProvider, fit: BoxFit.cover),
+                                    Container(
+                                      color: Colors.black.withOpacity(0.3),
+                                      child: const Center(
+                                        child: Icon(Icons.edit, color: Colors.white, size: 32),
+                                      ),
+                                    )
+                                  ],
+                                )
+                              : Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.add_a_photo_outlined, size: 40, color: Colors.grey.shade400),
+                                    const SizedBox(height: 8),
+                                    Text('Ketuk untuk unggah KTP', style: TextStyle(color: Colors.grey.shade500)),
+                                  ],
+                                ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
               const SizedBox(height: 32),
 
               // --- Tombol Simpan ---
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _saveData,
+                  onPressed: _saveData,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _primaryColorApp,
-                    disabledBackgroundColor: _primaryColorApp.withOpacity(0.6),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     elevation: 0,
                   ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
-                        )
-                      : const Text(
-                          'Simpan Perubahan',
-                          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16),
-                        ),
+                  child: const Text(
+                    'Simpan Perubahan',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16),
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -214,13 +451,43 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
     );
   }
 
-  // --- Widget Helper untuk Field yang DAPAT Diedit ---
+  // --- WIDGET HELPER ---
+  
+  // 1. Read Only Field
+  Widget _buildReadOnlyField({required String label, required String value, int? maxLines = 1}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.grey),
+          ),
+          const SizedBox(height: 8),
+          TextFormField(
+            key: ValueKey(value),
+            initialValue: value.isEmpty ? '-' : value,
+            readOnly: true,
+            maxLines: maxLines,
+            style: TextStyle(
+              color: Colors.grey.shade700,
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+            ),
+            decoration: _inputDecoration(isReadOnly: true),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 2. Editable Text Field
   Widget _buildEditableField({
     required String label,
     required TextEditingController controller,
     int? maxLines = 1,
     TextInputType keyboardType = TextInputType.text,
-    String? Function(String?)? validator,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
@@ -236,7 +503,6 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
             controller: controller,
             maxLines: maxLines,
             keyboardType: keyboardType,
-            validator: validator,
             style: const TextStyle(
               color: _primaryTextColor,
               fontSize: 15,
@@ -249,8 +515,14 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
     );
   }
 
-  // --- Widget Helper untuk Field yang TIDAK DAPAT Diedit (sama seperti di halaman detail) ---
-  Widget _buildReadOnlyField({required String label, required String value, int? maxLines = 1}) {
+  // 3. Dropdown Field
+  Widget _buildDropdownField<T>({
+    required String label,
+    required T? value,
+    required List<T> items,
+    required String Function(T) itemLabel,
+    required void Function(T?) onChanged,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
@@ -258,26 +530,31 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
         children: [
           Text(
             label,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.grey), // Warna label berbeda
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: _primaryTextColor),
           ),
           const SizedBox(height: 8),
-          TextFormField(
-            initialValue: value.isEmpty ? '-' : value,
-            readOnly: true,
-            maxLines: maxLines,
-            style: TextStyle(
-              color: Colors.grey.shade700, // Warna value lebih soft
+          DropdownButtonFormField<T>(
+            value: value,
+            items: items.map((item) {
+              return DropdownMenuItem<T>(
+                value: item,
+                child: Text(itemLabel(item)),
+              );
+            }).toList(),
+            onChanged: onChanged,
+            decoration: _inputDecoration(),
+            style: const TextStyle(
+              color: _primaryTextColor,
               fontSize: 15,
               fontWeight: FontWeight.w500,
             ),
-            decoration: _inputDecoration(isReadOnly: true),
           ),
         ],
       ),
     );
   }
 
-  // --- Helper untuk dekorasi input ---
+  // 4. Input Decoration
   InputDecoration _inputDecoration({bool isReadOnly = false}) {
     final Color borderColor = isReadOnly ? Colors.grey.shade200 : Colors.grey.shade300;
     final Color focusedColor = isReadOnly ? Colors.grey.shade300 : _primaryColorApp.withOpacity(0.5);
@@ -297,20 +574,12 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
         borderRadius: const BorderRadius.all(Radius.circular(12.0)),
         borderSide: BorderSide(color: focusedColor, width: isReadOnly ? 1 : 1.5),
       ),
-      errorBorder: const OutlineInputBorder(
-        borderRadius: BorderRadius.all(Radius.circular(12.0)),
-        borderSide: BorderSide(color: Colors.red, width: 1.5),
-      ),
-      focusedErrorBorder: const OutlineInputBorder(
-        borderRadius: BorderRadius.all(Radius.circular(12.0)),
-        borderSide: BorderSide(color: Colors.red, width: 1.5),
-      ),
       fillColor: fillColor,
       filled: true,
     );
   }
-  
-  // --- Grup Input (sama seperti di WargaDataDiriScreen) ---
+
+  // 5. Input Group Container
   Column _buildInputGroup({required String title, required List<Widget> children}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

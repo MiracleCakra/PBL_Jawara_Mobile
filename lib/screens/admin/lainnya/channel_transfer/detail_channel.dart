@@ -26,7 +26,7 @@ class _DetailChannelPageState extends State<DetailChannelPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Channel "${widget.channel.nama}" telah dihapus.'),
-            backgroundColor: const Color(0xFF2E2B32),
+            backgroundColor: Colors.grey.shade800,
           ),
         );
         Navigator.of(context).pop();
@@ -37,7 +37,7 @@ class _DetailChannelPageState extends State<DetailChannelPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Gagal menghapus: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.grey.shade800,
           ),
         );
       }

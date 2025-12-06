@@ -86,7 +86,10 @@ class _EditKegiatanScreenState extends State<EditKegiatanScreen> {
       if (file.size > 5 * 1024 * 1024) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Ukuran gambar melebihi batas 5MB!')),
+            SnackBar(
+              content: const Text('Ukuran gambar melebihi batas 5MB!'),
+              backgroundColor: Colors.grey.shade800,
+            ),
           );
         }
         return;
@@ -179,7 +182,7 @@ class _EditKegiatanScreenState extends State<EditKegiatanScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Gagal memperbarui kegiatan: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.grey.shade800,
           ),
         );
       }

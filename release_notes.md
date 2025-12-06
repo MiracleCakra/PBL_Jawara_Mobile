@@ -1,34 +1,9 @@
-# Release Notes - Version 1.6.1
+# Release Notes - Version 1.6.2
 
 🚀 **New Features**:
 
-* **Registration Update**:
-
-  * Added personal data fields and status kependudukan to the registration flow for more complete resident data.
-
-  * **Anggota Keluarga**
-
-    * Add Family Member
-    * Added new fields for personal data and population status.
-    * Improved validation and data handling.
-
-  * **Family Member Details**
-
-    * Updated detail view to display personal data and population status accurately.
-
-* **Edit Family Member**:
-
-  * Enabled editing of personal data and population status.
-  * Improved form logic and data synchronization.
-
-* **Transfer channel**:
-
-  * Added a new Transfer Channel Selection feature on the Detail Tagihan screen.
-  * Users can now choose the preferred transfer/payment channel.
-  
-* **UI Improvement: Status Dropdown in Citizen Messages**:
-
-  * Improved the status dropdown UI in the Citizen Messages page.
+* Profile editing with profile picture management implemented
+* Admin can now change user role.
 
 🐛 **Bug Fixes**:
 

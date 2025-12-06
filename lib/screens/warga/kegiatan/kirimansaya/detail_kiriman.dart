@@ -59,7 +59,7 @@ class _WargaDetailKirimanScreenState extends State<WargaDetailKirimanScreen> {
                 } catch (e) {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Gagal menghapus: $e')),
+                      SnackBar(content: Text('Gagal menghapus: $e'), backgroundColor: Colors.grey.shade800),
                     );
                   }
                 }

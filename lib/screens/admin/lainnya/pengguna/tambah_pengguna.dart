@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jawara_pintar_kel_5/services/pengguna_service.dart';
 
 class TambahPenggunaScreen extends StatefulWidget {
   const TambahPenggunaScreen({super.key});
@@ -10,6 +11,7 @@ class TambahPenggunaScreen extends StatefulWidget {
 
 class _TambahPenggunaScreenState extends State<TambahPenggunaScreen> {
   final Color primary = const Color(0xFF4E46B4);
+  final PenggunaService _penggunaService = PenggunaService();
 
   // Controllers
   final _namaLengkapCtl = TextEditingController();
@@ -21,6 +23,7 @@ class _TambahPenggunaScreenState extends State<TambahPenggunaScreen> {
   // Password visibility
   bool _passwordVisible = false;
   bool _konfirmasiPasswordVisible = false;
+  bool _isLoading = false;
 
   // Dropdown state
   String? _role;
@@ -163,7 +166,7 @@ class _TambahPenggunaScreenState extends State<TambahPenggunaScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      onPressed: _reset,
+                      onPressed: _isLoading ? null : _reset,
                       child: Text(
                         'Reset',
                         style: TextStyle(
@@ -184,15 +187,14 @@ class _TambahPenggunaScreenState extends State<TambahPenggunaScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      onPressed: () {
-                        // TODO: Backend logic nanti
-                        // Untuk sekarang hanya kembali ke halaman sebelumnya
-                        Navigator.pop(context);
-                      },
-                      child: const Text(
-                        'Simpan',
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
+                      // TODO: THIS ILL PROBABLY LEFT UNUSED
+                      onPressed: context.pop,
+                      child: _isLoading 
+                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : const Text(
+                          'Simpan',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
                     ),
                   ),
                 ],

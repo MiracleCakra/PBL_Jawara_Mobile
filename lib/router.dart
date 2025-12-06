@@ -504,7 +504,7 @@ final router = GoRouter(
               path: '/admin/lainnya/manajemen-pengguna/detail',
               name: 'penggunaDetail',
               builder: (context, state) {
-                final userdata = state.extra as Map<String, String>? ?? {};
+                final userdata = state.extra as Map<String, dynamic>? ?? {};
                 return DetailPenggunaScreen(userData: userdata);
               },
             ),
@@ -512,7 +512,7 @@ final router = GoRouter(
               path: '/admin/lainnya/manajemen-pengguna/edit',
               name: 'penggunaEdit',
               builder: (context, state) {
-                final userdata = state.extra as Map<String, String>? ?? {};
+                final userdata = state.extra as Map<String, dynamic>? ?? {};
                 return EditPenggunaScreen(userData: userdata);
               },
             ),
@@ -1626,7 +1626,10 @@ final router = GoRouter(
                 ),
                 GoRoute(
                   path: 'edit-data',
-                  builder: (context, state) => const WargaEditDataDiriScreen(),
+                  builder: (context, state) {
+                    final initialData = state.extra as Map<String, dynamic>? ?? {};
+                    return WargaEditDataDiriScreen(initialData: initialData);
+                  },
                 ),
                 GoRoute(
                   path: 'pengaturan',
