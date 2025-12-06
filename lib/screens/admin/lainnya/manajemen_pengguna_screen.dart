@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jawara_pintar_kel_5/models/keluarga/warga_model.dart';
+import 'package:jawara_pintar_kel_5/services/pengguna_service.dart';
 
 class ManajemenPenggunaScreen extends StatefulWidget {
   const ManajemenPenggunaScreen({super.key});
@@ -13,63 +15,52 @@ class _ManajemenPenggunaScreenState extends State<ManajemenPenggunaScreen> {
   final Color primary = const Color(0xFF4E46B4);
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
+  final PenggunaService _penggunaService = PenggunaService();
+  
   String _query = '';
+  // Variabel filter
+  String? _filterRole;
+  String? _filterStatus;
 
-  final List<Map<String, String>> _users = [
-    {
-      'name': 'Cakra Wanngsa',
-      'role': 'Ketua RW',
-      'status': 'Diterima',
-      'nik': '3573034501050004',
-      'email': 'cakra@gmail.com',
-      'phone': '085850889729',
-      'gender': 'Laki-Laki',
-    },
-    {
-      'name': 'Afrizal',
-      'role': 'Warga',
-      'status': 'Menunggu',
-      'nik': '3573034501050005',
-      'email': 'afrizal@gmail.com',
-      'phone': '081234567890',
-      'gender': 'Laki-laki',
-    },
-    {
-      'name': 'Fara',
-      'role': 'Bendahara',
-      'status': 'Diterima',
-      'nik': '3573034501050006',
-      'email': 'fara@gmail.com',
-      'phone': '082345678901',
-      'gender': 'Perempuan',
-    },
-       {
-      'name': 'Tio',
-      'role': 'Ketua RT',
-      'status': 'Diterima',
-      'nik': '3573033301050008',
-      'email': 'tio@gmail.com',
-      'phone': '082345678901',
-      'gender': 'Laki-Laki',
-    },
-  ];
+  // Gak butuh initState buat fetch data lagi!
 
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'Diterima':
-        return primary;
-      case 'Menunggu':
-        return Colors.amber.shade700;
-      case 'Ditolak':
-        return Colors.red.shade600;
-      default:
-        return Colors.grey;
+  Color _getRoleColor(String role) {
+    switch (role) {
+      case 'Admin': return primary;
+      case 'Warga': return Colors.blue;
+      case 'Ketua RT':
+      case 'Ketua RW': return Colors.orange;
+      case 'Sekretaris RT':
+      case 'Sekretaris RW': return Colors.teal;
+      case 'Bendahara RT':
+      case 'Bendahara RW': return Colors.green;
+      default: return Colors.grey;
     }
   }
 
+  // Logic filter lokal di sisi aplikasi
+  List<Warga> _applyFilters(List<Warga> data) {
+    return data.where((warga) {
+      // 1. Filter Search Nama
+      final matchesQuery = _query.isEmpty || 
+          warga.nama.toLowerCase().contains(_query.toLowerCase());
+      
+      // 2. Filter Role (Dropdown)
+      final matchesRole = _filterRole == null || 
+          warga.role == _filterRole;
+
+      // 3. Filter Status (Dropdown)
+      final matchesStatus = _filterStatus == null || 
+          (warga.statusPenduduk?.value ?? 'Nonaktif') == _filterStatus;
+
+      return matchesQuery && matchesRole && matchesStatus;
+    }).toList();
+  }
+
   void _openFilter() {
-    String? role;
-    String? status;
+    // Kita pakai variabel temp biar user harus klik "Terapkan" baru filter berubah
+    String? tempRole = _filterRole;
+    String? tempStatus = _filterStatus;
 
     showModalBottomSheet(
       context: context,
@@ -94,101 +85,64 @@ class _ManajemenPenggunaScreenState extends State<ManajemenPenggunaScreen> {
                     children: [
                       Center(
                         child: Container(
-                          width: 40,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[300],
-                            borderRadius: BorderRadius.circular(2),
-                          ),
+                          width: 40, height: 4,
+                          decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
                         ),
                       ),
                       const SizedBox(height: 12),
-                      const Text(
-                        'Filter Pengguna',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
+                      const Text('Filter Pengguna', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 16),
-                      const Text(
-                        'Role',
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
+                      
+                      // Filter Role
+                      const Text('Role', style: TextStyle(fontWeight: FontWeight.w600)),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
-                        value: role,
+                        value: tempRole,
                         isExpanded: true,
                         decoration: _dropdownDecoration(),
                         items: const [
-                          DropdownMenuItem(
-                            value: 'Warga',
-                            child: Text('Warga'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Admin',
-                            child: Text('Admin'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Bendahara',
-                            child: Text('Bendahara'),
-                          ),
+                          DropdownMenuItem(value: 'Warga', child: Text('Warga')),
+                          DropdownMenuItem(value: 'Admin', child: Text('Admin')),
+                          DropdownMenuItem(value: 'Bendahara', child: Text('Bendahara')),
+                          // Tambahin role lain sesuai kebutuhan
                         ],
-                        onChanged: (v) => setModalState(() => role = v),
+                        onChanged: (v) => setModalState(() => tempRole = v),
                       ),
+                      
                       const SizedBox(height: 16),
-                      const Text(
-                        'Status',
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
+                      
+                      // Filter Status
+                      const Text('Status', style: TextStyle(fontWeight: FontWeight.w600)),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
-                        value: status,
+                        value: tempStatus,
                         isExpanded: true,
                         decoration: _dropdownDecoration(),
                         items: const [
-                          DropdownMenuItem(
-                            value: 'Diterima',
-                            child: Text('Diterima'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Menunggu',
-                            child: Text('Menunggu'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Ditolak',
-                            child: Text('Ditolak'),
-                          ),
+                          DropdownMenuItem(value: 'Aktif', child: Text('Aktif')),
+                          DropdownMenuItem(value: 'Nonaktif', child: Text('Nonaktif')),
                         ],
-                        onChanged: (v) => setModalState(() => status = v),
+                        onChanged: (v) => setModalState(() => tempStatus = v),
                       ),
+                      
                       const SizedBox(height: 20),
                       Row(
                         children: [
                           Expanded(
                             child: OutlinedButton(
                               style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
-                                side: const BorderSide(
-                                  color: Color.fromRGBO(78, 70, 180, 0.12),
-                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                side: const BorderSide(color: Color.fromRGBO(78, 70, 180, 0.12)),
                                 backgroundColor: const Color(0xFFF4F3FF),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               ),
                               onPressed: () {
                                 setModalState(() {
-                                  role = null;
-                                  status = null;
+                                  tempRole = null;
+                                  tempStatus = null;
                                 });
                               },
-                              child: const Text(
-                                'Reset Filter',
-                                style: TextStyle(fontWeight: FontWeight.w600),
-                              ),
+                              child: const Text('Reset Filter', style: TextStyle(fontWeight: FontWeight.w600)),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -197,18 +151,18 @@ class _ManajemenPenggunaScreenState extends State<ManajemenPenggunaScreen> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF4E46B4),
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               ),
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text(
-                                'Terapkan',
-                                style: TextStyle(fontWeight: FontWeight.w600),
-                              ),
+                              onPressed: () {
+                                // Update state utama screen
+                                setState(() {
+                                  _filterRole = tempRole;
+                                  _filterStatus = tempStatus;
+                                });
+                                Navigator.pop(context);
+                              },
+                              child: const Text('Terapkan', style: TextStyle(fontWeight: FontWeight.w600)),
                             ),
                           ),
                         ],
@@ -229,26 +183,10 @@ class _ManajemenPenggunaScreenState extends State<ManajemenPenggunaScreen> {
       filled: true,
       fillColor: Colors.white,
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade300),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade300),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF4E46B4), width: 1.2),
-      ),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF4E46B4), width: 1.2)),
     );
-  }
-
-  List<Map<String, String>> get _filtered {
-    if (_query.isEmpty) return _users;
-    return _users
-        .where((e) => e['name']!.toLowerCase().contains(_query.toLowerCase()))
-        .toList();
   }
 
   @override
@@ -271,24 +209,16 @@ class _ManajemenPenggunaScreenState extends State<ManajemenPenggunaScreen> {
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.chevron_left, color: Colors.black),
         ),
-        title: const Text(
-          'Manajemen Pengguna',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        title: const Text('Manajemen Pengguna', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.w600)),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          context.push('/admin/lainnya/manajemen-pengguna/tambah');
+        onPressed: () async {
+          await context.push('/admin/lainnya/manajemen-pengguna/tambah');
+          // Gak perlu refresh manual, stream otomatis update!
         },
         backgroundColor: primary,
         foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: const Icon(Icons.add, size: 28),
       ),
       body: SafeArea(
@@ -299,45 +229,80 @@ class _ManajemenPenggunaScreenState extends State<ManajemenPenggunaScreen> {
               color: Colors.white,
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              child: const Text(
-                'Daftar Pengguna',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
+              child: const Text('Daftar Pengguna', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87)),
             ),
-            // Search and filter
+            // Search and filter component (tetap sama)
             _SearchFilterBar(
               controller: _searchController,
               focusNode: _searchFocusNode,
               onChanged: (v) => setState(() => _query = v),
               onFilterTap: _openFilter,
             ),
-            // User list
+            // User list dengan StreamBuilder
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: ListView.separated(
-                  padding: const EdgeInsets.only(bottom: 16, top: 8),
-                  itemCount: _filtered.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final user = _filtered[index];
-                    return _UserCard(
-                      user: user,
-                      primary: primary,
-                      onTap: () {
-                        context.push(
-                          '/admin/lainnya/manajemen-pengguna/detail',
-                          extra: user,
+              child: StreamBuilder<List<Warga>>(
+                stream: _penggunaService.streamAllUsers(),
+                builder: (context, snapshot) {
+                  // 1. Loading State
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  // 2. Error State
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  }
+
+                  // 3. Empty Data
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Center(child: Text('Belum ada data pengguna.'));
+                  }
+
+                  // 4. Data Ada -> Filter dulu sebelum ditampilkan
+                  final filteredList = _applyFilters(snapshot.data!);
+
+                  if (filteredList.isEmpty) {
+                     return const Center(child: Text('Data tidak ditemukan.'));
+                  }
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: ListView.separated(
+                      padding: const EdgeInsets.only(bottom: 16, top: 8),
+                      itemCount: filteredList.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        final warga = filteredList[index];
+                        
+                        // Map data untuk dikirim ke detail
+                        final userMap = {
+                          'id': warga.id,
+                          'name': warga.nama,
+                          'role': warga.role ?? '-',
+                          'status': warga.statusPenduduk?.value ?? 'Nonaktif',
+                          'nik': warga.id,
+                          'email': warga.email ?? '-',
+                          'phone': warga.telepon ?? '-',
+                          'gender': warga.gender?.value ?? '-',
+                          'imageUrl': warga.fotoProfil, // Bawa URL foto
+                        };
+                        
+                        return _UserCard(
+                          user: userMap,
+                          primary: primary,
+                          onTap: () async {
+                             // Kirim ID-nya, detail screen nanti listen ke stream ID ini
+                             context.push(
+                              '/admin/lainnya/manajemen-pengguna/detail',
+                              extra: userMap,
+                            );
+                          },
+                          getRoleColor: _getRoleColor,
                         );
                       },
-                      getStatusColor: _getStatusColor,
-                    );
-                  },
-                ),
+                    ),
+                  );
+                },
               ),
             ),
           ],
@@ -431,23 +396,22 @@ class _SearchFilterBar extends StatelessWidget {
     );
   }
 }
-
 class _UserCard extends StatelessWidget {
-  final Map<String, String> user;
+  final Map<String, dynamic> user; // Ubah jadi dynamic biar aman sama userMap barunya
   final Color primary;
   final VoidCallback? onTap;
-  final Color Function(String) getStatusColor;
+  final Color Function(String) getRoleColor;
 
   const _UserCard({
     required this.user,
     required this.primary,
     this.onTap,
-    required this.getStatusColor,
+    required this.getRoleColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    final statusColor = getStatusColor(user['status'] ?? 'Diterima');
+    final roleColor = getRoleColor(user['role'] ?? '-');
 
     return Material(
       color: Colors.white,
@@ -484,7 +448,7 @@ class _UserCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      user['role'] ?? '-',
+                      user['email'] ?? '-',
                       style: TextStyle(fontSize: 14, color: Colors.grey[700]),
                     ),
                   ],
@@ -496,11 +460,11 @@ class _UserCard extends StatelessWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: statusColor,
+                  color: roleColor,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  user['status'] ?? 'Diterima',
+                  user['role'] ?? '-',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,

@@ -1,24 +1,39 @@
+import 'package:jawara_pintar_kel_5/models/keluarga/warga_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class PenggunaService {
-  final SupabaseClient _client = Supabase.instance.client;
+  final SupabaseClient _supabase = Supabase.instance.client;
 
-  Future<List<Map<String, dynamic>>> getUsers() async {
+  Stream<List<Warga>> streamAllUsers() {
+    return _supabase
+        .from('warga')
+        .stream(primaryKey: ['id'])
+        .order('nama', ascending: true)
+        .map((data) => data.map((json) => Warga.fromJson(json)).toList());
+  }
+
+  Stream<Warga> streamUserById(String id) {
+    return _supabase
+        .from('warga')
+        .stream(primaryKey: ['id'])
+        .eq('id', id)
+        .limit(1)
+        .map((data) => Warga.fromJson(data.first));
+  }
+
+  Future<void> updateUser(String id, Map<String, dynamic> updates) async {
     try {
-      // This will likely fail without service_role key, but it reflects the user's intent
-      // final response = await _client.auth.admin.listUsers();
-      // return response.users.map((user) => user.toJson()).toList();
-      
-      // Placeholder, as direct listing is not possible from client.
-      // The correct implementation requires a backend call (e.g., Supabase Edge Function).
-      print("Warning: Attempting to list users from the client-side. This requires admin privileges and will likely fail without a proper backend implementation.");
-      final response = await _client.from('users').select();
-      return List<Map<String, dynamic>>.from(response);
-
+      await _supabase.from('warga').update(updates).eq('id', id);
     } catch (e) {
-      print('Error fetching users: $e');
-      // Returning an empty list as a fallback
-      return [];
+      throw Exception('Gagal memperbarui pengguna: $e');
+    }
+  }
+
+  Future<void> deleteUser(String id) async {
+    try {
+      await _supabase.from('warga').delete().eq('id', id);
+    } catch (e) {
+      throw Exception('Gagal menghapus pengguna: $e');
     }
   }
 }
