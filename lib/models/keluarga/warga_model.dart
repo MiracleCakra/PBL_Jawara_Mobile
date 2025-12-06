@@ -89,6 +89,7 @@ class Warga {
   final String? keluargaId;
   final String? agama;
   final String? fotoKtp;
+  final String? fotoProfil;
   final String? email;
   final Keluarga? keluarga;
   final List<AnggotaKeluarga>? anggotaKeluarga;
@@ -108,6 +109,7 @@ class Warga {
     this.keluargaId,
     this.agama,
     this.fotoKtp,
+    this.fotoProfil,
     this.email,
     this.keluarga,
     this.anggotaKeluarga,
@@ -131,6 +133,7 @@ class Warga {
       keluargaId: json['keluarga_id'],
       agama: json['agama'],
       fotoKtp: json['foto_ktp'],
+      fotoProfil: json['foto_profil'],
       email: json['email'],
       keluarga: json['keluarga'] != null
           ? Keluarga.fromJson(json['keluarga'])
@@ -159,6 +162,7 @@ class Warga {
       'keluarga_id': keluargaId,
       'agama': agama,
       'foto_ktp': fotoKtp,
+      'foto_profil': fotoProfil,
       'email': email,
     };
   }

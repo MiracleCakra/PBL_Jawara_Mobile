@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
 import 'package:jawara_pintar_kel_5/screens/auth/auth_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Model menu item
 class MenuItem {
@@ -22,7 +23,13 @@ class LainnyaScreen extends StatefulWidget {
 
 class _LainnyaScreenState extends State<LainnyaScreen> {
   final authService = AuthService();
+  final _currentEmail = Supabase.instance.client.auth.currentUser?.email;
   double _opacity = 0;
+  String _namaPengguna = 'Memuat...';
+  String _emailPengguna = '';
+  String _rolePengguna = '-';
+  String? _fotoProfilUrl;
+  bool _isLoadingProfile = true;
 
   @override
   void initState() {
@@ -30,6 +37,50 @@ class _LainnyaScreenState extends State<LainnyaScreen> {
     Future.delayed(const Duration(milliseconds: 180), () {
       if (mounted) setState(() => _opacity = 1);
     });
+    _fetchUserData();
+  }
+
+  // FETCH
+  Future<void> _fetchUserData() async {
+    try {
+      final userEmail = Supabase.instance.client.auth.currentUser?.email;
+      
+      if (userEmail != null) {
+        setState(() {
+          _emailPengguna = userEmail;
+        });
+
+        final response = await Supabase.instance.client
+            .from('warga')
+            .select('nama, role, foto_profil')
+            .eq('email', userEmail)
+            .single();
+
+        if (mounted) {
+          setState(() {
+            _namaPengguna = response['nama'] ?? 'Tanpa Nama';
+            _rolePengguna = response['role'] ?? 'Warga';
+            _fotoProfilUrl = response['foto_profil'];
+            _isLoadingProfile = false;
+          });
+        }
+      } else {
+        // Tidak ada user yang terautentikasi
+        if (mounted) {
+          setState(() {
+            _isLoadingProfile = false;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetch profile: $e');
+      if (mounted) {
+        setState(() {
+          _namaPengguna = 'Gagal memuat';
+          _isLoadingProfile = false;
+        });
+      }
+    }
   }
 
   // Quick Button (Menu Grid)
@@ -160,10 +211,13 @@ class _LainnyaScreenState extends State<LainnyaScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Card Profil Pengguna
                       InkWell(
-                        onTap: () =>
-                            context.push('/admin/lainnya/edit-profile'),
+                        onTap: () async {
+                          final result = await context.push('/admin/lainnya/edit-profile');
+                          if (result == true) {
+                            _fetchUserData();
+                          }
+                        },
                         borderRadius: BorderRadius.circular(16),
                         child: Container(
                           padding: const EdgeInsets.all(20),
@@ -180,64 +234,84 @@ class _LainnyaScreenState extends State<LainnyaScreen> {
                           ),
                           child: Row(
                             children: [
-                              Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: [
-                                      Color(0xFF6366F1),
-                                      Color(0xFF8B5CF6),
-                                    ],
-                                  ),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: const Icon(
-                                  Icons.person,
-                                  color: Colors.white,
-                                  size: 32,
-                                ),
-                              ),
+                              _fotoProfilUrl != null && _fotoProfilUrl!.isNotEmpty
+                                  ? Container(
+                                      width: 64,
+                                      height: 64,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(16),
+                                        image: DecorationImage(
+                                          image: NetworkImage(_fotoProfilUrl!),
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    )
+                                  : Container(
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        gradient: const LinearGradient(
+                                          colors: [
+                                            Color(0xFF6366F1),
+                                            Color(0xFF8B5CF6),
+                                          ],
+                                        ),
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      child: const Icon(
+                                        Icons.person,
+                                        color: Colors.white,
+                                        size: 32,
+                                      ),
+                                    ),
                               const SizedBox(width: 16),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      'Ningga',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700,
-                                        color: Color(0xFF1F2937),
-                                      ),
-                                    ),
+                                    // Tampilkan Nama (atau Loading)
+                                    _isLoadingProfile 
+                                      ? Container(
+                                          width: 100, height: 16, 
+                                          color: Colors.grey[200],
+                                        )
+                                      : Text(
+                                          _namaPengguna,
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w700,
+                                            color: Color(0xFF1F2937),
+                                          ),
+                                        ),
                                     const SizedBox(height: 4),
+                                    // Tampilkan Email
                                     Text(
-                                      'ningga@gmail.com',
+                                      _emailPengguna,
                                       style: TextStyle(
                                         fontSize: 13,
                                         color: Colors.grey.shade600,
                                       ),
                                     ),
                                     const SizedBox(height: 6),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: ConstantColors.primary
-                                            .withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        'Administrator',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                          color: ConstantColors.primary,
+                                    _isLoadingProfile
+                                      ? Container(width: 60, height: 20, color: Colors.grey[200])
+                                      : Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: ConstantColors.primary.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Text(
+                                            _rolePengguna,
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w600,
+                                              color: ConstantColors.primary,
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                    ),
                                   ],
                                 ),
                               ),
