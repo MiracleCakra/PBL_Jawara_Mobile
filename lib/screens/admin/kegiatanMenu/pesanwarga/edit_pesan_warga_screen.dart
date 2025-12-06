@@ -59,7 +59,7 @@ class _EditPesanWargaScreenState extends State<EditPesanWargaScreen> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Gagal memperbarui: $e')),
+            SnackBar(content: Text('Gagal memperbarui: $e'), backgroundColor: Colors.grey.shade800),
           );
         }
       } finally {

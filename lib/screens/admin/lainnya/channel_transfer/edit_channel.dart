@@ -62,7 +62,7 @@ class _EditChannelPageState extends State<EditChannelPage> {
         if (size > 2 * 1024 * 1024) {
            if (!mounted) return;
            ScaffoldMessenger.of(context).showSnackBar(
-             const SnackBar(content: Text("Ukuran gambar maksimal 2MB")),
+             SnackBar(content: const Text("Ukuran gambar maksimal 2MB"), backgroundColor: Colors.grey.shade800),
            );
            return;
         }
@@ -79,7 +79,7 @@ class _EditChannelPageState extends State<EditChannelPage> {
   Future<void> _saveChanges() async {
     if (_namaChannelCtl.text.isEmpty || _tipeChannel == null || _nomorRekeningCtl.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mohon lengkapi data wajib (Nama, Tipe, No. Rek)')),
+        SnackBar(content: const Text('Mohon lengkapi data wajib (Nama, Tipe, No. Rek)'), backgroundColor: Colors.grey.shade800),
       );
       return;
     }
@@ -114,7 +114,7 @@ class _EditChannelPageState extends State<EditChannelPage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Perubahan berhasil disimpan!'), backgroundColor: Colors.green),
+          SnackBar(content: const Text('Perubahan berhasil disimpan!'), backgroundColor: Colors.grey.shade800),
         );
         context.pop(); 
         context.pop(); 
@@ -122,7 +122,7 @@ class _EditChannelPageState extends State<EditChannelPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal update: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Gagal update: $e'), backgroundColor: Colors.grey.shade800),
         );
       }
     } finally {

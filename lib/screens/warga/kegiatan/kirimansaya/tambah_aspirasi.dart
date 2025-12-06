@@ -53,9 +53,9 @@ class _WargaTambahAspirasiScreenState
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text('Aspirasi Anda berhasil dikirim!'),
-              backgroundColor: Colors.green,
+              backgroundColor: Colors.grey.shade800,
             ),
           );
           context.pop(true);
@@ -65,7 +65,7 @@ class _WargaTambahAspirasiScreenState
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Gagal mengirim aspirasi: $e'),
-              backgroundColor: Colors.red,
+              backgroundColor: Colors.grey.shade800,
             ),
           );
         }

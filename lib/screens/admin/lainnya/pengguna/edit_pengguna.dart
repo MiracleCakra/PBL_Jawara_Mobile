@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class EditPenggunaScreen extends StatefulWidget {
   final Map<String, String> userData;
@@ -14,6 +15,8 @@ class EditPenggunaScreen extends StatefulWidget {
 }
 
 class _EditPenggunaScreenState extends State<EditPenggunaScreen> {
+  //XPLOIT THIS LATER
+  final _currentEmail = Supabase.instance.client.auth.currentUser?.email;
   final Color primary = const Color(0xFF4E46B4);
 
   // Controllers - Initialize dengan data yang ada

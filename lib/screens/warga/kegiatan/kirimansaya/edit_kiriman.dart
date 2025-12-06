@@ -50,9 +50,9 @@ class _WargaEditKirimanScreenState extends State<WargaEditKirimanScreen> {
         await _aspirasiService.updateAspiration(updatedAspirasi);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text('Kiriman berhasil diperbarui!'),
-              backgroundColor: Colors.green,
+              backgroundColor: Colors.grey.shade800,
             ),
           );
           context.pop(true);
@@ -62,7 +62,7 @@ class _WargaEditKirimanScreenState extends State<WargaEditKirimanScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Gagal memperbarui: $e'),
-              backgroundColor: Colors.red,
+              backgroundColor: Colors.grey.shade800,
             ),
           );
         }
