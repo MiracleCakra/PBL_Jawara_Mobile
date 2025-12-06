@@ -1,5 +1,5 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jawara_pintar_kel_5/models/marketplace/store_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class StoreService {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -11,7 +11,7 @@ class StoreService {
           .select()
           .eq('store_id', storeId)
           .maybeSingle();
-      
+
       if (response == null) return null;
       return StoreModel.fromJson(response);
     } catch (e) {
@@ -26,7 +26,7 @@ class StoreService {
           .select()
           .eq('user_id', userId)
           .maybeSingle();
-      
+
       if (response == null) return null;
       return StoreModel.fromJson(response);
     } catch (e) {
@@ -41,7 +41,7 @@ class StoreService {
           .insert(store.toJson())
           .select()
           .single();
-      
+
       return StoreModel.fromJson(response);
     } catch (e) {
       throw Exception('Error creating store: $e');
@@ -56,7 +56,7 @@ class StoreService {
           .eq('store_id', storeId)
           .select()
           .single();
-      
+
       return StoreModel.fromJson(response);
     } catch (e) {
       throw Exception('Error updating store: $e');
@@ -71,10 +71,7 @@ class StoreService {
     try {
       await _supabase
           .from('store')
-          .update({
-            'verifikasi': status,
-            if (alasan != null) 'alasan': alasan,
-          })
+          .update({'verifikasi': status, if (alasan != null) 'alasan': alasan})
           .eq('store_id', storeId);
     } catch (e) {
       throw Exception('Error updating verification status: $e');
@@ -83,10 +80,7 @@ class StoreService {
 
   Future<void> deleteStore(int storeId) async {
     try {
-      await _supabase
-          .from('store')
-          .delete()
-          .eq('store_id', storeId);
+      await _supabase.from('store').delete().eq('store_id', storeId);
     } catch (e) {
       throw Exception('Error deleting store: $e');
     }
@@ -98,9 +92,10 @@ class StoreService {
           .from('store')
           .select()
           .order('created_at', ascending: false);
-      
+
       return List<StoreModel>.from(
-          response.map((json) => StoreModel.fromJson(json)));
+        response.map((json) => StoreModel.fromJson(json)),
+      );
     } catch (e) {
       throw Exception('Error fetching stores: $e');
     }
@@ -111,13 +106,68 @@ class StoreService {
       final response = await _supabase
           .from('store')
           .select()
-          .eq('verifikasi', 'pending')
+          .eq('verifikasi', 'Pending')
           .order('created_at', ascending: false);
-      
+
       return List<StoreModel>.from(
-          response.map((json) => StoreModel.fromJson(json)));
+        response.map((json) => StoreModel.fromJson(json)),
+      );
     } catch (e) {
       throw Exception('Error fetching pending stores: $e');
+    }
+  }
+
+  Future<List<StoreModel>> getStoresByStatus(String status) async {
+    try {
+      final response = await _supabase
+          .from('store')
+          .select()
+          .eq('verifikasi', status)
+          .order('created_at', ascending: false);
+
+      return List<StoreModel>.from(
+        response.map((json) => StoreModel.fromJson(json)),
+      );
+    } catch (e) {
+      throw Exception('Error fetching stores by status: $e');
+    }
+  }
+
+  Future<List<StoreModel>> searchStores({String? query, String? status}) async {
+    try {
+      var request = _supabase.from('store').select();
+
+      // Filter by status if provided and not 'Semua'
+      if (status != null && status != 'Semua') {
+        request = request.eq('verifikasi', status);
+      }
+
+      // Search by name or owner if query provided
+      if (query != null && query.isNotEmpty) {
+        request = request.or('nama.ilike.%$query%,kontak.ilike.%$query%');
+      }
+
+      final response = await request.order('created_at', ascending: false);
+
+      return List<StoreModel>.from(
+        response.map((json) => StoreModel.fromJson(json)),
+      );
+    } catch (e) {
+      throw Exception('Error searching stores: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>?> getWargaByUserId(String userId) async {
+    try {
+      final response = await _supabase
+          .from('warga')
+          .select('nama, email')
+          .eq('id', userId)
+          .maybeSingle();
+
+      return response;
+    } catch (e) {
+      throw Exception('Error fetching warga: $e');
     }
   }
 }

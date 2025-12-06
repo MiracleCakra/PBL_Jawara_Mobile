@@ -40,7 +40,10 @@ class MyStoreSettingsScreen extends StatelessWidget {
             context,
             icon: Icons.storefront,
             title: "Edit Nama & Deskripsi",
-            onTap: () => context.pushNamed('EditStoreProfile'),
+            onTap: () async {
+              final result = await context.pushNamed('EditStoreProfile');
+              // No need to handle result, edit screen shows snackbar
+            },
           ),
 
           _buildSettingItem(
