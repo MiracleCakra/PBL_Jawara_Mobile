@@ -19,6 +19,7 @@ class _DetailBroadcastScreenState extends State<DetailBroadcastScreen> {
   late BroadcastModel _displayData;
   bool _isDeleting = false;
   bool _isRefreshing = false;
+  bool _hasEdited = false;
 
   @override initState(){
     super.initState();
@@ -28,11 +29,10 @@ class _DetailBroadcastScreenState extends State<DetailBroadcastScreen> {
   Future<void> _refreshData() async {
     setState(() => _isRefreshing = true);
     try {
-      // Ambil data fresh berdasarkan ID
       final freshData = await _broadcastService.getBroadcastById(_displayData.id!);
       if (mounted) {
         setState(() {
-          _displayData = freshData; // Update tampilan dengan data baru
+          _displayData = freshData;
         });
       }
     } catch (e) {
@@ -106,6 +106,9 @@ class _DetailBroadcastScreenState extends State<DetailBroadcastScreen> {
 
     if (result == true && mounted) {
       _refreshData();
+      setState(() {
+        _hasEdited = true;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Data berhasil diperbarui"), backgroundColor: Colors.grey.shade800),
       );
@@ -358,94 +361,106 @@ class _DetailBroadcastScreenState extends State<DetailBroadcastScreen> {
     final dateFormat = DateFormat('dd/MM/yyyy');
     final data = _displayData;
 
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        foregroundColor: Colors.black,
-        title: const Text('Detail Broadcast',
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(0.0),
-          child: Divider(height: 1, color: Colors.grey),
-        ),
-        actions: [
-          if (_isRefreshing)
-            const Center(child: Padding(padding: EdgeInsets.only(right: 16), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))),
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.black),
-            onPressed: () => _showActionBottomSheet(context),
-            tooltip: 'Aksi Lain',
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        // Return _hasEdited when popping via system back button
+        Navigator.of(context).pop(_hasEdited);
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          foregroundColor: Colors.black,
+          title: const Text('Detail Broadcast',
+              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+          bottom: const PreferredSize(
+            preferredSize: Size.fromHeight(0.0),
+            child: Divider(height: 1, color: Colors.grey),
           ),
-        ],
-      ),
-      body: _isDeleting
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator( // Tambahin fitur tarik buat refresh manual juga
-              onRefresh: _refreshData,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildDetailField('Judul Broadcast', data.judul),
-                    _buildDetailArea('Isi Broadcast', data.konten),
-                    _buildDetailField('Tanggal Publikasi', dateFormat.format(data.tanggal)),
-                    _buildDetailField('Dibuat oleh', data.pengirim),
-                    
-                    if (data.lampiranGambarUrl != null) ...[
-                      const Text('Lampiran Gambar',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      const SizedBox(height: 8),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          data.lampiranGambarUrl!,
-                          height: 200,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Text('Gagal memuat gambar'),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-
-                    if (data.lampiranDokumenUrl != null) ...[
-                      const Text('Lampiran Dokumen',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      const SizedBox(height: 8),
-                      InkWell(
-                        onTap: () => _launchUrl(data.lampiranDokumenUrl!),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.blue.shade200),
-                            borderRadius: BorderRadius.circular(8),
-                            color: Colors.blue.shade50,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () => Navigator.of(context).pop(_hasEdited),
+          ),
+          actions: [
+            if (_isRefreshing)
+              const Center(child: Padding(padding: EdgeInsets.only(right: 16), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))),
+            IconButton(
+              icon: const Icon(Icons.more_vert, color: Colors.black),
+              onPressed: () => _showActionBottomSheet(context),
+              tooltip: 'Aksi Lain',
+            ),
+          ],
+        ),
+        body: _isDeleting
+            ? const Center(child: CircularProgressIndicator())
+            : RefreshIndicator( // Tambahin fitur tarik buat refresh manual juga
+                onRefresh: _refreshData,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildDetailField('Judul Broadcast', data.judul),
+                      _buildDetailArea('Isi Broadcast', data.konten),
+                      _buildDetailField('Tanggal Publikasi', dateFormat.format(data.tanggal)),
+                      _buildDetailField('Dibuat oleh', data.pengirim),
+                      
+                      if (data.lampiranGambarUrl != null) ...[
+                        const Text('Lampiran Gambar',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        const SizedBox(height: 8),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            data.lampiranGambarUrl!,
+                            height: 200,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Text('Gagal memuat gambar'),
                           ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.picture_as_pdf, color: Colors.red),
-                              const SizedBox(width: 12),
-                              const Expanded(
-                                child: Text(
-                                  "Lihat Dokumen PDF",
-                                  style: TextStyle(
-                                      color: Colors.blue, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+
+                      if (data.lampiranDokumenUrl != null) ...[
+                        const Text('Lampiran Dokumen',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        const SizedBox(height: 8),
+                        InkWell(
+                          onTap: () => _launchUrl(data.lampiranDokumenUrl!),
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.blue.shade200),
+                              borderRadius: BorderRadius.circular(8),
+                              color: Colors.blue.shade50,
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.picture_as_pdf, color: Colors.red),
+                                const SizedBox(width: 12),
+                                const Expanded(
+                                  child: Text(
+                                    "Lihat Dokumen PDF",
+                                    style: TextStyle(
+                                        color: Colors.blue, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                const Icon(Icons.open_in_new, color: Colors.blue, size: 20),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                                 ),
                               ),
-                              const Icon(Icons.open_in_new, color: Colors.blue, size: 20),
-                            ],
-                          ),
-                        ),
                       ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-    );
-  }
-}
+                    );
+                  }
+                }

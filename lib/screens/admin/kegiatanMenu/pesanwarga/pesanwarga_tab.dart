@@ -58,7 +58,7 @@ class _PesanWargaScreenState extends State<PesanWargaScreen> {
 
     switch (status) {
       case 'Pending':
-        color = Colors.deepPurple.shade700;
+        color = Colors.yellow.shade800;
 
         break;
 

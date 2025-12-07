@@ -76,6 +76,18 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
     }
   }
 
+  void _removePhoto() {
+    setState(() {
+      _selectedPhoto = null;
+    });
+  }
+
+  void _removeDocument() {
+    setState(() {
+      _selectedDocument = null;
+    });
+  }
+
   void _simpanBroadcast() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
@@ -153,65 +165,6 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
     Navigator.pop(context);
   }
 
-  // WidgetArea Upload File
-  Widget _buildUploadArea(String label, String helpText, VoidCallback onTap, bool isSelected, String? fileName) {
-    // ... UI Sama ...
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        const SizedBox(height: 4),
-        Text(helpText, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-        const SizedBox(height: 8),
-        InkWell(
-          onTap: onTap,
-          child: Container(
-            height: 60,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(10.0),
-              border: isSelected ? Border.all(color: Colors.green, width: 2) : null, 
-            ),
-            child: Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(isSelected ? Icons.check : Icons.upload_file, color: isSelected ? Colors.green : Colors.grey),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      isSelected ? (fileName ?? 'File Terpilih') : 'Upload $label', 
-                      style: TextStyle(
-                        color: isSelected ? Colors.green : Colors.grey.shade700, 
-                        fontWeight: FontWeight.w500
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        if (isSelected) 
-           Padding(
-             padding: const EdgeInsets.only(top: 4.0),
-             child: InkWell(
-               onTap: () {
-                 setState(() {
-                   if (label == 'Foto') _selectedPhoto = null;
-                   if (label == 'Dokumen') _selectedDocument = null;
-                 });
-               },
-               child: const Text("Hapus", style: TextStyle(color: Colors.red, fontSize: 12)),
-             ),
-           ),
-        const SizedBox(height: 24),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     const Color simpanColor = Colors.deepPurple;
@@ -235,6 +188,7 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // JUDUL
               const Text(
                 'Judul Broadcast',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -259,7 +213,7 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
               ),
               const SizedBox(height: 24),
 
-              // ISI broadcst
+              // ISI
               const Text(
                 'Isi Broadcast',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -285,26 +239,137 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
               ),
               const SizedBox(height: 24),
 
-              //foto
-              _buildUploadArea(
-                'Foto',
+              // --- UPLOAD FOTO (Style: Kegiatan) ---
+              const Text(
+                'Upload Dokumentasi (Foto)',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 4),
+              const Text(
                 'Maksimal 1 gambar (.png / .jpg), max 5MB.',
-                _pickPhoto,
-                _selectedPhoto != null,
-                _selectedPhoto?.name,
+                style: TextStyle(color: Colors.grey, fontSize: 12),
               ),
+              const SizedBox(height: 8),
+              
+              if (_selectedPhoto != null)
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8.0),
+                      child: kIsWeb 
+                        ? Image.network(_selectedPhoto!.path, width: double.infinity, height: 200, fit: BoxFit.cover) // XFile on Web usually has blob url in path
+                        : Image.file(File(_selectedPhoto!.path), width: double.infinity, height: 200, fit: BoxFit.cover),
+                    ),
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: GestureDetector(
+                        onTap: _removePhoto,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          padding: const EdgeInsets.all(4),
+                          child: const Icon(Icons.close, size: 20, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              else
+                InkWell(
+                  onTap: _pickPhoto,
+                  child: Container(
+                    height: 150,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8.0),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.add_a_photo, size: 40, color: Colors.grey.shade400),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Ketuk untuk upload foto',
+                          style: TextStyle(color: Colors.grey.shade700),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
 
-              _buildUploadArea(
-                'Dokumen',
+              const SizedBox(height: 24),
+
+              // --- UPLOAD DOKUMEN (Style: Kegiatan-ish) ---
+              const Text(
+                'Upload Dokumen (PDF)',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 4),
+              const Text(
                 'Maksimal 1 file PDF, max 5MB.',
-                _pickDocument,
-                _selectedDocument != null,
-                _selectedDocument?.name,
+                style: TextStyle(color: Colors.grey, fontSize: 12),
               ),
+              const SizedBox(height: 8),
 
-              const SizedBox(height: 16),
+              if (_selectedDocument != null)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8.0),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.picture_as_pdf, color: Colors.red, size: 32),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _selectedDocument!.name,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.grey),
+                        onPressed: _removeDocument,
+                      ),
+                    ],
+                  ),
+                )
+              else
+                InkWell(
+                  onTap: _pickDocument,
+                  child: Container(
+                    height: 100,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8.0),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.upload_file, size: 40, color: Colors.grey.shade400),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Ketuk untuk upload dokumen',
+                          style: TextStyle(color: Colors.grey.shade700),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 32),
+
+              // TOMBOL
               Padding(
                 padding: const EdgeInsets.only(bottom: 16.0),
                 child: Row(

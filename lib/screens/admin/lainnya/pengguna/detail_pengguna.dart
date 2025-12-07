@@ -1,28 +1,79 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/keluarga/warga_model.dart';
 import 'package:jawara_pintar_kel_5/services/pengguna_service.dart';
 
-class DetailPenggunaScreen extends StatelessWidget {
+class DetailPenggunaScreen extends StatefulWidget {
   final Map<String, dynamic> userData;
 
   const DetailPenggunaScreen({super.key, required this.userData});
 
+  @override
+  State<DetailPenggunaScreen> createState() => _DetailPenggunaScreenState();
+}
+
+class _DetailPenggunaScreenState extends State<DetailPenggunaScreen> {
+  final PenggunaService _penggunaService = PenggunaService();
+  late Map<String, dynamic> _currentUserData;
+  bool _hasChanged = false; // Track if data has changed
+
+  @override
+  void initState() {
+    super.initState();
+    _currentUserData = widget.userData;
+    // Fetch latest data immediately to ensure sync
+    _fetchLatestData();
+  }
+
+  Future<void> _fetchLatestData() async {
+    try {
+      final id = _currentUserData['id'];
+      if (id != null) {
+        // Use stream.first to get a fresh snapshot
+        final updatedWarga = await _penggunaService.streamUserById(id).first;
+        if (mounted) {
+          setState(() {
+            _currentUserData = {
+              'id': updatedWarga.id,
+              'name': updatedWarga.nama,
+              'role': updatedWarga.role ?? '-',
+              'status': updatedWarga.statusPenduduk?.value ?? 'Nonaktif',
+              'nik': updatedWarga.id,
+              'email': updatedWarga.email ?? '-',
+              'phone': updatedWarga.telepon ?? '-',
+              'gender': updatedWarga.gender?.value ?? '-',
+              'imageUrl': updatedWarga.fotoProfil,
+            };
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error refreshing user details: $e');
+    }
+  }
+
   Color _getStatusColor(String? status) {
     switch (status?.toLowerCase()) {
       case 'diterima':
+      case 'aktif':
         return const Color(0xFF4E46B4); // Ungu
       case 'menunggu':
         return Colors.amber.shade700; // Kuning
       case 'ditolak':
+      case 'nonaktif':
         return Colors.red.shade600; // Merah
       default:
         return const Color(0xFF4E46B4);
     }
   }
 
-  void _navigateToEdit(BuildContext context) {
-    context.push('/admin/lainnya/manajemen-pengguna/edit', extra: userData);
+  void _navigateToEdit(BuildContext context) async {
+    final result = await context.push('/admin/lainnya/manajemen-pengguna/edit', extra: _currentUserData);
+    if (result == true) {
+      setState(() {
+        _hasChanged = true; // Mark as changed
+      });
+      _fetchLatestData();
+    }
   }
 
   void _showActionBottomSheet(BuildContext context) {
@@ -38,13 +89,11 @@ class DetailPenggunaScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              // Judul "Opsi"
               Center(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   child: Column(
                     children: [
-                      // Handle Bar
                       Container(
                         width: 40,
                         height: 5,
@@ -67,10 +116,9 @@ class DetailPenggunaScreen extends StatelessWidget {
               ),
               const Divider(height: 1, thickness: 1, color: Colors.grey),
 
-              // OPSI EDIT DATA
               _buildOptionTile(
                 icon: Icons.edit_rounded,
-                color: const Color(0xFF4E46B4), // Warna ungu
+                color: const Color(0xFF4E46B4), 
                 title: 'Edit Data',
                 subtitle: 'Ubah detail pengguna',
                 onTap: () {
@@ -98,7 +146,6 @@ class DetailPenggunaScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
         child: Row(
           children: [
-            // Ikon dengan latar belakang ringan
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
@@ -114,10 +161,9 @@ class DetailPenggunaScreen extends StatelessWidget {
                 Text(
                   title,
                   style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: title.contains('Hapus') ? color : Colors.black,
-                  ),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: title.contains('Hapus') ? color : Colors.black), 
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -132,8 +178,6 @@ class DetailPenggunaScreen extends StatelessWidget {
     );
   }
 
-  // --- WIDGET DETAIL STANDAR ---
-
   Widget _buildDetailItem({required String label, required String value}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -147,192 +191,154 @@ class DetailPenggunaScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        Text(value, style: const TextStyle(fontSize: 16, color: Colors.black)),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 16,
+            color: Colors.black,
+          ),
+        ),
       ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final PenggunaService penggunaService = PenggunaService();
-    final String userId = userData['id'];
-
-    return Scaffold(
-      backgroundColor: const Color(0xFFF7F7FB),
-      appBar: AppBar(
-        centerTitle: false,
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        leading: IconButton(
-          onPressed: () => context.pop(),
-          icon: const Icon(Icons.chevron_left, color: Colors.black),
-        ),
-        title: const Text(
-          'Detail Pengguna',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        // Return _hasChanged status to parent
+        context.pop(_hasChanged);
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF7F7FB),
+        appBar: AppBar(
+          centerTitle: false,
+          elevation: 0,
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          leading: IconButton(
+            onPressed: () => context.pop(_hasChanged),
+            icon: const Icon(Icons.chevron_left, color: Colors.black),
           ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.black),
-            onPressed: () => _showActionBottomSheet(context),
-            tooltip: 'Opsi Aksi',
+          title: const Text(
+            'Detail Pengguna',
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: SafeArea(
-        child: StreamBuilder<Warga>(
-          stream: penggunaService.streamUserById(userId),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            if (snapshot.hasError || !snapshot.hasData) {
-              return const Center(
-                child: Text(
-                  'Data pengguna tidak ditemukan (mungkin sudah dihapus).',
-                ),
-              );
-            }
-
-            final warga = snapshot.data!;
-
-            final displayData = {
-              'id': warga.id,
-              'name': warga.nama,
-              'role': warga.role ?? '-',
-              'status': warga.statusPenduduk?.value ?? 'Nonaktif',
-              'nik': warga.id,
-              'email': warga.email ?? '-',
-              'phone': warga.telepon ?? '-',
-              'gender': warga.gender?.value ?? '-',
-              'imageUrl': warga.fotoProfil,
-            };
-
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color.fromRGBO(0, 0, 0, 0.04),
-                          blurRadius: 8,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            CircleAvatar(
-                              radius: 32,
-                              backgroundColor: Colors.grey.shade300,
-                              backgroundImage: displayData['imageUrl'] != null
-                                  ? NetworkImage(displayData['imageUrl']!)
-                                  : null,
-                              child: displayData['imageUrl'] == null
-                                  ? Icon(
-                                      Icons.person,
-                                      size: 32,
-                                      color: Colors.grey.shade600,
-                                    )
-                                  : null,
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    displayData['name'] as String,
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    displayData['role'] as String,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.grey.shade700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            // Status Badge
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: _getStatusColor(
-                                  displayData['status'] as String,
-                                ),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                displayData['status'] as String,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                        // Detail Information
-                        _buildDetailItem(
-                          label: 'NIK',
-                          value: displayData['nik'] as String,
-                        ),
-                        const SizedBox(height: 16),
-                        _buildDetailItem(
-                          label: 'Email',
-                          value: displayData['email'] as String,
-                        ),
-                        const SizedBox(height: 16),
-                        _buildDetailItem(
-                          label: 'Nomor HP',
-                          value: displayData['phone'] as String,
-                        ),
-                        const SizedBox(height: 16),
-                        _buildDetailItem(
-                          label: 'Jenis Kelamin',
-                          value: displayData['gender'] as String,
-                        ),
-                      ],
-                    ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.more_vert, color: Colors.black),
+              onPressed: () => _showActionBottomSheet(context),
+              tooltip: 'Opsi Aksi',
+            ),
+            const SizedBox(width: 8),
+          ],
+        ),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color.fromRGBO(0, 0, 0, 0.04),
+                        blurRadius: 8,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            );
-          },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CircleAvatar(
+                            radius: 32,
+                            backgroundColor: Colors.grey.shade300,
+                            backgroundImage: _currentUserData['imageUrl'] != null
+                                ? NetworkImage(_currentUserData['imageUrl']!)
+                                : null,
+                            child: _currentUserData['imageUrl'] == null
+                                ? Icon(
+                                    Icons.person,
+                                    size: 32,
+                                    color: Colors.grey.shade600,
+                                  )
+                                : null,
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _currentUserData['name'] ?? 'Nama Tidak Tersedia',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _currentUserData['role'] ?? 'Role Tidak Tersedia',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey.shade700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _getStatusColor(_currentUserData['status']),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              _currentUserData['status'] ?? 'Aktif',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      _buildDetailItem(label: 'NIK', value: _currentUserData['nik'] ?? '-'),
+                      const SizedBox(height: 16),
+                      _buildDetailItem(label: 'Email', value: _currentUserData['email'] ?? '-'),
+                      const SizedBox(height: 16),
+                      _buildDetailItem(label: 'Nomor HP', value: _currentUserData['phone'] ?? '-'),
+                      const SizedBox(height: 16),
+                      _buildDetailItem(label: 'Jenis Kelamin', value: _currentUserData['gender'] ?? '-'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
-
-  // ...existing code...
 }
