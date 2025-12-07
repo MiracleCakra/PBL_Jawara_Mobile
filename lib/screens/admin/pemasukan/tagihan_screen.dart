@@ -1,10 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:jawara_pintar_kel_5/models/keuangan/tagihan_model.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/detail_tagihan_screen.dart';
 import 'package:moon_design/moon_design.dart';
+import 'package:path_provider/path_provider.dart';
 
 class TagihanScreen extends StatefulWidget {
   const TagihanScreen({super.key});
+  
 
   @override
   State<TagihanScreen> createState() => _TagihanScreenState();
@@ -14,6 +18,7 @@ class _TagihanScreenState extends State<TagihanScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<TagihanModel> _tagihanList = [];
   List<TagihanModel> _filteredTagihanList = [];
+  static const Color primaryColor = Color(0xFF4E46B4);
 
   TagihanModel tagihanModel = TagihanModel(
     namaKeluarga: '',
@@ -35,6 +40,9 @@ class _TagihanScreenState extends State<TagihanScreen> {
   @override
   void initState() {
     super.initState();
+    _searchController.addListener(() {
+      _filterTagihan(_searchController.text);
+    });
     _loadTagihan();
     _filteredTagihanList = _tagihanList;
   }
@@ -49,8 +57,8 @@ class _TagihanScreenState extends State<TagihanScreen> {
     final fetchedTagihan = await tagihanModel.fetchTagihan();
     setState(() {
       _tagihanList = fetchedTagihan;
-      _filteredTagihanList = fetchedTagihan;
     });
+    _filterTagihan(_searchController.text);
   }
 
   void _filterTagihan(String query) {
@@ -175,6 +183,44 @@ class _TagihanScreenState extends State<TagihanScreen> {
     }
   }
 
+  Color _getStatusColor(String status) {
+  switch (status.toLowerCase()) {
+    case 'ditolak':
+      return const Color(0xFFFEE2E2); // merah muda
+    case 'diterima':
+      return primaryColor.withOpacity(0.1); 
+    case 'terverifikasi':
+      return const Color.fromARGB(255, 224, 228, 246);
+    case 'menunggu bukti':
+      return const Color(0xFFFFF3CD); // kuning muda
+    case 'menunggu verifikasi':
+      return const Color(0xFFFFF3CD); // kuning muda
+    case 'belum dibayar':
+      return const Color(0xFFFEF3C7); // kuning lembut
+    default:
+      return Colors.grey.shade500;
+  }
+}
+
+Color _getStatusTextColor(String status) {
+  switch (status.toLowerCase()) {
+    case 'ditolak':
+      return const Color(0xFFEF4444); // merah
+    case 'diterima':
+      return primaryColor;
+    case 'terverifikasi':
+      return primaryColor;
+    case 'menunggu bukti':
+    case 'menunggu verifikasi':
+      return const Color(0xFFB45309); // oranye / coklat
+    case 'belum dibayar':
+      return const Color(0xFFD97706); // kuning gelap
+    default:
+      return Colors.grey.shade600;
+  }
+}
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -205,9 +251,8 @@ class _TagihanScreenState extends State<TagihanScreen> {
                     Expanded(
                       child: TextField(
                         controller: _searchController,
-                        onChanged: _filterTagihan,
                         decoration: InputDecoration(
-                          hintText: 'Search Name',
+                          hintText: 'Cari Berdasarkan nama..',
                           prefixIcon: const Icon(Icons.search, size: 20),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -273,23 +318,6 @@ class _TagihanScreenState extends State<TagihanScreen> {
                       ),
               ),
             ],
-          ),
-          // Floating Action Button for PDF Export
-          Positioned(
-            right: 16,
-            bottom: 16,
-            child: FloatingActionButton.extended(
-              onPressed: _exportToPDF,
-              backgroundColor: const Color(0xFFEF4444),
-              icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
-              label: const Text(
-                'Cetak PDF',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
           ),
         ],
       ),
@@ -373,15 +401,15 @@ class _TagihanScreenState extends State<TagihanScreen> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFEF3C7),
+                    color: _getStatusColor(tagihan.status),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
                     tagihan.status,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFFD97706),
+                      color: _getStatusTextColor(tagihan.status),
                     ),
                   ),
                 ),
@@ -392,20 +420,25 @@ class _TagihanScreenState extends State<TagihanScreen> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF10B981).withOpacity(0.1),
+                    color: tagihan.statusKeluarga.toLowerCase() == 'aktif'
+                        ? const Color(0xFF673AB7).withOpacity(0.1)
+                        : Colors.grey.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
                     tagihan.statusKeluarga,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF10B981),
+                      color: tagihan.statusKeluarga.toLowerCase() == 'aktif'
+                          ? const Color(0xFF673AB7)
+                          : Colors.grey.shade600,
                     ),
                   ),
                 ),
               ],
             ),
+
             const SizedBox(height: 12),
 
             // Details Grid
@@ -834,16 +867,6 @@ class _TagihanScreenState extends State<TagihanScreen> {
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Color(0xFF4E46B4), width: 1.2),
-      ),
-    );
-  }
-
-  void _exportToPDF() {
-    // TODO: Implement PDF export functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Fitur cetak PDF sedang dalam pengembangan'),
-        backgroundColor: Color(0xFF6366F1),
       ),
     );
   }

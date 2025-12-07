@@ -30,7 +30,7 @@ class PenerimaanWarga {
   Color get statusColor {
     switch (status.toLowerCase()) {
       case 'diterima':
-        return const Color(0xFF16A34A); // Green
+        return const Color(0xFF673AB7); // Green
       case 'pending':
         return const Color(0xFFF59E0B); // Orange/Amber
       case 'ditolak':

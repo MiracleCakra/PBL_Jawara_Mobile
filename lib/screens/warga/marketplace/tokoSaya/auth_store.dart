@@ -24,7 +24,7 @@ class _AuthStoreScreenState extends State<AuthStoreScreen> {
 
     switch (status) {
       case 2:
-        // Sudah punya toko
+        // Sudah punya toko - langsung ke dashboard
         context.goNamed('WargaMarketplaceStore');
         break;
       case 1:
@@ -33,7 +33,8 @@ class _AuthStoreScreenState extends State<AuthStoreScreen> {
         break;
       case 0:
       default:
-        // Belum punya toko
+        // Belum punya toko - langsung ke register
+        context.goNamed('WargaStoreRegister');
         break;
     }
   }
@@ -75,7 +76,7 @@ class _AuthStoreScreenState extends State<AuthStoreScreen> {
               ),
               const SizedBox(height: 16),
               const Text(
-                'Sudah Punya Akun?',
+                'Memeriksa Status Toko',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -84,60 +85,13 @@ class _AuthStoreScreenState extends State<AuthStoreScreen> {
               ),
               const SizedBox(height: 12),
               const Text(
-                'Silakan masuk atau daftar untuk membuka toko.',
+                'Memuat informasi toko Anda...',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF4B5563),
-                ),
+                style: TextStyle(fontSize: 14, color: Color(0xFF4B5563)),
               ),
               const SizedBox(height: 24),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Tombol Masuk
-                  ElevatedButton(
-                    onPressed: () => context.goNamed('WargaStoreLoginScreen'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6A5AE0),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'Masuk',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  // Tombol Daftar
-                  OutlinedButton(
-                    onPressed: () => context.goNamed('WargaStoreRegister'),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: BorderSide(
-                        color: Color(0xFF6A5AE0),
-                        width: 2,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: Text(
-                      'Daftar',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF6A5AE0),
-                      ),
-                    ),
-                  ),
-                ],
+              const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6A5AE0)),
               ),
             ],
           ),

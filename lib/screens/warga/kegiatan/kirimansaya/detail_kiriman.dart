@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:jawara_pintar_kel_5/models/kegiatan/aspirasi_model.dart';
 import 'package:jawara_pintar_kel_5/services/aspirasi_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -9,14 +9,14 @@ const Color _primaryColor = Color.fromARGB(255, 50, 52, 182);
 const Color _deleteColor = Colors.red;
 const Color _editColor = Colors.blue;
 
-
 class WargaDetailKirimanScreen extends StatefulWidget {
   final AspirasiModel data;
 
   const WargaDetailKirimanScreen({super.key, required this.data});
 
   @override
-  State<WargaDetailKirimanScreen> createState() => _WargaDetailKirimanScreenState();
+  State<WargaDetailKirimanScreen> createState() =>
+      _WargaDetailKirimanScreenState();
 }
 
 class _WargaDetailKirimanScreenState extends State<WargaDetailKirimanScreen> {
@@ -39,34 +39,115 @@ class _WargaDetailKirimanScreenState extends State<WargaDetailKirimanScreen> {
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text("Konfirmasi Hapus"),
-          content: Text("Anda yakin ingin menghapus kiriman berjudul '${widget.data.judul}'? Aksi ini tidak dapat dibatalkan."),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text("Batal"),
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.delete_forever,
+                    color: Colors.red,
+                    size: 48,
+                  ),
+                ),
+                const SizedBox(height: 22),
+                const Text(
+                  'Hapus Kiriman',
+                  style: TextStyle(
+                    fontSize: 21,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  "Anda yakin ingin menghapus kiriman berjudul '${widget.data.judul}'? Tindakan ini tidak dapat dibatalkan.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Colors.grey.shade700,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 28),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.grey.shade700,
+                          side: BorderSide(color: Colors.grey.shade400),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 15),
+                        ),
+                        child: const Text(
+                          'Batal',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          try {
+                            await _aspirasiService.deleteAspiration(
+                              widget.data.id!,
+                            );
+                            if (mounted) {
+                              Navigator.pop(dialogContext);
+                              context.pop(true);
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              Navigator.pop(dialogContext);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Gagal menghapus: $e'),
+                                  backgroundColor: Colors.grey.shade800,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 15),
+                        ),
+                        child: const Text(
+                          'Hapus',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            TextButton(
-              style: TextButton.styleFrom(foregroundColor: _deleteColor),
-              onPressed: () async {
-                try {
-                  await _aspirasiService.deleteAspiration(widget.data.id!);
-                  if (mounted) {
-                    Navigator.pop(dialogContext);
-                    context.pop(true);
-                  }
-                } catch (e) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Gagal menghapus: $e'), backgroundColor: Colors.grey.shade800),
-                    );
-                  }
-                }
-              },
-              child: const Text("Hapus"),
-            ),
-          ],
+          ),
         );
       },
     );
@@ -103,7 +184,7 @@ class _WargaDetailKirimanScreenState extends State<WargaDetailKirimanScreen> {
                 _navigateToEdit(context);
               },
             ),
-            
+
             _buildOptionTile(
               icon: Icons.delete_forever,
               color: _deleteColor,
@@ -120,7 +201,6 @@ class _WargaDetailKirimanScreenState extends State<WargaDetailKirimanScreen> {
       ),
     );
   }
-
 
   Widget _buildOptionTile({
     required IconData icon,
@@ -208,7 +288,11 @@ class _WargaDetailKirimanScreenState extends State<WargaDetailKirimanScreen> {
     );
   }
 
-  Widget _IconRow({required IconData icon, required String label, required String value}) {
+  Widget _IconRow({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
@@ -252,7 +336,6 @@ class _WargaDetailKirimanScreenState extends State<WargaDetailKirimanScreen> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     final data = widget.data;
@@ -262,7 +345,8 @@ class _WargaDetailKirimanScreenState extends State<WargaDetailKirimanScreen> {
     final String pengirim = data.pengirim;
     final String tanggalStr = DateFormat('dd MMMM yyyy').format(data.tanggal);
 
-    final String currentUserId = Supabase.instance.client.auth.currentUser?.id ?? '';
+    final String currentUserId =
+        Supabase.instance.client.auth.currentUser?.id ?? '';
     final bool isOwner = data.userId == currentUserId;
     final bool canModify = status == 'Pending' && isOwner;
 
@@ -278,11 +362,15 @@ class _WargaDetailKirimanScreenState extends State<WargaDetailKirimanScreen> {
         centerTitle: false,
         titleSpacing: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            color: Colors.black,
+            size: 20,
+          ),
           onPressed: () => context.pop(),
         ),
         actions: [
-          if (canModify) 
+          if (canModify)
             IconButton(
               icon: const Icon(Icons.more_vert, color: Colors.black),
               onPressed: () => _showOptionsBottomSheet(context),

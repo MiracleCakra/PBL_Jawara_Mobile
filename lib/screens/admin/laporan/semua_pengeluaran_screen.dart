@@ -16,6 +16,9 @@ class SemuaPengeluaranScreen extends StatefulWidget {
 class _SemuaPengeluaranScreenState extends State<SemuaPengeluaranScreen> {
   late final TextEditingController _textController;
   String _query = '';
+  String _selectedKategori = 'Semua';
+  DateTime? _selectedDari;
+  DateTime? _selectedSampai;
 
   @override
   void initState() {
@@ -34,52 +37,95 @@ class _SemuaPengeluaranScreenState extends State<SemuaPengeluaranScreen> {
       tanggal: DateTime(2024, 1, 1),
       nama: "Pengeluaran 1",
       nominal: 100000,
-      jenisPengeluaran: 'Pengeluaran Rutin',
       kategoriPengeluaran: 'Operasional',
+      buktiFoto:
+          'https://via.placeholder.com/400x300.png?text=Bukti+Pengeluaran+1',
     ),
     LaporanKeuanganModel(
       tanggal: DateTime(2024, 1, 3),
       nama: "Pengeluaran 2",
       nominal: 300000,
-      jenisPengeluaran: 'Pengeluaran Proyek',
       kategoriPengeluaran: 'Pembangunan',
+      buktiFoto:
+          'https://via.placeholder.com/400x300.png?text=Bukti+Pengeluaran+2',
     ),
     LaporanKeuanganModel(
       tanggal: DateTime(2024, 1, 5),
       nama: "Pengeluaran 3",
       nominal: 400000,
-      jenisPengeluaran: 'Pengeluaran Rutin',
       kategoriPengeluaran: 'Pemeliharaan',
+      buktiFoto:
+          'https://via.placeholder.com/400x300.png?text=Bukti+Pengeluaran+3',
     ),
     LaporanKeuanganModel(
       tanggal: DateTime(2024, 1, 7),
       nama: "Pengeluaran 4",
       nominal: 500000,
-      jenisPengeluaran: 'Pengeluaran Sosial',
       kategoriPengeluaran: 'Kegiatan Sosial',
+      buktiFoto:
+          'https://via.placeholder.com/400x300.png?text=Bukti+Pengeluaran+4',
     ),
     LaporanKeuanganModel(
       tanggal: DateTime(2024, 1, 9),
       nama: "Pengeluaran 5",
       nominal: 600000,
-      jenisPengeluaran: 'Pengeluaran Rutin',
       kategoriPengeluaran: 'Administrasi',
+      buktiFoto:
+          'https://via.placeholder.com/400x300.png?text=Bukti+Pengeluaran+5',
     ),
     LaporanKeuanganModel(
       tanggal: DateTime(2024, 1, 10),
       nama: "Pengeluaran 6",
       nominal: 700000,
-      jenisPengeluaran: 'Pengeluaran Rutin',
       kategoriPengeluaran: 'Operasional',
+      buktiFoto:
+          'https://via.placeholder.com/400x300.png?text=Bukti+Pengeluaran+6',
     ),
   ];
 
   List<LaporanKeuanganModel> get _filteredData {
+    var filtered = fakeData;
+
+    // Filter berdasarkan query pencarian
     final q = _query.trim().toLowerCase();
-    if (q.isEmpty) return fakeData;
-    return fakeData
-        .where((e) => e.nama.toLowerCase().contains(q))
-        .toList(growable: false);
+    if (q.isNotEmpty) {
+      filtered = filtered
+          .where((e) => e.nama.toLowerCase().contains(q))
+          .toList();
+    }
+
+    // Filter berdasarkan kategori
+    if (_selectedKategori != 'Semua') {
+      filtered = filtered
+          .where(
+            (e) =>
+                e.kategoriPengeluaran != null &&
+                e.kategoriPengeluaran == _selectedKategori,
+          )
+          .toList();
+    }
+
+    // Filter berdasarkan tanggal
+    if (_selectedDari != null) {
+      filtered = filtered
+          .where(
+            (e) => e.tanggal.isAfter(
+              _selectedDari!.subtract(const Duration(days: 1)),
+            ),
+          )
+          .toList();
+    }
+    if (_selectedSampai != null) {
+      filtered = filtered
+          .where(
+            (e) => e.tanggal.isBefore(
+              _selectedSampai!.add(const Duration(days: 1)),
+            ),
+          )
+          .toList();
+    }
+
+    return filtered;
   }
 
   @override
@@ -135,8 +181,12 @@ class _SemuaPengeluaranScreenState extends State<SemuaPengeluaranScreen> {
                   tanggal: result['tanggal'] ?? DateTime.now(),
                   nama: result['nama'] ?? '',
                   nominal: (result['nominal'] ?? 0).toInt(),
-                  jenisPengeluaran: result['jenisPengeluaran'] ?? '-',
-                  kategoriPengeluaran: result['kategoriPengeluaran'] ?? '',
+                  kategoriPengeluaran:
+                      (result['kategoriPengeluaran'] == null ||
+                          result['kategoriPengeluaran'] == '')
+                      ? null
+                      : result['kategoriPengeluaran'],
+                  buktiFoto: result['buktiFoto'],
                 ),
               );
             });
@@ -220,9 +270,9 @@ class _SemuaPengeluaranScreenState extends State<SemuaPengeluaranScreen> {
     showMoonModalBottomSheet(
       context: context,
       builder: (ctx) {
-        String jenis = 'Semua';
-        DateTime? dari;
-        DateTime? sampai;
+        String kategori = _selectedKategori;
+        DateTime? dari = _selectedDari;
+        DateTime? sampai = _selectedSampai;
 
         return StatefulBuilder(
           builder: (context, setState) {
@@ -237,6 +287,86 @@ class _SemuaPengeluaranScreenState extends State<SemuaPengeluaranScreen> {
                   }
                 });
               }
+            }
+
+            void _showKategoriBottomSheet() {
+              final List<String> kategoris = [
+                'Semua',
+                'Operasional',
+                'Pembangunan',
+                'Pemeliharaan',
+                'Kegiatan Sosial',
+                'Administrasi',
+                'Honorarium',
+                'Transportasi',
+                'Konsumsi',
+                'Peralatan',
+                'Lainnya',
+              ];
+              showMoonModalBottomSheet(
+                context: context,
+                enableDrag: true,
+                height: MediaQuery.of(context).size.height * 0.7,
+                builder: (context) => Column(
+                  children: [
+                    Container(
+                      height: 4,
+                      width: 40,
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: ShapeDecoration(
+                        color: context.moonColors!.beerus,
+                        shape: MoonSquircleBorder(
+                          borderRadius: BorderRadius.circular(
+                            16,
+                          ).squircleBorderRadius(context),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Pilih Kategori Pengeluaran',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: kategoris.map((item) {
+                            final isSelected = kategori == item;
+                            return MoonMenuItem(
+                              leading: isSelected
+                                  ? const Icon(
+                                      Icons.check_circle,
+                                      color: Color(0xFF6366F1),
+                                    )
+                                  : const SizedBox(width: 24),
+                              label: Text(
+                                item,
+                                style: TextStyle(
+                                  fontWeight: isSelected
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                  color: isSelected
+                                      ? Colors.black
+                                      : Colors.grey[800],
+                                ),
+                              ),
+                              onTap: () {
+                                setState(() => kategori = item);
+                                Navigator.of(context).pop();
+                              },
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
             }
 
             return Container(
@@ -277,29 +407,46 @@ class _SemuaPengeluaranScreenState extends State<SemuaPengeluaranScreen> {
                   ),
 
                   const SizedBox(height: 12),
-                  // Dropdown
+
+                  // Kategori Pengeluaran
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        isExpanded: true,
-                        value: jenis,
-                        icon: const Icon(Icons.keyboard_arrow_down_rounded),
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'Semua',
-                            child: Text('Semua'),
+                    child: InkWell(
+                      onTap: _showKategoriBottomSheet,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Colors.grey.shade300,
+                            width: 1,
                           ),
-                          DropdownMenuItem(
-                            value: 'Pemasukkan Halal',
-                            child: Text('Pemasukkan Halal'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Lainnya',
-                            child: Text('Lainnya'),
-                          ),
-                        ],
-                        onChanged: (v) => setState(() => jenis = v ?? 'Semua'),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                kategori,
+                                style: MoonTokens.light.typography.body.text14
+                                    .copyWith(
+                                      color: kategori == 'Semua'
+                                          ? Colors.grey[600]
+                                          : Colors.black87,
+                                      fontWeight: kategori == 'Semua'
+                                          ? FontWeight.w500
+                                          : FontWeight.w600,
+                                    ),
+                              ),
+                            ),
+                            Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              color: Colors.grey[600],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -311,8 +458,18 @@ class _SemuaPengeluaranScreenState extends State<SemuaPengeluaranScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: InkWell(
                             onTap: () => pickDate(isStart: true),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 12,
+                                horizontal: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: Colors.grey.shade300,
+                                  width: 1,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                               child: Row(
                                 children: [
                                   Icon(
@@ -346,8 +503,18 @@ class _SemuaPengeluaranScreenState extends State<SemuaPengeluaranScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: InkWell(
                             onTap: () => pickDate(isStart: false),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 12,
+                                horizontal: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: Colors.grey.shade300,
+                                  width: 1,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                               child: Row(
                                 children: [
                                   Icon(
@@ -384,19 +551,28 @@ class _SemuaPengeluaranScreenState extends State<SemuaPengeluaranScreen> {
                         child: MoonButton(
                           onTap: () {
                             setState(() {
-                              jenis = 'Semua';
+                              kategori = 'Semua';
                               dari = null;
                               sampai = null;
                             });
                           },
                           label: const Text('Reset'),
+                          backgroundColor: Colors.grey.shade200,
+
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: MoonFilledButton(
                           backgroundColor: colors.piccolo,
-                          onTap: () => Navigator.of(context).pop(),
+                          onTap: () {
+                            this.setState(() {
+                              _selectedKategori = kategori;
+                              _selectedDari = dari;
+                              _selectedSampai = sampai;
+                            });
+                            Navigator.of(context).pop();
+                          },
                           label: const Text('Terapkan'),
                         ),
                       ),
@@ -469,12 +645,6 @@ class _SemuaPengeluaranScreenState extends State<SemuaPengeluaranScreen> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    item.jenisPengeluaran ?? '-',
-                    style: MoonTokens.light.typography.body.text12.copyWith(
-                      color: Colors.grey[600],
-                    ),
-                  ),
                 ],
               ),
             ),

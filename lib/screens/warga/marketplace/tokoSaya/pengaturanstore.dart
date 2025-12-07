@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/services/marketplace/store_service.dart';
-import 'package:jawara_pintar_kel_5/services/store_status_service.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-class MyStoreSettingsScreen extends StatelessWidget {
+class MyStoreSettingsScreen extends StatefulWidget {
   const MyStoreSettingsScreen({super.key});
 
+  @override
+  State<MyStoreSettingsScreen> createState() => _MyStoreSettingsScreenState();
+}
+
+class _MyStoreSettingsScreenState extends State<MyStoreSettingsScreen> {
   static const Color primaryColor = Color(0xFF6A5AE0); // Ungu Tua
   static const Color errorColor = Colors.red;
+  bool _isStoreActive = true; // Track store active status
 
   void _showSnackbar(BuildContext context, String message) {
     ScaffoldMessenger.of(
@@ -42,10 +45,156 @@ class MyStoreSettingsScreen extends StatelessWidget {
             title: "Edit Nama & Deskripsi",
             onTap: () async {
               final result = await context.pushNamed('EditStoreProfile');
-              // No need to handle result, edit screen shows snackbar
             },
           ),
+          _buildSettingItem(
+            context,
+            icon: _isStoreActive ? Icons.block : Icons.check_circle,
+            title: _isStoreActive ? "Nonaktif Toko" : "Aktifkan Toko",
+            color: _isStoreActive ? errorColor : Colors.green,
+            showArrow: false,
+            onTap: () {
+              // Show confirmation dialog
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return Dialog(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color:
+                                  (_isStoreActive
+                                          ? Colors.orange
+                                          : Colors.green)
+                                      .withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              _isStoreActive
+                                  ? Icons.warning_amber_rounded
+                                  : Icons.check_circle_outline,
+                              color: _isStoreActive
+                                  ? Colors.orange
+                                  : Colors.green,
+                              size: 48,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            _isStoreActive
+                                ? 'Nonaktifkan Toko'
+                                : 'Aktifkan Toko',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            _isStoreActive
+                                ? 'Toko Anda akan dinonaktifkan. Anda tidak dapat menjual produk.\n\nApakah Anda yakin?'
+                                : 'Toko Anda akan diaktifkan kembali. Anda dapat mulai menjual produk setelah diaktifkan.\n\nApakah Anda yakin?',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade700,
+                              height: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
+                                    side: BorderSide(
+                                      color: Colors.grey.shade300,
+                                      width: 1.5,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Batal',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey.shade800,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
 
+                                    // Toggle store status
+                                    setState(() {
+                                      _isStoreActive = !_isStoreActive;
+                                    });
+
+                                    // Show success message
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          _isStoreActive
+                                              ? 'Toko berhasil diaktifkan'
+                                              : 'Toko berhasil dinonaktifkan',
+                                        ),
+                                        backgroundColor: Colors.grey.shade800,
+                                      ),
+                                    );
+
+                                    // TODO: Implement actual API call to update store status
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
+                                    backgroundColor: _isStoreActive
+                                        ? Colors.red
+                                        : Colors.green,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    _isStoreActive ? 'Nonaktifkan' : 'Aktifkan',
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
           _buildSettingItem(
             context,
             icon: Icons.logout,
@@ -53,120 +202,118 @@ class MyStoreSettingsScreen extends StatelessWidget {
             color: errorColor,
             showArrow: false,
             onTap: () {
-              _showSnackbar(context, "Berhasil Keluar...");
-              context.go('/warga/marketplace');
-            },
-          ),
-          _buildSettingItem(
-            context,
-            icon: Icons.block,
-            title: "Ajukan Nonaktif Toko",
-            color: errorColor,
-            showArrow: false,
-            onTap: () async {
               // Show confirmation dialog
               showDialog(
                 context: context,
-                builder: (dialogContext) => AlertDialog(
-                  title: const Row(
-                    children: [
-                      Icon(Icons.warning_amber, color: Colors.orange),
-                      SizedBox(width: 12),
-                      Text('Ajukan Nonaktif Toko'),
-                    ],
-                  ),
-                  content: const Text(
-                    'Toko Anda akan dinonaktifkan dan menunggu validasi admin. Selama proses ini, Anda tidak dapat menjual produk.\n\nApakah Anda yakin?',
-                    style: TextStyle(fontSize: 15),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(dialogContext),
-                      child: const Text('Batal'),
+                builder: (BuildContext context) {
+                  return Dialog(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                      ),
-                      onPressed: () async {
-                        Navigator.pop(dialogContext);
-
-                        // Show loading
-                        showDialog(
-                          context: context,
-                          barrierDismissible: false,
-                          builder: (context) =>
-                              const Center(child: CircularProgressIndicator()),
-                        );
-
-                        try {
-                          // Get user's store
-                          final authUser =
-                              Supabase.instance.client.auth.currentUser;
-                          if (authUser?.email == null) {
-                            throw Exception('User tidak terautentikasi');
-                          }
-
-                          final wargaResponse = await Supabase.instance.client
-                              .from('warga')
-                              .select('id')
-                              .eq('email', authUser!.email!)
-                              .maybeSingle();
-
-                          if (wargaResponse == null) {
-                            throw Exception('Data warga tidak ditemukan');
-                          }
-
-                          final userId = wargaResponse['id'] as String;
-                          final storeService = StoreService();
-                          final store = await storeService.getStoreByUserId(
-                            userId,
-                          );
-
-                          if (store == null || store.storeId == null) {
-                            throw Exception('Toko tidak ditemukan');
-                          }
-
-                          // Update store status to Nonaktif (pending admin validation)
-                          await Supabase.instance.client
-                              .from('store')
-                              .update({
-                                'verifikasi': 'Nonaktif',
-                                'alasan':
-                                    'Menunggu validasi admin untuk nonaktif',
-                              })
-                              .eq('store_id', store.storeId!);
-
-                          // Set store status to pending deactivation
-                          await StoreStatusService.setStoreStatus(1);
-
-                          // Close loading
-                          if (context.mounted) Navigator.pop(context);
-
-                          // Navigate to pending deactivation screen
-                          if (context.mounted) {
-                            context.goNamed('StorePendingDeactivation');
-                          }
-                        } catch (e) {
-                          // Close loading
-                          if (context.mounted) Navigator.pop(context);
-
-                          // Show error
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Gagal mengajukan nonaktif: $e'),
-                                backgroundColor: Colors.red,
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.logout,
+                              color: Colors.orange,
+                              size: 48,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          const Text(
+                            'Keluar dari Toko',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Apakah Anda yakin ingin keluar akun toko ini?',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade700,
+                              height: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
+                                    side: BorderSide(
+                                      color: Colors.grey.shade300,
+                                      width: 1.5,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Batal',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey.shade800,
+                                    ),
+                                  ),
+                                ),
                               ),
-                            );
-                          }
-                        }
-                      },
-                      child: const Text('Ya, Ajukan'),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: const Text('Berhasil keluar'),
+                                        backgroundColor: Colors.grey.shade800,
+                                      ),
+                                    );
+                                    context.go('/warga/marketplace');
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
+                                    backgroundColor: Colors.red,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Ya, Keluar',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
-                ),
+                  );
+                },
               );
             },
           ),

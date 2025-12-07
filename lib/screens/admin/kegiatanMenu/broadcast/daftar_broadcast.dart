@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:jawara_pintar_kel_5/models/kegiatan/broadcast_model.dart';
 import 'package:jawara_pintar_kel_5/services/broadcast_service.dart';
-
+import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
 import 'broadcast_filter_screen.dart';
 import 'detail_broadcast_screen.dart';
-import 'edit_broadcast_screen.dart';
 import 'tambah_broadcast.dart';
 
 class DaftarBroadcastScreen extends StatefulWidget {
@@ -32,7 +31,6 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
 
   void _refreshData() {
     setState(() {
-      // Kita panggil ulang service-nya agar mengambil data terbaru dari database/API
       _broadcastStream = _broadcastService.getBroadcastsStream();
     });
   }
@@ -263,11 +261,7 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
                     ],
                   ),
                 ),
-                const Icon(
-              Icons.chevron_right,
-              color: Colors.grey,
-              size: 28,
-            ),
+                const Icon(Icons.chevron_right, color: Colors.grey, size: 28),
               ],
             ),
           ),
@@ -278,7 +272,9 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Colors.deepPurple;
+    // ignore: unused_local_variable
+    const primaryColor =
+        Colors.deepPurple; // Deprecated, use ConstantColors.primary
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -360,7 +356,7 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _navigateToAddBroadcast,
-        backgroundColor: primaryColor,
+        backgroundColor: ConstantColors.primary,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(15.0),
         ),

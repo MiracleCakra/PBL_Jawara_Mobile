@@ -174,9 +174,96 @@ class _DetailPenerimaanWargaPageState extends State<DetailPenerimaanWargaPage> {
     );
   }
 
+  void _showActionBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.close, color: Colors.red, size: 24),
+                  ),
+                  title: const Text(
+                    'Tolak Pendaftaran',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.red,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Tolak pendaftaran warga ini',
+                    style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _handleReject();
+                  },
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF6366F1).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.check_circle_outline,
+                      color: Color(0xFF6366F1),
+                      size: 24,
+                    ),
+                  ),
+                  title: const Text(
+                    'Setujui Pendaftaran',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF6366F1),
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Setujui pendaftaran warga ini',
+                    style: TextStyle(fontSize: 13, color: Colors.grey),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _handleApprove();
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final bool showActionButtons =
+    final bool showActionMenu =
         widget.penerimaan.status.toLowerCase() == 'pending' ||
         widget.penerimaan.status.toLowerCase() == 'ditolak';
 
@@ -196,30 +283,35 @@ class _DetailPenerimaanWargaPageState extends State<DetailPenerimaanWargaPage> {
           'Detail Pendaftaran Warga',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-              children: [
-                _buildProfileSection(),
-                const SizedBox(height: 16),
-                _buildInfoCard(),
-                const SizedBox(height: 16),
-                _buildDetailInfoCard(),
-                const SizedBox(height: 16),
-                _buildInformasiTambahanCard(),
-                const SizedBox(height: 16),
-                _buildStatusCard(),
-                const SizedBox(height: 16),
-                _buildFotoIdentitasCard(),
-                SizedBox(height: showActionButtons ? 80 : 16),
-              ],
+        actions: [
+          if (showActionMenu)
+            IconButton(
+              onPressed: _showActionBottomSheet,
+              icon: const Icon(Icons.more_vert, color: Colors.black),
             ),
-          ),
-          if (showActionButtons) _buildStickyFooter(),
         ],
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildProfileSection(),
+              const SizedBox(height: 16),
+              _buildInfoCard(),
+              const SizedBox(height: 16),
+              _buildDetailInfoCard(),
+              const SizedBox(height: 16),
+              _buildInformasiTambahanCard(),
+              const SizedBox(height: 16),
+              _buildStatusCard(),
+              const SizedBox(height: 16),
+              _buildFotoIdentitasCard(),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -394,70 +486,6 @@ class _DetailPenerimaanWargaPageState extends State<DetailPenerimaanWargaPage> {
     );
   }
 
-  Widget _buildStickyFooter() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: _handleReject,
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  side: const BorderSide(color: Colors.red, width: 1.5),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Tolak',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                    color: Colors.red,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: _handleApprove,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: const Color(0xFF16A34A),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 0,
-                ),
-                child: const Text(
-                  'Setujui',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class _SectionCard extends StatelessWidget {

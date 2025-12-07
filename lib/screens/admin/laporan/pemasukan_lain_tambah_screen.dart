@@ -456,10 +456,9 @@ class _PemasukanLainTambahScreenState extends State<PemasukanLainTambahScreen> {
                             final data = {
                               'nama': _namaController.text,
                               'tanggal': _selectedDate ?? DateTime.now(),
-                              'kategoriPemasukan': _selectedKategori ?? '',
+                              'kategoriPemasukan': _selectedKategori,
                               'nominal':
                                   double.tryParse(_nominalController.text) ?? 0,
-                              'jenisPemasukan': 'Pemasukan Lainnya',
                               'buktiFoto': _buktiFotoPath,
                             };
 

@@ -206,10 +206,21 @@ class _DaftarAnggotaKeluargaPageState extends State<DaftarAnggotaKeluargaPage> {
                     isExpanded: true,
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: Colors.grey.shade100,
+                      fillColor: Colors.white,
+                      hintText: 'Pilih jenis kelamin',
+                      hintStyle: TextStyle(color: Colors.grey[400]),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFF4E46B4), width: 1.2),
                       ),
                     ),
                     items: const [
@@ -224,7 +235,6 @@ class _DaftarAnggotaKeluargaPageState extends State<DaftarAnggotaKeluargaPage> {
 
                   Row(
                     children: [
-                      // RESET
                       Expanded(
                         child: OutlinedButton(
                           onPressed: () {

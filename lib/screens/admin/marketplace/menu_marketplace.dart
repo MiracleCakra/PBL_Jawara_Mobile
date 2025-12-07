@@ -24,25 +24,8 @@ class Marketplace extends StatefulWidget {
 
 class _MarketplaceState extends State<Marketplace> {
   double _opacity = 0;
-  List<String> years = ['2023', '2024', '2025', '2026', '2027', '2028'];
-  List<String> months = [
-    'Semua Bulan',
-    'Januari',
-    'Februari',
-    'Maret',
-    'April',
-    'Mei',
-    'Juni',
-    'Juli',
-    'Agustus',
-    'September',
-    'Oktober',
-    'November',
-    'Desember',
-  ];
-
-  String selectedYear = DateTime.now().year.toString();
-  String selectedMonth = 'Semua Bulan';
+  int _selectedYear = DateTime.now().year;
+  int? _selectedMonth;
 
   // Data Dummy
   final int totalProdukAktif = 125;
@@ -256,63 +239,37 @@ class _MarketplaceState extends State<Marketplace> {
     required IconData icon,
     required Color iconColor,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: iconColor, size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF374151),
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 200;
+        return Container(
+          padding: EdgeInsets.all(isNarrow ? 10 : 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          ...items.asMap().entries.map((entry) {
-            int index = entry.key;
-            String item = entry.value;
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 3.0),
-              child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
                 children: [
-                  Text(
-                    '${index + 1}.',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: ConstantColors.primary,
-                      fontSize: 13,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
+                  Icon(icon, color: iconColor, size: isNarrow ? 18 : 20),
+                  SizedBox(width: isNarrow ? 6 : 8),
                   Expanded(
                     child: Text(
-                      item,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF4B5563),
+                      title,
+                      style: TextStyle(
+                        fontSize: isNarrow ? 12 : 14,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF374151),
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -320,11 +277,62 @@ class _MarketplaceState extends State<Marketplace> {
                   ),
                 ],
               ),
-            );
-          }).toList(),
-        ],
-      ),
+              SizedBox(height: isNarrow ? 8 : 10),
+              ...items.asMap().entries.map((entry) {
+                int index = entry.key;
+                String item = entry.value;
+                return Padding(
+                  padding: EdgeInsets.symmetric(vertical: isNarrow ? 2.0 : 3.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${index + 1}.',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: ConstantColors.primary,
+                          fontSize: isNarrow ? 11 : 13,
+                        ),
+                      ),
+                      SizedBox(width: isNarrow ? 4 : 6),
+                      Expanded(
+                        child: Text(
+                          item,
+                          style: TextStyle(
+                            fontSize: isNarrow ? 11 : 13,
+                            color: const Color(0xFF4B5563),
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ],
+          ),
+        );
+      },
     );
+  }
+
+  String _getMonthName(int month) {
+    const monthNames = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agt',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
+    return monthNames[month - 1];
   }
 
   Future<void> _showYearSelection(BuildContext context) {
@@ -358,21 +366,19 @@ class _MarketplaceState extends State<Marketplace> {
           Expanded(
             child: SingleChildScrollView(
               child: Column(
-                children: years.map((year) {
+                children: List.generate(10, (index) {
+                  final year = DateTime.now().year - index;
                   return MoonMenuItem(
                     onTap: () {
-                      setState(() {
-                        selectedYear = year;
-                        selectedMonth = 'Semua Bulan';
-                      });
                       Navigator.pop(context);
+                      _showMonthSelection(context, year);
                     },
-                    label: Text(year),
-                    trailing: year == selectedYear
+                    label: Text('$year'),
+                    trailing: year == _selectedYear
                         ? const Icon(Icons.check, color: ConstantColors.primary)
                         : null,
                   );
-                }).toList(),
+                }),
               ),
             ),
           ),
@@ -381,7 +387,22 @@ class _MarketplaceState extends State<Marketplace> {
     );
   }
 
-  Future<void> _showMonthSelection(BuildContext context) {
+  Future<void> _showMonthSelection(BuildContext context, int year) {
+    const monthNames = [
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
+    ];
+
     return showMoonModalBottomSheet(
       context: context,
       enableDrag: true,
@@ -404,7 +425,7 @@ class _MarketplaceState extends State<Marketplace> {
                 ),
               ),
               Text(
-                'Pilih Bulan ($selectedYear)',
+                'Pilih Bulan - $year',
                 style: MoonTokens.light.typography.heading.text14,
               ),
             ],
@@ -412,20 +433,23 @@ class _MarketplaceState extends State<Marketplace> {
           Expanded(
             child: SingleChildScrollView(
               child: Column(
-                children: months.map((month) {
+                children: List.generate(12, (index) {
+                  final monthIndex = index + 1;
                   return MoonMenuItem(
                     onTap: () {
                       setState(() {
-                        selectedMonth = month;
+                        _selectedYear = year;
+                        _selectedMonth = monthIndex;
                       });
                       Navigator.pop(context);
                     },
-                    label: Text(month),
-                    trailing: month == selectedMonth
+                    label: Text(monthNames[index]),
+                    trailing:
+                        _selectedYear == year && _selectedMonth == monthIndex
                         ? const Icon(Icons.check, color: ConstantColors.primary)
                         : null,
                   );
-                }).toList(),
+                }),
               ),
             ),
           ),
@@ -481,7 +505,6 @@ class _MarketplaceState extends State<Marketplace> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // Bagian Header
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.fromLTRB(20, 30, 20, 80),
@@ -513,7 +536,7 @@ class _MarketplaceState extends State<Marketplace> {
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      "Ringkasan performa dan manajemen marketplace (${selectedMonth == 'Semua Bulan' ? selectedYear : '$selectedMonth $selectedYear'})",
+                      "Ringkasan performa dan manajemen marketplace (${_selectedMonth != null ? '${_getMonthName(_selectedMonth!)} $_selectedYear' : '$_selectedYear'})",
                       style: const TextStyle(
                         color: Colors.white70,
                         fontSize: 14,
@@ -566,18 +589,11 @@ class _MarketplaceState extends State<Marketplace> {
                       const SizedBox(height: 16),
 
                       Row(
-                        children:
-                            quickAccessButtons
-                                .map((button) => Expanded(child: button))
-                                .toList()
-                                .expand(
-                                  (widget) => [
-                                    widget,
-                                    const SizedBox(width: 12),
-                                  ],
-                                )
-                                .toList()
-                              ..removeLast(),
+                        children: [
+                          Expanded(child: quickAccessButtons[0]),
+                          const SizedBox(width: 12),
+                          Expanded(child: quickAccessButtons[1]),
+                        ],
                       ),
 
                       const SizedBox(height: 36),
@@ -596,25 +612,14 @@ class _MarketplaceState extends State<Marketplace> {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              SizedBox(
-                                width: width > 400 ? 100 : 80,
-                                child: _buildFilterInput(
-                                  onTap: () => _showYearSelection(context),
-                                  label: selectedYear,
-                                ),
-                              ),
-                              SizedBox(width: width > 400 ? 8 : 4),
-                              SizedBox(
-                                width: width > 400 ? 140 : 100,
-                                child: _buildFilterInput(
-                                  onTap: () => _showMonthSelection(context),
-                                  label: selectedMonth,
-                                ),
-                              ),
-                            ],
+                          SizedBox(
+                            width: width > 400 ? 140 : 120,
+                            child: _buildFilterInput(
+                              onTap: () => _showYearSelection(context),
+                              label: _selectedMonth != null
+                                  ? '${_getMonthName(_selectedMonth!)} $_selectedYear'
+                                  : '$_selectedYear',
+                            ),
                           ),
                         ],
                       ),
@@ -654,7 +659,7 @@ class _MarketplaceState extends State<Marketplace> {
                       const Text(
                         "Statistik Distribusi Kategori Sayur (Hasil CV)",
                         style: TextStyle(
-                          fontSize: 15,
+                          fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF374151),
                         ),

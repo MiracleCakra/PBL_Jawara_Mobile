@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jawara_pintar_kel_5/services/pengguna_service.dart';
+import 'package:jawara_pintar_kel_5/widget/moon_result_modal.dart';
 
 class EditPenggunaScreen extends StatefulWidget {
   final Map<String, dynamic> userData;
 
-  const EditPenggunaScreen({
-    super.key,
-    required this.userData,
-  });
+  const EditPenggunaScreen({super.key, required this.userData});
 
   @override
   State<EditPenggunaScreen> createState() => _EditPenggunaScreenState();
@@ -59,14 +57,17 @@ class _EditPenggunaScreenState extends State<EditPenggunaScreen> {
         'role': _role,
       });
 
+      await showResultModal(
+        context,
+        type: ResultType.success,
+        title: 'Berhasil',
+        description: 'Data pengguna berhasil diperbarui.',
+        actionLabel: 'Selesai',
+        autoProceed: true,
+      );
+
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Data pengguna berhasil diperbarui'),
-            backgroundColor: Colors.grey.shade800,
-          ),
-        );
-        context.pop(true); // Kembali ke Detail
+        context.pop(true);
       }
     } catch (e) {
       if (mounted) {
@@ -144,8 +145,14 @@ class _EditPenggunaScreenState extends State<EditPenggunaScreen> {
                   DropdownMenuItem(value: 'Warga', child: Text('Warga')),
                   DropdownMenuItem(value: 'RT', child: Text('RT')),
                   DropdownMenuItem(value: 'RW', child: Text('RW')),
-                  DropdownMenuItem(value: 'Sekretaris', child: Text('Sekretaris')),
-                  DropdownMenuItem(value: 'Bendahara', child: Text('Bendahara')),
+                  DropdownMenuItem(
+                    value: 'Sekretaris',
+                    child: Text('Sekretaris'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'Bendahara',
+                    child: Text('Bendahara'),
+                  ),
                 ],
 
                 onChanged: (value) => setState(() => _role = value),
@@ -188,11 +195,18 @@ class _EditPenggunaScreenState extends State<EditPenggunaScreen> {
                       ),
                       onPressed: _isLoading ? null : _submit,
                       child: _isLoading
-                          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
                           : const Text(
-                            'Simpan',
-                            style: TextStyle(fontWeight: FontWeight.w600),
-                          ),
+                              'Simpan',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
                     ),
                   ),
                 ],
@@ -280,7 +294,7 @@ class _EditPenggunaScreenState extends State<EditPenggunaScreen> {
         DropdownButtonFormField<String>(
           value: value,
           isExpanded: true,
-          menuMaxHeight: 300, 
+          menuMaxHeight: 300,
 
           decoration: InputDecoration(
             filled: true,

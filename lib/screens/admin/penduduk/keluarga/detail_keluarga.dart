@@ -25,7 +25,7 @@ class AnggotaKeluarga {
   Color get statusColor {
     switch (status.toLowerCase()) {
       case 'aktif':
-        return const Color(0xFF16A34A); // Green
+        return const Color(0xFF673AB7); // Deep purple
       case 'nonaktif':
         return const Color(0xFFEF4444); // Red
       default:
@@ -37,7 +37,7 @@ class AnggotaKeluarga {
   Color get statusBackgroundColor {
     switch (status.toLowerCase()) {
       case 'aktif':
-        return const Color(0xFFDCFCE7); // Light green
+        return const Color(0xFFEDE7F6); // Light purple
       case 'nonaktif':
         return const Color(0xFFFEE2E2); // Light red
       default:

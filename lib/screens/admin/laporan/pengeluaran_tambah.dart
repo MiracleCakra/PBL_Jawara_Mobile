@@ -445,7 +445,10 @@ class _PengeluaranTambahScreenState extends State<PengeluaranTambahScreen> {
                             final data = {
                               'nama': _namaController.text,
                               'tanggal': _selectedDate ?? DateTime.now(),
-                              'kategoriPengeluaran': _kategoriController.text,
+                              'kategoriPengeluaran':
+                                  _kategoriController.text.isEmpty
+                                  ? null
+                                  : _kategoriController.text,
                               'nominal':
                                   double.tryParse(_nominalController.text) ?? 0,
                               'jenisPengeluaran': 'Pengeluaran Lainnya',

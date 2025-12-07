@@ -2,49 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/store_model.dart';
+import 'package:jawara_pintar_kel_5/providers/marketplace/store_provider.dart';
+import 'package:provider/provider.dart';
 
-const Color unguColor = Color(0xFF6366F1);
-
-class ProductValidation {
-  final String id;
-  final String productName;
-  final String sellerName;
-  final String category;
-  final String imageUrl;
-  final String timeUploaded;
-  final String cvResult;
-  final double cvConfidence;
-  final String status;
-  final String description;
-
-  const ProductValidation({
-    required this.id,
-    required this.productName,
-    required this.sellerName,
-    required this.category,
-    required this.imageUrl,
-    required this.timeUploaded,
-    required this.cvResult,
-    required this.cvConfidence,
-    required this.status,
-    this.description = '',
-  });
-
-  ProductValidation copyWith({String? status}) {
-    return ProductValidation(
-      id: id,
-      productName: productName,
-      sellerName: sellerName,
-      category: category,
-      imageUrl: imageUrl,
-      timeUploaded: timeUploaded,
-      cvResult: cvResult,
-      cvConfidence: cvConfidence,
-      status: status ?? this.status,
-      description: description,
-    );
-  }
-}
+const Color _primaryColor = Color(0xFF6366F1);
+const Color _successColor = Color(0xFF6366F1);
 
 class Debouncer {
   final int milliseconds;
@@ -58,110 +22,123 @@ class Debouncer {
   }
 }
 
-class ValidasiProdukBaruScreen extends StatefulWidget {
-  const ValidasiProdukBaruScreen({super.key});
+class DaftarTokoAktifScreen extends StatefulWidget {
+  const DaftarTokoAktifScreen({super.key});
 
   @override
-  State<ValidasiProdukBaruScreen> createState() =>
-      _ValidasiProdukBaruScreenState();
+  State<DaftarTokoAktifScreen> createState() => _DaftarTokoAktifScreenState();
 }
 
-class _ValidasiProdukBaruScreenState extends State<ValidasiProdukBaruScreen> {
-  List<ProductValidation> _allProducts = [
-    const ProductValidation(
-      id: 'P001',
-      productName: 'Tomat Segar',
-      sellerName: 'Warga Blok A2/05',
-      category: 'Sayuran',
-      imageUrl: 'assets/images/tomatsegar.jpg',
-      timeUploaded: '5 menit lalu',
-      cvResult: 'Tomat Kualitas A',
-      cvConfidence: 0.98,
-      status: 'Pending',
-      description:
-          'Tomat segar berkualitas tinggi dengan warna merah cerah dan tekstur padat.',
-    ),
-    const ProductValidation(
-      id: 'P002',
-      productName: 'Tomat Busuk',
-      sellerName: 'Warga Blok C1/12',
-      category: 'Sayuran',
-      imageUrl: 'assets/images/tomatbusuk.jpg',
-      timeUploaded: '25 menit lalu',
-      cvResult: 'Hasil Buah Busuk',
-      cvConfidence: 0.25,
-      status: 'Ditolak',
-      description: 'Produk tidak sesuai standar kualitas.',
-    ),
-    const ProductValidation(
-      id: 'P003',
-      productName: 'Wortel Segar',
-      sellerName: 'Warga Blok B5/01',
-      category: 'Sayuran',
-      imageUrl: 'assets/images/wortelsegar.jpg',
-      timeUploaded: '1 jam lalu',
-      cvResult: 'Akar Sayuran Kualitas Baik',
-      cvConfidence: 0.99,
-      status: 'Pending',
-      description: 'Wortel segar dengan ukuran seragam dan warna orange cerah.',
-    ),
-    const ProductValidation(
-      id: 'P004',
-      productName: 'Wortel Layu',
-      sellerName: 'Warga Blok F1/02',
-      category: 'Sayuran',
-      imageUrl: 'assets/images/wortellayu.jpg',
-      timeUploaded: '3 jam lalu',
-      cvResult: 'Akar Sayuran Kualitas Rendah',
-      cvConfidence: 0.65,
-      status: 'Disetujui',
-      description: 'Wortel dengan kualitas standar untuk konsumsi.',
-    ),
-  ];
-
-  List<ProductValidation> _filteredProducts = [];
+class _DaftarTokoAktifScreenState extends State<DaftarTokoAktifScreen> {
+  List<StoreModel> _activeStores = [];
   String _currentSearchQuery = '';
-  String _currentFilterStatus = 'Semua';
+  bool _isLoading = false;
 
   final Debouncer _debouncer = Debouncer(milliseconds: 300);
-
-  bool get isFilterActive => _currentFilterStatus != 'Semua';
 
   @override
   void initState() {
     super.initState();
-    _filterList();
+    _loadActiveStores();
   }
 
-  void _refreshListAfterAction(String productId, String newStatus) {
-    setState(() {
-      final index = _allProducts.indexWhere((item) => item.id == productId);
-      if (index != -1) {
-        _allProducts[index] = _allProducts[index].copyWith(status: newStatus);
-        _filterList();
-      }
-    });
+  Future<void> _loadActiveStores() async {
+    setState(() => _isLoading = true);
+
+    final storeProvider = Provider.of<StoreProvider>(context, listen: false);
+    await storeProvider.fetchAllStores();
+
+    // Tambahkan dummy data untuk toko aktif
+    final dummyStore1 = StoreModel(
+      storeId: 1001,
+      nama: 'Toko Sayur Segar Pak Budi',
+      deskripsi: 'Menjual sayuran segar setiap hari dengan harga terjangkau',
+      alamat: 'Jl. Melati No. 15, RT 02/RW 03',
+      kontak: '081234567890',
+      userId: '3201012501950001',
+      verifikasi: 'Diterima',
+      alasan: null,
+      createdAt: DateTime.now().subtract(const Duration(days: 10)),
+    );
+
+    final dummyStore2 = StoreModel(
+      storeId: 1002,
+      nama: 'Warung Sayur Ibu Siti',
+      deskripsi: 'Sayuran organik fresh dari kebun sendiri',
+      alamat: 'Jl. Mawar No. 22, RT 03/RW 05',
+      kontak: '082345678901',
+      userId: '3201012502960002',
+      verifikasi: 'Diterima',
+      alasan: null,
+      createdAt: DateTime.now().subtract(const Duration(days: 15)),
+    );
+
+    final dummyStore3 = StoreModel(
+      storeId: 1003,
+      nama: 'Toko Sayur Pak Ahmad',
+      deskripsi: 'Menyediakan sayuran segar berkualitas premium',
+      alamat: 'Jl. Dahlia No. 8, RT 01/RW 02',
+      kontak: '083456789012',
+      userId: '3201012503970003',
+      verifikasi: 'Diterima',
+      alasan: null,
+      createdAt: DateTime.now().subtract(const Duration(days: 7)),
+    );
+
+    if (!storeProvider.stores.any((s) => s.storeId == 1001)) {
+      storeProvider.stores.add(dummyStore1);
+    }
+    if (!storeProvider.stores.any((s) => s.storeId == 1002)) {
+      storeProvider.stores.add(dummyStore2);
+    }
+    if (!storeProvider.stores.any((s) => s.storeId == 1003)) {
+      storeProvider.stores.add(dummyStore3);
+    }
+
+    _filterList();
+
+    setState(() => _isLoading = false);
   }
 
   void _filterList() {
-    setState(() {
-      _filteredProducts = _allProducts.where((item) {
-        bool statusMatch =
-            _currentFilterStatus == 'Semua' ||
-            item.status == _currentFilterStatus;
+    final storeProvider = Provider.of<StoreProvider>(context, listen: false);
+    final allActiveStores = storeProvider.stores.where((store) {
+      return store.verifikasi == 'Diterima';
+    }).toList();
 
+    setState(() {
+      _activeStores = allActiveStores.where((store) {
         bool searchMatch =
             _currentSearchQuery.isEmpty ||
-            item.productName.toLowerCase().contains(
-              _currentSearchQuery.toLowerCase(),
-            ) ||
-            item.sellerName.toLowerCase().contains(
-              _currentSearchQuery.toLowerCase(),
-            );
+            (store.nama?.toLowerCase().contains(
+                  _currentSearchQuery.toLowerCase(),
+                ) ??
+                false) ||
+            (store.kontak?.toLowerCase().contains(
+                  _currentSearchQuery.toLowerCase(),
+                ) ??
+                false);
 
-        return statusMatch && searchMatch;
+        return searchMatch;
       }).toList();
     });
+  }
+
+  String _getTimeAgo(DateTime? createdAt) {
+    if (createdAt == null) return 'Tidak diketahui';
+
+    final now = DateTime.now();
+    final difference = now.difference(createdAt);
+
+    if (difference.inMinutes < 60) {
+      return '${difference.inMinutes} menit lalu';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours} jam lalu';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} hari lalu';
+    } else {
+      return DateFormat('dd MMM yyyy').format(createdAt);
+    }
   }
 
   void _onSearchChanged(String query) {
@@ -173,471 +150,7 @@ class _ValidasiProdukBaruScreenState extends State<ValidasiProdukBaruScreen> {
     });
   }
 
-  void _openFilterModal() {
-    final List<String> options = ['Semua', 'Pending', 'Disetujui', 'Ditolak'];
-    String? tempSelectedStatus = _currentFilterStatus;
-
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter modalSetState) {
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 4,
-                      margin: const EdgeInsets.only(bottom: 20),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    const Text(
-                      'Filter Status Produk',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    ...options.map((status) {
-                      final bool isSelected = tempSelectedStatus == status;
-                      return ListTile(
-                        title: Text(status),
-                        leading: Radio<String>(
-                          value: status,
-                          groupValue: tempSelectedStatus,
-                          activeColor: unguColor,
-                          onChanged: (String? value) {
-                            modalSetState(() {
-                              tempSelectedStatus = value;
-                            });
-                            if (value != null) {
-                              setState(() {
-                                _currentFilterStatus = value;
-                                _filterList();
-                              });
-                              Navigator.pop(context);
-                            }
-                          },
-                        ),
-                        trailing: isSelected
-                            ? const Icon(Icons.check, color: unguColor)
-                            : null,
-                        onTap: () {
-                          setState(() {
-                            _currentFilterStatus = status;
-                            _filterList();
-                          });
-                          Navigator.pop(context);
-                        },
-                      );
-                    }).toList(),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _showDetailDialog(ProductValidation item) {
-    Color confidenceColor = item.cvConfidence > 0.90
-        ? Colors.green.shade700
-        : (item.cvConfidence > 0.70
-              ? Colors.orange.shade700
-              : Colors.red.shade700);
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Detail Produk',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
-                  ),
-                  const Divider(),
-                  const SizedBox(height: 12),
-
-                  // Gambar Produk
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.asset(
-                      item.imageUrl,
-                      width: double.infinity,
-                      height: 200,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        width: double.infinity,
-                        height: 200,
-                        color: Colors.grey[300],
-                        child: const Icon(
-                          Icons.image,
-                          size: 50,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Info Produk
-                  _buildDetailRow(
-                    'Nama Produk',
-                    item.productName,
-                    Icons.shopping_bag,
-                  ),
-                  _buildDetailRow('Kategori', item.category, Icons.category),
-                  _buildDetailRow('Penjual', item.sellerName, Icons.person),
-                  _buildDetailRow(
-                    'Waktu Upload',
-                    item.timeUploaded,
-                    Icons.access_time,
-                  ),
-
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Deskripsi:',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    item.description.isNotEmpty ? item.description : '-',
-                    style: TextStyle(color: Colors.grey[700], fontSize: 13),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Hasil Computer Vision
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.blue.shade200),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Verifikasi Computer Vision',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                            color: Colors.blueAccent,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Klasifikasi:',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.blue.shade800,
-                                    ),
-                                  ),
-                                  Text(
-                                    item.cvResult,
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.blue.shade900,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: confidenceColor.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                '${(item.cvConfidence * 100).toStringAsFixed(0)}%',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: confidenceColor,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Tombol Aksi
-                  if (item.status == 'Pending')
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.pop(context);
-                              _handleReject(item);
-                            },
-                            icon: const Icon(Icons.close, size: 18),
-                            label: const Text('Tolak'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.pop(context);
-                              _handleApprove(item);
-                            },
-                            icon: const Icon(Icons.check, size: 18),
-                            label: const Text('Setujui'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: unguColor,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 18, color: Colors.grey[600]),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                ),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _handleApprove(ProductValidation item) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Text('Setujui Produk'),
-          content: Text(
-            'Apakah Anda yakin ingin menyetujui produk "${item.productName}"?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.grey.shade300,
-              ),
-              child: const Text('Batal'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _refreshListAfterAction(item.id, 'Disetujui');
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Produk "${item.productName}" telah disetujui',
-                    ),
-                    backgroundColor: Colors.grey.shade800,
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: unguColor,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Setujui'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _handleReject(ProductValidation item) {
-    String alasan = '';
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Text('Tolak Produk'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Anda akan menolak produk "${item.productName}". Masukkan alasan penolakan:',
-                style: TextStyle(color: Colors.grey[800], fontSize: 14),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                onChanged: (value) => alasan = value,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  hintText: 'Contoh: Gambar blur, produk tidak sesuai kategori',
-                  hintStyle: TextStyle(fontSize: 13, color: Colors.grey[500]),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  contentPadding: const EdgeInsets.all(12),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.grey.shade300,
-              ),
-              child: const Text('Batal'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (alasan.trim().isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Alasan tidak boleh kosong'),
-                      backgroundColor: Colors.grey.shade800,
-                    ),
-                  );
-                  return;
-                }
-                Navigator.pop(context);
-                _refreshListAfterAction(item.id, 'Ditolak');
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Produk "${item.productName}" telah ditolak. Alasan: $alasan',
-                    ),
-                    backgroundColor: Colors.grey.shade800,
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Tolak'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildProductCard(ProductValidation item) {
-    Color statusColor;
-    Color statusBgColor;
-
-    switch (item.status) {
-      case 'Pending':
-        statusColor = Colors.yellow.shade800;
-        statusBgColor = Colors.yellow.shade100;
-        break;
-      case 'Ditolak':
-        statusColor = Colors.red.shade800;
-        statusBgColor = Colors.red.shade100;
-        break;
-      case 'Disetujui':
-        statusColor = Colors.purple.shade800;
-        statusBgColor = Colors.purple.shade100;
-        break;
-      default:
-        statusColor = Colors.red.shade800;
-        statusBgColor = Colors.red.shade100;
-        break;
-    }
-
+  Widget _buildStoreCard(BuildContext context, StoreModel store) {
     return Card(
       color: Colors.white,
       margin: const EdgeInsets.only(bottom: 16),
@@ -645,7 +158,9 @@ class _ValidasiProdukBaruScreenState extends State<ValidasiProdukBaruScreen> {
       elevation: 2,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => _showDetailDialog(item),
+        onTap: () {
+          context.pushNamed('DaftarProdukToko', extra: store);
+        },
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -653,28 +168,16 @@ class _ValidasiProdukBaruScreenState extends State<ValidasiProdukBaruScreen> {
             children: [
               Row(
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: unguColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Image.asset(
-                        item.imageUrl,
-                        width: 60,
-                        height: 60,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Icon(
-                            Icons.shopping_basket,
-                            color: unguColor,
-                            size: 30,
-                          );
-                        },
-                      ),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: _successColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.storefront,
+                      color: _successColor,
+                      size: 24,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -683,9 +186,9 @@ class _ValidasiProdukBaruScreenState extends State<ValidasiProdukBaruScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          item.productName,
+                          store.nama ?? 'Nama Toko',
                           style: const TextStyle(
-                            fontSize: 16,
+                            fontSize: 15,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF1F2937),
                           ),
@@ -694,7 +197,7 @@ class _ValidasiProdukBaruScreenState extends State<ValidasiProdukBaruScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Penjual: ${item.sellerName}',
+                          'ID Toko: ${store.storeId ?? '-'}',
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.grey.shade600,
@@ -705,19 +208,22 @@ class _ValidasiProdukBaruScreenState extends State<ValidasiProdukBaruScreen> {
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
+                      horizontal: 10,
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: statusBgColor,
-                      borderRadius: BorderRadius.circular(20),
+                      color: const Color(0xFFEDE7F6),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: const Color(0xFF673AB7).withOpacity(0.3),
+                      ),
                     ),
-                    child: Text(
-                      item.status,
+                    child: const Text(
+                      'Aktif',
                       style: TextStyle(
                         fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: statusColor,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF673AB7),
                       ),
                     ),
                   ),
@@ -728,13 +234,39 @@ class _ValidasiProdukBaruScreenState extends State<ValidasiProdukBaruScreen> {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Icon(Icons.category, size: 16, color: Colors.grey.shade600),
+                  Icon(Icons.phone, size: 16, color: Colors.grey.shade600),
                   const SizedBox(width: 6),
                   Text(
-                    item.category,
+                    store.kontak ?? '-',
                     style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
                   ),
-                  const SizedBox(width: 16),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Icon(
+                    Icons.location_on,
+                    size: 16,
+                    color: Colors.grey.shade600,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      store.alamat ?? '-',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade700,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
                   Icon(
                     Icons.access_time,
                     size: 16,
@@ -742,7 +274,7 @@ class _ValidasiProdukBaruScreenState extends State<ValidasiProdukBaruScreen> {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    item.timeUploaded,
+                    'Terdaftar: ${_getTimeAgo(store.createdAt)}',
                     style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
                   ),
                 ],
@@ -754,88 +286,38 @@ class _ValidasiProdukBaruScreenState extends State<ValidasiProdukBaruScreen> {
     );
   }
 
-  Widget _buildFilterBar() {
+  Widget _buildSearchBar() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      child: Row(
-        children: [
-          Expanded(
-            child: SizedBox(
-              height: 50,
-              child: TextField(
-                onChanged: _onSearchChanged,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.white,
-                  hintText: 'Cari Berdasarkan Nama Sayur...',
-                  hintStyle: TextStyle(color: Colors.grey[500]),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    size: 24,
-                    color: Colors.grey.shade500,
-                  ),
-                  prefixIconConstraints: const BoxConstraints(
-                    minWidth: 45,
-                    minHeight: 45,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 18,
-                    horizontal: 16,
-                  ),
-                  isDense: true,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: Colors.grey.shade300,
-                      width: 1,
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: Colors.grey.shade300,
-                      width: 1,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF4E46B4),
-                      width: 1.5,
-                    ),
-                  ),
-                ),
-                style: const TextStyle(fontSize: 15),
-              ),
+      child: SizedBox(
+        height: 50,
+        child: TextField(
+          onChanged: _onSearchChanged,
+          decoration: InputDecoration(
+            hintText: 'Cari nama toko...',
+            hintStyle: TextStyle(color: Colors.grey.shade500),
+            prefixIcon: Icon(Icons.search, color: Colors.grey.shade600),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 0,
             ),
-          ),
-          const SizedBox(width: 8),
-          Material(
-            color: isFilterActive ? Colors.grey.shade200 : Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            child: InkWell(
-              onTap: _openFilterModal,
+            border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              highlightColor: Colors.transparent,
-              splashColor: Colors.grey.withOpacity(0.2),
-              child: Container(
-                width: 50,
-                height: 50,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300, width: 1),
-                  borderRadius: BorderRadius.circular(8),
-                  color: isFilterActive ? Colors.grey.shade200 : Colors.white,
-                ),
-                child: Icon(
-                  Icons.tune,
-                  color: isFilterActive ? Colors.black54 : Colors.black87,
-                  size: 24,
-                ),
-              ),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: _primaryColor, width: 2),
             ),
           ),
-        ],
+          style: const TextStyle(fontSize: 15),
+        ),
       ),
     );
   }
@@ -852,32 +334,64 @@ class _ValidasiProdukBaruScreenState extends State<ValidasiProdukBaruScreen> {
           icon: const Icon(Icons.chevron_left, color: Colors.black),
         ),
         title: const Text(
-          'Validasi Produk Baru',
+          'Daftar Toko Aktif',
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildFilterBar(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-            child: Text(
-              'Daftar Produk (${_filteredProducts.length} data)',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSearchBar(),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                  child: Text(
+                    'Daftar Toko (${_activeStores.length} toko)',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: _activeStores.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.store_outlined,
+                                size: 80,
+                                color: Colors.grey.shade400,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Tidak ada toko aktif.',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: _loadActiveStores,
+                          child: ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: _activeStores.length,
+                            itemBuilder: (context, index) {
+                              return _buildStoreCard(
+                                context,
+                                _activeStores[index],
+                              );
+                            },
+                          ),
+                        ),
+                ),
+              ],
             ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _filteredProducts.length,
-              itemBuilder: (context, index) {
-                return _buildProductCard(_filteredProducts[index]);
-              },
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
