@@ -291,7 +291,7 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
                   children: [
                     CircularProgressIndicator(),
                     SizedBox(height: 16),
-                    Text('Memuat produk dari database...', style: TextStyle(color: Colors.grey)),
+                    Text('Memuat produk ...', style: TextStyle(color: Colors.grey)),
                   ],
                 ),
               ),
@@ -310,7 +310,7 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Produk akan muncul di sini setelah ditambahkan ke database',
+                      'Produk akan muncul di sini setelah ditambahkan',
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 14, color: Colors.grey),
                     ),

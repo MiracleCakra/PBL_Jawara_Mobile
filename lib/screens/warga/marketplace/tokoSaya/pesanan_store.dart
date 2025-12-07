@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jawara_pintar_kel_5/models/marketplace/order_model.dart';
 import 'package:jawara_pintar_kel_5/services/marketplace/order_service.dart';
 import 'package:jawara_pintar_kel_5/services/marketplace/store_service.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class Menupesanan extends StatefulWidget {
   const Menupesanan({super.key});
@@ -298,8 +298,8 @@ class _MenupesananState extends State<Menupesanan> {
             extra: orderModel,
           );
 
-          // Refresh if order was updated
-          if (result == 'completed' && mounted) {
+          // Refresh if order was updated (any status change)
+          if (result != null && mounted) {
             _loadOrders();
           }
         },
