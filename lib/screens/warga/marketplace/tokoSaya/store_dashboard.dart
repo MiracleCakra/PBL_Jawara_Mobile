@@ -19,7 +19,8 @@ class MyStoreDashboardScreen extends StatefulWidget {
   State<MyStoreDashboardScreen> createState() => _MyStoreDashboardScreenState();
 }
 
-class _MyStoreDashboardScreenState extends State<MyStoreDashboardScreen> {
+class _MyStoreDashboardScreenState extends State<MyStoreDashboardScreen>
+    with WidgetsBindingObserver {
   static const Color primaryColor = Color(0xFF6A5AE0);
   static const Color successColor = Color(0xFF4CAF50);
   static const Color warningColor = Color(0xFFFF9800);
@@ -28,8 +29,8 @@ class _MyStoreDashboardScreenState extends State<MyStoreDashboardScreen> {
   bool _isLoading = true;
 
   int totalProducts = 0;
-  final int pendingOrders = 3;
-  final double monthlyRevenue = 450000;
+  int pendingOrders = 0;
+  double monthlyRevenue = 0;
   final double storeRating = 4.9;
 
   bool _isStoreDetailsExpanded = false;
@@ -37,7 +38,29 @@ class _MyStoreDashboardScreenState extends State<MyStoreDashboardScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadStoreData();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Refresh data when app comes back to foreground
+      _refreshDashboardData();
+    }
+  }
+
+  Future<void> _refreshDashboardData() async {
+    if (storeData?.storeId != null) {
+      await _fetchMonthlyRevenue(storeData!.storeId!);
+      await _fetchPendingOrders(storeData!.storeId!);
+    }
   }
 
   Future<void> _loadStoreData() async {
@@ -75,6 +98,10 @@ class _MyStoreDashboardScreenState extends State<MyStoreDashboardScreen> {
         );
         await productProvider.fetchProductsByStore(store.storeId!);
         final storeProducts = productProvider.products;
+
+        // Get monthly revenue and pending orders
+        await _fetchMonthlyRevenue(store.storeId!);
+        await _fetchPendingOrders(store.storeId!);
 
         if (mounted) {
           setState(() {
@@ -119,6 +146,100 @@ class _MyStoreDashboardScreenState extends State<MyStoreDashboardScreen> {
     });
   }
 
+  Future<void> _fetchMonthlyRevenue(int storeId) async {
+    try {
+      final now = DateTime.now();
+      final firstDayOfMonth = DateTime(now.year, now.month, 1);
+      final lastDayOfMonth = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
+
+      final supabase = Supabase.instance.client;
+
+      // Query orders bulan ini yang sudah selesai
+      final response = await supabase
+          .from('order')
+          .select('total_price, order_item!inner(product_id)')
+          .eq('order_status', 'completed')
+          .gte('created_at', firstDayOfMonth.toIso8601String())
+          .lte('created_at', lastDayOfMonth.toIso8601String());
+
+      // Filter berdasarkan store_id dari produk
+      double totalRevenue = 0;
+      for (final order in response) {
+        final orderItems = order['order_item'] as List;
+        bool hasStoreProduct = false;
+
+        // Cek apakah order memiliki produk dari toko ini
+        for (final item in orderItems) {
+          final productId = item['product_id'];
+          final productResponse = await supabase
+              .from('produk')
+              .select('store_id')
+              .eq('product_id', productId)
+              .maybeSingle();
+
+          if (productResponse != null &&
+              productResponse['store_id'] == storeId) {
+            hasStoreProduct = true;
+            break;
+          }
+        }
+
+        if (hasStoreProduct) {
+          totalRevenue += (order['total_price'] as num).toDouble();
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          monthlyRevenue = totalRevenue;
+        });
+      }
+    } catch (e) {
+      print('Error fetching monthly revenue: $e');
+    }
+  }
+
+  Future<void> _fetchPendingOrders(int storeId) async {
+    try {
+      final supabase = Supabase.instance.client;
+
+      // Query orders yang pending atau NULL (pesanan baru yang belum diproses)
+      final response = await supabase
+          .from('order')
+          .select('order_id, order_status, order_item!inner(product_id)')
+          .or('order_status.is.null,order_status.eq.pending');
+
+      // Filter berdasarkan store_id dari produk
+      int count = 0;
+      for (final order in response) {
+        final orderItems = order['order_item'] as List;
+
+        for (final item in orderItems) {
+          final productId = item['product_id'];
+          final productResponse = await supabase
+              .from('produk')
+              .select('store_id')
+              .eq('product_id', productId)
+              .maybeSingle();
+
+          if (productResponse != null &&
+              productResponse['store_id'] == storeId) {
+            count++;
+            break; // Hitung 1x per order
+          }
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          pendingOrders = count;
+        });
+      }
+    } catch (e) {
+      print('Error fetching pending orders: $e');
+    }
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -149,21 +270,24 @@ class _MyStoreDashboardScreenState extends State<MyStoreDashboardScreen> {
           ? const Center(child: CircularProgressIndicator())
           : storeData == null
           ? const Center(child: Text('Data toko tidak ditemukan'))
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                _buildStoreHeader(context),
-                const SizedBox(height: 20),
-                _buildPerformanceSummary(context),
-                const SizedBox(height: 30),
-                _buildSectionHeader('Kelola Toko'),
-                const SizedBox(height: 10),
-                _buildQuickMenu(context),
-                const SizedBox(height: 30),
-                _buildSectionHeader('Produk Terbaru'),
-                const SizedBox(height: 10),
-                _buildProductList(context),
-              ],
+          : RefreshIndicator(
+              onRefresh: _loadStoreData,
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  _buildStoreHeader(context),
+                  const SizedBox(height: 20),
+                  _buildPerformanceSummary(context),
+                  const SizedBox(height: 30),
+                  _buildSectionHeader('Kelola Toko'),
+                  const SizedBox(height: 10),
+                  _buildQuickMenu(context),
+                  const SizedBox(height: 30),
+                  _buildSectionHeader('Produk Terbaru'),
+                  const SizedBox(height: 10),
+                  _buildProductList(context),
+                ],
+              ),
             ),
     );
   }
@@ -443,7 +567,11 @@ class _MyStoreDashboardScreenState extends State<MyStoreDashboardScreen> {
                 context,
                 icon: Icons.shopping_cart_checkout,
                 label: 'Pesanan',
-                onTap: () => context.pushNamed('MyStoreOrders'),
+                onTap: () async {
+                  await context.pushNamed('MyStoreOrders');
+                  // Refresh dashboard data when returning from orders page
+                  _refreshDashboardData();
+                },
               ),
             ),
             const SizedBox(width: 10),
