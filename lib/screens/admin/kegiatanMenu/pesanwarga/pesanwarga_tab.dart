@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:jawara_pintar_kel_5/models/kegiatan/aspirasi_model.dart';
 import 'package:jawara_pintar_kel_5/services/aspirasi_service.dart';
-
 import 'detail_pesan_warga_screen.dart';
 
 class PesanWargaScreen extends StatefulWidget {
@@ -189,11 +188,10 @@ class _PesanWargaScreenState extends State<PesanWargaScreen> {
   Widget _buildFilterBar() {
     final statusList = ['Pending', 'Diterima', 'Ditolak'];
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Row(
         children: [
           Expanded(
-            flex: 6,
             child: SizedBox(
               height: 50,
               child: TextField(
@@ -203,38 +201,212 @@ class _PesanWargaScreenState extends State<PesanWargaScreen> {
                   filled: true,
                   fillColor: Colors.white,
                   hintText: 'Cari Judul/Pengirim...',
-                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
+                  hintStyle: TextStyle(color: Colors.grey[500]),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    size: 24,
+                    color: Colors.grey.shade500,
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                  prefixIconConstraints:
+                      const BoxConstraints(minWidth: 45, minHeight: 45),
+                  contentPadding: const EdgeInsets.symmetric(
+                      vertical: 18, horizontal: 16),
+                  isDense: true,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide:
+                        const BorderSide(color: Color(0xFF4E46B4), width: 1.5),
+                  ),
                 ),
+                style: const TextStyle(fontSize: 15),
               ),
             ),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            flex: 4,
-            child: Container(
-              height: 50,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String?>(
-                  value: _selectedStatus,
-                  isExpanded: true,
-                  hint: const Text('Status', style: TextStyle(fontSize: 14)),
-                  items: [
-                    const DropdownMenuItem(value: null, child: Text('Semua')),
-                    ...statusList.map(
-                      (s) => DropdownMenuItem(value: s, child: Text(s)),
+          const SizedBox(width: 8),
+          Material(
+            color: _isFilterActive ? Colors.grey.shade200 : Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: () {
+                String tempStatus = _selectedStatus ?? 'Semua';
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.white,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(16),
                     ),
-                  ],
-                  onChanged: (val) => setState(() => _selectedStatus = val),
+                  ),
+                  builder: (c) {
+                    final bottom = MediaQuery.of(c).viewInsets.bottom;
+                    return Padding(
+                      padding: EdgeInsets.only(bottom: bottom),
+                      child: StatefulBuilder(
+                        builder: (context, setModalState) {
+                          return SafeArea(
+                            top: false,
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Center(
+                                    child: Container(
+                                      width: 40,
+                                      height: 4,
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[300],
+                                        borderRadius: BorderRadius.circular(2),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  const Text(
+                                    'Status Pesan Warga',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  const Text(
+                                    'Status',
+                                    style: TextStyle(fontWeight: FontWeight.w600),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  DropdownButtonFormField<String>(
+                                    key: const Key(
+                                      'dropdown_filter_status_pesan',
+                                    ),
+                                    value:
+                                        tempStatus == 'Semua' ? null : tempStatus,
+                                    isExpanded: true,
+                                    decoration: InputDecoration(
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 12, vertical: 12),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide(
+                                          color: Colors.grey.shade300,
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide(
+                                          color: Colors.grey.shade300,
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: const BorderSide(
+                                          color: Color(0xFF4E46B4),
+                                          width: 1.2,
+                                        ),
+                                      ),
+                                    ),
+                                    items: [
+                                      const DropdownMenuItem(
+                                        value: null,
+                                        child: Text('Semua'),
+                                      ),
+                                      ...statusList.map(
+                                        (s) => DropdownMenuItem(
+                                          value: s,
+                                          child: Text(s),
+                                        ),
+                                      ),
+                                    ],
+                                    onChanged: (v) =>
+                                        setModalState(() => tempStatus = v ?? 'Semua'),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.grey[300],
+                                            foregroundColor: Colors.black,
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 14),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            elevation: 0,
+                                          ),
+                                          onPressed: () {
+                                            setState(() {
+                                              _selectedStatus = null;
+                                            });
+                                            Navigator.pop(context);
+                                          },
+                                          child: const Text('Reset'),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(0xFF4E46B4),
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 14),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            elevation: 0,
+                                          ),
+                                          onPressed: () {
+                                            setState(() {
+                                              _selectedStatus =
+                                                  tempStatus == 'Semua'
+                                                      ? null
+                                                      : tempStatus;
+                                            });
+                                            Navigator.pop(context);
+                                          },
+                                          child: const Text('Terapkan'),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                );
+              },
+              child: Container(
+                width: 50,
+                height: 50,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300, width: 1),
+                  borderRadius: BorderRadius.circular(8),
+                  color: _isFilterActive ? Colors.grey.shade200 : Colors.white,
+                ),
+                child: Icon(
+                  Icons.tune,
+                  color: _isFilterActive ? Colors.black54 : Colors.black87,
+                  size: 24,
                 ),
               ),
             ),
@@ -243,6 +415,7 @@ class _PesanWargaScreenState extends State<PesanWargaScreen> {
       ),
     );
   }
+
 
   @override
   Widget build(BuildContext context) {

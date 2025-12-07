@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:jawara_pintar_kel_5/services/store_status_service.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/store_model.dart';
 import 'package:jawara_pintar_kel_5/services/marketplace/store_service.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/store_model.dart'; 
-
+import 'package:jawara_pintar_kel_5/services/store_status_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class WargaStoreRegisterScreen extends StatefulWidget {
   const WargaStoreRegisterScreen({super.key});
@@ -22,9 +21,7 @@ class _WargaStoreRegisterScreenState extends State<WargaStoreRegisterScreen> {
   final TextEditingController deskripsiC = TextEditingController();
   final TextEditingController lokasiC = TextEditingController();
   final TextEditingController noHpC = TextEditingController();
-  final TextEditingController emailC = TextEditingController();
-  final TextEditingController passwordC = TextEditingController();
-  
+
   bool _isSubmitting = false;
 
   @override
@@ -83,8 +80,7 @@ class _WargaStoreRegisterScreenState extends State<WargaStoreRegisterScreen> {
       child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.store_mall_directory,
-              size: 40, color: Colors.white),
+          Icon(Icons.store_mall_directory, size: 40, color: Colors.white),
           SizedBox(height: 12),
           Text(
             "Buka Usaha di Marketplace Warga",
@@ -98,92 +94,64 @@ class _WargaStoreRegisterScreenState extends State<WargaStoreRegisterScreen> {
           SizedBox(height: 6),
           Text(
             "Daftarkan toko Anda dan mulai menjual produk ke warga sekitar.",
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: Colors.white70, fontSize: 14),
           ),
         ],
       ),
     );
   }
 
- Widget _buildFormCard() {
-  return Card(
-    elevation: 6,
-    color: Colors.grey.shade50,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(20),
-    ),
-    shadowColor: Colors.black.withOpacity(0.1),
-    child: Padding(
-      padding: const EdgeInsets.all(24),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildInput(
-              controller: emailC,
-              label: "Email",
-              icon: Icons.email_outlined,
-              keyboard: TextInputType.emailAddress,
-              validator: (v) => v!.isEmpty ? "Email wajib diisi" : null,
-            ),
-            const SizedBox(height: 18),
+  Widget _buildFormCard() {
+    return Card(
+      elevation: 6,
+      color: Colors.grey.shade50,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shadowColor: Colors.black.withOpacity(0.1),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildInput(
+                controller: namaTokoC,
+                label: "Nama Toko",
+                icon: Icons.storefront_outlined,
+                validator: (v) => v!.isEmpty ? "Nama toko wajib diisi" : null,
+              ),
+              const SizedBox(height: 18),
 
-            _buildInput(
-              controller: passwordC,
-              label: "Password",
-              icon: Icons.lock_outline,
-              keyboard: TextInputType.visiblePassword,
-              validator: (v) => v!.isEmpty ? "Password wajib diisi" : null,
-              obscureText: true,
-            ),
-            const SizedBox(height: 18),
+              _buildInput(
+                controller: deskripsiC,
+                label: "Deskripsi Toko",
+                icon: Icons.description_outlined,
+                maxLines: 3,
+                validator: (v) => v!.isEmpty ? "Deskripsi wajib diisi" : null,
+              ),
+              const SizedBox(height: 18),
 
-            _buildInput(
-              controller: namaTokoC,
-              label: "Nama Toko",
-              icon: Icons.storefront_outlined,
-              validator: (v) =>
-                  v!.isEmpty ? "Nama toko wajib diisi" : null,
-            ),
-            const SizedBox(height: 18),
+              _buildInput(
+                controller: lokasiC,
+                label: "Lokasi (RT/RW)",
+                icon: Icons.location_on_outlined,
+                validator: (v) => v!.isEmpty ? "Lokasi wajib diisi" : null,
+              ),
+              const SizedBox(height: 18),
 
-            _buildInput(
-              controller: deskripsiC,
-              label: "Deskripsi Toko",
-              icon: Icons.description_outlined,
-              maxLines: 3,
-              validator: (v) =>
-                  v!.isEmpty ? "Deskripsi wajib diisi" : null,
-            ),
-            const SizedBox(height: 18),
-
-            _buildInput(
-              controller: lokasiC,
-              label: "Lokasi (RT/RW)",
-              icon: Icons.location_on_outlined,
-              validator: (v) =>
-                  v!.isEmpty ? "Lokasi wajib diisi" : null,
-            ),
-            const SizedBox(height: 18),
-
-            _buildInput(
-              controller: noHpC,
-              label: "No. HP / WhatsApp",
-              icon: Icons.call_outlined,
-              keyboard: TextInputType.phone,
-              validator: (v) =>
-                  v!.isEmpty ? "Nomor HP wajib diisi" : null,
-            ),
-          ],
+              _buildInput(
+                controller: noHpC,
+                label: "No. HP / WhatsApp",
+                icon: Icons.call_outlined,
+                keyboard: TextInputType.phone,
+                validator: (v) => v!.isEmpty ? "Nomor HP wajib diisi" : null,
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   // Reusable Input
   Widget _buildInput({
@@ -206,108 +174,118 @@ class _WargaStoreRegisterScreenState extends State<WargaStoreRegisterScreen> {
         prefixIcon: Icon(icon),
         filled: true,
         fillColor: Colors.white,
-        contentPadding:
-            const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 14,
+          horizontal: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide:
-              BorderSide(color: Colors.grey.shade300, width: 1.2),
+          borderSide: BorderSide(color: Colors.grey.shade300, width: 1.2),
         ),
       ),
     );
   }
 
-
   Widget _buildSubmitButton(BuildContext context) {
     return SizedBox(
       width: double.infinity,
       child: FilledButton(
-        onPressed: _isSubmitting ? null : () async {
-          if (_formKey.currentState!.validate()) {
-            setState(() => _isSubmitting = true);
+        onPressed: _isSubmitting
+            ? null
+            : () async {
+                if (_formKey.currentState!.validate()) {
+                  setState(() => _isSubmitting = true);
 
-            try {
-              // Get user_id from email
-              final authUser = Supabase.instance.client.auth.currentUser;
-              if (authUser?.email != null) {
-                final wargaResponse = await Supabase.instance.client
-                    .from('warga')
-                    .select('id')
-                    .eq('email', authUser!.email!)
-                    .maybeSingle();
+                  try {
+                    // Get user_id from email
+                    final authUser = Supabase.instance.client.auth.currentUser;
+                    if (authUser?.email != null) {
+                      final wargaResponse = await Supabase.instance.client
+                          .from('warga')
+                          .select('id')
+                          .eq('email', authUser!.email!)
+                          .maybeSingle();
 
-                if (wargaResponse == null) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Data warga tidak ditemukan'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
+                      if (wargaResponse == null) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Data warga tidak ditemukan'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                        setState(() => _isSubmitting = false);
+                        return;
+                      }
+
+                      final userId = wargaResponse['id'] as String;
+
+                      // Check if user already has a store
+                      final existingStore = await _storeService
+                          .getStoreByUserId(userId);
+                      if (existingStore != null) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text(
+                                'Anda sudah memiliki toko yang terdaftar',
+                              ),
+                              backgroundColor: Colors.grey.shade800,
+                            ),
+                          );
+                        }
+                        setState(() => _isSubmitting = false);
+                        return;
+                      }
+
+                      final newStore = StoreModel(
+                        userId: userId,
+                        nama: namaTokoC.text.trim(),
+                        deskripsi: deskripsiC.text.trim(),
+                        alamat: lokasiC.text.trim(),
+                        kontak: noHpC.text.trim(),
+                        verifikasi: 'Pending',
+                        createdAt: DateTime.now(),
+                      );
+
+                      await _storeService.createStore(newStore);
+                      await StoreStatusService.setStoreStatus(1);
+
+                      if (mounted) {
+                        context.goNamed("StorePendingValidation");
+                        Future.delayed(const Duration(milliseconds: 500), () {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text(
+                                  'Toko berhasil didaftarkan! Menunggu verifikasi admin.',
+                                ),
+                                backgroundColor: Colors.grey.shade800,
+                                duration: const Duration(seconds: 3),
+                              ),
+                            );
+                          }
+                        });
+                      }
+                    }
+                  } catch (e) {
+                    print('Error creating store: $e');
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Gagal mendaftarkan toko: $e'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  } finally {
+                    if (mounted) {
+                      setState(() => _isSubmitting = false);
+                    }
                   }
-                  setState(() => _isSubmitting = false);
-                  return;
                 }
-
-                final userId = wargaResponse['id'] as String;
-
-                // Check if user already has a store
-                final existingStore = await _storeService.getStoreByUserId(userId);
-                if (existingStore != null) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Anda sudah memiliki toko yang terdaftar'),
-                        backgroundColor: Colors.orange,
-                      ),
-                    );
-                  }
-                  setState(() => _isSubmitting = false);
-                  return;
-                }
-
-                // Create new store with "Pending" status (waiting for admin verification)
-                final newStore = StoreModel(
-                  userId: userId,
-                  nama: namaTokoC.text.trim(),
-                  deskripsi: deskripsiC.text.trim(),
-                  alamat: lokasiC.text.trim(),
-                  kontak: noHpC.text.trim(),
-                  verifikasi: 'Pending', // Status menunggu verifikasi admin
-                  createdAt: DateTime.now(),
-                );
-
-                await _storeService.createStore(newStore);
-                await StoreStatusService.setStoreStatus(1);
-
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Toko berhasil didaftarkan! Menunggu verifikasi admin.'),
-                      backgroundColor: Colors.green,
-                      duration: Duration(seconds: 3),
-                    ),
-                  );
-                  context.goNamed("StorePendingValidation");
-                }
-              }
-            } catch (e) {
-              print('Error creating store: $e');
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Gagal mendaftarkan toko: $e'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            } finally {
-              if (mounted) {
-                setState(() => _isSubmitting = false);
-              }
-            }
-          }
-        },
+              },
         style: FilledButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 14),
           backgroundColor: const Color(0xFF6A5AE0),

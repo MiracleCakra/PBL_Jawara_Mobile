@@ -112,100 +112,144 @@ class _DetailBroadcastScreenState extends State<DetailBroadcastScreen> {
     }
   }
 
-  void _deleteBroadcast() {
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Text(
-            'Konfirmasi Hapus',
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
-          ),
-          content: Text(
-            'Apakah Anda yakin ingin menghapus broadcast "${widget.broadcastModel.judul}"? Aksi ini tidak dapat dibatalkan.',
-          ),
-          actionsAlignment: MainAxisAlignment.center,
-          actions: [
-            // TOMBOL BATAL (Style Abu-abu)
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.grey[500],
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+  void _showDeleteDialog(BuildContext context) {
+  final judul = _displayData.judul;
+
+  showDialog(
+    context: context,
+    builder: (BuildContext dialogContext) {
+      return Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  shape: BoxShape.circle,
                 ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
+                child: const Icon(
+                  Icons.delete_outline,
+                  color: Colors.red,
+                  size: 48,
                 ),
               ),
-              onPressed: () {
-                Navigator.pop(dialogContext); // Tutup dialog
-              },
-              child: const Text('Batal', style: TextStyle(color: Colors.white)),
-            ),
-            
-            // TOMBOL HAPUS (Style Merah, Logika Asli Broadcast)
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-                side: const BorderSide(color: Colors.red),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 10,
-                ),
-              ),
-              onPressed: () async {
-                Navigator.pop(dialogContext); 
-                setState(() {
-                  _isDeleting = true;
-                });
-                try {
-                  await _broadcastService.deleteBroadcast(widget.broadcastModel.id!);
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Broadcast "${widget.broadcastModel.judul}" berhasil dihapus.'),
-                      backgroundColor: Colors.grey.shade800,
-                    ),
-                  );
-                  
-                  if (context.canPop()) {
-                    context.pop(true);
-                  }
-                } catch (e) {
-                  setState(() {
-                    _isDeleting = false;
-                  });
-                  
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Gagal menghapus broadcast: ${e.toString()}'),
-                      backgroundColor: Colors.grey.shade800,
-                    ),
-                  );
-                }
-              },
-              child: const Text(
-                'Hapus',
+              const SizedBox(height: 20),
+              const Text(
+                'Hapus Broadcast',
                 style: TextStyle(
-                  color: Colors.white,
+                  fontSize: 20,
                   fontWeight: FontWeight.bold,
+                  color: Colors.black87,
                 ),
               ),
-            ),
-          ],
-        );
-      },
-    );
-  }
+              const SizedBox(height: 12),
+              Text(
+                'Apakah Anda yakin ingin menghapus broadcast "$judul"? Tindakan ini tidak dapat dibatalkan.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade700,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              /// BUTTONS
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: BorderSide(
+                          color: Colors.grey.shade300,
+                          width: 1.5,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: Text(
+                        'Batal',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade800,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        Navigator.pop(dialogContext);
+                        setState(() => _isDeleting = true);
+
+                        try {
+                          await _broadcastService
+                              .deleteBroadcast(_displayData.id!);
+
+                          if (!mounted) return;
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                  'Broadcast "$judul" berhasil dihapus.'),
+                              backgroundColor: const Color(0xFF2E2B32),
+                            ),
+                          );
+
+                          context.pop(true);
+                        } catch (e) {
+                          if (!mounted) return;
+
+                          setState(() => _isDeleting = false);
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content:
+                                  Text('Gagal menghapus broadcast: $e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        backgroundColor: Colors.red,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text(
+                        'Hapus',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
 
   Widget _buildOptionTile({
     required IconData icon,
@@ -299,7 +343,7 @@ class _DetailBroadcastScreenState extends State<DetailBroadcastScreen> {
                 subtitle: 'Hapus broadcast secara permanen',
                 onTap: () {
                   Navigator.pop(bc);
-                  _deleteBroadcast();
+                  _showDeleteDialog(context);
                 },
               ),
             ],

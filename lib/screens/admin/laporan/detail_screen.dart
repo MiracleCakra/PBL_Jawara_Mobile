@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:jawara_pintar_kel_5/models/keuangan/laporan_keuangan_model.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah, formatDate;
@@ -47,15 +49,6 @@ class LaporanDetailScreen extends StatelessWidget {
             const SizedBox(height: 8),
             _infoTile(
               context,
-              label: isPemasukkan ? 'Jenis Pemasukan' : 'Jenis Pengeluaran',
-              value: isPemasukkan
-                  ? (data.jenisPemasukan ?? '-')
-                  : (data.jenisPengeluaran ?? '-'),
-              icon: Icons.category_outlined,
-            ),
-            const SizedBox(height: 8),
-            _infoTile(
-              context,
               label: isPemasukkan
                   ? 'Kategori Pemasukan'
                   : 'Kategori Pengeluaran',
@@ -86,9 +79,13 @@ class LaporanDetailScreen extends StatelessWidget {
             _infoTile(
               context,
               label: 'Verifikator',
-              value: data.verifikator,
+              value: data.verifikator ?? 'Admin Jawara',
               icon: Icons.verified_user_outlined,
             ),
+            if (data.buktiFoto != null && data.buktiFoto!.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _buktiSection(context, isPemasukkan),
+            ],
           ],
         ),
       ),
@@ -211,6 +208,127 @@ class LaporanDetailScreen extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buktiSection(BuildContext context, bool isPemasukkan) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: ShapeDecoration(
+        color: Colors.white,
+        shape: MoonSquircleBorder(
+          borderRadius: BorderRadius.circular(14).squircleBorderRadius(context),
+        ),
+        shadows: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            isPemasukkan ? 'Bukti Pemasukan' : 'Bukti Pengeluaran',
+            style: MoonTokens.light.typography.body.text14.copyWith(
+              fontWeight: FontWeight.w700,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: data.buktiFoto!.startsWith('http')
+                ? Image.network(
+                    data.buktiFoto!,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        height: 200,
+                        color: Colors.grey[200],
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                : null,
+                            color: const Color(0xFF6366F1),
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 200,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.broken_image_outlined,
+                                size: 50,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Gagal memuat gambar',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  )
+                : Image.file(
+                    File(data.buktiFoto!),
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 200,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.image,
+                                size: 50,
+                                color: Colors.grey,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Gambar Bukti ${isPemasukkan ? 'Pemasukan' : 'Pengeluaran'}',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),

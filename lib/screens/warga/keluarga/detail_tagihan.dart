@@ -220,10 +220,7 @@ class _DetailTagihanWargaScreenState extends State<DetailTagihanWargaScreen>
                       _formatCurrency(widget.tagihan.nominal),
                     ),
                     const SizedBox(height: 12),
-                    _buildBiayaRow("Biaya Admin", "Rp 0"),
-                    const SizedBox(height: 12),
-                    const Divider(color: Colors.grey),
-                    const SizedBox(height: 12),
+                    
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [

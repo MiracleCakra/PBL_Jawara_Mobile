@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
 import 'package:jawara_pintar_kel_5/models/kegiatan/kegiatan_model.dart';
 import 'package:jawara_pintar_kel_5/services/kegiatan_service.dart';
+
 import 'kegiatan_filter_screen.dart';
 
 class DaftarKegiatanScreen extends StatefulWidget {
@@ -186,7 +188,7 @@ class _DaftarKegiatanScreenState extends State<DaftarKegiatanScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Colors.deepPurple;
+
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -284,7 +286,7 @@ class _DaftarKegiatanScreenState extends State<DaftarKegiatanScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _navigateToAddKegiatan(context),
-        backgroundColor: primaryColor,
+        backgroundColor: ConstantColors.primary,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(15.0),
         ),

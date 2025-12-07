@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:jawara_pintar_kel_5/models/kegiatan/kegiatan_model.dart';
 import 'package:jawara_pintar_kel_5/services/kegiatan_service.dart';
+import 'package:jawara_pintar_kel_5/widget/moon_result_modal.dart';
+import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
 
 class EditKegiatanScreen extends StatefulWidget {
   final KegiatanModel kegiatan;
@@ -173,17 +176,28 @@ class _EditKegiatanScreenState extends State<EditKegiatanScreen> {
           updatedKegiatan,
         );
         if (mounted) {
-          context.pop(result);
+          await showResultModal(
+            context,
+            type: ResultType.success,
+            title: 'Berhasil',
+            description: 'Perubahan kegiatan berhasil disimpan.',
+            actionLabel: 'Selesai',
+            autoProceed: true,
+          );
+          if (mounted) {
+            context.pop(result);
+          }
         }
       } catch (e) {
         setState(() {
           _isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal memperbarui kegiatan: $e'),
-            backgroundColor: Colors.grey.shade800,
-          ),
+        await showResultModal(
+          context,
+          type: ResultType.error,
+          title: 'Gagal',
+          description: 'Gagal memperbarui kegiatan: $e',
+          actionLabel: 'Tutup',
         );
       }
     }
@@ -241,7 +255,7 @@ class _EditKegiatanScreenState extends State<EditKegiatanScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const Color simpanColor = Colors.deepPurple;
+    const Color simpanColor = ConstantColors.primary;
     final Color batalColor = Colors.grey.shade500;
 
     return Scaffold(

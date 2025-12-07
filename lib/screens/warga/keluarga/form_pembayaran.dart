@@ -9,7 +9,7 @@ import 'package:jawara_pintar_kel_5/models/keuangan/warga_tagihan_model.dart';
 
 class FormPembayaranScreen extends StatefulWidget {
   final WargaTagihanModel tagihan;
-  final Map<String, String>? channel; // Data channel transfer yang dipilih
+  final Map<String, String>? channel;
 
   const FormPembayaranScreen({super.key, required this.tagihan, this.channel});
 
@@ -179,7 +179,7 @@ class _FormPembayaranScreenState extends State<FormPembayaranScreen> {
               Navigator.pop(context, true);
             },
             child: const Text(
-              "OK, Mengerti",
+              "Mengerti",
               style: TextStyle(
                 color: Color(0xFF4E46B4),
                 fontWeight: FontWeight.bold,

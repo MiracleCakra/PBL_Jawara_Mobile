@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/services/store_status_service.dart'; 
-
 
 class StorePendingValidationScreen extends StatelessWidget {
   const StorePendingValidationScreen({super.key});
@@ -19,7 +17,11 @@ class StorePendingValidationScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.access_time_filled, size: 80, color: Colors.amber),
+              const Icon(
+                Icons.access_time_filled,
+                size: 80,
+                color: Colors.amber,
+              ),
               const SizedBox(height: 20),
               const Text(
                 'Pendaftaran Toko Anda Sedang Diproses',
@@ -34,15 +36,19 @@ class StorePendingValidationScreen extends StatelessWidget {
               ),
               const SizedBox(height: 30),
               ElevatedButton(
-                onPressed: () async{
-                  await StoreStatusService.setStoreStatus(2);
+                onPressed: () {
                   context.go('/warga/marketplace');
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF6366F1),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 15,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 child: const Text('Kembali ke Menu'),
               ),

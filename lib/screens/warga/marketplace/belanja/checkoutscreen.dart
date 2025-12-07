@@ -242,11 +242,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   value: 'COD',
                   icon: Icons.money,
                 ),
-                _buildPaymentMethod(
-                  label: 'Transfer Bank (Manual)',
-                  value: 'Transfer Manual',
-                  icon: Icons.account_balance_outlined,
-                ),
+                
               ],
             ),
           ],
@@ -495,7 +491,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               },
               icon: const Icon(Icons.lock_open, size: 24),
               label: Text(
-                'Bayar ${formatRupiah(_finalTotal)}',
+                'Beli ${formatRupiah(_finalTotal)}',
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,

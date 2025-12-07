@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:moon_design/moon_design.dart';
 import 'package:jawara_pintar_kel_5/utils.dart'
     show formatDate, getPrimaryColor, openDateTimePicker;
 import 'package:jawara_pintar_kel_5/widget/moon_result_modal.dart'
     show showResultModal, ResultType;
+import 'package:moon_design/moon_design.dart';
 
 class CetakLaporanScreen extends StatefulWidget {
   const CetakLaporanScreen({super.key});
@@ -17,9 +17,19 @@ class _CetakLaporanScreenState extends State<CetakLaporanScreen> {
   DateTime? _startDate;
   DateTime? _endDate;
 
+  // State untuk filter Kategori Iuran
+  String _selectedCategory = 'Semua';
+
+  // Daftar Kategori Iuran
+  final List<String> _jenisIuranOptions = [
+    'Semua',
+    'Iuran Bulanan',
+    'Iuran Khusus',
+    // Tambahkan kategori lain jika ada
+  ];
+
   @override
   Widget build(BuildContext context) {
-    final colors = context.moonColors ?? MoonTokens.light.colors;
     return Scaffold(
       appBar: AppBar(
         centerTitle: false,
@@ -49,19 +59,17 @@ class _CetakLaporanScreenState extends State<CetakLaporanScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            // Form card
+            // 3 Tabs (Jenis Laporan)
             Container(
               width: double.infinity,
               decoration: ShapeDecoration(
                 color: Colors.white,
                 shape: MoonSquircleBorder(
-                  borderRadius: BorderRadius.circular(
-                    16,
-                  ).squircleBorderRadius(context),
+                  borderRadius: BorderRadius.circular(16).squircleBorderRadius(context),
                 ),
                 shadows: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
+                    color: Colors.black.withOpacity(0.04),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -71,6 +79,7 @@ class _CetakLaporanScreenState extends State<CetakLaporanScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Jenis Laporan
                   Text(
                     'Jenis Laporan',
                     style: MoonTokens.light.typography.body.text16.copyWith(
@@ -82,7 +91,37 @@ class _CetakLaporanScreenState extends State<CetakLaporanScreen> {
                     value: _selectedType,
                     onChanged: (v) => setState(() => _selectedType = v),
                   ),
-                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            _CategoryFilterBar(
+              selectedCategory: _selectedCategory,
+              onTap: _showCategoryFilterModal,
+              primaryColor: getPrimaryColor(context),
+            ),
+            const SizedBox(height: 12),
+            // Form card
+            Container(
+              width: double.infinity,
+              decoration: ShapeDecoration(
+                color: Colors.white,
+                shape: MoonSquircleBorder(
+                  borderRadius: BorderRadius.circular(16).squircleBorderRadius(context),
+                ),
+                shadows: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Periode
                   Text(
                     'Periode',
                     style: MoonTokens.light.typography.body.text16.copyWith(
@@ -95,9 +134,7 @@ class _CetakLaporanScreenState extends State<CetakLaporanScreen> {
                       Expanded(
                         child: _DateField(
                           label: 'Dari tanggal',
-                          value: _startDate == null
-                              ? null
-                              : formatDate(_startDate!),
+                          value: _startDate == null ? null : formatDate(_startDate!),
                           onTap: () async {
                             final picked = await openDateTimePicker(context);
                             if (picked != null) {
@@ -110,9 +147,7 @@ class _CetakLaporanScreenState extends State<CetakLaporanScreen> {
                       Expanded(
                         child: _DateField(
                           label: 'Sampai tanggal',
-                          value: _endDate == null
-                              ? null
-                              : formatDate(_endDate!),
+                          value: _endDate == null ? null : formatDate(_endDate!),
                           onTap: () async {
                             final picked = await openDateTimePicker(context);
                             if (picked != null) {
@@ -126,14 +161,16 @@ class _CetakLaporanScreenState extends State<CetakLaporanScreen> {
                   const SizedBox(height: 24),
                   Row(
                     children: [
-                      const SizedBox(width: 12),
+                      const Spacer(),
                       Expanded(
+                        flex: 3,
                         child: MoonFilledButton(
                           backgroundColor: getPrimaryColor(context),
                           onTap: _printReport,
                           label: const Text('Cetak'),
                         ),
                       ),
+                      const Spacer(),
                     ],
                   ),
                 ],
@@ -144,6 +181,111 @@ class _CetakLaporanScreenState extends State<CetakLaporanScreen> {
       ),
     );
   }
+
+  void _showCategoryFilterModal() {
+  String tempSelected = _selectedCategory;
+
+  final primaryColor = getPrimaryColor(context);
+
+  showMoonModalBottomSheet(
+    context: context,
+    enableDrag: true,
+    height: MediaQuery.of(context).size.height * 0.65,
+    builder: (BuildContext context) => StatefulBuilder(
+      builder: (context, setStateModal) {
+        return Column(
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              height: 4,
+              width: 40,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(40),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              "Filter Kategori",
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            Expanded(
+              child: ListView(
+                children: List.generate(_jenisIuranOptions.length, (index) {
+                  final option = _jenisIuranOptions[index];
+                  final isSelected = tempSelected == option;
+
+                  return MoonMenuItem(
+                    onTap: () {
+                      setStateModal(() => tempSelected = option);
+                    },
+                    label: Text(option),
+                    trailing: isSelected
+                        ? const Icon(MoonIcons.generic_check_alternative_32_light)
+                        : null,
+                  );
+                }),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: MoonFilledButton(
+                      backgroundColor: Colors.grey[300],
+                      label: const Text(
+                        "Reset",
+                        style: TextStyle(color: Colors.black),
+                      ),
+                      onTap: () {
+                        setState(() => _selectedCategory = "Semua");
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: MoonFilledButton(
+                      backgroundColor: primaryColor,
+                      label: const Text("Terapkan"),
+                      onTap: () {
+                        setState(() => _selectedCategory = tempSelected);
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            )
+          ],
+        );
+      },
+    ),
+  );
+}
+
+
+  // Helper function untuk mendapatkan ikon
+  IconData _getJenisIcon(String jenis) {
+    switch (jenis) {
+      case 'Semua':
+        return Icons.apps;
+      case 'Iuran Bulanan':
+        return Icons.calendar_month;
+      case 'Iuran Khusus':
+        return Icons.star_outline;
+      default:
+        return Icons.category;
+    }
+  }
+
+  // --- Utility & Display Helpers ---
 
   String get _periodLabel {
     if (_startDate == null && _endDate == null) return 'Semua waktu';
@@ -168,17 +310,67 @@ class _CetakLaporanScreenState extends State<CetakLaporanScreen> {
   }
 
   Future<void> _printReport() async {
+    final categoryText = _selectedCategory != 'Semua'
+        ? ' untuk kategori **$_selectedCategory**'
+        : '';
+
     await showResultModal(
       context,
       type: ResultType.success,
       title: 'Laporan siap!',
       description:
-          'Laporan ${_labelForType(_selectedType).toLowerCase()} untuk periode $_periodLabel berhasil disiapkan.',
+          'Laporan **${_labelForType(_selectedType).toLowerCase()}**$categoryText periode $_periodLabel berhasil disiapkan.',
       actionLabel: 'Selesai',
       onAction: () {},
     );
   }
 }
+
+class _CategoryFilterBar extends StatelessWidget {
+  final String selectedCategory;
+  final VoidCallback onTap;
+  final Color primaryColor;
+
+  const _CategoryFilterBar({
+    required this.selectedCategory,
+    required this.onTap,
+    required this.primaryColor,
+  });
+
+  @override
+   Widget build(BuildContext context) {
+    return Material(
+      color: primaryColor,
+      shape: MoonSquircleBorder(
+        borderRadius: BorderRadius.circular(20).squircleBorderRadius(context),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20).squircleBorderRadius(context),
+        onTap: onTap,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.tune, color: Colors.white, size: 18),
+              const SizedBox(width: 10),
+              Text(
+                "Filter Kategori",
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                ),
+              )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 
 class _TypeSegmented extends StatelessWidget {
   final String value;
