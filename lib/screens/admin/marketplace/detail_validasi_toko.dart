@@ -5,6 +5,8 @@ import 'package:jawara_pintar_kel_5/models/marketplace/store_model.dart';
 import 'package:jawara_pintar_kel_5/providers/marketplace/store_provider.dart';
 import 'package:jawara_pintar_kel_5/services/marketplace/store_service.dart';
 import 'package:provider/provider.dart';
+import 'package:jawara_pintar_kel_5/widget/moon_result_modal.dart';
+
 
 const Color _primaryColor = Color(0xFF4E46B4);
 const Color _successColor = Color(0xFF6366F1);
@@ -83,34 +85,100 @@ class _DetailValidasiTokoScreenState extends State<DetailValidasiTokoScreen> {
     }
   }
 
-  void _handleApprove() {
+   void _handleApprove() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: const Text('Terima Pendaftaran'),
-        content: Text(
-          'Apakah Anda yakin ingin menyetujui pendaftaran toko "${_currentStore?.nama}"?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            style: TextButton.styleFrom(backgroundColor: Colors.grey.shade600),
-            child: const Text('Batal', style: TextStyle(color: Colors.white)),
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await _updateStoreStatus('Diterima', null);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _successColor,
-              foregroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF6366F1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_circle_outline,
+                    color: Colors.white,
+                    size: 48,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Setujui Toko',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Apakah Anda yakin ingin menyetujui pendaftaran toko "${_currentStore?.nama}"?',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 15, color: Colors.black87),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey.shade500,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          'Batal',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          await _updateStoreStatus('Diterima', null);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _successColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          'Setujui',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            child: const Text('Terima'),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
