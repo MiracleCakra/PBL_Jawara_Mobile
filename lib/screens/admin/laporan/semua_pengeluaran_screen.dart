@@ -14,11 +14,24 @@ class SemuaPengeluaranScreen extends StatefulWidget {
 
 class _SemuaPengeluaranScreenState extends State<SemuaPengeluaranScreen> {
   late final TextEditingController _textController;
+  List<LaporanKeuanganModel> _pengeluaranList = [];
   String _query = '';
+  String _selectedKategori = 'Semua';
+  DateTime? _selectedDari;
+  DateTime? _selectedSampai;
+
+  LaporanKeuanganModel laporanKeuanganModel = LaporanKeuanganModel(
+    tanggal: DateTime.now(),
+    nama: "",
+    nominal: 0,
+    kategoriPengeluaran: '',
+    buktiFoto: '',
+  );
 
   @override
   void initState() {
     _textController = TextEditingController();
+    _loadPengeluaranData();
     super.initState();
   }
 
@@ -28,40 +41,17 @@ class _SemuaPengeluaranScreenState extends State<SemuaPengeluaranScreen> {
     super.dispose();
   }
 
-  final List<LaporanKeuanganModel> fakeData = [
-    LaporanKeuanganModel(
-      tanggal: DateTime(2024, 1, 1),
-      nama: "Pengeluaran 1",
-      nominal: 100000,
-    ),
-    LaporanKeuanganModel(
-      tanggal: DateTime(2024, 1, 3),
-      nama: "Pengeluaran 2",
-      nominal: 300000,
-    ),
-    LaporanKeuanganModel(
-      tanggal: DateTime(2024, 1, 5),
-      nama: "Pengeluaran 3",
-      nominal: 400000,
-    ),
-    LaporanKeuanganModel(
-      tanggal: DateTime(2024, 1, 7),
-      nama: "Pengeluaran 4",
-      nominal: 500000,
-    ),
-    LaporanKeuanganModel(
-      tanggal: DateTime(2024, 1, 9),
-      nama: "Pengeluaran 5",
-      nominal: 600000,
-    ),
-    LaporanKeuanganModel(
-      tanggal: DateTime(2024, 1, 10),
-      nama: "Pengeluaran 6",
-      nominal: 700000,
-    ),
-  ];
+  Future<void> _loadPengeluaranData() async {
+    final fetchedTagihan = await laporanKeuanganModel.fetchPengeluaran();
+    setState(() {
+      _pengeluaranList = fetchedTagihan;
+    });
+  }
 
   List<LaporanKeuanganModel> get _filteredData {
+    var filtered = _pengeluaranList;
+
+    // Filter berdasarkan query pencarian
     final q = _query.trim().toLowerCase();
     if (q.isEmpty) return fakeData;
     return fakeData
@@ -109,6 +99,32 @@ class _SemuaPengeluaranScreenState extends State<SemuaPengeluaranScreen> {
                   ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final result = await Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const PengeluaranTambahScreen()),
+          );
+          if (result != null && result is Map<String, dynamic>) {
+            setState(() {
+              _pengeluaranList.add(
+                LaporanKeuanganModel(
+                  tanggal: result['tanggal'] ?? DateTime.now(),
+                  nama: result['nama'] ?? '',
+                  nominal: (result['nominal'] ?? 0).toInt(),
+                  kategoriPengeluaran:
+                      (result['kategoriPengeluaran'] == null ||
+                          result['kategoriPengeluaran'] == '')
+                      ? null
+                      : result['kategoriPengeluaran'],
+                  buktiFoto: result['buktiFoto'],
+                ),
+              );
+            });
+          }
+        },
+        backgroundColor: const Color(0xFF6366F1),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
@@ -355,6 +371,7 @@ class _SemuaPengeluaranScreenState extends State<SemuaPengeluaranScreen> {
                             });
                           },
                           label: const Text('Reset'),
+                          backgroundColor: Colors.grey.shade200,
                         ),
                       ),
                       const SizedBox(width: 12),

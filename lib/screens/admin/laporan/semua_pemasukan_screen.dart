@@ -14,11 +14,21 @@ class SemuaPemasukanScreen extends StatefulWidget {
 
 class _SemuaPemasukanScreenState extends State<SemuaPemasukanScreen> {
   late final TextEditingController _textController;
+  List<LaporanKeuanganModel> _pemasukanList = [];
   String _query = '';
+
+  LaporanKeuanganModel laporanKeuanganModel = LaporanKeuanganModel(
+    tanggal: DateTime.now(),
+    nama: "",
+    nominal: 0,
+    kategoriPengeluaran: '',
+    buktiFoto: '',
+  );
 
   @override
   void initState() {
     _textController = TextEditingController();
+    _loadPemasukanData();
     super.initState();
   }
 
@@ -28,40 +38,18 @@ class _SemuaPemasukanScreenState extends State<SemuaPemasukanScreen> {
     super.dispose();
   }
 
-  final List<LaporanKeuanganModel> fakeData = [
-    LaporanKeuanganModel(
-      tanggal: DateTime(2024, 1, 1),
-      nama: "Pemasukan 1",
-      nominal: 100000,
-    ),
-    LaporanKeuanganModel(
-      tanggal: DateTime(2024, 1, 3),
-      nama: "Pemasukan 2",
-      nominal: 300000,
-    ),
-    LaporanKeuanganModel(
-      tanggal: DateTime(2024, 1, 5),
-      nama: "Pemasukan 3",
-      nominal: 400000,
-    ),
-    LaporanKeuanganModel(
-      tanggal: DateTime(2024, 1, 7),
-      nama: "Pemasukan 4",
-      nominal: 500000,
-    ),
-    LaporanKeuanganModel(
-      tanggal: DateTime(2024, 1, 9),
-      nama: "Pemasukan 5",
-      nominal: 600000,
-    ),
-    LaporanKeuanganModel(
-      tanggal: DateTime(2024, 1, 10),
-      nama: "Pemasukan 6",
-      nominal: 700000,
-    ),
-  ];
+  Future<void> _loadPemasukanData() async {
+    final fetchedIuran = await laporanKeuanganModel.fetchIuran();
+    final fetchedPemasukan = await laporanKeuanganModel.fetchPemasukan();
+    setState(() {
+      _pemasukanList = fetchedIuran;
+      _pemasukanList.addAll(fetchedPemasukan);
+    });
+  }
 
   List<LaporanKeuanganModel> get _filteredData {
+    var filtered = _pemasukanList;
+
     final q = _query.trim().toLowerCase();
     if (q.isEmpty) return fakeData;
     return fakeData
@@ -87,6 +75,33 @@ class _SemuaPemasukanScreenState extends State<SemuaPemasukanScreen> {
           ),
         ),
       ),
+
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final result = await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const PemasukanLainTambahScreen(),
+            ),
+          );
+
+          if (result != null && result is Map<String, dynamic>) {
+            setState(() {
+              _pemasukanList.add(
+                LaporanKeuanganModel(
+                  tanggal: result['tanggal'] ?? DateTime.now(),
+                  nama: result['nama'] ?? '',
+                  nominal: (result['nominal'] ?? 0).toInt(),
+                  kategoriPemasukan: result['kategoriPemasukan'] ?? '',
+                  buktiFoto: result['buktiFoto'],
+                ),
+              );
+            });
+          }
+        },
+        backgroundColor: const Color(0xFF6366F1),
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
+
       body: Column(
         children: [
           searchSection(),

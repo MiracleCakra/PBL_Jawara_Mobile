@@ -1,42 +1,36 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:jawara_pintar_kel_5/models/keuangan/laporan_keuangan_model.dart';
 import 'package:moon_design/moon_design.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class PemasukanLainTambahScreen extends StatefulWidget {
-  const PemasukanLainTambahScreen({super.key});
+class PengeluaranTambahScreen extends StatefulWidget {
+  const PengeluaranTambahScreen({super.key});
 
   @override
-  State<PemasukanLainTambahScreen> createState() =>
-      _PemasukanLainTambahScreenState();
+  State<PengeluaranTambahScreen> createState() =>
+      _PengeluaranTambahScreenState();
 }
 
-class _PemasukanLainTambahScreenState extends State<PemasukanLainTambahScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _namaController = TextEditingController();
-  final _nominalController = TextEditingController();
-  final _tanggalController = TextEditingController();
-  DateTime? _selectedDate;
-  String? _selectedKategori;
-  String? _buktiFotoPath;
-  final ImagePicker _picker = ImagePicker();
-
+class _PengeluaranTambahScreenState extends State<PengeluaranTambahScreen> {
   LaporanKeuanganModel laporankeuanganmodel = LaporanKeuanganModel(
     tanggal: DateTime.now(),
     nama: "",
     nominal: 0,
-    kategoriPemasukan: '',
+    kategoriPengeluaran: '',
     buktiFoto: '',
   );
 
-  final List<String> _kategoriOptions = [
-    'Donasi',
-    'Dana Bantuan Pemerintah',
-    'Sumbangan Swadaya',
-    'Hasil Usaha Kampung',
-    'Pendapatan Lainnya',
-  ];
+  final _formKey = GlobalKey<FormState>();
+  final _namaController = TextEditingController();
+  final _nominalController = TextEditingController();
+  final _tanggalController = TextEditingController();
+  KategoriPengeluaran? _selectedKategoriPengeluaran;
+  DateTime? _selectedDate;
+  String? _buktiFotoPath;
+  final ImagePicker _picker = ImagePicker();
 
   Future<void> _pickImageFromSource(ImageSource source) async {
     try {
@@ -62,17 +56,17 @@ class _PemasukanLainTambahScreenState extends State<PemasukanLainTambahScreen> {
     try {
       final fileExt = image.path.split('.').last;
       final fileName = '${DateTime.now().toIso8601String()}.$fileExt';
-      final filePath = 'foto-pemasukan/$fileName';
+      final filePath = 'foto-pengeluaran/$fileName';
 
       await Supabase.instance.client.storage
-          .from('foto-pemasukan')
+          .from('foto-pengeluaran')
           .upload(
             filePath,
             File(image.path),
             fileOptions: FileOptions(contentType: image.mimeType),
           );
       final imageUrl = Supabase.instance.client.storage
-          .from('foto-pemasukan')
+          .from('foto-pengeluaran')
           .getPublicUrl(filePath);
       return imageUrl;
     } on StorageException catch (e) {
@@ -146,7 +140,7 @@ class _PemasukanLainTambahScreenState extends State<PemasukanLainTambahScreen> {
           icon: const Icon(Icons.chevron_left, color: Colors.black),
         ),
         title: Text(
-          "Tambah Pemasukkan Lain",
+          "Tambah Pengeluaran",
           style: MoonTokens.light.typography.heading.text20.copyWith(
             fontWeight: FontWeight.w700,
           ),
@@ -160,9 +154,9 @@ class _PemasukanLainTambahScreenState extends State<PemasukanLainTambahScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Nama Pemasukan
+                // Nama Pengeluaran
                 const Text(
-                  'Nama Pemasukan',
+                  'Nama Pengeluaran',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -173,7 +167,7 @@ class _PemasukanLainTambahScreenState extends State<PemasukanLainTambahScreen> {
                 TextFormField(
                   controller: _namaController,
                   decoration: InputDecoration(
-                    hintText: 'Masukkan nama pemasukan',
+                    hintText: 'Masukkan nama pengeluaran',
                     hintStyle: TextStyle(color: Colors.grey.shade400),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -197,16 +191,16 @@ class _PemasukanLainTambahScreenState extends State<PemasukanLainTambahScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Nama pemasukan tidak boleh kosong';
+                      return 'Nama pengeluaran tidak boleh kosong';
                     }
                     return null;
                   },
                 ),
                 const SizedBox(height: 20),
 
-                // Tanggal Pemasukan
+                // Tanggal Pengeluaran
                 const Text(
-                  'Tanggal Pemasukan',
+                  'Tanggal Pengeluaran',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -242,29 +236,30 @@ class _PemasukanLainTambahScreenState extends State<PemasukanLainTambahScreen> {
                     suffixIcon: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        if (_selectedDate != null)
+                          IconButton(
+                            icon: const Icon(Icons.close, size: 18),
+                            onPressed: () {
+                              setState(() {
+                                _selectedDate = null;
+                                _tanggalController.clear();
+                              });
+                            },
+                          ),
                         IconButton(
-                          icon: const Icon(Icons.close, size: 20),
-                          onPressed: () {
-                            setState(() {
-                              _selectedDate = null;
-                              _tanggalController.clear();
-                            });
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.calendar_today, size: 20),
+                          icon: const Icon(Icons.calendar_today, size: 18),
                           onPressed: () async {
-                            final date = await showDatePicker(
+                            final picked = await showDatePicker(
                               context: context,
                               initialDate: _selectedDate ?? DateTime.now(),
                               firstDate: DateTime(2000),
                               lastDate: DateTime(2100),
                             );
-                            if (date != null) {
+                            if (picked != null) {
                               setState(() {
-                                _selectedDate = date;
+                                _selectedDate = picked;
                                 _tanggalController.text =
-                                    '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+                                    "${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}";
                               });
                             }
                           },
@@ -275,9 +270,9 @@ class _PemasukanLainTambahScreenState extends State<PemasukanLainTambahScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Kategori pemasukan
+                // Kategori pengeluaran
                 const Text(
-                  'Kategori pemasukan',
+                  'Kategori pengeluaran',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -285,41 +280,40 @@ class _PemasukanLainTambahScreenState extends State<PemasukanLainTambahScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  value: _selectedKategori,
+                DropdownButtonFormField<KategoriPengeluaran>(
+                  initialValue: _selectedKategoriPengeluaran,
+                  onChanged: (KategoriPengeluaran? newValue) {
+                    setState(() {
+                      _selectedKategoriPengeluaran = newValue;
+                    });
+                  },
+                  items: KategoriPengeluaran.values
+                      .map<DropdownMenuItem<KategoriPengeluaran>>((
+                        KategoriPengeluaran value,
+                      ) {
+                        return DropdownMenuItem<KategoriPengeluaran>(
+                          value: value,
+                          child: Text(value.value),
+                        );
+                      })
+                      .toList(),
                   decoration: InputDecoration(
-                    hintText: '-- Pilih Kategori --',
+                    hintText: 'Pilih kategori pengeluaran',
                     hintStyle: TextStyle(color: Colors.grey.shade400),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF6366F1),
-                        width: 2,
-                      ),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 12,
                     ),
                   ),
-                  items: _kategoriOptions.map((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      _selectedKategori = newValue;
-                    });
+                  validator: (value) {
+                    if (value == null) {
+                      return 'Kategori pengeluaran tidak boleh kosong';
+                    }
+                    return null;
                   },
                 ),
                 const SizedBox(height: 20),
@@ -369,9 +363,9 @@ class _PemasukanLainTambahScreenState extends State<PemasukanLainTambahScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Bukti Pemasukan
+                // Bukti Pengeluaran
                 const Text(
-                  'Bukti Pemasukan',
+                  'Bukti Pengeluaran',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -379,32 +373,92 @@ class _PemasukanLainTambahScreenState extends State<PemasukanLainTambahScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(40),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey.shade300),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        'Upload bukti pemasukan (.png/.jpg)',
-                        style: TextStyle(
-                          color: Colors.grey.shade600,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Powered by PQINA',
-                        style: TextStyle(
-                          color: Colors.grey.shade400,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
+                GestureDetector(
+                  onTap: _showImageSourcePicker,
+                  child: Container(
+                    width: double.infinity,
+                    height: 200,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: _buktiFotoPath == null
+                        ? Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.upload,
+                                size: 40,
+                                color: Colors.grey.shade400,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Upload bukti pengeluaran (.png/.jpg)',
+                                style: TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Tap untuk memilih foto',
+                                style: TextStyle(
+                                  color: Colors.grey.shade400,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          )
+                        : Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.file(
+                                  File(_buktiFotoPath!),
+                                  width: double.infinity,
+                                  height: 200,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              Positioned(
+                                right: 8,
+                                top: 8,
+                                child: InkWell(
+                                  onTap: () =>
+                                      setState(() => _buktiFotoPath = null),
+                                  child: Container(
+                                    decoration: const BoxDecoration(
+                                      color: Colors.black54,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    padding: const EdgeInsets.all(6),
+                                    child: const Icon(
+                                      Icons.close,
+                                      color: Colors.white,
+                                      size: 18,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                bottom: 8,
+                                right: 8,
+                                child: Container(
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF6366F1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  padding: const EdgeInsets.all(6),
+                                  child: const Icon(
+                                    Icons.check,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -413,34 +467,21 @@ class _PemasukanLainTambahScreenState extends State<PemasukanLainTambahScreen> {
                 Row(
                   children: [
                     Expanded(
-                      child: SizedBox(
-                        height: 48,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            if (_formKey.currentState!.validate()) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Pemasukan berhasil ditambahkan',
-                                  ),
-                                  backgroundColor: Color(0xFF6366F1),
-                                ),
-                              );
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF6366F1),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          side: const BorderSide(color: Color(0xFF6366F1)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Text(
-                            'Kirim',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
+                        ),
+                        child: const Text(
+                          'Batal',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF6366F1),
                           ),
                         ),
                       ),
@@ -455,10 +496,10 @@ class _PemasukanLainTambahScreenState extends State<PemasukanLainTambahScreen> {
                               final XFile image = XFile(_buktiFotoPath!);
                               final imageUrl = await _uploadFoto(image);
                               if (imageUrl != null) {
-                                laporankeuanganmodel.savePemasukan(
+                                laporankeuanganmodel.savePengeluaran(
                                   _namaController.text,
                                   double.tryParse(_nominalController.text) ?? 0,
-                                  _selectedKategori ?? '',
+                                  _selectedKategoriPengeluaran?.value ?? '',
                                   imageUrl,
                                   _selectedDate ?? DateTime.now(),
                                   Supabase
@@ -472,7 +513,7 @@ class _PemasukanLainTambahScreenState extends State<PemasukanLainTambahScreen> {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text(
-                                      'Pemasukan berhasil ditambahkan',
+                                      'Pengeluaran berhasil ditambahkan',
                                     ),
                                   ),
                                 );
