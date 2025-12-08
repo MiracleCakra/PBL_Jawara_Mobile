@@ -19,6 +19,35 @@ class KeluargaService {
     }
   }
 
+  /// Fetch keluarga berdasarkan email warga
+  Future<k_model.Keluarga?> getKeluargaByEmail(String email) async {
+    try {
+      // 1. Cari warga berdasarkan email untuk dapat keluarga_id
+      final wargaResponse = await _supabase
+          .from('warga')
+          .select('keluarga_id')
+          .eq('email', email)
+          .maybeSingle();
+
+      if (wargaResponse == null || wargaResponse['keluarga_id'] == null) {
+        return null;
+      }
+
+      final String keluargaId = wargaResponse['keluarga_id'];
+
+      // 2. Ambil detail keluarga berdasarkan ID
+      final response = await _supabase
+          .from('keluarga')
+          .select('*, warga:kepala_keluarga_id(*), rumah:alamat_rumah(alamat)')
+          .eq('id', keluargaId)
+          .single();
+
+      return k_model.Keluarga.fromJson(response);
+    } catch (e) {
+      throw Exception('Error fetching keluarga by email: $e');
+    }
+  }
+
   /// Create keluarga baru
   Future<k_model.Keluarga> createKeluarga(k_model.Keluarga keluarga) async {
     try {
@@ -47,6 +76,31 @@ class KeluargaService {
       return k_model.Keluarga.fromJson(response);
     } catch (e) {
       throw Exception('Error updating keluarga: $e');
+    }
+  }
+
+  /// Menambahkan relasi warga ke keluarga (tabel keluarga_warga)
+  Future<void> addAnggotaKeluargaRelation(String keluargaId, String wargaId, String peran) async {
+    try {
+      await _supabase.from('keluarga_warga').insert({
+        'keluarga_id': keluargaId,
+        'warga_id': wargaId,
+        'peran': peran,
+      });
+    } catch (e) {
+      throw Exception('Error adding anggota keluarga relation: $e');
+    }
+  }
+
+  /// Update relasi warga ke keluarga (tabel keluarga_warga)
+  Future<void> updateAnggotaKeluargaRelation(String wargaId, String peran) async {
+    try {
+      await _supabase
+          .from('keluarga_warga')
+          .update({'peran': peran})
+          .eq('warga_id', wargaId);
+    } catch (e) {
+      throw Exception('Error updating anggota keluarga relation: $e');
     }
   }
 

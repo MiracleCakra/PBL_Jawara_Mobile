@@ -2,11 +2,71 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:jawara_pintar_kel_5/models/keluarga/anggota_keluarga_model.dart';
+import 'package:jawara_pintar_kel_5/services/warga_service.dart';
 
-class DetailAnggotaKeluargaPage extends StatelessWidget {
+class DetailAnggotaKeluargaPage extends StatefulWidget {
   final Anggota anggota;
 
   const DetailAnggotaKeluargaPage({super.key, required this.anggota});
+
+  @override
+  State<DetailAnggotaKeluargaPage> createState() => _DetailAnggotaKeluargaPageState();
+}
+
+class _DetailAnggotaKeluargaPageState extends State<DetailAnggotaKeluargaPage> {
+  final WargaService _wargaService = WargaService();
+  late Anggota _currentAnggota;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentAnggota = widget.anggota;
+    _fetchFullDetails();
+  }
+
+  Future<void> _fetchFullDetails() async {
+    setState(() => _isLoading = true);
+    try {
+      // Assuming anggota.nik maps to Warga ID
+      if (_currentAnggota.nik.isNotEmpty) {
+        final warga = await _wargaService.getWargaById(_currentAnggota.nik);
+        if (mounted) {
+          setState(() {
+            // Map fetched Warga back to Anggota model for display
+            _currentAnggota = Anggota(
+              nik: warga.id,
+              nama: warga.nama,
+              tempatLahir: warga.tempatLahir,
+              tanggalLahir: warga.tanggalLahir,
+              jenisKelamin: warga.gender?.value,
+              agama: warga.agama,
+              golonganDarah: warga.golDarah?.value,
+              telepon: warga.telepon,
+              email: warga.email,
+              pendidikanTerakhir: warga.pendidikanTerakhir,
+              pekerjaan: warga.pekerjaan,
+              peranKeluarga: (warga.anggotaKeluarga != null && warga.anggotaKeluarga!.isNotEmpty) 
+                  ? warga.anggotaKeluarga!.first.peran 
+                  : "Anggota Keluarga",
+              statusPenduduk: warga.statusPenduduk?.value,
+              statusHidup: warga.statusHidupWafat?.value,
+              namaKeluarga: warga.keluarga?.namaKeluarga, // Nested property
+              status: warga.statusPenduduk?.value ?? "Aktif",
+              fotoKtp: warga.fotoKtp,
+              rumahSaatIni: warga.keluarga?.alamatRumah, // Nested property
+            );
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal memuat detail: $e')));
+      }
+    }
+  }
 
   void _showOptionsBottomSheet(BuildContext context, Anggota data) {
     showModalBottomSheet(
@@ -35,8 +95,11 @@ class DetailAnggotaKeluargaPage extends StatelessWidget {
               ),
               title: const Text('Edit Data'),
               subtitle: const Text('Ubah informasi anggota keluarga'),
-              onTap: () =>
-                  context.pushNamed("EditAnggotaKeluarga", extra: data),
+              onTap: () {
+                Navigator.pop(context);
+                // Pass updated data to edit screen if needed
+                context.pushNamed("EditAnggotaKeluarga", extra: data);
+              },
             ),
             const SizedBox(height: 16),
           ],
@@ -47,7 +110,7 @@ class DetailAnggotaKeluargaPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final data = anggota;
+    final data = _currentAnggota;
 
     final String formattedDate = data.tanggalLahir != null
         ? DateFormat('d MMMM yyyy', 'id_ID').format(data.tanggalLahir!)
@@ -66,108 +129,112 @@ class DetailAnggotaKeluargaPage extends StatelessWidget {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _buildHeader(data),
-          const SizedBox(height: 20),
+      body: _isLoading 
+          ? const Center(child: CircularProgressIndicator())
+          : ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                _buildHeader(data),
+                const SizedBox(height: 20),
 
-          _SectionCard(
-            title: "Data Diri",
-            children: [
-              _IconRow(
-                icon: Icons.phone,
-                label: "Nomor Telepon",
-                value: data.telepon ?? "-",
-              ),
-              _IconRow(
-                icon: Icons.email,
-                label: "Email (Opsional)",
-                value: data.email ?? "-",
-              ),
-              _IconRow(
-                icon: Icons.location_city,
-                label: "Tempat Lahir",
-                value: data.tempatLahir ?? "-",
-              ),
-              _IconRow(
-                icon: Icons.event,
-                label: "Tanggal Lahir",
-                value: formattedDate,
-              ),
-              _IconRow(
-                icon: Icons.home,
-                label: "Rumah Saat Ini",
-                value: data.rumahSaatIni ?? "-",
-              ),
-            ],
-          ),
+                _SectionCard(
+                  title: "Data Diri",
+                  children: [
+                    _IconRow(
+                      icon: Icons.phone,
+                      label: "Nomor Telepon",
+                      value: data.telepon ?? "-",
+                    ),
+                    _IconRow(
+                      icon: Icons.email,
+                      label: "Email (Opsional)",
+                      value: data.email ?? "-",
+                    ),
+                    _IconRow(
+                      icon: Icons.location_city,
+                      label: "Tempat Lahir",
+                      value: data.tempatLahir ?? "-",
+                    ),
+                    _IconRow(
+                      icon: Icons.event,
+                      label: "Tanggal Lahir",
+                      value: formattedDate,
+                    ),
+                    _IconRow(
+                      icon: Icons.home,
+                      label: "Rumah Saat Ini",
+                      value: data.rumahSaatIni ?? "-",
+                    ),
+                  ],
+                ),
 
-          const SizedBox(height: 20),
-          _SectionCard(
-            title: "Atribut Personal",
-            children: [
-              _IconRow(
-                icon: Icons.people,
-                label: "Jenis Kelamin",
-                value: data.jenisKelamin ?? "-",
-              ),
-              _IconRow(
-                icon: Icons.self_improvement,
-                label: "Agama",
-                value: data.agama ?? "-",
-              ),
-              _IconRow(
-                icon: Icons.bloodtype,
-                label: "Golongan Darah",
-                value: data.golonganDarah ?? "-",
-              ),
-            ],
-          ),
+                const SizedBox(height: 20),
+                _SectionCard(
+                  title: "Atribut Personal",
+                  children: [
+                    _IconRow(
+                      icon: Icons.people,
+                      label: "Jenis Kelamin",
+                      value: data.jenisKelamin ?? "-",
+                    ),
+                    _IconRow(
+                      icon: Icons.self_improvement,
+                      label: "Agama",
+                      value: data.agama ?? "-",
+                    ),
+                    _IconRow(
+                      icon: Icons.bloodtype,
+                      label: "Golongan Darah",
+                      value: data.golonganDarah ?? "-",
+                    ),
+                  ],
+                ),
 
-          const SizedBox(height: 20),
-          _SectionCard(
-            title: "Peran & Latar Belakang",
-            children: [
-              _IconRow(
-                icon: Icons.family_restroom,
-                label: "Peran Keluarga",
-                value: data.peranKeluarga ?? "-",
-              ),
-              _IconRow(
-                icon: Icons.school,
-                label: "Pendidikan Terakhir",
-                value: data.pendidikanTerakhir ?? "-",
-              ),
-              _IconRow(
-                icon: Icons.work,
-                label: "Pekerjaan",
-                value: data.pekerjaan ?? "-",
-              ),
-            ],
-          ),
+                const SizedBox(height: 20),
+                _SectionCard(
+                  title: "Peran & Latar Belakang",
+                  children: [
+                    _IconRow(
+                      icon: Icons.family_restroom,
+                      label: "Peran Keluarga",
+                      value: data.peranKeluarga ?? "-",
+                    ),
+                    _IconRow(
+                      icon: Icons.school,
+                      label: "Pendidikan Terakhir",
+                      value: data.pendidikanTerakhir ?? "-",
+                    ),
+                    _IconRow(
+                      icon: Icons.work,
+                      label: "Pekerjaan",
+                      value: data.pekerjaan ?? "-",
+                    ),
+                  ],
+                ),
 
-          const SizedBox(height: 20),
-          _SectionCard(
-            title: "Status",
-            children: [
-              _IconRow(
-                icon: Icons.favorite,
-                label: "Status Hidup",
-                value: data.statusHidup ?? "-",
-              ),
-              _IconRow(
-                icon: Icons.verified,
-                label: "Status Kependudukan",
-                value: data.statusPenduduk ?? "-",
-              ),
-            ],
-          ),
+                const SizedBox(height: 20),
+                _SectionCard(
+                  title: "Status",
+                  children: [
+                    _IconRow(
+                      icon: Icons.favorite,
+                      label: "Status Hidup",
+                      value: data.statusHidup ?? "-",
+                    ),
+                    _IconRow(
+                      icon: Icons.verified,
+                      label: "Status Kependudukan",
+                      value: data.statusPenduduk ?? "-",
+                    ),
+                  ],
+                ),
 
-          const SizedBox(height: 20),
-          _FotoKKCard(fotoUrl: data.namaKeluarga),
-        ],
-      ),
+                const SizedBox(height: 20),
+                // Pass actual Image URL if available in the future, currently model uses namaKeluarga as placeholder? 
+                // Checking model: fotoKtp is available. Using that or Placeholder.
+                _FotoKKCard(fotoUrl: data.fotoKtp), 
+              ],
+            ),
     );
   }
 
@@ -271,6 +338,11 @@ class _FotoKKCard extends StatelessWidget {
                   height: 160,
                   width: double.infinity,
                   fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                      height: 160,
+                      color: Colors.grey.shade200,
+                      child: const Center(child: Text("Gagal memuat gambar")),
+                  ),
                 ),
               ),
             ),

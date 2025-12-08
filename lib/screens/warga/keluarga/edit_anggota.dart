@@ -1,6 +1,12 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jawara_pintar_kel_5/models/keluarga/anggota_keluarga_model.dart';
+import 'package:jawara_pintar_kel_5/models/keluarga/warga_model.dart';
+import 'package:jawara_pintar_kel_5/services/keluarga_service.dart';
+import 'package:jawara_pintar_kel_5/services/warga_service.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show getPrimaryColor;
 import 'package:jawara_pintar_kel_5/widget/form/date_picker_field.dart';
 import 'package:jawara_pintar_kel_5/widget/form/labeled_dropdown.dart';
@@ -18,6 +24,9 @@ class EditAnggotaPage extends StatefulWidget {
 }
 
 class _EditAnggotaPageState extends State<EditAnggotaPage> {
+  final WargaService _wargaService = WargaService();
+  final KeluargaService _keluargaService = KeluargaService();
+
   late final TextEditingController _nikCtl;
   late final TextEditingController _namaCtl;
   late final TextEditingController _tempatLahirCtl;
@@ -25,14 +34,14 @@ class _EditAnggotaPageState extends State<EditAnggotaPage> {
   final TextEditingController _emailCtl = TextEditingController();
 
   DateTime? _tanggalLahir;
-  String? _jenisKelamin;
+  Gender? _jenisKelamin;
   String? _agama;
-  String? _golDarah;
+  GolonganDarah? _golDarah;
   String? _pendidikan;
   String? _pekerjaan;
   String? _peranKeluarga;
-  String? _statusPenduduk;
-  String? _statusHidup;
+  StatusPenduduk? _statusPenduduk;
+  StatusHidup? _statusHidup;
 
   // Rumah Saat Ini
   String? _rumahSaatIni;
@@ -47,21 +56,47 @@ class _EditAnggotaPageState extends State<EditAnggotaPage> {
     try {
       final a = widget.anggota;
 
-      _nikCtl = TextEditingController(text: a.nik ?? '');
-      _namaCtl = TextEditingController(text: a.nama ?? '');
+      _nikCtl = TextEditingController(text: a.nik);
+      _namaCtl = TextEditingController(text: a.nama);
       _tempatLahirCtl = TextEditingController(text: a.tempatLahir ?? "");
       _teleponCtl = TextEditingController(text: a.telepon ?? "");
       _emailCtl.text = a.email ?? "";
 
       _tanggalLahir = a.tanggalLahir;
-      _jenisKelamin = a.jenisKelamin;
-      _agama = a.agama;
-      _golDarah = a.golonganDarah;
-      _pendidikan = a.pendidikanTerakhir;
-      _pekerjaan = a.pekerjaan;
-      _peranKeluarga = a.peranKeluarga;
-      _statusPenduduk = a.statusPenduduk;
-      _statusHidup = a.statusHidup;
+
+      // Safe assignment for Dropdowns
+      const genderList = ["Pria", "Wanita"];
+      _jenisKelamin = (a.jenisKelamin != null && genderList.contains(a.jenisKelamin)) 
+          ? Gender.values.firstWhere((g) => g.value == a.jenisKelamin) 
+          : null;
+
+      const agamaList = ["Islam", "Kristen", "Katolik", "Hindu", "Buddha", "Konghucu"];
+      _agama = (a.agama != null && agamaList.contains(a.agama)) ? a.agama : null;
+
+      const golDarahList = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+      _golDarah = (a.golonganDarah != null && golDarahList.contains(a.golonganDarah)) 
+          ? GolonganDarah.values.firstWhere((g) => g.value == a.golonganDarah)
+          : null;
+
+      const pendidikanList = ["SD", "SMP", "SMA/SMK", "Diploma", "S1", "S2", "S3"];
+      _pendidikan = (a.pendidikanTerakhir != null && pendidikanList.contains(a.pendidikanTerakhir)) ? a.pendidikanTerakhir : null;
+
+      const pekerjaanList = ["Pelajar/Mahasiswa", "Karyawan", "Wiraswasta", "Ibu Rumah Tangga", "Tidak Bekerja"];
+      _pekerjaan = (a.pekerjaan != null && pekerjaanList.contains(a.pekerjaan)) ? a.pekerjaan : null;
+
+      const peranList = ['Kepala Keluarga', 'Ibu', 'Anak', 'Lainnya'];
+      _peranKeluarga = (a.peranKeluarga != null && peranList.contains(a.peranKeluarga)) ? a.peranKeluarga : null;
+
+      const statusPendudukList = ["Aktif", "Nonaktif"];
+      _statusPenduduk = (a.statusPenduduk != null && statusPendudukList.contains(a.statusPenduduk)) 
+          ? StatusPenduduk.values.firstWhere((s) => s.value == a.statusPenduduk)
+          : null;
+
+      const statusHidupList = ["Hidup", "Wafat"];
+      _statusHidup = (a.statusHidup != null && statusHidupList.contains(a.statusHidup)) 
+          ? StatusHidup.values.firstWhere((s) => s.value == a.statusHidup)
+          : null;
+
       _rumahSaatIni = a.rumahSaatIni;
 
       // Set manual mode if rumahSaatIni doesn't match predefined options
@@ -75,7 +110,6 @@ class _EditAnggotaPageState extends State<EditAnggotaPage> {
       }
     } catch (e) {
       debugPrint('Error initializing edit form: $e');
-      // Jika ada error, tetap lanjut dengan nilai default
     }
   }
 
@@ -89,23 +123,69 @@ class _EditAnggotaPageState extends State<EditAnggotaPage> {
 
     setState(() => _isSaving = true);
 
-    // **SIMULASI UPDATE TANPA API**
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+        // We assume we are editing an existing Warga (member) who is ALREADY in the family.
+        // We fetch the existing Warga to get the 'role' (app role) to preserve it.
+        final existingWarga = await _wargaService.getWargaById(_nikCtl.text);
 
-    if (!mounted) return;
+        final updatedWarga = Warga(
+            id: _nikCtl.text,
+            nama: _namaCtl.text,
+            email: _emailCtl.text.isEmpty ? null : _emailCtl.text,
+            telepon: _teleponCtl.text.isEmpty ? null : _teleponCtl.text,
+            tempatLahir: _tempatLahirCtl.text.isEmpty ? null : _tempatLahirCtl.text,
+            tanggalLahir: _tanggalLahir,
+            gender: _jenisKelamin,
+            agama: _agama,
+            golDarah: _golDarah,
+            pendidikanTerakhir: _pendidikan,
+            pekerjaan: _pekerjaan,
+            statusPenduduk: _statusPenduduk,
+            statusHidupWafat: _statusHidup,
+            
+            // Preserve existing fields
+            keluargaId: existingWarga.keluargaId,
+            fotoKtp: existingWarga.fotoKtp,
+            fotoProfil: existingWarga.fotoProfil,
+            role: existingWarga.role, // Preserve App Role
+        );
 
-    await showResultModal(
-      context,
-      type: ResultType.success,
-      title: "Berhasil",
-      description: "Data anggota berhasil diperbarui.",
-      actionLabel: "OK",
-      autoProceed: true,
-    );
+        // 1. Update Warga
+        await _wargaService.updateWarga(_nikCtl.text, updatedWarga);
 
-    context.pop(true);
+        // 2. Update Keluarga Relation (Peran)
+        if (_peranKeluarga != null) {
+            if (existingWarga.anggotaKeluarga != null && existingWarga.anggotaKeluarga!.isNotEmpty) {
+               await _keluargaService.updateAnggotaKeluargaRelation(_nikCtl.text, _peranKeluarga!);
+            } else if (existingWarga.keluargaId != null) {
+               await _keluargaService.addAnggotaKeluargaRelation(
+                 existingWarga.keluargaId!, 
+                 _nikCtl.text, 
+                 _peranKeluarga!
+               );
+            }
+        }
 
-    setState(() => _isSaving = false);
+        if (!mounted) return;
+
+        await showResultModal(
+            context,
+            type: ResultType.success,
+            title: "Berhasil",
+            description: "Data anggota berhasil diperbarui.",
+            actionLabel: "OK",
+            autoProceed: true,
+        );
+
+        context.pop(true);
+
+    } catch (e) {
+        if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal menyimpan: $e')));
+        }
+    } finally {
+        if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   @override
@@ -143,16 +223,18 @@ class _EditAnggotaPageState extends State<EditAnggotaPage> {
             title: "Data Diri",
             children: [
               LabeledTextField(
-                label: "Nama",
+                label: "Nama (Read Only)",
                 controller: _namaCtl,
                 hint: "Masukkan nama lengkap",
+                readOnly: true, // Disabled as requested
               ),
               const SizedBox(height: 8),
               LabeledTextField(
-                label: "NIK",
+                label: "NIK (Read Only)",
                 controller: _nikCtl,
                 keyboardType: TextInputType.number,
                 hint: "Masukkan NIK",
+                readOnly: true, // Disabled as requested
               ),
               const SizedBox(height: 8),
               LabeledTextField(
@@ -163,10 +245,11 @@ class _EditAnggotaPageState extends State<EditAnggotaPage> {
               ),
               const SizedBox(height: 8),
               LabeledTextField(
-                label: "Email (Opsional)",
+                label: "Email (Read Only)",
                 controller: _emailCtl,
                 keyboardType: TextInputType.emailAddress,
                 hint: "Masukkan email",
+                readOnly: true, // Disabled
               ),
               const SizedBox(height: 8),
               LabeledTextField(
@@ -182,55 +265,28 @@ class _EditAnggotaPageState extends State<EditAnggotaPage> {
                 onDateSelected: (d) => setState(() => _tanggalLahir = d),
               ),
               const SizedBox(height: 8),
+              // Rumah Saat Ini (Read Only/Disabled)
               if (!_isRumahManual)
-                LabeledDropdown<String>(
-                  label: "Rumah Saat ini",
-                  value: _rumahSaatIni,
-                  onChanged: (v) {
-                    setState(() {
-                      if (v == 'manual') {
-                        _isRumahManual = true;
-                        _rumahSaatIni = null;
-                      } else {
-                        _rumahSaatIni = v;
-                      }
-                    });
-                  },
-                  items: const [
-                    DropdownMenuItem(
-                      value: null,
-                      child: Text('-- Pilih Rumah --'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'Blok A No. 1',
-                      child: Text('Blok A No. 1'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'Blok A No. 2',
-                      child: Text('Blok A No. 2'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'Blok B No. 1',
-                      child: Text('Blok B No. 1'),
-                    ),
-                    DropdownMenuItem(value: 'manual', child: Text('Lainnya')),
-                  ],
+                IgnorePointer( // Disable interaction
+                  child: LabeledDropdown<String>(
+                    label: "Rumah Saat ini (Read Only)",
+                    value: _rumahSaatIni,
+                    onChanged: (v) {},
+                    items: const [
+                      DropdownMenuItem(value: null, child: Text('-- Pilih Rumah --')),
+                      DropdownMenuItem(value: 'Blok A No. 1', child: Text('Blok A No. 1')),
+                      DropdownMenuItem(value: 'Blok A No. 2', child: Text('Blok A No. 2')),
+                      DropdownMenuItem(value: 'Blok B No. 1', child: Text('Blok B No. 1')),
+                      DropdownMenuItem(value: 'manual', child: Text('Lainnya')),
+                    ],
+                  ),
                 )
               else ...[
                 LabeledTextField(
-                  label: "Rumah Saat Ini",
+                  label: "Rumah Saat Ini (Read Only)",
                   controller: _rumahManualCtl,
                   hint: "Masukkan rumah saat ini",
-                ),
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _isRumahManual = false;
-                      _rumahManualCtl.clear();
-                    });
-                  },
-                  child: const Text('Kembali ke pilihan dropdown'),
+                  readOnly: true,
                 ),
               ],
             ],
@@ -238,28 +294,18 @@ class _EditAnggotaPageState extends State<EditAnggotaPage> {
           SectionCard(
             title: "Atribut Personal",
             children: [
-              LabeledDropdown<String>(
+              LabeledDropdown<Gender>(
                 label: "Jenis Kelamin",
                 value: _jenisKelamin,
                 onChanged: (v) => setState(() => _jenisKelamin = v),
-                items: const [
-                  DropdownMenuItem(
-                    value: null,
-                    child: Text('-- Pilih Jenis Kelamin --'),
-                  ),
-                  DropdownMenuItem(value: "Pria", child: Text("Pria")),
-                  DropdownMenuItem(value: "Wanita", child: Text("Wanita")),
-                ],
+                items: Gender.values.map((g) => DropdownMenuItem(value: g, child: Text(g.value))).toList(),
               ),
               LabeledDropdown<String>(
                 label: "Agama",
                 value: _agama,
                 onChanged: (v) => setState(() => _agama = v),
                 items: const [
-                  DropdownMenuItem(
-                    value: null,
-                    child: Text('-- Pilih Agama --'),
-                  ),
+                  DropdownMenuItem(value: null, child: Text('-- Pilih Agama --')),
                   DropdownMenuItem(value: "Islam", child: Text("Islam")),
                   DropdownMenuItem(value: "Kristen", child: Text("Kristen")),
                   DropdownMenuItem(value: "Katolik", child: Text("Katolik")),
@@ -268,24 +314,11 @@ class _EditAnggotaPageState extends State<EditAnggotaPage> {
                   DropdownMenuItem(value: "Konghucu", child: Text("Konghucu")),
                 ],
               ),
-              LabeledDropdown<String>(
+              LabeledDropdown<GolonganDarah>(
                 label: "Golongan Darah",
                 value: _golDarah,
                 onChanged: (v) => setState(() => _golDarah = v),
-                items: const [
-                  DropdownMenuItem(
-                    value: null,
-                    child: Text('-- Pilih Golongan Darah --'),
-                  ),
-                  DropdownMenuItem(value: "A+", child: Text("A+")),
-                  DropdownMenuItem(value: "A-", child: Text("A-")),
-                  DropdownMenuItem(value: "B+", child: Text("B+")),
-                  DropdownMenuItem(value: "B-", child: Text("B-")),
-                  DropdownMenuItem(value: "AB+", child: Text("AB+")),
-                  DropdownMenuItem(value: "AB-", child: Text("AB-")),
-                  DropdownMenuItem(value: "O+", child: Text("O+")),
-                  DropdownMenuItem(value: "O-", child: Text("O-")),
-                ],
+                items: GolonganDarah.values.map((g) => DropdownMenuItem(value: g, child: Text(g.value))).toList(),
               ),
             ],
           ),
@@ -297,14 +330,8 @@ class _EditAnggotaPageState extends State<EditAnggotaPage> {
                 value: _peranKeluarga,
                 onChanged: (v) => setState(() => _peranKeluarga = v),
                 items: const [
-                  DropdownMenuItem(
-                    value: null,
-                    child: Text('-- Pilih Peran Keluarga --'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'Kepala Keluarga',
-                    child: Text('Kepala Keluarga'),
-                  ),
+                  DropdownMenuItem(value: null, child: Text('-- Pilih Peran Keluarga --')),
+                  DropdownMenuItem(value: 'Kepala Keluarga', child: Text('Kepala Keluarga')),
                   DropdownMenuItem(value: 'Ibu', child: Text('Ibu')),
                   DropdownMenuItem(value: 'Anak', child: Text('Anak')),
                   DropdownMenuItem(value: 'Lainnya', child: Text('Lainnya')),
@@ -315,10 +342,7 @@ class _EditAnggotaPageState extends State<EditAnggotaPage> {
                 value: _pendidikan,
                 onChanged: (v) => setState(() => _pendidikan = v),
                 items: const [
-                  DropdownMenuItem(
-                    value: null,
-                    child: Text('-- Pilih Pendidikan Terakhir --'),
-                  ),
+                  DropdownMenuItem(value: null, child: Text('-- Pilih Pendidikan Terakhir --')),
                   DropdownMenuItem(value: "SD", child: Text("SD")),
                   DropdownMenuItem(value: "SMP", child: Text("SMP")),
                   DropdownMenuItem(value: "SMA/SMK", child: Text("SMA/SMK")),
@@ -333,27 +357,12 @@ class _EditAnggotaPageState extends State<EditAnggotaPage> {
                 value: _pekerjaan,
                 onChanged: (v) => setState(() => _pekerjaan = v),
                 items: const [
-                  DropdownMenuItem(
-                    value: null,
-                    child: Text('-- Pilih Jenis Pekerjaan --'),
-                  ),
-                  DropdownMenuItem(
-                    value: "Pelajar/Mahasiswa",
-                    child: Text("Pelajar/Mahasiswa"),
-                  ),
+                  DropdownMenuItem(value: null, child: Text('-- Pilih Jenis Pekerjaan --')),
+                  DropdownMenuItem(value: "Pelajar/Mahasiswa", child: Text("Pelajar/Mahasiswa")),
                   DropdownMenuItem(value: "Karyawan", child: Text("Karyawan")),
-                  DropdownMenuItem(
-                    value: "Wiraswasta",
-                    child: Text("Wiraswasta"),
-                  ),
-                  DropdownMenuItem(
-                    value: "Ibu Rumah Tangga",
-                    child: Text("Ibu Rumah Tangga"),
-                  ),
-                  DropdownMenuItem(
-                    value: "Tidak Bekerja",
-                    child: Text("Tidak Bekerja"),
-                  ),
+                  DropdownMenuItem(value: "Wiraswasta", child: Text("Wiraswasta")),
+                  DropdownMenuItem(value: "Ibu Rumah Tangga", child: Text("Ibu Rumah Tangga")),
+                  DropdownMenuItem(value: "Tidak Bekerja", child: Text("Tidak Bekerja")),
                 ],
               ),
             ],
@@ -361,34 +370,17 @@ class _EditAnggotaPageState extends State<EditAnggotaPage> {
           SectionCard(
             title: "Status",
             children: [
-              LabeledDropdown<String>(
+              LabeledDropdown<StatusHidup>(
                 label: "Status Hidup",
                 value: _statusHidup,
                 onChanged: (v) => setState(() => _statusHidup = v),
-                items: const [
-                  DropdownMenuItem(
-                    value: null,
-                    child: Text('-- Pilih Status Hidup --'),
-                  ),
-                  DropdownMenuItem(value: "Hidup", child: Text("Hidup")),
-                  DropdownMenuItem(value: "Wafat", child: Text("Wafat")),
-                ],
+                items: StatusHidup.values.map((s) => DropdownMenuItem(value: s, child: Text(s.value))).toList(),
               ),
-              LabeledDropdown<String>(
+              LabeledDropdown<StatusPenduduk>(
                 label: "Status Kependudukan",
                 value: _statusPenduduk,
                 onChanged: (v) => setState(() => _statusPenduduk = v),
-                items: const [
-                  DropdownMenuItem(
-                    value: null,
-                    child: Text('-- Pilih Status Kependudukan --'),
-                  ),
-                  DropdownMenuItem(value: "Aktif", child: Text("Aktif")),
-                  DropdownMenuItem(
-                    value: "Non Aktif",
-                    child: Text("Non Aktif"),
-                  ),
-                ],
+                items: StatusPenduduk.values.map((s) => DropdownMenuItem(value: s, child: Text(s.value))).toList(),
               ),
             ],
           ),

@@ -38,23 +38,7 @@ class Keluargamenuwarga extends StatelessWidget {
               label: 'Profil Keluarga',
               color: profilColor,
               onTap: () {
-                final dummyKeluarga = Keluarga(
-                  id: "1",
-                  namaKeluarga: "Keluarga Susanto",
-                  kepalaKeluargaId: "1001",
-                  alamatRumah: "Jl. Mawar No. 12",
-                  statusKepemilikan: "Milik Sendiri",
-                  statusKeluarga: "Aktif",
-                  kepalaKeluarga: null,
-                  jenisMutasi: null,
-                  alasanMutasi: null,
-                  tanggalMutasi: null,
-                );
-
-                context.pushNamed(
-                  'ProfilKeluarga',
-                  extra: dummyKeluarga,
-                );
+                context.pushNamed('ProfilKeluarga');
               },
             ),
 

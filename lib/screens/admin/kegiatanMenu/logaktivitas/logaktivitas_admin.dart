@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
 import 'package:jawara_pintar_kel_5/models/log/activity_log_model.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/logaktivitas/log_filter_screen.dart';
 import 'package:jawara_pintar_kel_5/services/activity_log_service.dart';
 
 class LogAktivitasScreenAdmin extends StatelessWidget {
@@ -66,46 +67,40 @@ class _LogAktivitasContentState extends State<LogAktivitasContent> {
   }
 
   void _showFilterModal(BuildContext context) async {
-    final DateTimeRange? picked = await showDateRangePicker(
+    final result = await showModalBottomSheet<Map<String, dynamic>?>(
       context: context,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2030),
-      initialDateRange: _filterStartDate != null && _filterEndDate != null
-          ? DateTimeRange(start: _filterStartDate!, end: _filterEndDate!)
-          : null,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF4E46B4),
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext modalContext) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(25.0)),
+          ),
+          child: Padding(
+            padding: EdgeInsets.only(
+              top: 20,
+              bottom: MediaQuery.of(modalContext).viewInsets.bottom,
+            ),
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height * 0.6, // Adjust height as needed
+              child: LogFilterScreen(
+                initialStartDate: _filterStartDate,
+                initialEndDate: _filterEndDate,
+              ),
             ),
           ),
-          child: child!,
         );
       },
     );
 
-    if (picked != null) {
+    if (result != null) {
       setState(() {
-        _filterStartDate = picked.start;
-        _filterEndDate = picked.end;
-        isFilterActive = true;
+        _filterStartDate = result['startDate'] as DateTime?;
+        _filterEndDate = result['endDate'] as DateTime?;
+        isFilterActive = _filterStartDate != null || _filterEndDate != null;
       });
-    } else {
-        // Optional: Clear filter if cancelled? No, standard behavior is keep unless cleared.
-        // To clear, we might need a custom button or "Reset" in a custom modal.
-        // For now, let's just support setting range.
     }
-  }
-  
-  void _clearFilter() {
-      setState(() {
-        _filterStartDate = null;
-        _filterEndDate = null;
-        isFilterActive = false;
-      });
   }
 
   Widget _buildLogItem(ActivityLogModel log) {
@@ -253,32 +248,7 @@ class _LogAktivitasContentState extends State<LogAktivitasContent> {
                 color: isFilterActive ? Colors.grey.shade200 : Colors.white,
                 borderRadius: BorderRadius.circular(8),
                 child: InkWell(
-                  onTap: () {
-                    if (isFilterActive) {
-                        // Show dialog to clear or change
-                        showDialog(context: context, builder: (c) => SimpleDialog(
-                            title: const Text('Filter Tanggal'),
-                            children: [
-                                SimpleDialogOption(
-                                    onPressed: () {
-                                        Navigator.pop(c);
-                                        _showFilterModal(context);
-                                    },
-                                    child: const Text('Ubah Rentang Tanggal'),
-                                ),
-                                SimpleDialogOption(
-                                    onPressed: () {
-                                        Navigator.pop(c);
-                                        _clearFilter();
-                                    },
-                                    child: const Text('Hapus Filter', style: TextStyle(color: Colors.red)),
-                                ),
-                            ],
-                        ));
-                    } else {
-                        _showFilterModal(context);
-                    }
-                  },
+                  onTap: () => _showFilterModal(context),
                   borderRadius: BorderRadius.circular(8),
                   highlightColor: Colors.transparent,
                   splashColor: Colors.grey.withOpacity(0.2),
