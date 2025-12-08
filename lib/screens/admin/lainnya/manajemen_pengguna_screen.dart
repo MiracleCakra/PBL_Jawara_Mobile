@@ -305,16 +305,6 @@ class _ManajemenPenggunaScreenState extends State<ManajemenPenggunaScreen> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          await context.push('/admin/lainnya/manajemen-pengguna/tambah');
-          // Gak perlu refresh manual, stream otomatis update!
-        },
-        backgroundColor: primary,
-        foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: const Icon(Icons.add, size: 28),
-      ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

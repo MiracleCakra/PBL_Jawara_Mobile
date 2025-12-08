@@ -111,11 +111,12 @@ class _EditPenggunaScreenState extends State<EditPenggunaScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Nama Lengkap
+              // Nama Lengkap (read-only)
               _buildTextField(
                 label: 'Nama Lengkap',
                 controller: _namaLengkapCtl,
                 keyboardType: TextInputType.name,
+                enabled: false,
               ),
               const SizedBox(height: 16),
 
