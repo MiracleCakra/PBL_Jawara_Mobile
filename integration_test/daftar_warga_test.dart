@@ -22,7 +22,10 @@ void main() {
       await tester.tap(btnShowForm);
       await tester.pumpAndSettle(const Duration(seconds: 1));
 
-      await tester.enterText(find.byKey(const Key('input_email')), 'admin');
+      await tester.enterText(
+        find.byKey(const Key('input_email')),
+        'admin@gmail.com',
+      );
       await tester.pump(const Duration(milliseconds: 100));
 
       await tester.enterText(
@@ -44,57 +47,34 @@ void main() {
     // --------------------------------------------------------
     // STEP 2: NAVIGASI KE DAFTAR WARGA
     // --------------------------------------------------------
-    print('Step 2: Navigasi Menu Penduduk -> Submenu Warga...');
+    print('Step 2: Navigasi ke Daftar Warga dari Dashboard Penduduk...');
 
     expect(
-      find.text('Dashboard'),
-      findsOneWidget,
-      reason: "Gagal Login: Belum masuk halaman Dashboard",
+      find.textContaining('Dashboard'),
+      findsWidgets,
+      reason: "Gagal Login: Belum masuk halaman Dashboard Penduduk",
     );
 
-    await tester.pumpAndSettle(const Duration(seconds: 6));
-
-    print('Mencari menu Penduduk di bottom navigation...');
-
-    final size = tester.getSize(find.byType(MaterialApp));
-    final screenWidth = size.width;
-    final screenHeight = size.height;
-
-    final pendudukX =
-        screenWidth *
-        0.3; // Menu kedua dari 5 menu (Rumah, Penduduk, Keuangan, Kegiatan, Lainnya)
-    final pendudukY = screenHeight * 0.95;
-
-    print('Tap koordinat bottom nav: ($pendudukX, $pendudukY)');
-    await tester.tapAt(Offset(pendudukX, pendudukY));
     await tester.pumpAndSettle(const Duration(seconds: 3));
-    print('Verifikasi halaman Penduduk terbuka...');
 
-    final allTexts = find.byType(Text);
-    print('Jumlah widget Text ditemukan: ${allTexts.evaluate().length}');
+    print('Verifikasi sudah di Dashboard Penduduk...');
+    expect(
+      find.text('Dashboard Penduduk'),
+      findsOneWidget,
+      reason: "Belum berada di Dashboard Penduduk",
+    );
 
-    if (find.text('Pilih Menu').evaluate().isNotEmpty) {
-      print('Found: Pilih Menu');
-    } else if (find.text('Penduduk').evaluate().isNotEmpty) {
-      print('Found: Penduduk (header)');
-    } else if (find.text('Warga').evaluate().isNotEmpty) {
-      print('Found: Warga (submenu)');
-    } else {
-      print('PERINGATAN: Tidak menemukan header yang diharapkan');
-    }
+    print('Mencari menu card "Daftar Warga"...');
+    final daftarWargaCard = find.text('Daftar Warga');
 
-    final hasHeader =
-        find.text('Pilih Menu').evaluate().isNotEmpty ||
-        find.text('Penduduk').evaluate().length > 1;
+    expect(
+      daftarWargaCard,
+      findsOneWidget,
+      reason: "Menu card 'Daftar Warga' tidak ditemukan",
+    );
 
-    expect(hasHeader, true, reason: "Gagal masuk ke halaman Menu Penduduk");
-
-    print('Mencari submenu Warga...');
-    final subMenuWarga = find.text('Warga');
-
-    expect(subMenuWarga, findsWidgets, reason: "Submenu Warga tidak ditemukan");
-
-    await tester.tap(subMenuWarga.first);
+    print('Tap card Daftar Warga...');
+    await tester.tap(daftarWargaCard);
     await tester.pumpAndSettle(const Duration(seconds: 5));
 
     expect(
@@ -151,7 +131,7 @@ void main() {
       await tester.tap(dropdownGender);
       await tester.pumpAndSettle();
 
-      final lakiLakiOption = find.text('Laki-laki');
+      final lakiLakiOption = find.text('Pria');
       if (lakiLakiOption.evaluate().isNotEmpty) {
         await tester.tap(lakiLakiOption.last);
         await tester.pumpAndSettle();
@@ -867,7 +847,7 @@ void main() {
         await tester.tap(genderDropdown);
         await tester.pumpAndSettle();
 
-        final perempuanOption = find.text('Perempuan');
+        final perempuanOption = find.text('Wanita');
         if (perempuanOption.evaluate().isNotEmpty) {
           await tester.tap(perempuanOption.last);
           await tester.pumpAndSettle();
@@ -892,7 +872,7 @@ void main() {
       if (applyBtn.evaluate().isNotEmpty) {
         await tester.tap(applyBtn);
         await tester.pumpAndSettle(const Duration(seconds: 2));
-        print('Kombinasi filter diterapkan: Perempuan + Aktif');
+        print('Kombinasi filter diterapkan: Wanita + Aktif');
       }
     }
 

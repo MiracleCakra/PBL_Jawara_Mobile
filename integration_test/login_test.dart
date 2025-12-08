@@ -15,14 +15,14 @@ void main() {
 
     await tester.pumpAndSettle(const Duration(seconds: 2));
 
-    // Verifikasi Halaman Awal
-    expect(find.textContaining('Jawara'), findsWidgets);
-    expect(find.textContaining('Pintar'), findsWidgets);
-    
+    // Verifikasi Halaman Awal (UI sudah berubah dari "Jawara Pintar" jadi "Sapa Warga")
+    expect(find.textContaining('Sapa'), findsWidgets);
+    expect(find.textContaining('Warga'), findsWidgets);
+
     // menggunakan KEY yang sudah ditambahkan di login.dart
     final btnShowForm = find.byKey(const Key('btn_show_login_form'));
     final btnDaftar = find.byKey(const Key('btn_to_register'));
-    
+
     expect(btnShowForm, findsOneWidget);
     expect(btnDaftar, findsOneWidget);
 
@@ -53,16 +53,16 @@ void main() {
 
     // Verifikasi pesan error muncul
     expect(find.text('Email & Password tidak boleh kosong'), findsOneWidget);
-    
+
     await tester.pumpAndSettle(const Duration(seconds: 2));
 
     // ----------------------------------------------------------------
     // STEP 4: Input Kredensial
     // ----------------------------------------------------------------
     print('Action: Mengisi email dan password...');
-    
+
     // Isi Email
-    await tester.enterText(emailField, 'admin');
+    await tester.enterText(emailField, 'admin@gmail.com');
     await tester.pump(const Duration(milliseconds: 100));
 
     // Isi Password
