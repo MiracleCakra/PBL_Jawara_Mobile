@@ -2,7 +2,13 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+<<<<<<< HEAD
+import 'package:jawara_pintar_kel_5/models/keuangan/laporan_keuangan_model.dart';
 import 'package:moon_design/moon_design.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+=======
+import 'package:moon_design/moon_design.dart';
+>>>>>>> e880963302028c513d6f88042d0ffc208416b69c
 
 class PengeluaranTambahScreen extends StatefulWidget {
   const PengeluaranTambahScreen({super.key});
@@ -13,11 +19,26 @@ class PengeluaranTambahScreen extends StatefulWidget {
 }
 
 class _PengeluaranTambahScreenState extends State<PengeluaranTambahScreen> {
+<<<<<<< HEAD
+  LaporanKeuanganModel laporankeuanganmodel = LaporanKeuanganModel(
+    tanggal: DateTime.now(),
+    nama: "",
+    nominal: 0,
+    kategoriPengeluaran: '',
+    buktiFoto: '',
+  );
+
+=======
+>>>>>>> e880963302028c513d6f88042d0ffc208416b69c
   final _formKey = GlobalKey<FormState>();
   final _namaController = TextEditingController();
   final _nominalController = TextEditingController();
   final _tanggalController = TextEditingController();
+<<<<<<< HEAD
+  KategoriPengeluaran? _selectedKategoriPengeluaran;
+=======
   final _kategoriController = TextEditingController();
+>>>>>>> e880963302028c513d6f88042d0ffc208416b69c
   DateTime? _selectedDate;
   String? _buktiFotoPath;
   final ImagePicker _picker = ImagePicker();
@@ -41,6 +62,46 @@ class _PengeluaranTambahScreenState extends State<PengeluaranTambahScreen> {
     }
   }
 
+<<<<<<< HEAD
+  // Fungsi untuk mengunggah foto ke Supabase
+  Future<String?> _uploadFoto(XFile image) async {
+    try {
+      final fileExt = image.path.split('.').last;
+      final fileName = '${DateTime.now().toIso8601String()}.$fileExt';
+      final filePath = 'foto-pengeluaran/$fileName';
+
+      await Supabase.instance.client.storage
+          .from('foto-pengeluaran')
+          .upload(
+            filePath,
+            File(image.path),
+            fileOptions: FileOptions(contentType: image.mimeType),
+          );
+      final imageUrl = Supabase.instance.client.storage
+          .from('foto-pengeluaran')
+          .getPublicUrl(filePath);
+      return imageUrl;
+    } on StorageException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal mengunggah foto, Silakan coba lagi.')),
+        );
+        debugPrint('error: $e');
+      }
+      return null;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal mengunggah foto: $e')));
+      }
+      debugPrint('error: $e');
+      return null;
+    }
+  }
+
+=======
+>>>>>>> e880963302028c513d6f88042d0ffc208416b69c
   void _showImageSourcePicker() {
     showModalBottomSheet(
       context: context,
@@ -78,7 +139,10 @@ class _PengeluaranTambahScreenState extends State<PengeluaranTambahScreen> {
     _namaController.dispose();
     _nominalController.dispose();
     _tanggalController.dispose();
+<<<<<<< HEAD
+=======
     _kategoriController.dispose();
+>>>>>>> e880963302028c513d6f88042d0ffc208416b69c
     super.dispose();
   }
 
@@ -234,15 +298,39 @@ class _PengeluaranTambahScreenState extends State<PengeluaranTambahScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
+<<<<<<< HEAD
+                DropdownButtonFormField<KategoriPengeluaran>(
+                  initialValue: _selectedKategoriPengeluaran,
+                  onChanged: (KategoriPengeluaran? newValue) {
+                    setState(() {
+                      _selectedKategoriPengeluaran = newValue;
+                    });
+                  },
+                  items: KategoriPengeluaran.values
+                      .map<DropdownMenuItem<KategoriPengeluaran>>((
+                        KategoriPengeluaran value,
+                      ) {
+                        return DropdownMenuItem<KategoriPengeluaran>(
+                          value: value,
+                          child: Text(value.value),
+                        );
+                      })
+                      .toList(),
+                  decoration: InputDecoration(
+                    hintText: 'Pilih kategori pengeluaran',
+=======
                 TextFormField(
                   controller: _kategoriController,
                   decoration: InputDecoration(
                     hintText: 'Masukkan kategori pengeluaran',
+>>>>>>> e880963302028c513d6f88042d0ffc208416b69c
                     hintStyle: TextStyle(color: Colors.grey.shade400),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(color: Colors.grey.shade300),
                     ),
+<<<<<<< HEAD
+=======
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(color: Colors.grey.shade300),
@@ -254,13 +342,18 @@ class _PengeluaranTambahScreenState extends State<PengeluaranTambahScreen> {
                         width: 2,
                       ),
                     ),
+>>>>>>> e880963302028c513d6f88042d0ffc208416b69c
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 12,
                     ),
                   ),
                   validator: (value) {
+<<<<<<< HEAD
+                    if (value == null) {
+=======
                     if (value == null || value.isEmpty) {
+>>>>>>> e880963302028c513d6f88042d0ffc208416b69c
                       return 'Kategori pengeluaran tidak boleh kosong';
                     }
                     return null;
@@ -439,6 +532,40 @@ class _PengeluaranTambahScreenState extends State<PengeluaranTambahScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
+<<<<<<< HEAD
+                        onPressed: () async {
+                          if (_formKey.currentState!.validate()) {
+                            // Upload foto sebelum menyimpan data
+                            if (_buktiFotoPath != null) {
+                              final XFile image = XFile(_buktiFotoPath!);
+                              final imageUrl = await _uploadFoto(image);
+                              if (imageUrl != null) {
+                                laporankeuanganmodel.savePengeluaran(
+                                  _namaController.text,
+                                  double.tryParse(_nominalController.text) ?? 0,
+                                  _selectedKategoriPengeluaran?.value ?? '',
+                                  imageUrl,
+                                  _selectedDate ?? DateTime.now(),
+                                  Supabase
+                                          .instance
+                                          .client
+                                          .auth
+                                          .currentUser
+                                          ?.email ??
+                                      '',
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Pengeluaran berhasil ditambahkan',
+                                    ),
+                                  ),
+                                );
+
+                                Navigator.of(context).pop();
+                              }
+                            }
+=======
                         onPressed: () {
                           if (_formKey.currentState!.validate()) {
                             // Return data to previous screen
@@ -463,6 +590,7 @@ class _PengeluaranTambahScreenState extends State<PengeluaranTambahScreen> {
                               ),
                             );
                             Navigator.of(context).pop(data);
+>>>>>>> e880963302028c513d6f88042d0ffc208416b69c
                           }
                         },
                         style: ElevatedButton.styleFrom(

@@ -15,14 +15,24 @@ class SemuaPemasukanScreen extends StatefulWidget {
 
 class _SemuaPemasukanScreenState extends State<SemuaPemasukanScreen> {
   late final TextEditingController _textController;
+  List<LaporanKeuanganModel> _pemasukanList = [];
   String _query = '';
   String _selectedKategori = 'Semua';
   DateTime? _selectedDari;
   DateTime? _selectedSampai;
 
+  LaporanKeuanganModel laporanKeuanganModel = LaporanKeuanganModel(
+    tanggal: DateTime.now(),
+    nama: "",
+    nominal: 0,
+    kategoriPengeluaran: '',
+    buktiFoto: '',
+  );
+
   @override
   void initState() {
     _textController = TextEditingController();
+    _loadPemasukanData();
     super.initState();
   }
 
@@ -32,59 +42,17 @@ class _SemuaPemasukanScreenState extends State<SemuaPemasukanScreen> {
     super.dispose();
   }
 
-  final List<LaporanKeuanganModel> fakeData = [
-    LaporanKeuanganModel(
-      tanggal: DateTime(2024, 1, 1),
-      nama: "Pemasukan 1",
-      nominal: 100000,
-      kategoriPemasukan: 'Donasi',
-      buktiFoto:
-          'https://via.placeholder.com/400x300.png?text=Bukti+Transfer+1',
-    ),
-    LaporanKeuanganModel(
-      tanggal: DateTime(2024, 1, 3),
-      nama: "Pemasukan 2",
-      nominal: 300000,
-      kategoriPemasukan: 'Dana Bantuan Pemerintah',
-      buktiFoto:
-          'https://via.placeholder.com/400x300.png?text=Bukti+Transfer+2',
-    ),
-    LaporanKeuanganModel(
-      tanggal: DateTime(2024, 1, 5),
-      nama: "Pemasukan 3",
-      nominal: 400000,
-      kategoriPemasukan: 'Sumbangan Swadaya',
-      buktiFoto:
-          'https://via.placeholder.com/400x300.png?text=Bukti+Transfer+3',
-    ),
-    LaporanKeuanganModel(
-      tanggal: DateTime(2024, 1, 7),
-      nama: "Pemasukan 4",
-      nominal: 500000,
-      kategoriPemasukan: 'Hasil Usaha Kampung',
-      buktiFoto:
-          'https://via.placeholder.com/400x300.png?text=Bukti+Transfer+4',
-    ),
-    LaporanKeuanganModel(
-      tanggal: DateTime(2024, 1, 9),
-      nama: "Pemasukan 5",
-      nominal: 600000,
-      kategoriPemasukan: 'Pendapatan Lainnya',
-      buktiFoto:
-          'https://via.placeholder.com/400x300.png?text=Bukti+Transfer+5',
-    ),
-    LaporanKeuanganModel(
-      tanggal: DateTime(2024, 1, 10),
-      nama: "Pemasukan 6",
-      nominal: 700000,
-      kategoriPemasukan: 'Donasi',
-      buktiFoto:
-          'https://via.placeholder.com/400x300.png?text=Bukti+Transfer+6',
-    ),
-  ];
+  Future<void> _loadPemasukanData() async {
+    final fetchedIuran = await laporanKeuanganModel.fetchIuran();
+    final fetchedPemasukan = await laporanKeuanganModel.fetchPemasukan();
+    setState(() {
+      _pemasukanList = fetchedIuran;
+      _pemasukanList.addAll(fetchedPemasukan);
+    });
+  }
 
   List<LaporanKeuanganModel> get _filteredData {
-    var filtered = fakeData;
+    var filtered = _pemasukanList;
 
     final q = _query.trim().toLowerCase();
     if (q.isNotEmpty) {
@@ -150,7 +118,7 @@ class _SemuaPemasukanScreenState extends State<SemuaPemasukanScreen> {
 
           if (result != null && result is Map<String, dynamic>) {
             setState(() {
-              fakeData.add(
+              _pemasukanList.add(
                 LaporanKeuanganModel(
                   tanggal: result['tanggal'] ?? DateTime.now(),
                   nama: result['nama'] ?? '',

@@ -96,10 +96,11 @@ class IuranModel {
     DateTime tglTagihan,
   ) async {
     try {
-      // Fetch all families from the 'keluarga' table
+      // Fetch all families from the 'keluarga' table where the status_keluarga is 'Aktif'
       final response = await Supabase.instance.client
           .from('keluarga')
-          .select('id, alamat_rumah');
+          .select('id, alamat_rumah')
+          .eq('status_keluarga', 'Aktif'); // Filter by status_keluarga 'Aktif'
 
       List<dynamic> families = response;
 
@@ -107,9 +108,7 @@ class IuranModel {
       for (var family in families) {
         String idKeluarga = family['id'].toString();
         await Supabase.instance.client
-            .from(
-              'tagihan_iuran',
-            ) // Assuming 'tagihan_iuran' is your table for bills
+            .from('tagihan_iuran') // Reference only the 'tagihan_iuran' table
             .insert({
               'id_iuran': idIuran,
               'tgl_tagihan': tglTagihan.toIso8601String(),

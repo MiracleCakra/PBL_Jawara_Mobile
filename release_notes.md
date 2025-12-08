@@ -1,17 +1,15 @@
-# Release Notes - Version 1.8.1
+# Release Notes - Version 1.9.0
 
 🚀 **New Features**:
 
-* Updated app icon and application slogan for better branding.
-* Added/updated dialog components for improved user interaction.
-* Implemented unit tests for core modules to ensure stability.
+* Enhanced financial reporting with dynamic fetching of yearly income and expense totals across admin screens.
+* Added new income/expense fetch and save flows in `LaporanKeuanganModel` plus active-family filtering in `IuranModel`.
+* Updated admin financial UI components to display live data and improve data entry for income/expense additions.
 
 🐛 **Bug Fixes**:
 
-* Minor UI adjustments on dialogs for consistency.
-* Fixed layout or text issues revealed during unit testing.
+* Improved error handling for financial data fetching and image uploads in income/expense forms.
 
 🔧 **Miscellaneous**:
 
-* General code cleanup and improvements.
-* Test coverage enhanced for critical features.
+* General code cleanup and UI adjustments within financial reporting screens.
