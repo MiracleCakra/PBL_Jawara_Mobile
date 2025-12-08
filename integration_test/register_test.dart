@@ -21,14 +21,23 @@ void main() {
 
     expect(btnToRegister, findsOneWidget);
     await tester.tap(btnToRegister);
-    await tester.pumpAndSettle(const Duration(seconds: 2));
+    await tester.pumpAndSettle(const Duration(seconds: 3)); // Tambah durasi
 
     // Verifikasi sudah di halaman Register
+    // Scroll ke atas untuk memastikan text terlihat
+    final scrollView = find.byKey(const Key('scroll_view_register'));
+    if (scrollView.evaluate().isNotEmpty) {
+      await tester.ensureVisible(
+        find.text('Daftar untuk mengakses sistem Jawara Pintar.'),
+      );
+      await tester.pumpAndSettle();
+    }
+
     expect(
       find.text('Daftar untuk mengakses sistem Jawara Pintar.'),
       findsOneWidget,
     );
-    expect(find.text('Identitas'), findsOneWidget);
+    expect(find.text('Data Diri'), findsOneWidget);
 
     // ------------------------------------------------------------
     // STEP 2: Mengisi Form Identitas
@@ -47,7 +56,6 @@ void main() {
 
     // Pilih Dropdown Gender
     // Scroll dulu biar aman
-    final scrollView = find.byKey(const Key('scroll_view_register'));
     await tester.drag(scrollView, const Offset(0, -100));
     await tester.pumpAndSettle();
 
@@ -76,7 +84,7 @@ void main() {
 
     // Input Email
     final inputEmail = find.byKey(const Key('input_email_reg'));
-    await tester.enterText(inputEmail, 'e3etest@mail.com');
+    await tester.enterText(inputEmail, 'e6etest@mail.com');
     await tester.pump(const Duration(milliseconds: 100));
 
     // Input Telepon
@@ -99,12 +107,17 @@ void main() {
     // ------------------------------------------------------------
     print('Step 4: Menekan tombol Daftar...');
 
-    await tester.drag(scrollView, const Offset(0, -200));
+    // Scroll lebih banyak untuk memastikan button terlihat
+    await tester.drag(scrollView, const Offset(0, -400));
     await tester.pumpAndSettle();
 
     final btnSubmit = find.byKey(const Key('btn_submit_register'));
-    expect(btnSubmit, findsOneWidget);
 
+    // Pastikan button terlihat di layar
+    await tester.ensureVisible(btnSubmit);
+    await tester.pumpAndSettle();
+
+    expect(btnSubmit, findsOneWidget);
     await tester.tap(btnSubmit);
 
     await tester.pumpAndSettle(const Duration(seconds: 5));
