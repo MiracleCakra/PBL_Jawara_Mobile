@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/order_item_model.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/order_model.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
+import 'package:jawara_pintar_kel_5/providers/marketplace/cart_provider.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/keranjangScreen.dart';
+import 'package:jawara_pintar_kel_5/services/marketplace/order_service.dart';
+import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/keranjangScreen.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/order_model.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/order_item_model.dart';
-import 'package:jawara_pintar_kel_5/services/marketplace/order_service.dart';
-import 'package:jawara_pintar_kel_5/providers/marketplace/cart_provider.dart';
-import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -24,7 +24,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   String _selectedPaymentMethod = 'COD';
   String _selectedDeliveryOption = 'Ambil di Toko Warga';
-  
+
   List<CartItem> _checkoutItems = [];
   ProductModel? _buyNowProduct;
   String? _userId;
@@ -43,9 +43,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Future<void> _loadCheckoutData() async {
     final extra = GoRouterState.of(context).extra;
-    
+
     print('DEBUG Checkout: extra data = $extra');
-    
+
     if (extra is Map<String, dynamic> && extra['type'] == 'buy_now') {
       // Buy Now flow
       print('DEBUG Checkout: Buy Now mode detected');
@@ -62,7 +62,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       setState(() {
         _checkoutType = 'cart';
       });
-      
+
       try {
         final authUser = Supabase.instance.client.auth.currentUser;
         if (authUser?.email == null) {
@@ -73,14 +73,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           }
           return;
         }
-        
+
         // Get warga.id
         final wargaResponse = await Supabase.instance.client
             .from('warga')
             .select('id')
             .eq('email', authUser!.email!)
             .maybeSingle();
-        
+
         if (wargaResponse == null) {
           if (mounted) {
             setState(() {
@@ -89,31 +89,36 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           }
           return;
         }
-        
+
         final userId = wargaResponse['id'] as String;
-        
+
         // Load cart from provider
         final cartProvider = Provider.of<CartProvider>(context, listen: false);
         await cartProvider.fetchCartWithProducts(userId);
-        
-        print('DEBUG Checkout: Cart items count = ${cartProvider.cartItems.length}');
-        
+
+        print(
+          'DEBUG Checkout: Cart items count = ${cartProvider.cartItems.length}',
+        );
+
         if (mounted) {
           setState(() {
             _userId = userId;
             _checkoutItems = cartProvider.cartItems.map((cartItem) {
-              print('DEBUG Checkout: Processing cart item: ${cartItem['produk']['nama']}');
-              final product = ProductModel.fromJson(cartItem['produk']);
-              final quantity = cartItem['qty'] as int? ?? 1; // Get actual quantity from database
-              print('DEBUG Checkout: Quantity = $quantity');
-              return CartItem(
-                product: product,
-                quantity: quantity,
+              print(
+                'DEBUG Checkout: Processing cart item: ${cartItem['produk']['nama']}',
               );
+              final product = ProductModel.fromJson(cartItem['produk']);
+              final quantity =
+                  cartItem['qty'] as int? ??
+                  1; // Get actual quantity from database
+              print('DEBUG Checkout: Quantity = $quantity');
+              return CartItem(product: product, quantity: quantity);
             }).toList();
             _isLoading = false;
           });
-          print('DEBUG Checkout: Final checkout items count = ${_checkoutItems.length}');
+          print(
+            'DEBUG Checkout: Final checkout items count = ${_checkoutItems.length}',
+          );
         }
       } catch (e) {
         print('Error loading cart: $e');
@@ -132,13 +137,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
     return _checkoutItems.fold(0, (sum, item) => sum + item.subtotal);
   }
-  
+
   int get _totalQuantity {
     if (_checkoutType == 'buy_now') {
       return 1;
     }
     return _checkoutItems.fold(0, (sum, item) => sum + item.quantity);
   }
+
   int get _finalTotal {
     final currentShipping = _selectedDeliveryOption == 'Ambil di Toko Warga'
         ? 0
@@ -158,13 +164,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         body: const Center(child: CircularProgressIndicator()),
       );
     }
-    
+
     if (_checkoutType == 'cart' && _checkoutItems.isEmpty) {
       return const Scaffold(
         body: Center(child: Text('Keranjang kosong. Tidak bisa Checkout.')),
       );
     }
-    
+
     if (_checkoutType == 'buy_now' && _buyNowProduct == null) {
       return const Scaffold(
         body: Center(child: Text('Produk tidak ditemukan.')),
@@ -184,7 +190,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ),
 
       body: SingleChildScrollView(
-        padding: const EdgeInsets.only(bottom: 150), 
+        padding: const EdgeInsets.only(bottom: 150),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -230,7 +236,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               icon: Icons.receipt_long,
               children: _checkoutType == 'buy_now'
                   ? [_buildBuyNowOrderItem()]
-                  : _checkoutItems.map((item) => _buildOrderSummaryItem(item)).toList(),
+                  : _checkoutItems
+                        .map((item) => _buildOrderSummaryItem(item))
+                        .toList(),
             ),
 
             _buildSectionCard(
@@ -241,11 +249,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   label: 'Tunai (COD / Bayar di Tempat)',
                   value: 'COD',
                   icon: Icons.money,
-                ),
-                _buildPaymentMethod(
-                  label: 'Transfer Bank (Manual)',
-                  value: 'Transfer Manual',
-                  icon: Icons.account_balance_outlined,
                 ),
               ],
             ),
@@ -323,7 +326,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Widget _buildBuyNowOrderItem() {
     if (_buyNowProduct == null) return const SizedBox();
-    
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Row(
@@ -366,6 +369,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 Text(
                   '1 x ${formatRupiah(_buyNowProduct!.harga?.toInt() ?? 0)}',
                   style: const TextStyle(fontSize: 13, color: Colors.grey),
+                ),
+                Text(
+                  'Stok tersedia: ${_buyNowProduct!.stok ?? 0} ${_buyNowProduct!.satuan ?? "pcs"}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: (_buyNowProduct!.stok ?? 0) > 0
+                        ? Colors.green
+                        : Colors.red,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
@@ -422,6 +435,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 Text(
                   '${item.quantity} x ${formatRupiah(item.product.harga?.toInt() ?? 0)}',
                   style: const TextStyle(fontSize: 13, color: Colors.grey),
+                ),
+                Text(
+                  'Stok tersedia: ${item.product.stok ?? 0} ${item.product.satuan ?? "pcs"}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: (item.product.stok ?? 0) > 0
+                        ? Colors.green
+                        : Colors.red,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
@@ -495,7 +518,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               },
               icon: const Icon(Icons.lock_open, size: 24),
               label: Text(
-                'Bayar ${formatRupiah(_finalTotal)}',
+                'Beli ${formatRupiah(_finalTotal)}',
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -553,64 +576,73 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
 
     try {
-      // Show loading
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(child: CircularProgressIndicator()),
-      );
-
       final orderService = OrderService();
-      
+
       // Create order
       final newOrder = OrderModel(
         userId: _userId,
         totalPrice: _finalTotal.toDouble(),
-        orderStatus: null, // Status NULL = pesanan baru, menunggu konfirmasi penjual
-        alamat: 'Jl. Mawar No. 12, RT 01 / RW 01', // TODO: get from user profile
+        orderStatus:
+            null, // Status NULL = pesanan baru, menunggu konfirmasi penjual
+        alamat:
+            'Jl. Mawar No. 12, RT 01 / RW 01', // TODO: get from user profile
         totalQty: _totalQuantity,
         createdAt: DateTime.now(),
       );
-      
+
       final createdOrder = await orderService.createOrder(newOrder);
-      
-      // Create order items
+
+      // Create order items and reduce stock
       if (_checkoutType == 'buy_now' && _buyNowProduct != null) {
-        await orderService.createOrderItem(OrderItemModel(
-          orderId: createdOrder.orderId,
-          productId: _buyNowProduct!.productId,
-          qty: 1,
-        ));
+        await orderService.createOrderItem(
+          OrderItemModel(
+            orderId: createdOrder.orderId,
+            productId: _buyNowProduct!.productId,
+            qty: 1,
+          ),
+        );
+
+        // Reduce stock for buy now product
+        await orderService.reduceProductStock(_buyNowProduct!.productId!, 1);
       } else {
         for (var item in _checkoutItems) {
-          await orderService.createOrderItem(OrderItemModel(
-            orderId: createdOrder.orderId,
-            productId: item.product.productId,
-            qty: item.quantity,
-          ));
+          await orderService.createOrderItem(
+            OrderItemModel(
+              orderId: createdOrder.orderId,
+              productId: item.product.productId,
+              qty: item.quantity,
+            ),
+          );
+
+          // Reduce stock for each cart item
+          await orderService.reduceProductStock(
+            item.product.productId!,
+            item.quantity,
+          );
         }
-        
+
         // Clear cart after successful order
         if (_checkoutType == 'cart') {
-          final cartProvider = Provider.of<CartProvider>(context, listen: false);
+          final cartProvider = Provider.of<CartProvider>(
+            context,
+            listen: false,
+          );
           await cartProvider.clearCart(_userId!);
         }
       }
-      
+
       if (mounted) {
-        Navigator.pop(context); // Close loading dialog
-        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
               'Pesanan berhasil dibuat! Order ID: ${createdOrder.orderId}',
             ),
             backgroundColor: Colors.green,
-            duration: const Duration(seconds: 3),
+            duration: const Duration(seconds: 2),
           ),
         );
 
-        Future.delayed(const Duration(seconds: 1), () {
+        Future.delayed(const Duration(milliseconds: 500), () {
           if (mounted) {
             context.go('/warga/marketplace');
           }
@@ -618,7 +650,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       }
     } catch (e) {
       if (mounted) {
-        Navigator.pop(context); // Close loading dialog
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Gagal membuat pesanan: $e'),

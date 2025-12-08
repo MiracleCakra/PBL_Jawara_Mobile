@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jawara_pintar_kel_5/models/kegiatan/aspirasi_model.dart';
 import 'package:jawara_pintar_kel_5/services/aspirasi_service.dart';
+import 'package:jawara_pintar_kel_5/widget/moon_result_modal.dart';
 
 class WargaEditKirimanScreen extends StatefulWidget {
   final AspirasiModel data;
@@ -19,7 +20,9 @@ class _WargaEditKirimanScreenState extends State<WargaEditKirimanScreen> {
   final AspirasiService _aspirasiService = AspirasiService();
   bool _isLoading = false;
 
-  static const Color _primaryColor = Color(0xFF6366F1); 
+  static const Color _primaryColor = Color(
+    0xFF6366F1,
+  ); // Biru utama sama seperti di halaman kegiatan
 
   @override
   void initState() {
@@ -49,21 +52,24 @@ class _WargaEditKirimanScreenState extends State<WargaEditKirimanScreen> {
       try {
         await _aspirasiService.updateAspiration(updatedAspirasi);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Kiriman berhasil diperbarui!'),
-              backgroundColor: Colors.green,
-            ),
+          await showResultModal(
+            context,
+            type: ResultType.success,
+            title: 'Berhasil',
+            description: 'Kiriman berhasil diperbarui!',
+            actionLabel: 'Selesai',
+            autoProceed: true,
           );
-          context.pop(true);
+          if (mounted) context.pop(true);
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Gagal memperbarui: $e'),
-              backgroundColor: Colors.red,
-            ),
+          await showResultModal(
+            context,
+            type: ResultType.error,
+            title: 'Gagal',
+            description: 'Gagal memperbarui: $e',
+            actionLabel: 'Tutup',
           );
         }
       } finally {
@@ -119,10 +125,17 @@ class _WargaEditKirimanScreenState extends State<WargaEditKirimanScreen> {
                   hintText: 'Masukkan judul pesan',
                   filled: true,
                   fillColor: Colors.grey.shade50,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
                 ),
-                validator: (value) => value == null || value.isEmpty ? 'Judul tidak boleh kosong' : null,
+                validator: (value) => value == null || value.isEmpty
+                    ? 'Judul tidak boleh kosong'
+                    : null,
               ),
               const SizedBox(height: 24),
 
@@ -134,15 +147,22 @@ class _WargaEditKirimanScreenState extends State<WargaEditKirimanScreen> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _isiController,
-                maxLines: 8, 
+                maxLines: 8,
                 decoration: InputDecoration(
                   hintText: 'Tulis isi pesan di sini...',
                   filled: true,
                   fillColor: Colors.grey.shade50,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
                 ),
-                validator: (value) => value == null || value.isEmpty ? 'Isi pesan tidak boleh kosong' : null,
+                validator: (value) => value == null || value.isEmpty
+                    ? 'Isi pesan tidak boleh kosong'
+                    : null,
               ),
               const SizedBox(height: 32),
 
@@ -150,29 +170,49 @@ class _WargaEditKirimanScreenState extends State<WargaEditKirimanScreen> {
               Row(
                 children: [
                   Expanded(
-                    flex: 3,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _submitForm, 
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _primaryColor, 
-                        foregroundColor: Colors.white,
+                    flex: 2,
+                    child: OutlinedButton(
+                      onPressed: _isLoading ? null : _resetForm,
+                      style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        side: BorderSide(color: Colors.grey.shade300),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
-                      child: _isLoading ? const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white),) : const Text('Simpan Perubahan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      child: const Text(
+                        'Reset',
+                        style: TextStyle(color: Colors.black87),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    flex: 2,
-                    child: OutlinedButton(
-                      onPressed: _isLoading ? null : _resetForm, 
-                      style: OutlinedButton.styleFrom(
+                    flex: 3,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _submitForm,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _primaryColor,
+                        foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        side: BorderSide(color: Colors.grey.shade300),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 0,
                       ),
-                      child: const Text('Reset', style: TextStyle(color: Colors.black87)),
+                      child: _isLoading
+                          ? const CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              'Simpan Perubahan',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
                     ),
                   ),
                 ],

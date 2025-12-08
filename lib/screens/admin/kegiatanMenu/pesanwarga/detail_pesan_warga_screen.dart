@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:jawara_pintar_kel_5/models/kegiatan/aspirasi_model.dart';
 import 'package:jawara_pintar_kel_5/services/aspirasi_service.dart';
-import 'edit_pesan_warga_screen.dart';
 
 class DetailPesanWargaScreen extends StatefulWidget {
   final AspirasiModel pesan;
@@ -62,9 +61,9 @@ class _DetailPesanWargaScreenState extends State<DetailPesanWargaScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memperbarui status: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal memperbarui status: $e'), backgroundColor: Colors.grey.shade800));
       }
     } finally {
       if (mounted) {
@@ -75,29 +74,191 @@ class _DetailPesanWargaScreenState extends State<DetailPesanWargaScreen> {
     }
   }
 
+  void _showActionBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext bc) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Aksi Pesan Warga',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                const Divider(height: 1),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.close, color: Colors.red, size: 24),
+                  ),
+                  title: const Text(
+                    'Tolak',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.red,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Tolak aspirasi ini',
+                    style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                  ),
+                  onTap: _isLoading
+                      ? null
+                      : () {
+                          Navigator.pop(context);
+                          _showConfirmationDialog('Ditolak');
+                        },
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: Container(
+                    padding:  EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color:  Colors.deepPurple.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.check,
+                      color: Colors.deepPurple,
+                      size: 24,
+                    ),
+                  ),
+                  title: const Text(
+                    'Terima',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.deepPurple,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Terima aspirasi ini',
+                    style: TextStyle(fontSize: 13, color: Colors.grey),
+                  ),
+                  onTap: _isLoading
+                      ? null
+                      : () {
+                          Navigator.pop(context);
+                          _showConfirmationDialog('Diterima');
+                        },
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _showConfirmationDialog(String newStatus) {
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text('Konfirmasi ${newStatus == 'Diterima' ? 'Penerimaan' : 'Penolakan'}'),
-        content: Text(
-            'Anda yakin ingin ${newStatus == 'Diterima' ? 'menerima' : 'menolak'} aspirasi ini?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Batal'),
+      builder: (dialogContext) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: newStatus == 'Diterima'
+                      ? Colors.deepPurple.withOpacity(0.1)
+                      : Colors.red.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  newStatus == 'Diterima' ? Icons.check : Icons.close,
+                  color: newStatus == 'Diterima'
+                      ? Colors.deepPurple
+                      : Colors.red,
+                  size: 40,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                newStatus == 'Diterima'
+                    ? 'Terima Aspirasi?'
+                    : 'Tolak Aspirasi?',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Anda yakin ingin ${newStatus == 'Diterima' ? 'menerima' : 'menolak'} aspirasi ini?',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: BorderSide(color: Colors.grey.shade300),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text('Batal'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(dialogContext);
+                        _updateStatus(newStatus);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: newStatus == 'Diterima'
+                            ? Colors.deepPurple
+                            : Colors.red,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        newStatus == 'Diterima' ? 'Terima' : 'Tolak',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              _updateStatus(newStatus);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: newStatus == 'Diterima' ? Colors.green : Colors.red,
-            ),
-            child: Text(newStatus == 'Diterima' ? 'Terima' : 'Tolak'),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -116,9 +277,17 @@ class _DetailPesanWargaScreenState extends State<DetailPesanWargaScreen> {
         elevation: 0,
         foregroundColor: Colors.black,
         title: const Text(
-          'Detail Informasi / Aspirasi Warga',
+          'Detail Pesan Warga',
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
         ),
+        actions: [
+          if (status == 'Pending')
+            IconButton(
+              icon: const Icon(Icons.more_vert, color: Colors.black),
+              tooltip: 'Aksi Pesan',
+              onPressed: _isLoading ? null : _showActionBottomSheet,
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -134,32 +303,6 @@ class _DetailPesanWargaScreenState extends State<DetailPesanWargaScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: status == 'Pending'
-          ? Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : () => _showConfirmationDialog('Ditolak'),
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                      child: const Text('Tolak'),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : () => _showConfirmationDialog('Diterima'),
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                      child: const Text('Terima'),
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : null,
     );
   }
 }
-
- 

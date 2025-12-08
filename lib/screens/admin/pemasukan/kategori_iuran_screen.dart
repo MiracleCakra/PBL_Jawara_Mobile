@@ -265,167 +265,151 @@ class _KategoriIuranScreenState extends State<KategoriIuranScreen> {
   }
 
   void _showFilterDialog() {
+    String tempSelected = _selectedJenisFilter ?? 'Semua';
+
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Handle bar
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            // Header
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(24),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.filter_list,
-                      color: Colors.white,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'Jenis Iuran',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Options list
-            Container(
-              constraints: const BoxConstraints(maxHeight: 400),
-              child: ListView.separated(
-                shrinkWrap: true,
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                itemCount: _jenisIuranOptions.length,
-                separatorBuilder: (context, index) => Divider(
-                  height: 1,
-                  indent: 16,
-                  endIndent: 16,
-                  color: Colors.grey.shade200,
-                ),
-                itemBuilder: (context, index) {
-                  final option = _jenisIuranOptions[index];
-                  final isSelected =
-                      _selectedJenisFilter == option ||
-                      (_selectedJenisFilter == null && option == 'Semua');
-
-                  return Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () {
-                        setState(() {
-                          _selectedJenisFilter = option;
-                          _filterIuran(_searchController.text);
-                        });
-                        Navigator.pop(context);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 16,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? const Color(0xFF6366F1).withOpacity(0.08)
-                              : Colors.transparent,
-                        ),
-                        child: Row(
-                          children: [
-                            // Icon for each category
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? const Color(0xFF6366F1).withOpacity(0.1)
-                                    : Colors.grey.shade100,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(
-                                _getJenisIcon(option),
-                                color: isSelected
-                                    ? const Color(0xFF6366F1)
-                                    : Colors.grey.shade600,
-                                size: 20,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            // Text
-                            Expanded(
-                              child: Text(
-                                option,
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w600
-                                      : FontWeight.normal,
-                                  color: isSelected
-                                      ? const Color(0xFF6366F1)
-                                      : Colors.black87,
-                                ),
-                              ),
-                            ),
-                            // Checkmark
-                            if (isSelected)
-                              Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFF6366F1),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.check,
-                                  color: Colors.white,
-                                  size: 16,
-                                ),
-                              ),
-                          ],
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        final bottom = MediaQuery.of(context).viewInsets.bottom;
+        return Padding(
+          padding: EdgeInsets.only(bottom: bottom),
+          child: StatefulBuilder(
+            builder: (context, setModalState) {
+              return SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(2),
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Filter Kategori Iuran',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Jenis Iuran',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        key: const Key('dropdown_filter_jenis_iuran'),
+                        value: tempSelected,
+                        isExpanded: true,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF4E46B4),
+                              width: 1.2,
+                            ),
+                          ),
+                        ),
+                        items: _jenisIuranOptions
+                            .map(
+                              (option) => DropdownMenuItem(
+                                value: option,
+                                child: Text(option),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (v) =>
+                            setModalState(() => tempSelected = v ?? 'Semua'),
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.grey[300],
+                                foregroundColor: Colors.black,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 0,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _selectedJenisFilter = 'Semua';
+                                  _filterIuran(_searchController.text);
+                                });
+                                Navigator.pop(context);
+                              },
+                              child: const Text('Reset'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF4E46B4),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 0,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _selectedJenisFilter = tempSelected;
+                                  _filterIuran(_searchController.text);
+                                });
+                                Navigator.pop(context);
+                              },
+                              child: const Text('Terapkan'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 

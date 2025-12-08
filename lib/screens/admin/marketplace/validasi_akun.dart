@@ -2,46 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/store_model.dart';
+import 'package:jawara_pintar_kel_5/providers/marketplace/store_provider.dart';
+import 'package:provider/provider.dart';
 
-const Color unguColor = Color(0xFF6366F1);
-
-class StoreRegistration {
-  final String id;
-  final String storeName;
-  final String ownerName;
-  final String email;
-  final String phone;
-  final String address;
-  final String description;
-  final String timeSubmitted;
-  final String status; // 'Pending', 'Disetujui', 'Ditolak'
-
-  const StoreRegistration({
-    required this.id,
-    required this.storeName,
-    required this.ownerName,
-    required this.email,
-    required this.phone,
-    required this.address,
-    required this.description,
-    required this.timeSubmitted,
-    required this.status,
-  });
-
-  StoreRegistration copyWith({String? status}) {
-    return StoreRegistration(
-      id: id,
-      storeName: storeName,
-      ownerName: ownerName,
-      email: email,
-      phone: phone,
-      address: address,
-      description: description,
-      timeSubmitted: timeSubmitted,
-      status: status ?? this.status,
-    );
-  }
-}
+const Color primaryColor = Colors.blue;
 
 class Debouncer {
   final int milliseconds;
@@ -63,101 +29,73 @@ class ValidasiAkunTokoScreen extends StatefulWidget {
 }
 
 class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
-  List<StoreRegistration> _allRegistrations = [
-    const StoreRegistration(
-      id: 'S001',
-      storeName: 'SSS, Sayur Segar Susanto',
-      ownerName: 'Susanto',
-      email: 'susanto@email.com',
-      phone: '081234567890',
-      address: 'Jl. Anggrek No. 5, RT 001 / RW 001',
-      description:
-          'Menyediakan sayuran dan buah segar dari kebun lokal dengan pengiriman cepat ke seluruh RW.',
-      timeSubmitted: '10 menit lalu',
-      status: 'Pending',
-    ),
-    const StoreRegistration(
-      id: 'S002',
-      storeName: 'Sayur Ibu Dewi',
-      ownerName: 'Dewi Lestari',
-      email: 'dewi.lestari@email.com',
-      phone: '082345678901',
-      address: 'Jl. Mawar No. 12, RT 002 / RW 001',
-      description: 'Sayur lengkap dengan harga terjangkau, melayani COD.',
-      timeSubmitted: '10 jam lalu',
-      status: 'Disetujui',
-    ),
-    const StoreRegistration(
-      id: 'S003',
-      storeName: 'Toko Sayur Segar Pak Budi',
-      ownerName: 'Budi Santoso',
-      email: 'budi.santoso@email.com',
-      phone: '083456789012',
-      address: 'Jl. Melati No. 8, RT 003 / RW 001',
-      description:
-          'Menjual berbagai macam sayuran segar lokal dengan kualitas terbaik.',
-      timeSubmitted: '2 jam lalu',
-      status: 'Pending',
-    ),
-    const StoreRegistration(
-      id: 'S004',
-      storeName: 'Toko Sayur Murah',
-      ownerName: 'Ahmad Rifai',
-      email: 'ahmad.rifai@email.com',
-      phone: '084567890123',
-      address: 'Jl. Kenanga No. 3, RT 004 / RW 001',
-      description: 'Penyedia sayur dengan harga murah dan kualitas terjamin.',
-      timeSubmitted: '3 jam lalu',
-      status: 'Ditolak',
-    ),
-  ];
-
-  List<StoreRegistration> _filteredRegistrations = [];
+  List<StoreModel> _filteredStores = [];
   String _currentSearchQuery = '';
   String _currentFilterStatus = 'Semua';
   bool isFilterActive = false;
+  bool _isLoading = false;
 
   final Debouncer _debouncer = Debouncer(milliseconds: 300);
 
   @override
   void initState() {
     super.initState();
-    _filterList();
+    _loadStores();
   }
 
-  void _refreshListAfterAction(String registrationId, String newStatus) {
-    setState(() {
-      final index = _allRegistrations.indexWhere(
-        (item) => item.id == registrationId,
-      );
-      if (index != -1) {
-        _allRegistrations[index] = _allRegistrations[index].copyWith(
-          status: newStatus,
-        );
-        _filterList();
-      }
-    });
+  Future<void> _loadStores() async {
+    setState(() => _isLoading = true);
+
+    final storeProvider = Provider.of<StoreProvider>(context, listen: false);
+    await storeProvider.fetchAllStores();
+
+    _filterList();
+
+    setState(() => _isLoading = false);
   }
 
   void _filterList() {
+    final storeProvider = Provider.of<StoreProvider>(context, listen: false);
+    final allStores = storeProvider.stores;
+
     setState(() {
-      _filteredRegistrations = _allRegistrations.where((item) {
+      _filteredStores = allStores.where((store) {
         bool statusMatch =
             _currentFilterStatus == 'Semua' ||
-            item.status == _currentFilterStatus;
+            (store.verifikasi?.toLowerCase() ==
+                _currentFilterStatus.toLowerCase());
 
         bool searchMatch =
             _currentSearchQuery.isEmpty ||
-            item.storeName.toLowerCase().contains(
-              _currentSearchQuery.toLowerCase(),
-            ) ||
-            item.ownerName.toLowerCase().contains(
-              _currentSearchQuery.toLowerCase(),
-            );
+            (store.nama?.toLowerCase().contains(
+                  _currentSearchQuery.toLowerCase(),
+                ) ??
+                false) ||
+            (store.kontak?.toLowerCase().contains(
+                  _currentSearchQuery.toLowerCase(),
+                ) ??
+                false);
 
         return statusMatch && searchMatch;
       }).toList();
     });
+  }
+
+  String _getTimeAgo(DateTime? createdAt) {
+    if (createdAt == null) return 'Tidak diketahui';
+
+    final now = DateTime.now();
+    final difference = now.difference(createdAt);
+
+    if (difference.inMinutes < 60) {
+      return '${difference.inMinutes} menit lalu';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours} jam lalu';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} hari lalu';
+    } else {
+      return DateFormat('dd MMM yyyy').format(createdAt);
+    }
   }
 
   void _onSearchChanged(String query) {
@@ -170,82 +108,163 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
   }
 
   void _openFilterModal() {
-    final List<String> options = ['Semua', 'Pending', 'Disetujui', 'Ditolak'];
-    String? tempSelectedStatus = _currentFilterStatus;
+    final List<String> options = ['Semua', 'Pending', 'Diterima', 'Ditolak'];
+    String tempSelectedStatus = _currentFilterStatus;
 
     showModalBottomSheet(
       context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter modalSetState) {
-            return SafeArea(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: 12),
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (c) {
+        final bottom = MediaQuery.of(c).viewInsets.bottom;
+        return Padding(
+          padding: EdgeInsets.only(bottom: bottom),
+          child: StatefulBuilder(
+            builder: (context, setModalState) {
+              return SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Filter Status Akun Toko',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Status Verifikasi',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        key: const Key('dropdown_filter_status_verifikasi'),
+                        value: tempSelectedStatus,
+                        isExpanded: true,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Color(0xFF4E46B4), width: 1.2),
+                          ),
+                        ),
+                        items: options.map((option) => DropdownMenuItem(
+                          value: option,
+                          child: Text(option),
+                        )).toList(),
+                        onChanged: (v) => setModalState(() => tempSelectedStatus = v ?? 'Semua'),
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.grey[300],
+                                foregroundColor: Colors.black,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 0,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _currentFilterStatus = 'Semua';
+                                  isFilterActive = false;
+                                  _filterList();
+                                });
+                                Navigator.pop(context);
+                              },
+                              child: const Text('Reset'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF4E46B4),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 0,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _currentFilterStatus = tempSelectedStatus;
+                                  isFilterActive = tempSelectedStatus != 'Semua';
+                                  _filterList();
+                                });
+                                Navigator.pop(context);
+                              },
+                              child: const Text('Terapkan'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Filter Status',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  ...options.map((option) {
-                    final isSelected = option == tempSelectedStatus;
-                    return RadioListTile<String>(
-                      value: option,
-                      groupValue: tempSelectedStatus,
-                      title: Text(option),
-                      activeColor: unguColor,
-                      onChanged: (val) {
-                        modalSetState(() {
-                          tempSelectedStatus = val;
-                        });
-                        setState(() {
-                          _currentFilterStatus = val!;
-                          isFilterActive = val != 'Semua';
-                          _filterList();
-                        });
-                        Navigator.pop(context);
-                      },
-                    );
-                  }).toList(),
-                ],
-              ),
-            );
-          },
+                ),
+              );
+            },
+          ),
         );
       },
     );
   }
 
-  Widget _buildRegistrationCard(BuildContext context, StoreRegistration item) {
+  Widget _buildRegistrationCard(BuildContext context, StoreModel store) {
     Color statusColor;
     Color statusBgColor;
 
-    switch (item.status) {
-      case 'Pending':
-        statusColor = Colors.yellow.shade800;
-        statusBgColor = Colors.yellow.shade100;
+    final status = (store.verifikasi ?? 'Pending').toLowerCase();
+    switch (status) {
+      case 'pending':
+        statusColor = const Color(0xFFF59E0B);
+        statusBgColor = const Color(0xFFFEF3C7);
         break;
-      case 'Ditolak':
-        statusColor = Colors.red.shade800;
-        statusBgColor = Colors.red.shade100;
+      case 'ditolak':
+        statusColor = const Color(0xFFEF4444);
+        statusBgColor = const Color(0xFFFEE2E2);
         break;
-      case 'Disetujui':
-        statusColor = Colors.purple.shade800;
-        statusBgColor = Colors.purple.shade100;
+      case 'diterima':
+        statusColor = const Color(0xFF6366F1);;
+        statusBgColor = const Color(0xFFEDE7F6);
         break;
       default:
-        statusColor = Colors.red.shade800;
-        statusBgColor = Colors.red.shade100;
+        statusColor = const Color(0xFF6B7280);
+        statusBgColor = const Color(0xFFF3F4F6);
         break;
     }
 
@@ -257,7 +276,9 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
-          _showDetailDialog(context, item);
+          context.pushNamed('detailValidasiToko', extra: store).then((_) {
+            _loadStores();
+          });
         },
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -269,12 +290,12 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: unguColor.withOpacity(0.1),
+                      color: primaryColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
                       Icons.storefront,
-                      color: unguColor,
+                      color: primaryColor,
                       size: 24,
                     ),
                   ),
@@ -284,7 +305,7 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          item.storeName,
+                          store.nama ?? 'Nama Toko',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -295,7 +316,7 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Pemilik: ${item.ownerName}',
+                          'ID: ${store.storeId ?? '-'}',
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.grey.shade600,
@@ -306,18 +327,19 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
+                      horizontal: 10,
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
                       color: statusBgColor,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: statusColor.withOpacity(0.3)),
                     ),
                     child: Text(
-                      item.status,
+                      store.verifikasi ?? 'Pending',
                       style: TextStyle(
                         fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                         color: statusColor,
                       ),
                     ),
@@ -332,7 +354,7 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
                   Icon(Icons.phone, size: 16, color: Colors.grey.shade600),
                   const SizedBox(width: 6),
                   Text(
-                    item.phone,
+                    store.kontak ?? '-',
                     style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
                   ),
                   const SizedBox(width: 16),
@@ -344,7 +366,7 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      item.address,
+                      store.alamat ?? '-',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey.shade700,
@@ -365,7 +387,7 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    item.timeSubmitted,
+                    _getTimeAgo(store.createdAt),
                     style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
                   ),
                 ],
@@ -373,224 +395,6 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  void _showDetailDialog(BuildContext context, StoreRegistration item) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: unguColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.storefront,
-                        color: unguColor,
-                        size: 28,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Text(
-                        'Detail Pendaftaran Toko',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                _buildDetailRow('ID Pendaftaran', item.id),
-                _buildDetailRow('Nama Toko', item.storeName),
-                _buildDetailRow('Pemilik', item.ownerName),
-                _buildDetailRow('Email', item.email),
-                _buildDetailRow('No. HP', item.phone),
-                _buildDetailRow('Alamat', item.address),
-                _buildDetailRow(
-                  'Deskripsi',
-                  item.description,
-                  isMultiline: true,
-                ),
-                _buildDetailRow('Waktu Daftar', item.timeSubmitted),
-                _buildDetailRow('Status', item.status),
-                const SizedBox(height: 20),
-                if (item.status == 'Pending')
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            _handleReject(item);
-                          },
-                          icon: const Icon(Icons.close, size: 18),
-                          label: const Text('Tolak'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.red,
-                            side: const BorderSide(color: Colors.red),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            _handleApprove(item);
-                          },
-                          icon: const Icon(Icons.check, size: 18),
-                          label: const Text('Setujui'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: unguColor,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                        ),
-                      ),
-                    ],
-                  )
-                else
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey.shade300,
-                        foregroundColor: Colors.black87,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: const Text('Tutup'),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(
-    String label,
-    String value, {
-    bool isMultiline = false,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade600,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF1F2937),
-              fontWeight: FontWeight.w600,
-            ),
-            maxLines: isMultiline ? null : 1,
-            overflow: isMultiline ? null : TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _handleApprove(StoreRegistration item) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: const Text('Setujui Pendaftaran'),
-        content: Text(
-          'Apakah Anda yakin ingin menyetujui pendaftaran toko "${item.storeName}"?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            style: TextButton.styleFrom(backgroundColor: Colors.grey.shade300),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _refreshListAfterAction(item.id, 'Disetujui');
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Toko "${item.storeName}" telah disetujui'),
-                  backgroundColor: Colors.grey.shade800,
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: unguColor,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Setujui'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _handleReject(StoreRegistration item) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: const Text('Tolak Pendaftaran'),
-        content: Text(
-          'Apakah Anda yakin ingin menolak pendaftaran toko "${item.storeName}"?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            style: TextButton.styleFrom(backgroundColor: Colors.grey.shade300),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _refreshListAfterAction(item.id, 'Ditolak');
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Toko "${item.storeName}" telah ditolak'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Tolak'),
-          ),
-        ],
       ),
     );
   }
@@ -625,7 +429,10 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: unguColor, width: 2),
+                    borderSide: const BorderSide(
+                      color: Colors.deepPurple,
+                      width: 2,
+                    ),
                   ),
                 ),
                 style: const TextStyle(fontSize: 15),
@@ -652,7 +459,7 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
                 ),
                 child: Icon(
                   Icons.tune,
-                  color: isFilterActive ? unguColor : Colors.grey.shade600,
+                  color: isFilterActive ? primaryColor : Colors.grey.shade600,
                   size: 24,
                 ),
               ),
@@ -679,31 +486,60 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildFilterBar(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-            child: Text(
-              'Daftar Validasi (${_filteredRegistrations.length} data)',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildFilterBar(),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                  child: Text(
+                    'Daftar Validasi (${_filteredStores.length} data)',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: _filteredStores.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.store_mall_directory_outlined,
+                                size: 80,
+                                color: Colors.grey.shade400,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Tidak ada data toko',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: _loadStores,
+                          child: ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: _filteredStores.length,
+                            itemBuilder: (context, index) {
+                              return _buildRegistrationCard(
+                                context,
+                                _filteredStores[index],
+                              );
+                            },
+                          ),
+                        ),
+                ),
+              ],
             ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _filteredRegistrations.length,
-              itemBuilder: (context, index) {
-                return _buildRegistrationCard(
-                  context,
-                  _filteredRegistrations[index],
-                );
-              },
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

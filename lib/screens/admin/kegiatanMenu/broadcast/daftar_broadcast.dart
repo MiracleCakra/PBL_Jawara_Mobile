@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:jawara_pintar_kel_5/models/kegiatan/broadcast_model.dart';
 import 'package:jawara_pintar_kel_5/services/broadcast_service.dart';
-import 'tambah_broadcast.dart';
-import 'edit_broadcast_screen.dart';
-import 'detail_broadcast_screen.dart';
+import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
 import 'broadcast_filter_screen.dart';
+import 'detail_broadcast_screen.dart';
+import 'tambah_broadcast.dart';
 
 class DaftarBroadcastScreen extends StatefulWidget {
   const DaftarBroadcastScreen({super.key});
@@ -31,7 +31,6 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
 
   void _refreshData() {
     setState(() {
-      // Kita panggil ulang service-nya agar mengambil data terbaru dari database/API
       _broadcastStream = _broadcastService.getBroadcastsStream();
     });
   }
@@ -90,47 +89,6 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
     );
     _refreshData();
   }
-
-  void _navigateToEditBroadcast(BroadcastModel broadcast) async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => EditBroadcastScreen(broadcast: broadcast),
-      ),
-    );
-    _refreshData();
-  }
-
-Future<void> _deleteBroadcast(BroadcastModel broadcast) async {
-  try {
-    await _broadcastService.deleteBroadcast(broadcast.id!);
-    setState(() {
-      _broadcastStream = Stream.empty();
-    });
-    await Future.delayed(const Duration(milliseconds: 100));
-    setState(() {
-      _broadcastStream = _broadcastService.getBroadcastsStream();
-    });
-    _refreshData(); 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Broadcast "${broadcast.judul}" telah dihapus.'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    }
-  } catch (e) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Gagal menghapus broadcast: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-}
 
   Widget _buildFilterBar() {
     return Padding(
@@ -258,13 +216,22 @@ Future<void> _deleteBroadcast(BroadcastModel broadcast) async {
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          Text(
-                            broadcast.pengirim,
-                            style: TextStyle(fontSize: 14, color: detailColor),
+                          Flexible(
+                            child: Text(
+                              broadcast.pengirim,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: detailColor,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
 
                           const Text(
@@ -288,35 +255,13 @@ Future<void> _deleteBroadcast(BroadcastModel broadcast) async {
                           fontSize: 13,
                           color: Colors.grey.shade600,
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
                 ),
-                PopupMenuButton<String>(
-                  onSelected: (value) {
-                    if (value == 'edit') {
-                      _navigateToEditBroadcast(broadcast);
-                    } else if (value == 'delete') {
-                      _deleteBroadcast(broadcast);
-                    }
-                  },
-                  itemBuilder: (BuildContext context) =>
-                      <PopupMenuEntry<String>>[
-                        const PopupMenuItem<String>(
-                          value: 'edit',
-
-                          child: Text('Edit'),
-                        ),
-
-                        const PopupMenuItem<String>(
-                          value: 'delete',
-
-                          child: Text('Delete'),
-                        ),
-                      ],
-
-                  icon: const Icon(Icons.more_vert, color: Colors.grey),
-                ),
+                const Icon(Icons.chevron_right, color: Colors.grey, size: 28),
               ],
             ),
           ),
@@ -327,7 +272,9 @@ Future<void> _deleteBroadcast(BroadcastModel broadcast) async {
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Colors.deepPurple;
+    // ignore: unused_local_variable
+    const primaryColor =
+        Colors.deepPurple; // Deprecated, use ConstantColors.primary
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -409,7 +356,7 @@ Future<void> _deleteBroadcast(BroadcastModel broadcast) async {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _navigateToAddBroadcast,
-        backgroundColor: primaryColor,
+        backgroundColor: ConstantColors.primary,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(15.0),
         ),

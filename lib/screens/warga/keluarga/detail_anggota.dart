@@ -75,8 +75,6 @@ class DetailAnggotaKeluargaPage extends StatelessWidget {
           _SectionCard(
             title: "Data Diri",
             children: [
-              _IconRow(icon: Icons.person, label: "Nama", value: data.nama),
-              _IconRow(icon: Icons.badge, label: "NIK", value: data.nik),
               _IconRow(
                 icon: Icons.phone,
                 label: "Nomor Telepon",
@@ -96,6 +94,11 @@ class DetailAnggotaKeluargaPage extends StatelessWidget {
                 icon: Icons.event,
                 label: "Tanggal Lahir",
                 value: formattedDate,
+              ),
+              _IconRow(
+                icon: Icons.home,
+                label: "Rumah Saat Ini",
+                value: data.rumahSaatIni ?? "-",
               ),
             ],
           ),

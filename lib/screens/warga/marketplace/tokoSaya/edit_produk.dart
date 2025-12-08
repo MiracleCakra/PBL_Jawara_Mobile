@@ -105,25 +105,38 @@ class _MyStoreProductEditScreenState extends State<MyStoreProductEditScreen> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
-      // Show loading
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(child: CircularProgressIndicator()),
-      );
-
       String? imageUrl = _currentImageUrl; // Use existing image by default
 
       // Upload new image if selected
       if (_imageFile != null) {
+        // Show loading only when uploading image
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text(
+                  'Mengupload gambar...',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+        );
+
         try {
           imageUrl = await _productService.uploadProductImage(
             _imageFile!,
             widget.product.storeId!,
           );
 
+          if (mounted) Navigator.pop(context); // Close loading
+
           if (imageUrl == null) {
-            if (mounted) Navigator.pop(context); // Close loading
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -144,6 +157,7 @@ class _MyStoreProductEditScreenState extends State<MyStoreProductEditScreen> {
           }
         } catch (e) {
           if (mounted) Navigator.pop(context); // Close loading
+
           if (mounted) {
             String errorMessage = 'Error upload gambar: $e';
 
@@ -184,13 +198,12 @@ class _MyStoreProductEditScreenState extends State<MyStoreProductEditScreen> {
         createdAt: widget.product.createdAt,
       );
 
-      if (mounted) Navigator.pop(context); // Close loading
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${updatedProduct.nama} berhasil diperbarui.'),
-            backgroundColor: Colors.grey.shade800,
+            content: Text('${updatedProduct.nama} berhasil diperbarui'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
           ),
         );
         context.pop(updatedProduct);

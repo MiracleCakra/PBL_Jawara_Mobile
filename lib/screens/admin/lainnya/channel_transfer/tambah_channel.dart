@@ -58,7 +58,7 @@ class _TambahChannelPageState extends State<TambahChannelPage> {
         if (size > 2 * 1024 * 1024) {
            if (!mounted) return;
            ScaffoldMessenger.of(context).showSnackBar(
-             const SnackBar(content: Text("Ukuran gambar maksimal 2MB")),
+             SnackBar(content: const Text("Ukuran gambar maksimal 2MB"), backgroundColor: Colors.grey.shade800),
            );
            return;
         }
@@ -74,7 +74,7 @@ class _TambahChannelPageState extends State<TambahChannelPage> {
   Future<void> _saveData() async {
     if (_namaChannelCtl.text.isEmpty || _tipeChannel == null || _nomorRekeningCtl.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mohon lengkapi data wajib (Nama, Tipe, No. Rek)')),
+        SnackBar(content: const Text('Mohon lengkapi data wajib (Nama, Tipe, No. Rek)'), backgroundColor: Colors.grey.shade800),
       );
       return;
     }
@@ -105,14 +105,14 @@ class _TambahChannelPageState extends State<TambahChannelPage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Channel berhasil disimpan!'), backgroundColor: Colors.green),
+          SnackBar(content: const Text('Channel berhasil disimpan!'), backgroundColor: Colors.grey.shade800),
         );
         context.pop();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal menyimpan: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Gagal menyimpan: $e'), backgroundColor: Colors.grey.shade800),
         );
       }
     } finally {

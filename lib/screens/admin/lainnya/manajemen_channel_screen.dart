@@ -16,7 +16,7 @@ class _ChannelTransferScreenState extends State<ChannelTransferScreen> {
   final FocusNode _searchFocusNode = FocusNode();
   final ChannelTransferService _channelService = ChannelTransferService();
   late Stream<List<ChannelTransferModel>> _channelStream;
-  
+
   String _query = '';
   String? _selectedTypeFilter;
 
@@ -27,7 +27,7 @@ class _ChannelTransferScreenState extends State<ChannelTransferScreen> {
 
     Future.delayed(const Duration(milliseconds: 50), () {
       setState(() {
-        _channelStream = _channelService.getChannelsStream(); 
+        _channelStream = _channelService.getChannelsStream();
       });
     });
   }
@@ -41,9 +41,11 @@ class _ChannelTransferScreenState extends State<ChannelTransferScreen> {
   List<ChannelTransferModel> _applyFilter(List<ChannelTransferModel> data) {
     return data.where((channel) {
       final searchLower = _query.toLowerCase();
-      final matchesSearch = channel.nama.toLowerCase().contains(searchLower) ||
+      final matchesSearch =
+          channel.nama.toLowerCase().contains(searchLower) ||
           channel.pemilik.toLowerCase().contains(searchLower);
-      final matchesType = _selectedTypeFilter == null || 
+      final matchesType =
+          _selectedTypeFilter == null ||
           channel.tipe.toLowerCase() == _selectedTypeFilter!.toLowerCase();
 
       return matchesSearch && matchesType;
@@ -51,16 +53,17 @@ class _ChannelTransferScreenState extends State<ChannelTransferScreen> {
   }
 
   void _openFilter() {
-    String? tempType = _selectedTypeFilter;
+    String tempSelected = _selectedTypeFilter ?? 'Semua';
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (c) {
-        final bottom = MediaQuery.of(c).viewInsets.bottom;
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        final bottom = MediaQuery.of(context).viewInsets.bottom;
         return Padding(
           padding: EdgeInsets.only(bottom: bottom),
           child: StatefulBuilder(
@@ -84,45 +87,84 @@ class _ChannelTransferScreenState extends State<ChannelTransferScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      const Text('Filter Channel Transfer',
-                          style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.w700)),
+                      const Text(
+                        'Filter Channel Transfer',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                       const SizedBox(height: 16),
-                      const Text('Tipe Channel',
-                          style: TextStyle(fontWeight: FontWeight.w600)),
+                      const Text(
+                        'Tipe Channel',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
-                        value: tempType,
+                        key: const Key('dropdown_filter_tipe_channel'),
+                        value: tempSelected,
                         isExpanded: true,
-                        decoration: _dropdownDecoration(),
-                        items: const [
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF4E46B4),
+                              width: 1.2,
+                            ),
+                          ),
+                        ),
+                        items: [
+                          DropdownMenuItem(
+                            value: 'Semua',
+                            child: Text('Semua'),
+                          ),
                           DropdownMenuItem(value: 'Bank', child: Text('Bank')),
                           DropdownMenuItem(value: 'QRIS', child: Text('QRIS')),
                           DropdownMenuItem(
-                              value: 'e-wallet', child: Text('E-Wallet')),
+                            value: 'e-wallet',
+                            child: Text('E-Wallet'),
+                          ),
                         ],
-                        onChanged: (v) => setModalState(() => tempType = v),
+                        onChanged: (v) =>
+                            setModalState(() => tempSelected = v ?? 'Semua'),
                       ),
                       const SizedBox(height: 20),
                       Row(
                         children: [
                           Expanded(
-                            child: OutlinedButton(
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                side: const BorderSide(
-                                    color: Color.fromRGBO(78, 70, 180, 0.12)),
-                                backgroundColor: const Color(0xFFF4F3FF),
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.grey[300],
+                                foregroundColor: Colors.black,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                                 shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12)),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 0,
                               ),
                               onPressed: () {
-                                setModalState(() {
-                                  tempType = null;
+                                setState(() {
+                                  _selectedTypeFilter = 'Semua';
                                 });
+                                Navigator.pop(context);
                               },
-                              child: const Text('Reset Filter',
-                                  style: TextStyle(fontWeight: FontWeight.w600)),
+                              child: const Text('Reset'),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -131,18 +173,21 @@ class _ChannelTransferScreenState extends State<ChannelTransferScreen> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF4E46B4),
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                                 shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12)),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 0,
                               ),
                               onPressed: () {
                                 setState(() {
-                                  _selectedTypeFilter = tempType;
+                                  _selectedTypeFilter = tempSelected;
                                 });
                                 Navigator.pop(context);
                               },
-                              child: const Text('Terapkan',
-                                  style: TextStyle(fontWeight: FontWeight.w600)),
+                              child: const Text('Terapkan'),
                             ),
                           ),
                         ],
@@ -214,9 +259,7 @@ class _ChannelTransferScreenState extends State<ChannelTransferScreen> {
         },
         backgroundColor: primary,
         foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: const Icon(Icons.add, size: 28),
       ),
       body: SafeArea(
@@ -249,19 +292,23 @@ class _ChannelTransferScreenState extends State<ChannelTransferScreen> {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
-                  
+
                   if (snapshot.hasError) {
                     return Center(child: Text("Error: ${snapshot.error}"));
                   }
 
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text("Belum ada channel transfer."));
+                    return const Center(
+                      child: Text("Belum ada channel transfer."),
+                    );
                   }
 
                   final filteredList = _applyFilter(snapshot.data!);
 
                   if (filteredList.isEmpty) {
-                    return const Center(child: Text("Tidak ada data yang cocok."));
+                    return const Center(
+                      child: Text("Tidak ada data yang cocok."),
+                    );
                   }
 
                   return Padding(
@@ -322,7 +369,10 @@ class _SearchFilterBar extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: Colors.grey.shade400, width: 1.0),
                 boxShadow: const [
-                  BoxShadow(color: Color.fromRGBO(0, 0, 0, 0.03), blurRadius: 8),
+                  BoxShadow(
+                    color: Color.fromRGBO(0, 0, 0, 0.03),
+                    blurRadius: 8,
+                  ),
                 ],
               ),
               child: TextField(
@@ -331,11 +381,18 @@ class _SearchFilterBar extends StatelessWidget {
                 onChanged: onChanged,
                 onTap: () => focusNode.requestFocus(),
                 decoration: InputDecoration(
-                  prefixIcon: Icon(Icons.search, size: 20, color: Colors.grey[600]),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    size: 20,
+                    color: Colors.grey[600],
+                  ),
                   hintText: 'Cari Nama Channel / Pemilik...',
                   hintStyle: TextStyle(color: Colors.grey[500]),
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 12,
+                  ),
                 ),
               ),
             ),
@@ -353,7 +410,10 @@ class _SearchFilterBar extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: Colors.grey.shade400, width: 1.0),
                   boxShadow: const [
-                    BoxShadow(color: Color.fromRGBO(0, 0, 0, 0.03), blurRadius: 8),
+                    BoxShadow(
+                      color: Color.fromRGBO(0, 0, 0, 0.03),
+                      blurRadius: 8,
+                    ),
                   ],
                 ),
                 child: const Icon(Icons.tune, color: Colors.black, size: 22),
@@ -377,21 +437,37 @@ class _ChannelCard extends StatelessWidget {
     this.onTap,
   });
 
+  // Badge style mirip validasi akun
   Color _getTypeColor(String type) {
     switch (type.toLowerCase()) {
       case 'bank':
         return const Color(0xFF4E46B4);
       case 'qris':
-        return Colors.orange.shade700;
+        return const Color(0xFFF59E0B);
       case 'e-wallet':
-        return Colors.green.shade700;
+        return const Color(0xFF10B981);
       default:
-        return const Color(0xFF4E46B4);
+        return const Color(0xFF6B7280);
+    }
+  }
+
+  Color _getTypeBgColor(String type) {
+    switch (type.toLowerCase()) {
+      case 'bank':
+        return const Color(0xFFEDE7F6);
+      case 'qris':
+        return const Color(0xFFFFF7E6);
+      case 'e-wallet':
+        return const Color(0xFFE6FFF5);
+      default:
+        return const Color(0xFFF3F4F6);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final typeColor = _getTypeColor(channel.tipe);
+    final typeBgColor = _getTypeBgColor(channel.tipe);
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(12),
@@ -435,17 +511,21 @@ class _ChannelCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
-                  color: _getTypeColor(channel.tipe),
-                  borderRadius: BorderRadius.circular(6),
+                  color: typeBgColor,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: typeColor.withOpacity(0.3)),
                 ),
                 child: Text(
                   channel.tipe,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: typeColor,
                     fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),

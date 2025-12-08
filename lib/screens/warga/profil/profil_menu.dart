@@ -1,40 +1,153 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jawara_pintar_kel_5/models/keluarga/warga_model.dart';
+import 'package:jawara_pintar_kel_5/services/warga_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class ProfilMenuWarga extends StatelessWidget {
+class ProfilMenuWarga extends StatefulWidget {
   const ProfilMenuWarga({super.key});
 
-  static const Color _primaryColor = Color(0xFF4E46B4); 
+  @override
+  State<ProfilMenuWarga> createState() => _ProfilMenuWargaState();
+}
+
+class _ProfilMenuWargaState extends State<ProfilMenuWarga> {
+  static const Color _primaryColor = Color(0xFF4E46B4);
   static const Color _secondaryColor = Color(0xFF6366F1);
   static const Color _accentColor = Color(0xFF3B82F6);
   static const Color _logoutColor = Color(0xFFEF4444);
 
-  final String namaWarga = 'Santoso';
-  final String noKtp = '3200101234567890';
-  final String alamat = 'Blok C No. 5, RT 001 / RW 001';
+  final WargaService _wargaService = WargaService();
+  Warga? _currentUserWarga;
+  bool _isLoading = true;
+  String _userEmail = '';
 
-  void _onLogout(BuildContext context) {
+  @override
+  void initState() {
+    super.initState();
+    _userEmail = Supabase.instance.client.auth.currentUser?.email ?? '';
+    _fetchUserData();
+  }
+
+  Future<void> _fetchUserData() async {
+    try {
+      final warga = await _wargaService.getWargaByEmail(_userEmail);
+      if (mounted) {
+        setState(() {
+          _currentUserWarga = warga;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        debugPrint("Error fetching profile: $e");
+      }
+    }
+  }
+
+  Future<void> _onLogout(BuildContext context) async {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Konfirmasi Keluar'),
-        content: const Text('Apakah Anda yakin ingin keluar dari aplikasi?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _logoutColor,
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: _logoutColor.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.logout,
+                    color: _logoutColor,
+                    size: 48,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Keluar dari Aplikasi',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Apakah Anda yakin ingin keluar dari aplikasi? Anda harus login kembali untuk mengakses aplikasi.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black54,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          side: BorderSide(
+                            color: Colors.grey.shade300,
+                            width: 1.5,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: Text(
+                          'Batal',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey.shade800,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          context.replace('/login');
+                        },
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          backgroundColor: _logoutColor,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          'Keluar',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            onPressed: () {
-              context.replace('/login');
-            },
-            child: const Text('Keluar', style: TextStyle(color: Colors.white)),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -53,90 +166,86 @@ class ProfilMenuWarga extends StatelessWidget {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildProfileCard(context),
-            const SizedBox(height: 24),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildProfileCard(context),
+                  const SizedBox(height: 24),
 
-            const Text(
-              'Pengaturan & Bantuan',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1F2937),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              mainAxisSpacing: 16,
-              crossAxisSpacing: 16,
-              childAspectRatio: 1.0,
-              children: [
-                _buildMenuItem(
-                  context,
-                  icon: Icons.account_circle,
-                  label: 'Lihat Profil',
-                  color: _primaryColor,
-                  onTap: () => context.push('/warga/profil/data-diri'),
-                ),
-                _buildMenuItem(
-                  context,
-                  icon: Icons.settings,
-                  label: 'Pengaturan Akun',
-                  color:_accentColor,
-                  onTap: () => context.push('/warga/profil/pengaturan'),
-                ),
-                _buildMenuItem(
-                  context,
-                  icon: Icons.help_outline,
-                  label: 'Pusat Bantuan',
-                  color: _secondaryColor,
-                  onTap: () => context.push('/warga/profil/bantuan'),
-                ),
-                _buildMenuItem(
-                  context,
-                  icon: Icons.info_outline,
-                  label: 'Tentang Aplikasi',
-                  color: _primaryColor.withOpacity(0.7),
-                  onTap: () => context.push('/warga/profil/about'), 
-                ),
-              ],
-            ),
-            const SizedBox(height: 30),
-
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () => _onLogout(context),
-                icon: const Icon(Icons.logout, color: Colors.white),
-                label: const Text(
-                  'Keluar',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _logoutColor,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                  const Text(
+                    'Pengaturan & Bantuan',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1F2937),
+                    ),
                   ),
-                  elevation: 0,
-                ),
+                  const SizedBox(height: 16),
+
+                  GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                    childAspectRatio: 1.0,
+                    children: [
+                      _buildMenuItem(
+                        context,
+                        icon: Icons.account_circle,
+                        label: 'Lihat Profil',
+                        color: _primaryColor,
+                        onTap: () async {
+                          await context.push('/warga/profil/data-diri');
+                          _fetchUserData();
+                        },
+                      ),
+                      _buildMenuItem(
+                        context,
+                        icon: Icons.settings,
+                        label: 'Pengaturan Akun',
+                        color: _accentColor,
+                        onTap: () => context.push('/warga/profil/pengaturan'),
+                      ),
+                      _buildMenuItem(
+                        context,
+                        icon: Icons.help_outline,
+                        label: 'Pusat Bantuan',
+                        color: _secondaryColor,
+                        onTap: () => context.push('/warga/profil/bantuan'),
+                      ),
+                      _buildMenuItem(
+                        context,
+                        icon: Icons.info_outline,
+                        label: 'Tentang Aplikasi',
+                        color: _primaryColor.withOpacity(0.7),
+                        onTap: () => context.push('/warga/profil/about'),
+                      ),
+                      _buildMenuItem(
+                        context,
+                        icon: Icons.logout,
+                        label: 'Keluar',
+                        color: _logoutColor,
+                        onTap: () => _onLogout(context),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 30),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
     );
   }
 
   Widget _buildProfileCard(BuildContext context) {
+    final namaWarga = _currentUserWarga?.nama ?? 'Warga';
+    final noKtp = _currentUserWarga?.id ?? '-'; // Menggunakan ID sebagai NIK
+    final alamat = _currentUserWarga?.keluarga?.alamatRumah ?? '-';
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -157,7 +266,12 @@ class ProfilMenuWarga extends StatelessWidget {
           CircleAvatar(
             radius: 30,
             backgroundColor: _primaryColor.withOpacity(0.15),
-            child: Icon(Icons.person, size: 36, color:_primaryColor),
+            backgroundImage: _currentUserWarga?.fotoProfil != null
+                ? NetworkImage(_currentUserWarga!.fotoProfil!)
+                : null,
+            child: _currentUserWarga?.fotoProfil == null
+                ? Icon(Icons.person, size: 36, color: _primaryColor)
+                : null,
           ),
           const SizedBox(width: 16),
           // Detail Profil
@@ -177,17 +291,11 @@ class ProfilMenuWarga extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   'NIK: $noKtp',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
                 Text(
                   alamat,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
               ],
             ),

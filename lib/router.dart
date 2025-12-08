@@ -16,6 +16,8 @@ import 'package:jawara_pintar_kel_5/models/marketplace/marketplace_model.dart'
 import 'package:jawara_pintar_kel_5/models/marketplace/order_model.dart'
     as o_model;
 import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
+import 'package:jawara_pintar_kel_5/models/marketplace/store_model.dart';
+// ----------------------- ADMIN ---------------------
 // Broadcast
 import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/broadcast/daftar_broadcast.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/broadcast/detail_broadcast_screen.dart';
@@ -52,10 +54,13 @@ import 'package:jawara_pintar_kel_5/screens/admin/lainnya/pengguna/edit_pengguna
 import 'package:jawara_pintar_kel_5/screens/admin/lainnya/pengguna/tambah_pengguna.dart';
 // ========================= LAPORAN =========================
 import 'package:jawara_pintar_kel_5/screens/admin/laporan/cetak_laporan_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/laporan/pemasukan_lain_tambah_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/laporan/semua_pemasukan_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/laporan/semua_pengeluaran_screen.dart';
 // Layout
 import 'package:jawara_pintar_kel_5/screens/admin/layout.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/marketplace/daftar_produk.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/marketplace/detail_validasi_toko.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/marketplace/menu_marketplace.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/marketplace/validasi_akun.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/marketplace/validasiproduk.dart';
@@ -63,7 +68,6 @@ import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/detail_pemasukan_lai
 // Pemasukan
 import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/kategori_iuran_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/pemasukan_lain_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/laporan/pemasukan_lain_tambah_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/pemasukan_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/tagih_iuran_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/tagihan_screen.dart';
@@ -168,6 +172,8 @@ import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/store_das
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/store_pending_validasi.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/store_product_detail.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/tambah_produk.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/profil/edit_profil.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/profil/pengaturan_akun.dart';
 // Profil
 import 'package:jawara_pintar_kel_5/screens/warga/profil/profil_menu.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/profil/profil_screen.dart';
@@ -391,12 +397,15 @@ final router = GoRouter(
             GoRoute(
               path: '/admin/marketplace/validasiproduk',
               name: 'validasiProdukList',
-              builder: (context, state) => const ValidasiProdukBaruScreen(),
+              builder: (context, state) => const DaftarTokoAktifScreen(),
             ),
             GoRoute(
-              path: '/admin/marketplace/validasiakuntoko',
-              name: 'validasiAkunToko',
-              builder: (context, state) => const ValidasiAkunTokoScreen(),
+              path: '/admin/marketplace/daftarproduk',
+              name: 'DaftarProdukToko',
+              builder: (context, state) {
+                final store = state.extra as StoreModel;
+                return DaftarProdukTokoScreen(store: store);
+              },
             ),
             GoRoute(
               path: '/admin/marketplace/detail',
@@ -404,6 +413,20 @@ final router = GoRouter(
               builder: (context, state) {
                 final product = state.extra as m_model.ActiveProductItem;
                 return DetailValidasiProdukScreen(product: product);
+              },
+            ),
+
+            GoRoute(
+              path: '/admin/marketplace/validasiakuntoko',
+              name: 'validasiAkunToko',
+              builder: (context, state) => const ValidasiAkunTokoScreen(),
+            ),
+            GoRoute(
+              path: '/admin/marketplace/validasiakuntoko/detail',
+              name: 'detailValidasiToko',
+              builder: (context, state) {
+                final store = state.extra as StoreModel;
+                return DetailValidasiTokoScreen(store: store);
               },
             ),
           ],
@@ -502,7 +525,7 @@ final router = GoRouter(
               path: '/admin/lainnya/manajemen-pengguna/detail',
               name: 'penggunaDetail',
               builder: (context, state) {
-                final userdata = state.extra as Map<String, String>? ?? {};
+                final userdata = state.extra as Map<String, dynamic>? ?? {};
                 return DetailPenggunaScreen(userData: userdata);
               },
             ),
@@ -510,7 +533,7 @@ final router = GoRouter(
               path: '/admin/lainnya/manajemen-pengguna/edit',
               name: 'penggunaEdit',
               builder: (context, state) {
-                final userdata = state.extra as Map<String, String>? ?? {};
+                final userdata = state.extra as Map<String, dynamic>? ?? {};
                 return EditPenggunaScreen(userData: userdata);
               },
             ),
@@ -1253,8 +1276,15 @@ final router = GoRouter(
                           path: 'bayar',
                           name: 'FormPembayaranWarga',
                           builder: (context, state) {
-                            final tagihan = state.extra as WargaTagihanModel;
-                            return FormPembayaranScreen(tagihan: tagihan);
+                            final data = state.extra as Map<String, dynamic>;
+                            final tagihan =
+                                data['tagihan'] as WargaTagihanModel;
+                            final channel =
+                                data['channel'] as Map<String, String>?;
+                            return FormPembayaranScreen(
+                              tagihan: tagihan,
+                              channel: channel,
+                            );
                           },
                         ),
                       ],
@@ -1619,12 +1649,15 @@ final router = GoRouter(
                 ),
                 GoRoute(
                   path: 'edit-data',
-                  builder: (context, state) => const EditStoreProfileScreen(),
+                  builder: (context, state) {
+                    final initialData = state.extra as Map<String, dynamic>? ?? {};
+                    return WargaEditDataDiriScreen(initialData: initialData);
+                  },
                 ),
                 GoRoute(
                   path: 'pengaturan',
                   name: 'WargaPengaturanAkun',
-                  builder: (context, state) => const MyStoreSettingsScreen(),
+                  builder: (context, state) => const PengaturanAkunScreen(),
                   routes: [
                     GoRoute(
                       path: 'ganti-password',

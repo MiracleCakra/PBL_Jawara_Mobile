@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jawara_pintar_kel_5/models/keluarga/warga_model.dart';
+import 'package:jawara_pintar_kel_5/services/pengguna_service.dart';
 
 class DetailPenggunaScreen extends StatelessWidget {
-  final Map<String, String> userData;
+  final Map<String, dynamic> userData;
 
   const DetailPenggunaScreen({super.key, required this.userData});
 
-  // Fungsi untuk mendapatkan warna status (disalin dari ManajemenPenggunaScreen)
   Color _getStatusColor(String? status) {
     switch (status?.toLowerCase()) {
       case 'diterima':
@@ -20,86 +21,8 @@ class DetailPenggunaScreen extends StatelessWidget {
     }
   }
 
-  // --- FUNGSI BARU UNTUK BOTTOM SHEET & DIALOG ---
-
   void _navigateToEdit(BuildContext context) {
-    // Navigasi ke EditPenggunaScreen (Diasumsikan rute sudah terdaftar)
     context.push('/admin/lainnya/manajemen-pengguna/edit', extra: userData);
-  }
-
-  void _showDeleteDialog(BuildContext context) {
-    final namaPengguna = userData['name'] ?? 'Pengguna';
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Text(
-            'Konfirmasi Hapus',
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
-          ),
-          content: Text(
-            'Apakah kamu yakin ingin menghapus pengguna "$namaPengguna"? Aksi ini tidak dapat dibatalkan.',
-          ),
-          actionsAlignment: MainAxisAlignment.center,
-          actions: [
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.grey[500],
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-              ),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Batal', style: TextStyle(color: Colors.white)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-                side: const BorderSide(color: Colors.red),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 10,
-                ),
-              ),
-              onPressed: () {
-                Navigator.pop(context);
-                context.pop(); // Kembali ke halaman Manajemen Pengguna
-                
-                // Logic hapus data pengguna di sini
-                
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Pengguna "$namaPengguna" telah dihapus.'),
-                    backgroundColor: const Color(0xFF2E2B32),
-                  ),
-                );
-              },
-              child: const Text(
-                'Hapus',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   void _showActionBottomSheet(BuildContext context) {
@@ -155,17 +78,6 @@ class DetailPenggunaScreen extends StatelessWidget {
                   _navigateToEdit(context);
                 },
               ),
-              // OPSI HAPUS DATA
-              _buildOptionTile(
-                icon: Icons.delete_forever,
-                color: Colors.red.shade600,
-                title: 'Hapus Data',
-                subtitle: 'Hapus pengguna ini secara permanen',
-                onTap: () {
-                  Navigator.pop(bc);
-                  _showDeleteDialog(context);
-                },
-              ),
             ],
           ),
         );
@@ -202,10 +114,10 @@ class DetailPenggunaScreen extends StatelessWidget {
                 Text(
                   title,
                   style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      // Jika judul mengandung 'Hapus', gunakan warna ikon, jika tidak, gunakan hitam
-                      color: title.contains('Hapus') ? color : Colors.black), 
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: title.contains('Hapus') ? color : Colors.black,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -235,19 +147,16 @@ class DetailPenggunaScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 16,
-            color: Colors.black,
-          ),
-        ),
+        Text(value, style: const TextStyle(fontSize: 16, color: Colors.black)),
       ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final PenggunaService penggunaService = PenggunaService();
+    final String userId = userData['id'];
+
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7FB),
       appBar: AppBar(
@@ -268,7 +177,6 @@ class DetailPenggunaScreen extends StatelessWidget {
           ),
         ),
         actions: [
-          // --- PENGGANTIAN DI SINI: IconButton memanggil BottomSheet ---
           IconButton(
             icon: const Icon(Icons.more_vert, color: Colors.black),
             onPressed: () => _showActionBottomSheet(context),
@@ -278,109 +186,153 @@ class DetailPenggunaScreen extends StatelessWidget {
         ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Detail Card
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color.fromRGBO(0, 0, 0, 0.04),
-                      blurRadius: 8,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
+        child: StreamBuilder<Warga>(
+          stream: penggunaService.streamUserById(userId),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (snapshot.hasError || !snapshot.hasData) {
+              return const Center(
+                child: Text(
+                  'Data pengguna tidak ditemukan (mungkin sudah dihapus).',
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Profile Section
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        CircleAvatar(
-                          radius: 32,
-                          backgroundColor: Colors.grey.shade300,
-                          // Image logic dibiarkan apa adanya, meskipun userData['imageUrl'] belum terdefinisi di data list Anda
-                          backgroundImage: userData['imageUrl'] != null
-                              ? NetworkImage(userData['imageUrl']!)
-                              : null,
-                          child: userData['imageUrl'] == null
-                              ? Icon(
-                                  Icons.person,
-                                  size: 32,
-                                  color: Colors.grey.shade600,
-                                )
-                              : null,
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                userData['name'] ?? 'Nama Tidak Tersedia',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                userData['role'] ?? 'Role Tidak Tersedia',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey.shade700,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        // Status Badge
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _getStatusColor(userData['status']),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            userData['status'] ?? 'Aktif',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+              );
+            }
+
+            final warga = snapshot.data!;
+
+            final displayData = {
+              'id': warga.id,
+              'name': warga.nama,
+              'role': warga.role ?? '-',
+              'status': warga.statusPenduduk?.value ?? 'Nonaktif',
+              'nik': warga.id,
+              'email': warga.email ?? '-',
+              'phone': warga.telepon ?? '-',
+              'gender': warga.gender?.value ?? '-',
+              'imageUrl': warga.fotoProfil,
+            };
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color.fromRGBO(0, 0, 0, 0.04),
+                          blurRadius: 8,
+                          offset: Offset(0, 2),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 24),
-                    // Detail Information
-                    _buildDetailItem(label: 'NIK', value: userData['nik'] ?? '-'),
-                    const SizedBox(height: 16),
-                    _buildDetailItem(label: 'Email', value: userData['email'] ?? '-'),
-                    const SizedBox(height: 16),
-                    _buildDetailItem(label: 'Nomor HP', value: userData['phone'] ?? '-'),
-                    const SizedBox(height: 16),
-                    _buildDetailItem(label: 'Jenis Kelamin', value: userData['gender'] ?? '-'),
-                  ],
-                ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CircleAvatar(
+                              radius: 32,
+                              backgroundColor: Colors.grey.shade300,
+                              backgroundImage: displayData['imageUrl'] != null
+                                  ? NetworkImage(displayData['imageUrl']!)
+                                  : null,
+                              child: displayData['imageUrl'] == null
+                                  ? Icon(
+                                      Icons.person,
+                                      size: 32,
+                                      color: Colors.grey.shade600,
+                                    )
+                                  : null,
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    displayData['name'] as String,
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    displayData['role'] as String,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey.shade700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // Status Badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _getStatusColor(
+                                  displayData['status'] as String,
+                                ),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                displayData['status'] as String,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        // Detail Information
+                        _buildDetailItem(
+                          label: 'NIK',
+                          value: displayData['nik'] as String,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildDetailItem(
+                          label: 'Email',
+                          value: displayData['email'] as String,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildDetailItem(
+                          label: 'Nomor HP',
+                          value: displayData['phone'] as String,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildDetailItem(
+                          label: 'Jenis Kelamin',
+                          value: displayData['gender'] as String,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
   }
+
+  // ...existing code...
 }

@@ -10,6 +10,8 @@ class TagihanModel {
   final DateTime periode;
   final String status;
   final String? alamat;
+  final String? buktiPembayaran;
+  final String? catatanWarga;
 
   TagihanModel({
     required this.namaKeluarga,
@@ -20,6 +22,8 @@ class TagihanModel {
     required this.periode,
     required this.status,
     this.alamat,
+    this.buktiPembayaran,
+    this.catatanWarga,
   });
 
   Future<List<TagihanModel>> fetchTagihan() async {
@@ -41,6 +45,8 @@ class TagihanModel {
           periode: DateTime.parse(item['tgl_tagihan'] as String),
           status: item['status_pembayaran'] as String,
           alamat: item['rumah']['alamat'] as String?,
+          buktiPembayaran: item['bukti_pembayaran'] as String?,
+          catatanWarga: item['catatan'] as String?,
         );
       }).toList();
     } catch (e) {

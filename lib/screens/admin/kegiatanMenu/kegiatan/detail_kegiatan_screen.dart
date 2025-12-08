@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:jawara_pintar_kel_5/models/kegiatan/kegiatan_model.dart';
 import 'package:jawara_pintar_kel_5/services/kegiatan_service.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/kegiatan/edit_kegiatan_screen.dart';
 
 class DetailKegiatanScreen extends StatefulWidget {
   final KegiatanModel kegiatan;
@@ -64,9 +63,9 @@ class _DetailKegiatanScreenState extends State<DetailKegiatanScreen> {
     if (result != null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Data berhasil diperbarui'),
-            backgroundColor: Colors.green,
+            backgroundColor: Colors.grey.shade800,
             duration: Duration(seconds: 1),
           ),
         );
@@ -77,97 +76,141 @@ class _DetailKegiatanScreenState extends State<DetailKegiatanScreen> {
 
   void _showDeleteDialog(BuildContext context) {
     final judulKegiatan = _currentKegiatan.judul;
-
     showDialog(
       context: context,
-      builder: (BuildContext dialogContext) { // Use a different context name to avoid confusion
-        return AlertDialog(
+      builder: (BuildContext dialogContext) {
+        return Dialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: const Text(
-            'Konfirmasi Hapus',
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
-          ),
-          content: Text(
-            'Apakah kamu yakin ingin menghapus kegiatan "$judulKegiatan"? Aksi ini tidak dapat dibatalkan.',
-          ),
-          actionsAlignment: MainAxisAlignment.center,
-          actions: [
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.grey[500],
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.delete_outline,
+                    color: Colors.red,
+                    size: 48,
+                  ),
                 ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
+                const SizedBox(height: 20),
+                const Text(
+                  'Hapus Kegiatan',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
                 ),
-              ),
-              onPressed: () {
-                Navigator.pop(dialogContext); // Close dialog
-              },
-              child: const Text('Batal', style: TextStyle(color: Colors.white)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-                side: const BorderSide(color: Colors.red),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                const SizedBox(height: 12),
+                Text(
+                  'Apakah Anda yakin ingin menghapus kegiatan "$judulKegiatan"? Tindakan ini tidak dapat dibatalkan.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade700,
+                    height: 1.5,
+                  ),
                 ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 10,
-                ),
-              ),
-              onPressed: () async {
-                Navigator.pop(dialogContext);
-                setState(() {
-                  _isLoading = true;
-                });
-                try {
-                  await _kegiatanService.deleteKegiatan(_currentKegiatan.id!);
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Kegiatan "$judulKegiatan" telah dihapus.',
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          side: BorderSide(
+                            color: Colors.grey.shade300,
+                            width: 1.5,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
-                        backgroundColor: const Color(0xFF2E2B32),
+                        child: Text(
+                          'Batal',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey.shade800,
+                          ),
+                        ),
                       ),
-                    );
-                    context.pop('refresh'); 
-                  }
-                } catch (e) {
-                  if (mounted) {
-                    setState(() {
-                      _isLoading = false;
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Gagal menghapus kegiatan: $e'),
-                        backgroundColor: Colors.red,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          Navigator.pop(dialogContext);
+                          setState(() {
+                            _isLoading = true;
+                          });
+                          try {
+                            await _kegiatanService.deleteKegiatan(
+                              _currentKegiatan.id!,
+                            );
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Kegiatan "$judulKegiatan" telah dihapus.',
+                                  ),
+                                  backgroundColor: const Color(0xFF2E2B32),
+                                ),
+                              );
+                              context.pop('refresh');
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              setState(() {
+                                _isLoading = false;
+                              });
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Gagal menghapus kegiatan: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          backgroundColor: Colors.red,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          'Hapus',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
-                    );
-                  }
-                }
-              },
-              child: const Text(
-                'Hapus',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+                    ),
+                  ],
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
   }
+
+  
 
   void _showActionBottomSheet(BuildContext context) {
     showModalBottomSheet(

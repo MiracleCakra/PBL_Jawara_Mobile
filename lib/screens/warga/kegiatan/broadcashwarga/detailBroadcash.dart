@@ -39,7 +39,10 @@ class _DetailBroadcastWargaScreenState
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tidak dapat membuka file')),
+          SnackBar(
+            content: const Text('Tidak dapat membuka file'),
+            backgroundColor: Colors.grey.shade800,
+          ),
         );
       }
     }

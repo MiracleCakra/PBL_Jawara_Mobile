@@ -17,6 +17,9 @@ class _SemuaPemasukanScreenState extends State<SemuaPemasukanScreen> {
   late final TextEditingController _textController;
   List<LaporanKeuanganModel> _pemasukanList = [];
   String _query = '';
+  String _selectedKategori = 'Semua';
+  DateTime? _selectedDari;
+  DateTime? _selectedSampai;
 
   LaporanKeuanganModel laporanKeuanganModel = LaporanKeuanganModel(
     tanggal: DateTime.now(),
@@ -52,10 +55,38 @@ class _SemuaPemasukanScreenState extends State<SemuaPemasukanScreen> {
     var filtered = _pemasukanList;
 
     final q = _query.trim().toLowerCase();
-    if (q.isEmpty) return fakeData;
-    return fakeData
-        .where((e) => e.nama.toLowerCase().contains(q))
-        .toList(growable: false);
+    if (q.isNotEmpty) {
+      filtered = filtered
+          .where((e) => e.nama.toLowerCase().contains(q))
+          .toList();
+    }
+
+    if (_selectedKategori != 'Semua') {
+      filtered = filtered
+          .where((e) => e.kategoriPemasukan == _selectedKategori)
+          .toList();
+    }
+
+    if (_selectedDari != null) {
+      filtered = filtered
+          .where(
+            (e) => e.tanggal.isAfter(
+              _selectedDari!.subtract(const Duration(days: 1)),
+            ),
+          )
+          .toList();
+    }
+    if (_selectedSampai != null) {
+      filtered = filtered
+          .where(
+            (e) => e.tanggal.isBefore(
+              _selectedSampai!.add(const Duration(days: 1)),
+            ),
+          )
+          .toList();
+    }
+
+    return filtered;
   }
 
   @override
@@ -116,10 +147,8 @@ class _SemuaPemasukanScreenState extends State<SemuaPemasukanScreen> {
                   )
                 : ListView.separated(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                    itemBuilder: (context, index) {
-                      final item = _filteredData[index];
-                      return _incomeCard(item);
-                    },
+                    itemBuilder: (context, index) =>
+                        _incomeCard(_filteredData[index]),
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemCount: _filteredData.length,
                   ),
@@ -129,6 +158,9 @@ class _SemuaPemasukanScreenState extends State<SemuaPemasukanScreen> {
     );
   }
 
+  // -----------------------------------------------------
+  // SEARCH SECTION
+  // -----------------------------------------------------
   Padding searchSection() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
@@ -179,6 +211,8 @@ class _SemuaPemasukanScreenState extends State<SemuaPemasukanScreen> {
             ),
           ),
           const SizedBox(width: 8),
+
+          // FILTER BUTTON
           Material(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
@@ -196,14 +230,17 @@ class _SemuaPemasukanScreenState extends State<SemuaPemasukanScreen> {
     );
   }
 
+  // -----------------------------------------------------
+  // FILTER BOTTOM SHEET
+  // -----------------------------------------------------
   void _showFilterSheet() {
     final colors = context.moonColors ?? MoonTokens.light.colors;
     showMoonModalBottomSheet(
       context: context,
       builder: (ctx) {
-        String jenis = 'Semua';
-        DateTime? dari;
-        DateTime? sampai;
+        String kategori = _selectedKategori;
+        DateTime? dari = _selectedDari;
+        DateTime? sampai = _selectedSampai;
 
         return StatefulBuilder(
           builder: (context, setState) {
@@ -218,6 +255,82 @@ class _SemuaPemasukanScreenState extends State<SemuaPemasukanScreen> {
                   }
                 });
               }
+            }
+
+            void _showKategoriBottomSheet() {
+              final List<String> kategoris = [
+                'Semua',
+                'Donasi',
+                'Dana Bantuan Pemerintah',
+                'Sumbangan Swadaya',
+                'Hasil Usaha Kampung',
+                'Pendapatan Lainnya',
+                'Iuran',
+              ];
+              showMoonModalBottomSheet(
+                context: context,
+                enableDrag: true,
+                height: MediaQuery.of(context).size.height * 0.7,
+                builder: (context) => Column(
+                  children: [
+                    Container(
+                      height: 4,
+                      width: 40,
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: ShapeDecoration(
+                        color: context.moonColors!.beerus,
+                        shape: MoonSquircleBorder(
+                          borderRadius: BorderRadius.circular(
+                            16,
+                          ).squircleBorderRadius(context),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Pilih Kategori Pemasukan',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: kategoris.map((item) {
+                            final isSelected = kategori == item;
+                            return MoonMenuItem(
+                              leading: isSelected
+                                  ? const Icon(
+                                      Icons.check_circle,
+                                      color: Color(0xFF6366F1),
+                                    )
+                                  : const SizedBox(width: 24),
+                              label: Text(
+                                item,
+                                style: TextStyle(
+                                  fontWeight: isSelected
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                  color: isSelected
+                                      ? Colors.black
+                                      : Colors.grey[800],
+                                ),
+                              ),
+                              onTap: () {
+                                setState(() => kategori = item);
+                                Navigator.of(context).pop();
+                              },
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
             }
 
             return Container(
@@ -258,29 +371,46 @@ class _SemuaPemasukanScreenState extends State<SemuaPemasukanScreen> {
                   ),
 
                   const SizedBox(height: 12),
-                  // Dropdown
+
+                  // Kategori Pemasukan
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        isExpanded: true,
-                        value: jenis,
-                        icon: const Icon(Icons.keyboard_arrow_down_rounded),
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'Semua',
-                            child: Text('Semua'),
+                    child: InkWell(
+                      onTap: _showKategoriBottomSheet,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Colors.grey.shade300,
+                            width: 1,
                           ),
-                          DropdownMenuItem(
-                            value: 'Pemasukkan Halal',
-                            child: Text('Pemasukkan Halal'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Lainnya',
-                            child: Text('Lainnya'),
-                          ),
-                        ],
-                        onChanged: (v) => setState(() => jenis = v ?? 'Semua'),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                kategori,
+                                style: MoonTokens.light.typography.body.text14
+                                    .copyWith(
+                                      color: kategori == 'Semua'
+                                          ? Colors.grey[600]
+                                          : Colors.black87,
+                                      fontWeight: kategori == 'Semua'
+                                          ? FontWeight.w500
+                                          : FontWeight.w600,
+                                    ),
+                              ),
+                            ),
+                            Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              color: Colors.grey[600],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -292,8 +422,18 @@ class _SemuaPemasukanScreenState extends State<SemuaPemasukanScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: InkWell(
                             onTap: () => pickDate(isStart: true),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 12,
+                                horizontal: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: Colors.grey.shade300,
+                                  width: 1,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                               child: Row(
                                 children: [
                                   Icon(
@@ -327,8 +467,18 @@ class _SemuaPemasukanScreenState extends State<SemuaPemasukanScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: InkWell(
                             onTap: () => pickDate(isStart: false),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 12,
+                                horizontal: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: Colors.grey.shade300,
+                                  width: 1,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                               child: Row(
                                 children: [
                                   Icon(
@@ -365,19 +515,27 @@ class _SemuaPemasukanScreenState extends State<SemuaPemasukanScreen> {
                         child: MoonButton(
                           onTap: () {
                             setState(() {
-                              jenis = 'Semua';
+                              kategori = 'Semua';
                               dari = null;
                               sampai = null;
                             });
                           },
                           label: const Text('Reset'),
+                          backgroundColor: Colors.grey.shade200,
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: MoonFilledButton(
                           backgroundColor: colors.piccolo,
-                          onTap: () => Navigator.of(context).pop(),
+                          onTap: () {
+                            this.setState(() {
+                              _selectedKategori = kategori;
+                              _selectedDari = dari;
+                              _selectedSampai = sampai;
+                            });
+                            Navigator.of(context).pop();
+                          },
                           label: const Text('Terapkan'),
                         ),
                       ),
@@ -392,16 +550,19 @@ class _SemuaPemasukanScreenState extends State<SemuaPemasukanScreen> {
     );
   }
 
+  // -----------------------------------------------------
+  // CARD ITEM PEMASUKAN
+  // -----------------------------------------------------
   Widget _incomeCard(LaporanKeuanganModel item) {
     final colors = context.moonColors ?? MoonTokens.light.colors;
+
     return InkWell(
       borderRadius: BorderRadius.circular(16),
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => LaporanDetailScreen(data: item)),
-        );
-      },
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => LaporanDetailScreen(data: item)),
+      ),
       child: Container(
+        padding: const EdgeInsets.all(12),
         decoration: ShapeDecoration(
           color: Colors.white,
           shape: MoonSquircleBorder(
@@ -411,20 +572,19 @@ class _SemuaPemasukanScreenState extends State<SemuaPemasukanScreen> {
           ),
           shadows: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: Colors.black.withOpacity(0.04),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
           ],
         ),
-        padding: const EdgeInsets.all(12),
         child: Row(
           children: [
             Container(
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: colors.piccolo.withValues(alpha: 0.12),
+                color: colors.piccolo.withOpacity(0.12),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -434,6 +594,7 @@ class _SemuaPemasukanScreenState extends State<SemuaPemasukanScreen> {
               ),
             ),
             const SizedBox(width: 12),
+
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -447,16 +608,12 @@ class _SemuaPemasukanScreenState extends State<SemuaPemasukanScreen> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    item.jenisPemasukan ?? '-',
-                    style: MoonTokens.light.typography.body.text12.copyWith(
-                      color: Colors.grey[600],
-                    ),
-                  ),
                 ],
               ),
             ),
+
             const SizedBox(width: 8),
+
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -464,7 +621,7 @@ class _SemuaPemasukanScreenState extends State<SemuaPemasukanScreen> {
                   formatRupiah(item.nominal),
                   style: MoonTokens.light.typography.body.text16.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF2E7D32), // green accent for income
+                    color: const Color(0xFF2E7D32),
                   ),
                 ),
                 Text(

@@ -47,7 +47,10 @@ class _DetailBroadcastScreenState extends State<DetailBroadcastScreen> {
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tidak dapat membuka file')),
+          SnackBar(
+            content: Text('Tidak dapat membuka file'),
+            backgroundColor: Colors.grey.shade800,  
+          ),
         );
       }
     }
@@ -97,77 +100,156 @@ class _DetailBroadcastScreenState extends State<DetailBroadcastScreen> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => EditBroadcastScreen(broadcast: _displayData), // Kirim data yg skrg
+        builder: (_) => EditBroadcastScreen(broadcast: _displayData),
       ),
     );
 
-    // 4. Cek hasil balikan: Kalau true (berhasil edit), kita refresh
     if (result == true && mounted) {
-      _refreshData(); // <--- INI KUNCINYA
-      
-      // Opsional: Kalau mau tampilkan snackbar sukses
+      _refreshData();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Data berhasil diperbarui"), backgroundColor: Colors.green),
+        SnackBar(content: Text("Data berhasil diperbarui"), backgroundColor: Colors.grey.shade800),
       );
     }
   }
 
-  void _deleteBroadcast() async {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Konfirmasi Hapus',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: Text(
-          'Apakah Anda yakin ingin menghapus broadcast "${widget.broadcastModel.judul}"?',
-        ),
-        actionsAlignment: MainAxisAlignment.center,
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Batal'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(dialogContext); 
-              setState(() {
-                _isDeleting = true;
-              });
-              try {
-                await _broadcastService.deleteBroadcast(widget.broadcastModel.id!);
+  void _showDeleteDialog(BuildContext context) {
+  final judul = _displayData.judul;
 
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Broadcast "${widget.broadcastModel.judul}" berhasil dihapus.'),
-                    backgroundColor: Colors.green,
+  showDialog(
+    context: context,
+    builder: (BuildContext dialogContext) {
+      return Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.delete_outline,
+                  color: Colors.red,
+                  size: 48,
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Hapus Broadcast',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Apakah Anda yakin ingin menghapus broadcast "$judul"? Tindakan ini tidak dapat dibatalkan.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade700,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              /// BUTTONS
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: BorderSide(
+                          color: Colors.grey.shade300,
+                          width: 1.5,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: Text(
+                        'Batal',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade800,
+                        ),
+                      ),
+                    ),
                   ),
-                );
-                if (context.canPop()) {
-                  context.pop(true);
-                }
-              } catch (e) {
-                setState(() {
-                  _isDeleting = false;
-                });
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Gagal menghapus broadcast: ${e.toString()}'),
-                    backgroundColor: Colors.red,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        Navigator.pop(dialogContext);
+                        setState(() => _isDeleting = true);
+
+                        try {
+                          await _broadcastService
+                              .deleteBroadcast(_displayData.id!);
+
+                          if (!mounted) return;
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                  'Broadcast "$judul" berhasil dihapus.'),
+                              backgroundColor: const Color(0xFF2E2B32),
+                            ),
+                          );
+
+                          context.pop(true);
+                        } catch (e) {
+                          if (!mounted) return;
+
+                          setState(() => _isDeleting = false);
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content:
+                                  Text('Gagal menghapus broadcast: $e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        backgroundColor: Colors.red,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text(
+                        'Hapus',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
                   ),
-                );
-              }
-            },
-            child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+                ],
+              )
+            ],
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      );
+    },
+  );
+}
+
 
   Widget _buildOptionTile({
     required IconData icon,
@@ -261,7 +343,7 @@ class _DetailBroadcastScreenState extends State<DetailBroadcastScreen> {
                 subtitle: 'Hapus broadcast secara permanen',
                 onTap: () {
                   Navigator.pop(bc);
-                  _deleteBroadcast();
+                  _showDeleteDialog(context);
                 },
               ),
             ],

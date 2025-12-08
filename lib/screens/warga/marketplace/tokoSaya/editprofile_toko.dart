@@ -28,39 +28,39 @@ class _EditStoreProfileScreenState extends State<EditStoreProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   XFile? _pickedImage;
   final ImagePicker _picker = ImagePicker();
-  
+
   @override
   void initState() {
     super.initState();
     _loadStoreData();
   }
-  
+
   Future<void> _loadStoreData() async {
     setState(() => _isLoading = true);
-    
+
     try {
       // Get warga.id from email
       final authUser = Supabase.instance.client.auth.currentUser;
       if (authUser?.email == null) {
         throw Exception('User tidak login');
       }
-      
+
       final wargaResponse = await Supabase.instance.client
           .from('warga')
           .select('id')
           .eq('email', authUser!.email!)
           .maybeSingle();
-      
+
       if (wargaResponse == null) {
         throw Exception('Data warga tidak ditemukan');
       }
-      
+
       final userId = wargaResponse['id'].toString();
-      
+
       // Get store data using service directly
       final storeService = StoreService();
       final store = await storeService.getStoreByUserId(userId);
-      
+
       if (store != null && mounted) {
         setState(() {
           _storeId = store.storeId;
@@ -131,13 +131,15 @@ class _EditStoreProfileScreenState extends State<EditStoreProfileScreen> {
     if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Terdapat input yang belum valid. Mohon periksa lagi...'),
+          content: Text(
+            'Terdapat input yang belum valid. Mohon periksa lagi...',
+          ),
           backgroundColor: Colors.grey.shade800,
         ),
       );
       return;
     }
-    
+
     if (_storeId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -147,18 +149,9 @@ class _EditStoreProfileScreenState extends State<EditStoreProfileScreen> {
       );
       return;
     }
-    
+
     _formKey.currentState!.save();
-    
-    // Show loading dialog
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
-    
+
     try {
       final updatedStore = StoreModel(
         storeId: _storeId,
@@ -170,26 +163,23 @@ class _EditStoreProfileScreenState extends State<EditStoreProfileScreen> {
             ? 'local:${_pickedImage!.path}' // TODO: Upload to Supabase Storage
             : _storeImageUrl,
       );
-      
+
       final storeProvider = Provider.of<StoreProvider>(context, listen: false);
       await storeProvider.updateStore(_storeId!, updatedStore);
-      
+
       if (mounted) {
-        Navigator.of(context).pop(); // Close loading dialog
-        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Profil toko berhasil diperbarui!'),
             backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
           ),
         );
-        
-        Navigator.pop(context);
+
+        Navigator.pop(context, 'updated');
       }
     } catch (e) {
       if (mounted) {
-        Navigator.of(context).pop(); // Close loading dialog
-        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Gagal menyimpan perubahan: $e'),
@@ -232,64 +222,64 @@ class _EditStoreProfileScreenState extends State<EditStoreProfileScreen> {
                   _buildAvatarEdit(),
                   const SizedBox(height: 20),
 
-            _buildInputField(
-              label: "Nama Toko",
-              initialValue: _storeName,
-              hintText: "Masukkan nama toko Anda",
-              validator: (value) =>
-                  value!.isEmpty ? 'Nama toko tidak boleh kosong' : null,
-              onSaved: (value) => _storeName = value!,
-            ),
+                  _buildInputField(
+                    label: "Nama Toko",
+                    initialValue: _storeName,
+                    hintText: "Masukkan nama toko Anda",
+                    validator: (value) =>
+                        value!.isEmpty ? 'Nama toko tidak boleh kosong' : null,
+                    onSaved: (value) => _storeName = value!,
+                  ),
 
-            _buildInputField(
-              label: "Deskripsi Toko",
-              initialValue: _storeDescription,
-              hintText: "Jelaskan tentang toko dan produk Anda",
-              maxLines: 5,
-              validator: (value) =>
-                  value!.length < 10 ? 'Deskripsi terlalu pendek' : null,
-              onSaved: (value) => _storeDescription = value!,
-            ),
+                  _buildInputField(
+                    label: "Deskripsi Toko",
+                    initialValue: _storeDescription,
+                    hintText: "Jelaskan tentang toko dan produk Anda",
+                    maxLines: 5,
+                    validator: (value) =>
+                        value!.length < 10 ? 'Deskripsi terlalu pendek' : null,
+                    onSaved: (value) => _storeDescription = value!,
+                  ),
 
-            _buildInputField(
-              label: "Nomor Kontak",
-              initialValue: _storePhone,
-              hintText: "Contoh: 081222222132",
-              keyboardType: TextInputType.phone,
-              onSaved: (value) => _storePhone = value!,
-            ),
+                  _buildInputField(
+                    label: "Nomor Kontak",
+                    initialValue: _storePhone,
+                    hintText: "Contoh: 081222222132",
+                    keyboardType: TextInputType.phone,
+                    onSaved: (value) => _storePhone = value!,
+                  ),
 
-            _buildInputField(
-              label: "Alamat Toko",
-              initialValue: _storeAddress,
-              hintText: "Masukkan alamat lengkap toko",
-              maxLines: 3,
-              onSaved: (value) => _storeAddress = value!,
-            ),
+                  _buildInputField(
+                    label: "Alamat Toko",
+                    initialValue: _storeAddress,
+                    hintText: "Masukkan alamat lengkap toko",
+                    maxLines: 3,
+                    onSaved: (value) => _storeAddress = value!,
+                  ),
 
-            const SizedBox(height: 30),
+                  const SizedBox(height: 30),
 
-            ElevatedButton(
-              onPressed: () => _saveChanges(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                  ElevatedButton(
+                    onPressed: () => _saveChanges(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Simpan Perubahan',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              child: const Text(
-                'Simpan Perubahan',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
             ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -350,8 +340,8 @@ class _EditStoreProfileScreenState extends State<EditStoreProfileScreen> {
     final imageWidget = _pickedImage != null
         ? Image.file(File(_pickedImage!.path), fit: BoxFit.cover)
         : (_storeImageUrl != null
-            ? Image.network(_storeImageUrl!, fit: BoxFit.cover)
-            : const Icon(Icons.store, size: 50, color: primaryColor));
+              ? Image.network(_storeImageUrl!, fit: BoxFit.cover)
+              : const Icon(Icons.store, size: 50, color: primaryColor));
 
     return Center(
       child: Stack(

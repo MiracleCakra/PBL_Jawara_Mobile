@@ -7,6 +7,7 @@ class TextInputLogin extends StatelessWidget {
   final String Function(String?)? validator;
   final VoidCallback? onTap;
   final bool isPassword;
+  final bool readOnly;
   final TextInputType? keyboardType;
   final Widget? trailing;
 
@@ -17,6 +18,7 @@ class TextInputLogin extends StatelessWidget {
     this.validator,
     this.onTap,
     this.isPassword = false,
+    this.readOnly = false,
     this.keyboardType,
     this.trailing,
   });
@@ -30,6 +32,7 @@ class TextInputLogin extends StatelessWidget {
       hintText: hint,
       validator: validator,
       onTap: onTap,
+      readOnly: readOnly,
       keyboardType: keyboardType,
       obscureText: isPassword,
       trailing: trailing,

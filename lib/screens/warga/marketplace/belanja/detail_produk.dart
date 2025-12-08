@@ -141,13 +141,29 @@ class _WargaProductDetailScreenState extends State<WargaProductDetailScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        formatRupiah(product.harga?.toInt() ?? 0),
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.w900,
-                          color: _primaryColor,
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            formatRupiah(product.harga?.toInt() ?? 0),
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w900,
+                              color: _primaryColor,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Stok: ${product.stok ?? 0} ${product.satuan ?? "pcs"}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: (product.stok ?? 0) > 0
+                                  ? Colors.green.shade700
+                                  : Colors.red.shade700,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                       // Label Grade Produk
                       Container(

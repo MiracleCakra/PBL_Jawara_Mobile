@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moon_design/moon_design.dart';
+import 'package:jawara_pintar_kel_5/models/keluarga/warga_model.dart';
+import 'package:jawara_pintar_kel_5/services/warga_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 // --- Asumsi Warna Utama ---
 const Color _primaryColorApp = Color(0xFF6A5AE0); 
@@ -15,51 +18,55 @@ class WargaDataDiriScreen extends StatefulWidget {
 }
 
 class _WargaDataDiriScreenState extends State<WargaDataDiriScreen> {
-  late final TextEditingController _namaController;
-  late final TextEditingController _nikController;
-  late final TextEditingController _emailController;
-  late final TextEditingController _phoneController;
-  late final TextEditingController _genderController;
-  late final TextEditingController _statusController;
-  late final TextEditingController _alamatController;
-
-  final Map<String, dynamic> dummyDataWarga = {
-    'nama': 'Susanto',
-    'nik': '3200101234567890',
-    'email': 'Sasanto@gmail.com',
-    'telepon': '081234567890',
-    'gender': 'Pria',
-    'status': 'Aktif',
-    'alamat': 'Blok C No. 5, RT 001 / RW 001, Kelurahan jiwiri',
-    'foto_ktp_url': 'https://media.istockphoto.com/id/1403638387/id/foto/kartu-identitas-kewarganegaraan-indonesia.jpg?s=612x612&w=is&k=20&c=o1BJDIL4oYnJagYpGnBJS9Wsg6wQU5HyOXbQ4skRPg4=',
-  };
+  final WargaService _wargaService = WargaService();
+  Warga? _currentUserWarga;
+  bool _isLoading = true;
+  String _userEmail = '';
 
   @override
   void initState() {
     super.initState();
-    _namaController = TextEditingController(text: dummyDataWarga['nama']);
-    _nikController = TextEditingController(text: dummyDataWarga['nik']);
-    _emailController = TextEditingController(text: dummyDataWarga['email']);
-    _phoneController = TextEditingController(text: dummyDataWarga['telepon']);
-    _genderController = TextEditingController(text: dummyDataWarga['gender']);
-    _statusController = TextEditingController(text: dummyDataWarga['status']);
-    _alamatController = TextEditingController(text: dummyDataWarga['alamat']);
+    _userEmail = Supabase.instance.client.auth.currentUser?.email ?? '';
+    _fetchUserData();
   }
 
-  @override
-  void dispose() {
-    _namaController.dispose();
-    _nikController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
-    _genderController.dispose();
-    _statusController.dispose();
-    _alamatController.dispose();
-    super.dispose();
+  Future<void> _fetchUserData() async {
+    try {
+      final warga = await _wargaService.getWargaByEmail(_userEmail);
+      if (mounted) {
+        setState(() {
+          _currentUserWarga = warga;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        debugPrint("Error fetching profile: $e");
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: _backgroundColor,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    // Prepare data for UI
+    final String nama = _currentUserWarga?.nama ?? '-';
+    final String nik = _currentUserWarga?.id ?? '-';
+    final String email = _currentUserWarga?.email ?? '-';
+    final String telepon = _currentUserWarga?.telepon ?? '-';
+    final String gender = _currentUserWarga?.gender?.value ?? '-';
+    final String status = _currentUserWarga?.statusPenduduk?.value ?? '-';
+    final String alamat = _currentUserWarga?.keluarga?.alamatRumah ?? '-';
+    final String? fotoKtpUrl = _currentUserWarga?.fotoKtp;
+    final String? fotoProfilUrl = _currentUserWarga?.fotoProfil;
+
     return Scaffold(
       backgroundColor: _backgroundColor, 
       appBar: AppBar(
@@ -93,16 +100,29 @@ class _WargaDataDiriScreenState extends State<WargaDataDiriScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             
-            _buildProfilePictureSection(),
+            // --- Foto Profil (Avatar) ---
+             Center(
+                child: CircleAvatar(
+                  radius: 50,
+                  backgroundColor: _primaryColorApp.withOpacity(0.1),
+                  backgroundImage: fotoProfilUrl != null ? NetworkImage(fotoProfilUrl) : null,
+                  child: fotoProfilUrl == null
+                      ? Text(
+                          nama.isNotEmpty ? nama[0].toUpperCase() : 'A',
+                          style: const TextStyle(fontSize: 32, color: _primaryColorApp, fontWeight: FontWeight.bold),
+                        )
+                      : null,
+                ),
+              ),
             const SizedBox(height: 24),
 
             // --- Identitas ---
             _buildInputGroup(
               title: 'Identitas',
               children: [
-                _buildReadOnlyField(label: 'Nama Lengkap', value: _namaController.text),
-                _buildReadOnlyField(label: 'NIK', value: _nikController.text),
-                _buildReadOnlyField(label: 'Jenis Kelamin', value: _genderController.text),
+                _buildReadOnlyField(label: 'Nama Lengkap', value: nama),
+                _buildReadOnlyField(label: 'NIK', value: nik),
+                _buildReadOnlyField(label: 'Jenis Kelamin', value: gender),
               ],
             ),
             const SizedBox(height: 24),
@@ -111,8 +131,8 @@ class _WargaDataDiriScreenState extends State<WargaDataDiriScreen> {
             _buildInputGroup(
               title: 'Kontak & Akun',
               children: [
-                _buildReadOnlyField(label: 'Email', value: _emailController.text),
-                _buildReadOnlyField(label: 'No Telepone', value: _phoneController.text),
+                _buildReadOnlyField(label: 'Email', value: email),
+                _buildReadOnlyField(label: 'No Telepone', value: telepon),
               ],
             ),
             const SizedBox(height: 24),
@@ -121,18 +141,37 @@ class _WargaDataDiriScreenState extends State<WargaDataDiriScreen> {
             _buildInputGroup(
               title: 'Detail Tempat Tinggal',
               children: [
-                _buildReadOnlyField(label: 'Alamat', value: _alamatController.text, maxLines: 3),
-                _buildReadOnlyField(label: 'Status Warga', value: _statusController.text),
+                _buildReadOnlyField(label: 'Alamat', value: alamat, maxLines: 3),
+                _buildReadOnlyField(label: 'Status Warga', value: status),
               ],
             ),
+             const SizedBox(height: 24),
+             
+             // --- Foto KTP ---
+            _buildProfilePictureSection(fotoKtpUrl),
             const SizedBox(height: 32),
 
             // --- Tombol Edit ---
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () {
-                  context.push('/warga/profil/edit-data'); 
+                onPressed: () async {
+                  if (_currentUserWarga != null) {
+                    final updated = await context.push('/warga/profil/edit-data', extra: {
+                      'id': _currentUserWarga!.id, // ID IS NIK
+                      'nama': _currentUserWarga!.nama,
+                      'email': _currentUserWarga!.email,
+                      'telepon': _currentUserWarga!.telepon,
+                      'alamat': _currentUserWarga?.keluarga?.alamatRumah ?? '',
+                      'nik': _currentUserWarga!.id,
+                      'gender': _currentUserWarga!.gender?.value,
+                      'status': _currentUserWarga!.statusPenduduk?.value,
+                    });
+                    
+                    if (updated == true) {
+                       _fetchUserData(); // Refresh data if updated
+                    }
+                  }
                 },
                 icon: const Icon(Icons.edit, color: Colors.white),
                 label: const Text(
@@ -170,6 +209,7 @@ class _WargaDataDiriScreenState extends State<WargaDataDiriScreen> {
           const SizedBox(height: 8),
           
           TextFormField(
+            key: ValueKey(value), // Ensure rebuild when value changes
             initialValue: value.isEmpty ? '-' : value,
             readOnly: true,
             style: const TextStyle(
@@ -238,9 +278,7 @@ class _WargaDataDiriScreenState extends State<WargaDataDiriScreen> {
     );
   }
 
-  Widget _buildProfilePictureSection() {
-    final fotoUrl = dummyDataWarga['foto_ktp_url'];
-    
+  Widget _buildProfilePictureSection(String? fotoUrl) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

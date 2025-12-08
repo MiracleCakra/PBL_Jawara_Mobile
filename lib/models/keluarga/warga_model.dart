@@ -89,7 +89,9 @@ class Warga {
   final String? keluargaId;
   final String? agama;
   final String? fotoKtp;
+  final String? fotoProfil;
   final String? email;
+  final String? role;
   final Keluarga? keluarga;
   final List<AnggotaKeluarga>? anggotaKeluarga;
 
@@ -108,7 +110,9 @@ class Warga {
     this.keluargaId,
     this.agama,
     this.fotoKtp,
+    this.fotoProfil,
     this.email,
+    this.role,
     this.keluarga,
     this.anggotaKeluarga,
   });
@@ -131,7 +135,9 @@ class Warga {
       keluargaId: json['keluarga_id'],
       agama: json['agama'],
       fotoKtp: json['foto_ktp'],
+      fotoProfil: json['foto_profil'],
       email: json['email'],
+      role: json['role'],
       keluarga: json['keluarga'] != null
           ? Keluarga.fromJson(json['keluarga'])
           : null,
@@ -159,7 +165,9 @@ class Warga {
       'keluarga_id': keluargaId,
       'agama': agama,
       'foto_ktp': fotoKtp,
+      'foto_profil': fotoProfil,
       'email': email,
+      'role': role,
     };
   }
 }
@@ -186,7 +194,9 @@ class Keluarga {
       id: json['id'] ?? '',
       namaKeluarga: json['nama_keluarga'] ?? '',
       kepaluKepalaId: json['kepala_keluarga_id'],
-      alamatRumah: json['alamat_rumah'],
+      alamatRumah: (json['rumah'] != null && json['rumah']['alamat'] != null)
+          ? json['rumah']['alamat']
+          : json['alamat_rumah'],
       statusKepemilikan: json['status_kepemilikan'],
       statusKeluarga: json['status_keluarga'],
     );

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jawara_pintar_kel_5/models/keluarga/warga_model.dart';
+import 'package:jawara_pintar_kel_5/services/pengguna_service.dart';
 
 class ManajemenPenggunaScreen extends StatefulWidget {
   const ManajemenPenggunaScreen({super.key});
@@ -13,63 +15,81 @@ class _ManajemenPenggunaScreenState extends State<ManajemenPenggunaScreen> {
   final Color primary = const Color(0xFF4E46B4);
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
+  final PenggunaService _penggunaService = PenggunaService();
+
   String _query = '';
+  // Variabel filter
+  String? _filterRole;
+  String? _filterStatus;
 
-  final List<Map<String, String>> _users = [
-    {
-      'name': 'Cakra Wanngsa',
-      'role': 'Ketua RW',
-      'status': 'Diterima',
-      'nik': '3573034501050004',
-      'email': 'cakra@gmail.com',
-      'phone': '085850889729',
-      'gender': 'Laki-Laki',
-    },
-    {
-      'name': 'Afrizal',
-      'role': 'Warga',
-      'status': 'Menunggu',
-      'nik': '3573034501050005',
-      'email': 'afrizal@gmail.com',
-      'phone': '081234567890',
-      'gender': 'Laki-laki',
-    },
-    {
-      'name': 'Fara',
-      'role': 'Bendahara',
-      'status': 'Diterima',
-      'nik': '3573034501050006',
-      'email': 'fara@gmail.com',
-      'phone': '082345678901',
-      'gender': 'Perempuan',
-    },
-       {
-      'name': 'Tio',
-      'role': 'Ketua RT',
-      'status': 'Diterima',
-      'nik': '3573033301050008',
-      'email': 'tio@gmail.com',
-      'phone': '082345678901',
-      'gender': 'Laki-Laki',
-    },
-  ];
+  // Gak butuh initState buat fetch data lagi!
 
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'Diterima':
-        return primary;
-      case 'Menunggu':
-        return Colors.amber.shade700;
-      case 'Ditolak':
-        return Colors.red.shade600;
+  // Logic filter lokal di sisi aplikasi
+  List<Warga> _applyFilters(List<Warga> data) {
+    return data.where((warga) {
+      // 1. Filter Search Nama
+      final matchesQuery =
+          _query.isEmpty ||
+          warga.nama.toLowerCase().contains(_query.toLowerCase());
+
+      // 2. Filter Role (Dropdown)
+      final matchesRole = _filterRole == null || warga.role == _filterRole;
+
+      // 3. Filter Status (Dropdown)
+      final matchesStatus =
+          _filterStatus == null ||
+          (warga.statusPenduduk?.value ?? 'Nonaktif') == _filterStatus;
+
+      return matchesQuery && matchesRole && matchesStatus;
+    }).toList();
+  }
+
+  Map<String, Color> _getRoleColor(String role) {
+    switch (role) {
+      case 'Admin':
+        return {
+          'color': const Color(0xFF673AB7),
+          'bgColor': const Color(0xFFEDE7F6),
+        };
+      case 'Ketua RW':
+        // Biru
+        return {
+          'color': const Color(0xFF3B82F6),
+          'bgColor': const Color(0xFFDBEAFE),
+        };
+      case 'Ketua RT':
+        // Hijau
+        return {
+          'color': const Color(0xFF10B981),
+          'bgColor': const Color(0xFFD1FAE5),
+        };
+      case 'Bendahara':
+        // Orange
+        return {
+          'color': const Color(0xFFF59E0B),
+          'bgColor': const Color(0xFFFEF3C7),
+        };
+      case 'Sekretaris':
+        // Teal/Cyan
+        return {
+          'color': const Color(0xFF06B6D4),
+          'bgColor': const Color(0xFFCFFAFE),
+        };
+      case 'Warga':
+        // Warna utama/primary
+        return {
+          'color': primary, // Primary Blue-Purple
+          'bgColor': const Color(0xFFF4F3FF),
+        };
       default:
-        return Colors.grey;
+        return {'color': Colors.grey.shade600, 'bgColor': Colors.grey.shade200};
     }
   }
 
   void _openFilter() {
-    String? role;
-    String? status;
+    // Kita pakai variabel temp biar user harus klik "Terapkan" baru filter berubah
+    String? tempRole = _filterRole;
+    String? tempStatus = _filterStatus;
 
     showModalBottomSheet(
       context: context,
@@ -111,13 +131,16 @@ class _ManajemenPenggunaScreenState extends State<ManajemenPenggunaScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
+
+                      // Filter Role
                       const Text(
                         'Role',
                         style: TextStyle(fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
-                        value: role,
+                        value: tempRole,
+                        hint: const Text('Semua Role'), // Tambahkan hint
                         isExpanded: true,
                         decoration: _dropdownDecoration(),
                         items: const [
@@ -133,35 +156,37 @@ class _ManajemenPenggunaScreenState extends State<ManajemenPenggunaScreen> {
                             value: 'Bendahara',
                             child: Text('Bendahara'),
                           ),
+                          // Tambahin role lain sesuai kebutuhan
                         ],
-                        onChanged: (v) => setModalState(() => role = v),
+                        onChanged: (v) => setModalState(() => tempRole = v),
                       ),
+
                       const SizedBox(height: 16),
+
+                      // Filter Status Pendaftaran
                       const Text(
                         'Status',
                         style: TextStyle(fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
-                        value: status,
+                        value: tempStatus,
+                        hint: const Text('Semua Status'), // Tambahkan hint
                         isExpanded: true,
                         decoration: _dropdownDecoration(),
                         items: const [
                           DropdownMenuItem(
-                            value: 'Diterima',
-                            child: Text('Diterima'),
+                            value: 'Aktif',
+                            child: Text('Aktif'),
                           ),
                           DropdownMenuItem(
-                            value: 'Menunggu',
-                            child: Text('Menunggu'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Ditolak',
-                            child: Text('Ditolak'),
+                            value: 'Nonaktif',
+                            child: Text('Nonaktif'),
                           ),
                         ],
-                        onChanged: (v) => setModalState(() => status = v),
+                        onChanged: (v) => setModalState(() => tempStatus = v),
                       ),
+
                       const SizedBox(height: 20),
                       Row(
                         children: [
@@ -181,8 +206,8 @@ class _ManajemenPenggunaScreenState extends State<ManajemenPenggunaScreen> {
                               ),
                               onPressed: () {
                                 setModalState(() {
-                                  role = null;
-                                  status = null;
+                                  tempRole = null;
+                                  tempStatus = null;
                                 });
                               },
                               child: const Text(
@@ -204,7 +229,14 @@ class _ManajemenPenggunaScreenState extends State<ManajemenPenggunaScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              onPressed: () => Navigator.pop(context),
+                              onPressed: () {
+                                // Update state utama screen
+                                setState(() {
+                                  _filterRole = tempRole;
+                                  _filterStatus = tempStatus;
+                                });
+                                Navigator.pop(context);
+                              },
                               child: const Text(
                                 'Terapkan',
                                 style: TextStyle(fontWeight: FontWeight.w600),
@@ -244,13 +276,6 @@ class _ManajemenPenggunaScreenState extends State<ManajemenPenggunaScreen> {
     );
   }
 
-  List<Map<String, String>> get _filtered {
-    if (_query.isEmpty) return _users;
-    return _users
-        .where((e) => e['name']!.toLowerCase().contains(_query.toLowerCase()))
-        .toList();
-  }
-
   @override
   void dispose() {
     _searchFocusNode.dispose();
@@ -280,17 +305,6 @@ class _ManajemenPenggunaScreenState extends State<ManajemenPenggunaScreen> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          context.push('/admin/lainnya/manajemen-pengguna/tambah');
-        },
-        backgroundColor: primary,
-        foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: const Icon(Icons.add, size: 28),
-      ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -308,36 +322,80 @@ class _ManajemenPenggunaScreenState extends State<ManajemenPenggunaScreen> {
                 ),
               ),
             ),
-            // Search and filter
+            // Search and filter component (tetap sama)
             _SearchFilterBar(
               controller: _searchController,
               focusNode: _searchFocusNode,
               onChanged: (v) => setState(() => _query = v),
               onFilterTap: _openFilter,
             ),
-            // User list
+            // User list dengan StreamBuilder
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: ListView.separated(
-                  padding: const EdgeInsets.only(bottom: 16, top: 8),
-                  itemCount: _filtered.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final user = _filtered[index];
-                    return _UserCard(
-                      user: user,
-                      primary: primary,
-                      onTap: () {
-                        context.push(
-                          '/admin/lainnya/manajemen-pengguna/detail',
-                          extra: user,
+              child: StreamBuilder<List<Warga>>(
+                stream: _penggunaService.streamAllUsers(),
+                builder: (context, snapshot) {
+                  // 1. Loading State
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  // 2. Error State
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  }
+
+                  // 3. Empty Data
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Center(
+                      child: Text('Belum ada data pengguna.'),
+                    );
+                  }
+
+                  // 4. Data Ada -> Filter dulu sebelum ditampilkan
+                  final filteredList = _applyFilters(snapshot.data!);
+
+                  if (filteredList.isEmpty) {
+                    return const Center(child: Text('Data tidak ditemukan.'));
+                  }
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: ListView.separated(
+                      padding: const EdgeInsets.only(bottom: 16, top: 8),
+                      itemCount: filteredList.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        final warga = filteredList[index];
+
+                        // Map data untuk dikirim ke detail
+                        final userMap = {
+                          'id': warga.id,
+                          'name': warga.nama,
+                          'role': warga.role ?? '-',
+                          'status': warga.statusPenduduk?.value ?? 'Nonaktif',
+                          'nik': warga.id,
+                          'email': warga.email ?? '-',
+                          'phone': warga.telepon ?? '-',
+                          'gender': warga.gender?.value ?? '-',
+                          'imageUrl': warga.fotoProfil, // Bawa URL foto
+                        };
+
+                        return _UserCard(
+                          user: userMap,
+                          primary: primary,
+                          onTap: () async {
+                            // Kirim ID-nya, detail screen nanti listen ke stream ID ini
+                            context.push(
+                              '/admin/lainnya/manajemen-pengguna/detail',
+                              extra: userMap,
+                            );
+                          },
+                          getRoleColor: _getRoleColor,
                         );
                       },
-                      getStatusColor: _getStatusColor,
-                    );
-                  },
-                ),
+                    ),
+                  );
+                },
               ),
             ),
           ],
@@ -433,21 +491,23 @@ class _SearchFilterBar extends StatelessWidget {
 }
 
 class _UserCard extends StatelessWidget {
-  final Map<String, String> user;
+  final Map<String, dynamic> user;
   final Color primary;
   final VoidCallback? onTap;
-  final Color Function(String) getStatusColor;
+  final Map<String, Color> Function(String) getRoleColor;
 
   const _UserCard({
     required this.user,
     required this.primary,
     this.onTap,
-    required this.getStatusColor,
+    required this.getRoleColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    final statusColor = getStatusColor(user['status'] ?? 'Diterima');
+    final roleColorMap = getRoleColor(user['role'] ?? '-');
+    final color = roleColorMap['color'] ?? Colors.grey;
+    final bgColor = roleColorMap['bgColor'] ?? Colors.grey.shade200;
 
     return Material(
       color: Colors.white,
@@ -484,7 +544,7 @@ class _UserCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      user['role'] ?? '-',
+                      user['email'] ?? '-',
                       style: TextStyle(fontSize: 14, color: Colors.grey[700]),
                     ),
                   ],
@@ -492,19 +552,20 @@ class _UserCard extends StatelessWidget {
               ),
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
+                  horizontal: 10,
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: statusColor,
+                  color: bgColor,
                   borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: color.withOpacity(0.3)),
                 ),
                 child: Text(
-                  user['status'] ?? 'Diterima',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  user['role'] ?? '-',
+                  style: TextStyle(
+                    color: color,
                     fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),

@@ -1,0 +1,2 @@
+PCVK/models/*.pkl filter=lfs diff=lfs merge=lfs -text
+PCVK/models/*.onnx filter=lfs diff=lfs merge=lfs -text

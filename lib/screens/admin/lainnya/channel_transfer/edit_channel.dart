@@ -1,18 +1,17 @@
 import 'dart:io';
-import 'package:file_picker/file_picker.dart';
+
 import 'package:flutter/foundation.dart'; // kIsWeb
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:jawara_pintar_kel_5/models/keuangan/channel_transfer_model.dart'; // Sesuaikan path
 import 'package:jawara_pintar_kel_5/services/channel_transfer_service.dart';
+import 'package:jawara_pintar_kel_5/widget/moon_result_modal.dart';
+
 class EditChannelPage extends StatefulWidget {
   final ChannelTransferModel channelData;
 
-  const EditChannelPage({
-    super.key,
-    required this.channelData,
-  });
+  const EditChannelPage({super.key, required this.channelData});
 
   @override
   State<EditChannelPage> createState() => _EditChannelPageState();
@@ -40,7 +39,7 @@ class _EditChannelPageState extends State<EditChannelPage> {
     _nomorRekeningCtl = TextEditingController(text: widget.channelData.norek);
     _namaPemilikCtl = TextEditingController(text: widget.channelData.pemilik);
     _catatanCtl = TextEditingController(text: widget.channelData.catatan);
-    
+
     _tipeChannel = widget.channelData.tipe;
     _existingQrUrl = widget.channelData.qrisImg;
   }
@@ -60,13 +59,16 @@ class _EditChannelPageState extends State<EditChannelPage> {
       if (image != null) {
         final size = await image.length();
         if (size > 2 * 1024 * 1024) {
-           if (!mounted) return;
-           ScaffoldMessenger.of(context).showSnackBar(
-             const SnackBar(content: Text("Ukuran gambar maksimal 2MB")),
-           );
-           return;
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text("Ukuran gambar maksimal 2MB"),
+              backgroundColor: Colors.grey.shade800,
+            ),
+          );
+          return;
         }
-        
+
         setState(() {
           _newQrImageFile = image;
         });
@@ -77,9 +79,16 @@ class _EditChannelPageState extends State<EditChannelPage> {
   }
 
   Future<void> _saveChanges() async {
-    if (_namaChannelCtl.text.isEmpty || _tipeChannel == null || _nomorRekeningCtl.text.isEmpty) {
+    if (_namaChannelCtl.text.isEmpty ||
+        _tipeChannel == null ||
+        _nomorRekeningCtl.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mohon lengkapi data wajib (Nama, Tipe, No. Rek)')),
+        SnackBar(
+          content: const Text(
+            'Mohon lengkapi data wajib (Nama, Tipe, No. Rek)',
+          ),
+          backgroundColor: Colors.grey.shade800,
+        ),
       );
       return;
     }
@@ -90,8 +99,8 @@ class _EditChannelPageState extends State<EditChannelPage> {
       String? finalQrUrl = _existingQrUrl;
       if (_tipeChannel == 'QRIS' && _newQrImageFile != null) {
         final bytes = await _newQrImageFile!.readAsBytes();
-        final fileName = '${DateTime.now().millisecondsSinceEpoch}_update_${_newQrImageFile!.name}';
-        
+        final fileName =
+            '${DateTime.now().millisecondsSinceEpoch}_update_${_newQrImageFile!.name}';
         finalQrUrl = await _channelService.uploadQrImage(
           bytes: bytes,
           file: kIsWeb ? null : File(_newQrImageFile!.path),
@@ -110,19 +119,32 @@ class _EditChannelPageState extends State<EditChannelPage> {
         qrisImg: finalQrUrl,
       );
 
-      await _channelService.updateChannel(widget.channelData.id!, updatedChannel);
+      await _channelService.updateChannel(
+        widget.channelData.id!,
+        updatedChannel,
+      );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Perubahan berhasil disimpan!'), backgroundColor: Colors.green),
+        await showResultModal(
+          context,
+          type: ResultType.success,
+          title: 'Berhasil',
+          description: 'Perubahan channel berhasil disimpan.',
+          actionLabel: 'Selesai',
+          autoProceed: true,
         );
-        context.pop(); 
-        context.pop(); 
+        if (mounted) {
+          context.pop();
+          context.pop();
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal update: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Gagal update: $e'),
+            backgroundColor: Colors.grey.shade800,
+          ),
         );
       }
     } finally {
@@ -176,12 +198,19 @@ class _EditChannelPageState extends State<EditChannelPage> {
               ),
               const SizedBox(height: 16),
 
-              _buildTextField(label: 'Nomor Rekening / Akun', controller: _nomorRekeningCtl, keyboardType: TextInputType.number),
+              _buildTextField(
+                label: 'Nomor Rekening / Akun',
+                controller: _nomorRekeningCtl,
+                keyboardType: TextInputType.number,
+              ),
               const SizedBox(height: 16),
 
-              _buildTextField(label: 'Nama Pemilik', controller: _namaPemilikCtl),
+              _buildTextField(
+                label: 'Nama Pemilik',
+                controller: _namaPemilikCtl,
+              ),
               const SizedBox(height: 16),
-              
+
               _buildTextField(label: 'Catatan', controller: _catatanCtl),
               const SizedBox(height: 16),
 
@@ -189,9 +218,15 @@ class _EditChannelPageState extends State<EditChannelPage> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Gambar QR', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    const Text(
+                      'Gambar QR',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
                     const SizedBox(height: 8),
-                    
+
                     GestureDetector(
                       onTap: _pickImage,
                       child: Container(
@@ -203,40 +238,70 @@ class _EditChannelPageState extends State<EditChannelPage> {
                           border: Border.all(color: Colors.grey.shade300),
                         ),
                         child: _newQrImageFile != null
-                            ? ClipRRect( // 1. Gambar Baru Terpilih
+                            ? ClipRRect(
+                                // 1. Gambar Baru Terpilih
                                 borderRadius: BorderRadius.circular(12),
-                                child: kIsWeb 
-                                  ? Image.network(_newQrImageFile!.path, fit: BoxFit.cover)
-                                  : Image.file(File(_newQrImageFile!.path), fit: BoxFit.cover),
-                              )
-                            : (_existingQrUrl != null // 2. Gambar Lama Ada
-                                ? Stack(
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: Image.network(_existingQrUrl!, width: double.infinity, height: 150, fit: BoxFit.cover),
+                                child: kIsWeb
+                                    ? Image.network(
+                                        _newQrImageFile!.path,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Image.file(
+                                        File(_newQrImageFile!.path),
+                                        fit: BoxFit.cover,
                                       ),
-                                      Center(child: Container(
-                                        padding: const EdgeInsets.all(8),
-                                        color: Colors.black54,
-                                        child: const Text("Tap untuk ganti", style: TextStyle(color: Colors.white)),
-                                      ))
-                                    ],
-                                  )
-                                : Column( // 3. Kosong
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Icon(Icons.add_a_photo, size: 40, color: Colors.grey),
-                                      const Text("Upload Gambar", style: TextStyle(color: Colors.grey))
-                                    ],
-                                  )
-                              ),
+                              )
+                            : (_existingQrUrl !=
+                                      null // 2. Gambar Lama Ada
+                                  ? Stack(
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          child: Image.network(
+                                            _existingQrUrl!,
+                                            width: double.infinity,
+                                            height: 150,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                        Center(
+                                          child: Container(
+                                            padding: const EdgeInsets.all(8),
+                                            color: Colors.black54,
+                                            child: const Text(
+                                              "Tap untuk ganti",
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  : Column(
+                                      // 3. Kosong
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(
+                                          Icons.add_a_photo,
+                                          size: 40,
+                                          color: Colors.grey,
+                                        ),
+                                        const Text(
+                                          "Upload Gambar",
+                                          style: TextStyle(color: Colors.grey),
+                                        ),
+                                      ],
+                                    )),
                       ),
                     ),
                     const SizedBox(height: 24),
                   ],
                 ),
-                
+
               // Buttons
               Row(
                 children: [
@@ -251,7 +316,13 @@ class _EditChannelPageState extends State<EditChannelPage> {
                         ),
                       ),
                       onPressed: () => context.pop(),
-                      child: Text('Batal', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
+                      child: Text(
+                        'Batal',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -261,12 +332,24 @@ class _EditChannelPageState extends State<EditChannelPage> {
                         backgroundColor: primary,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                       onPressed: _isLoading ? null : _saveChanges,
-                      child: _isLoading 
-                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Text('Simpan Perubahan', style: TextStyle(fontWeight: FontWeight.w600)),
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'Simpan Perubahan',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
                     ),
                   ),
                 ],
@@ -288,7 +371,10 @@ class _EditChannelPageState extends State<EditChannelPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
@@ -297,10 +383,22 @@ class _EditChannelPageState extends State<EditChannelPage> {
           decoration: InputDecoration(
             filled: true,
             fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: primary, width: 1.5)),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: primary, width: 1.5),
+            ),
           ),
         ),
       ],
@@ -316,7 +414,10 @@ class _EditChannelPageState extends State<EditChannelPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
           value: value,
@@ -326,10 +427,22 @@ class _EditChannelPageState extends State<EditChannelPage> {
           decoration: InputDecoration(
             filled: true,
             fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: primary, width: 1.5)),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: primary, width: 1.5),
+            ),
           ),
         ),
       ],

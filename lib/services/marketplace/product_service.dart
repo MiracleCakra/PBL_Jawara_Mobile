@@ -86,6 +86,7 @@ class ProductService {
           .from('produk')
           .select()
           .eq('store_id', storeId)
+          .gt('stok', 0)
           .order('created_at', ascending: false);
 
       return List<ProductModel>.from(
@@ -162,10 +163,30 @@ class ProductService {
 
   Future<void> updateStock(int productId, int newStock) async {
     try {
-      await _supabase
-          .from('produk')
-          .update({'stok': newStock})
-          .eq('product_id', productId);
+      if (newStock <= 0) {
+        // Check if product has orders before deleting
+        final orderItems = await _supabase
+            .from('order_item')
+            .select('id')
+            .eq('product_id', productId)
+            .limit(1);
+
+        if (orderItems.isEmpty) {
+          // No orders, delete the product
+          await deleteProduct(productId);
+        } else {
+          // Has orders, just set stock to 0
+          await _supabase
+              .from('produk')
+              .update({'stok': 0})
+              .eq('product_id', productId);
+        }
+      } else {
+        await _supabase
+            .from('produk')
+            .update({'stok': newStock})
+            .eq('product_id', productId);
+      }
     } catch (e) {
       throw Exception('Error updating stock: $e');
     }
@@ -173,8 +194,28 @@ class ProductService {
 
   Future<void> deleteProduct(int productId) async {
     try {
-      await _supabase.from('produk').delete().eq('product_id', productId);
+      // Check if product has orders
+      final orderItems = await _supabase
+          .from('order_item')
+          .select('id')
+          .eq('product_id', productId)
+          .limit(1);
+
+      if (orderItems.isNotEmpty) {
+        // Product has orders, just set stock to 0
+        await _supabase
+            .from('produk')
+            .update({'stok': 0})
+            .eq('product_id', productId);
+        throw Exception('Produk memiliki riwayat pesanan, stok diatur ke 0');
+      } else {
+        // No orders, safe to delete
+        await _supabase.from('produk').delete().eq('product_id', productId);
+      }
     } catch (e) {
+      if (e.toString().contains('Produk memiliki riwayat pesanan')) {
+        rethrow;
+      }
       throw Exception('Error deleting product: $e');
     }
   }

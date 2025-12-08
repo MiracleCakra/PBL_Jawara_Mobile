@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jawara_pintar_kel_5/models/marketplace/order_model.dart';
 import 'package:jawara_pintar_kel_5/services/marketplace/order_service.dart';
 import 'package:jawara_pintar_kel_5/services/marketplace/store_service.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class Menupesanan extends StatefulWidget {
   const Menupesanan({super.key});
@@ -26,10 +26,13 @@ class _MenupesananState extends State<Menupesanan> {
 
   Future<void> _loadOrders() async {
     try {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-      });
+      // Only show loading on first load
+      if (_orders.isEmpty) {
+        setState(() {
+          _isLoading = true;
+          _errorMessage = null;
+        });
+      }
 
       // Get current user
       final authUser = Supabase.instance.client.auth.currentUser;
@@ -80,19 +83,21 @@ class _MenupesananState extends State<Menupesanan> {
       final orderService = OrderService();
       final orders = await orderService.getOrdersByStore(store.storeId!);
 
-      print('DEBUG Orders: Loaded ${orders.length} orders for store ${store.storeId}');
+      print(
+        'DEBUG Orders: Loaded ${orders.length} orders for store ${store.storeId}',
+      );
 
       if (mounted) {
         setState(() {
           _orders = orders;
-          _isLoading = false;
+          if (_isLoading) _isLoading = false;
         });
       }
     } catch (e) {
       print('Error loading orders: $e');
       if (mounted) {
         setState(() {
-          _isLoading = false;
+          if (_isLoading) _isLoading = false;
           _errorMessage = 'Gagal memuat pesanan: $e';
         });
       }
@@ -111,48 +116,55 @@ class _MenupesananState extends State<Menupesanan> {
         elevation: 0.5,
         foregroundColor: Colors.black,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadOrders,
-          ),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadOrders),
         ],
       ),
       backgroundColor: const Color(0xFFF7F7F7),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.error_outline, size: 50, color: Colors.red.shade300),
-                      const SizedBox(height: 10),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Text(
-                          _errorMessage!,
-                          style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      ElevatedButton(
-                        onPressed: _loadOrders,
-                        child: const Text('Coba Lagi'),
-                      ),
-                    ],
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 50,
+                    color: Colors.red.shade300,
                   ),
-                )
-              : _orders.isEmpty
-                  ? _buildEmptyOrders()
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _orders.length,
-                      itemBuilder: (context, index) {
-                        final orderData = _orders[index];
-                        return _buildOrderCard(context, orderData);
-                      },
+                  const SizedBox(height: 10),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Text(
+                      _errorMessage!,
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 16,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: _loadOrders,
+                    child: const Text('Coba Lagi'),
+                  ),
+                ],
+              ),
+            )
+          : _orders.isEmpty
+          ? _buildEmptyOrders()
+          : RefreshIndicator(
+              onRefresh: _loadOrders,
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: _orders.length,
+                itemBuilder: (context, index) {
+                  final orderData = _orders[index];
+                  return _buildOrderCard(context, orderData);
+                },
+              ),
+            ),
     );
   }
 
@@ -179,13 +191,13 @@ class _MenupesananState extends State<Menupesanan> {
     // Extract order data from nested structure
     final order = orderData['order'];
     final product = orderData['produk'];
-    
+
     final orderId = order['order_id'] as int?;
     final orderStatus = order['order_status'] as String? ?? 'pending';
     final totalPrice = order['total_price'] as num? ?? 0;
     final productName = product['nama'] as String? ?? 'Produk';
     final qty = orderData['qty'] as int? ?? 0;
-    
+
     Color statusColor;
     String statusLabel;
     final lower = orderStatus.toLowerCase();
@@ -247,7 +259,10 @@ class _MenupesananState extends State<Menupesanan> {
               decoration: BoxDecoration(
                 color: statusColor.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: statusColor.withOpacity(0.5), width: 1.5),
+                border: Border.all(
+                  color: statusColor.withOpacity(0.5),
+                  width: 1.5,
+                ),
               ),
               child: Text(
                 statusLabel,
@@ -260,7 +275,7 @@ class _MenupesananState extends State<Menupesanan> {
             ),
           ],
         ),
-        onTap: () {
+        onTap: () async {
           // Convert orderData to OrderModel
           final orderModel = OrderModel(
             orderId: orderId,
@@ -269,16 +284,24 @@ class _MenupesananState extends State<Menupesanan> {
             orderStatus: orderStatus,
             alamat: order['alamat'] as String?,
             totalQty: order['total_qty'] as int?,
-            createdAt: order['created_at'] != null 
+            createdAt: order['created_at'] != null
                 ? DateTime.parse(order['created_at'] as String)
                 : null,
             updatedAt: order['updated_at'] != null
                 ? DateTime.parse(order['updated_at'] as String)
                 : null,
           );
-          
-          // Navigate to order detail
-          context.pushNamed('MyStoreOrderDetail', extra: orderModel);
+
+          // Navigate to order detail and handle return
+          final result = await context.pushNamed(
+            'MyStoreOrderDetail',
+            extra: orderModel,
+          );
+
+          // Refresh if order was updated (any status change)
+          if (result != null && mounted) {
+            _loadOrders();
+          }
         },
       ),
     );

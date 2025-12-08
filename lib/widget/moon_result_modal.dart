@@ -26,7 +26,6 @@ Future<void> showResultModal(
     if (closed) return;
     closed = true;
     Navigator.of(ctx).maybePop();
-    // Panggil onAction setelah dialog tertutup untuk navigasi tambahan
     await Future.microtask(() => onAction?.call());
   }
 
