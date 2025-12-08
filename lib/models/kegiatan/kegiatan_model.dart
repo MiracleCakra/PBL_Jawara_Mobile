@@ -11,6 +11,7 @@ class KegiatanModel {
   final String deskripsi;
   final String? dibuatOleh;
   final bool? hasDocs;
+  final String? gambarDokumentasi;
   final DateTime? createdAt;
 
   KegiatanModel({
@@ -23,6 +24,7 @@ class KegiatanModel {
     required this.deskripsi,
     this.dibuatOleh,
     this.hasDocs,
+    this.gambarDokumentasi,
     this.createdAt,
   });
 
@@ -36,6 +38,7 @@ class KegiatanModel {
     String? deskripsi,
     String? dibuatOleh,
     bool? hasDocs,
+    String? gambarDokumentasi,
     DateTime? createdAt,
   }) {
     return KegiatanModel(
@@ -48,6 +51,7 @@ class KegiatanModel {
       deskripsi: deskripsi ?? this.deskripsi,
       dibuatOleh: dibuatOleh ?? this.dibuatOleh,
       hasDocs: hasDocs ?? this.hasDocs,
+      gambarDokumentasi: gambarDokumentasi ?? this.gambarDokumentasi,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -63,6 +67,7 @@ class KegiatanModel {
       'deskripsi': deskripsi,
       'dibuat_oleh': dibuatOleh,
       'has_docs': hasDocs.toString(), // Convert bool to String
+      'gambardokumentasi': gambarDokumentasi,
       // 'created_at' is handled by the database
     };
   }
@@ -79,6 +84,7 @@ class KegiatanModel {
       dibuatOleh: map['dibuat_oleh'],
       // Convert String 'true'/'false' to bool
       hasDocs: map['has_docs']?.toString().toLowerCase() == 'true',
+      gambarDokumentasi: map['gambardokumentasi'],
       createdAt: map['created_at'] == null
           ? null
           : DateTime.parse(map['created_at']),
@@ -92,7 +98,7 @@ class KegiatanModel {
 
   @override
   String toString() {
-    return 'KegiatanModel(id: $id, judul: $judul, pj: $pj, tanggal: $tanggal, kategori: $kategori, lokasi: $lokasi, deskripsi: $deskripsi, dibuatOleh: $dibuatOleh, hasDocs: $hasDocs, createdAt: $createdAt)';
+    return 'KegiatanModel(id: $id, judul: $judul, pj: $pj, tanggal: $tanggal, kategori: $kategori, lokasi: $lokasi, deskripsi: $deskripsi, dibuatOleh: $dibuatOleh, hasDocs: $hasDocs, gambarDokumentasi: $gambarDokumentasi, createdAt: $createdAt)';
   }
 
   @override
@@ -109,6 +115,7 @@ class KegiatanModel {
         other.deskripsi == deskripsi &&
         other.dibuatOleh == dibuatOleh &&
         other.hasDocs == hasDocs &&
+        other.gambarDokumentasi == gambarDokumentasi &&
         other.createdAt == createdAt;
   }
 
@@ -123,6 +130,7 @@ class KegiatanModel {
         deskripsi.hashCode ^
         dibuatOleh.hashCode ^
         hasDocs.hashCode ^
+        gambarDokumentasi.hashCode ^
         createdAt.hashCode;
   }
 }

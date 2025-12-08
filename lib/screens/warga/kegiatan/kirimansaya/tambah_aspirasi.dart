@@ -58,7 +58,7 @@ class _WargaTambahAspirasiScreenState
               backgroundColor: Colors.green,
             ),
           );
-          context.pop();
+          context.pop(true);
         }
       } catch (e) {
         if (mounted) {

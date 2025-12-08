@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:jawara_pintar_kel_5/models/keuangan/laporan_keuangan_model.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/laporan/detail_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/laporan/pengeluaran_tambah.dart';
 import 'package:jawara_pintar_kel_5/utils.dart'
     show formatDate, formatRupiah, openDateTimePicker;
 import 'package:moon_design/moon_design.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/laporan/detail_screen.dart';
 
 class SemuaPengeluaranScreen extends StatefulWidget {
   const SemuaPengeluaranScreen({super.key});
@@ -452,7 +453,7 @@ class _SemuaPengeluaranScreenState extends State<SemuaPengeluaranScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    item.jenisPemasukan,
+                    item.jenisPengeluaran ?? '-',
                     style: MoonTokens.light.typography.body.text12.copyWith(
                       color: Colors.grey[600],
                     ),

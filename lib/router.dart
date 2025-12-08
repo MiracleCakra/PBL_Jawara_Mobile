@@ -8,6 +8,7 @@ import 'package:jawara_pintar_kel_5/models/kegiatan/kegiatan_model.dart';
 // Models
 import 'package:jawara_pintar_kel_5/models/keluarga/anggota_keluarga_model.dart';
 import 'package:jawara_pintar_kel_5/models/keluarga/warga_model.dart';
+import 'package:jawara_pintar_kel_5/models/keuangan/channel_transfer_model.dart';
 import 'package:jawara_pintar_kel_5/models/keuangan/transaksi_model.dart';
 import 'package:jawara_pintar_kel_5/models/keuangan/warga_tagihan_model.dart';
 import 'package:jawara_pintar_kel_5/models/marketplace/marketplace_model.dart'
@@ -62,7 +63,7 @@ import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/detail_pemasukan_lai
 // Pemasukan
 import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/kategori_iuran_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/pemasukan_lain_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/pemasukan_lain_tambah_screen.dart';
+import 'package:jawara_pintar_kel_5/screens/admin/laporan/pemasukan_lain_tambah_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/pemasukan_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/tagih_iuran_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/tagihan_screen.dart';
@@ -524,14 +525,14 @@ final router = GoRouter(
             GoRoute(
               path: '/admin/lainnya/channel-transfer/detail',
               builder: (context, state) {
-                final channelData = state.extra as Map<String, String>;
-                return DetailChannelPage(channelData: channelData);
+                final channelData = state.extra as ChannelTransferModel;
+                return DetailChannelPage(channel: channelData);
               },
             ),
             GoRoute(
               path: '/admin/lainnya/channel-transfer/edit',
               builder: (context, state) {
-                final channelData = state.extra as Map<String, String>;
+                final channelData = state.extra as ChannelTransferModel;
                 return EditChannelPage(channelData: channelData);
               },
             ),

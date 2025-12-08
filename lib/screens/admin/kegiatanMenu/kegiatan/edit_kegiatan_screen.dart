@@ -1,7 +1,8 @@
 import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:jawara_pintar_kel_5/models/kegiatan/kegiatan_model.dart';
 import 'package:jawara_pintar_kel_5/services/kegiatan_service.dart';
@@ -38,8 +39,10 @@ class _EditKegiatanScreenState extends State<EditKegiatanScreen> {
   ];
 
   DateTime? _selectedDate;
-  final List<File> _dokumentasiFiles = [];
-  final ImagePicker _picker = ImagePicker();
+  File? _selectedImageFile; // Mobile: Path File
+  Uint8List? _selectedImageBytes; // Web: Bytes
+  String? _selectedImageName; // Nama file baru
+  String? _existingImageUrl; // URL gambar lama dari DB
 
   @override
   void initState() {
@@ -52,6 +55,7 @@ class _EditKegiatanScreenState extends State<EditKegiatanScreen> {
     _deskripsiController.text = data.deskripsi;
     _tanggalController.text = DateFormat('dd.MM.yyyy').format(data.tanggal);
     _selectedDate = data.tanggal;
+    _existingImageUrl = data.gambarDokumentasi;
 
     if (_kategoriList.contains(data.kategori)) {
       _selectedKategori = data.kategori;
@@ -69,33 +73,47 @@ class _EditKegiatanScreenState extends State<EditKegiatanScreen> {
   }
 
   Future<void> _pickImage() async {
-    if (_dokumentasiFiles.length >= 10) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Maksimal 10 gambar telah tercapai!')),
-      );
-      return;
-    }
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+      withData: true, // PENTING: Supaya bytes terbaca di Web
+    );
 
-    final XFile? pickedFile =
-        await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (result != null && result.files.isNotEmpty) {
+      final PlatformFile file = result.files.first;
 
-    if (pickedFile != null) {
-      final newFile = File(pickedFile.path);
-      if (await newFile.length() > 5 * 1024 * 1024) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ukuran gambar melebihi batas 5MB!')),
-        );
+      // Validasi 5MB
+      if (file.size > 5 * 1024 * 1024) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Ukuran gambar melebihi batas 5MB!')),
+          );
+        }
         return;
       }
+
       setState(() {
-        _dokumentasiFiles.add(newFile);
+        _selectedImageName = file.name;
+
+        if (kIsWeb) {
+          _selectedImageBytes = file.bytes;
+          _selectedImageFile = null;
+        } else {
+          if (file.path != null) {
+            _selectedImageFile = File(file.path!);
+            _selectedImageBytes = null;
+          }
+        }
       });
     }
   }
 
-  void _removeImage(int index) {
+  void _removeImage() {
     setState(() {
-      _dokumentasiFiles.removeAt(index);
+      _selectedImageFile = null;
+      _selectedImageBytes = null;
+      _selectedImageName = null;
+      _existingImageUrl = null; // Hapus gambar lama juga
     });
   }
 
@@ -123,19 +141,34 @@ class _EditKegiatanScreenState extends State<EditKegiatanScreen> {
         _isLoading = true;
       });
 
-      final updatedKegiatan = widget.kegiatan.copyWith(
-        judul: _namaController.text,
-        kategori: _selectedKategori!,
-        tanggal: _selectedDate!,
-        lokasi: _lokasiController.text,
-        pj: _pjController.text,
-        deskripsi: _deskripsiController.text,
-        hasDocs: _dokumentasiFiles.isNotEmpty,
-      );
-
       try {
+        String? imageUrl = _existingImageUrl;
+        if (_selectedImageBytes != null || _selectedImageFile != null) {
+          final String uniqueFileName =
+              '${DateTime.now().millisecondsSinceEpoch}_${_selectedImageName ?? 'update.jpg'}';
+
+          imageUrl = await _kegiatanService.uploadKegiatanImage(
+            file: _selectedImageFile,
+            bytes: _selectedImageBytes,
+            fileName: uniqueFileName,
+          );
+        }
+
+        final updatedKegiatan = widget.kegiatan.copyWith(
+          judul: _namaController.text,
+          kategori: _selectedKategori!,
+          tanggal: _selectedDate!,
+          lokasi: _lokasiController.text,
+          pj: _pjController.text,
+          deskripsi: _deskripsiController.text,
+          hasDocs: imageUrl != null,
+          gambarDokumentasi: imageUrl,
+        );
+
         final result = await _kegiatanService.updateKegiatan(
-            widget.kegiatan.id!, updatedKegiatan);
+          widget.kegiatan.id!,
+          updatedKegiatan,
+        );
         if (mounted) {
           context.pop(result);
         }
@@ -176,8 +209,10 @@ class _EditKegiatanScreenState extends State<EditKegiatanScreen> {
           onTap: label == 'Tanggal' ? () => _selectDate(context) : null,
           decoration: InputDecoration(
             hintText: hint,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
             border: const OutlineInputBorder(
               borderRadius: BorderRadius.all(Radius.circular(8.0)),
               borderSide: BorderSide(color: Colors.grey),
@@ -230,17 +265,23 @@ class _EditKegiatanScreenState extends State<EditKegiatanScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildTextField(
-                      'Nama Kegiatan', _namaController, 'Masukkan Nama Kegiatan'),
-                  const Text('Pilih Kategori',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    'Nama Kegiatan',
+                    _namaController,
+                    'Masukkan Nama Kegiatan',
+                  ),
+                  const Text(
+                    'Pilih Kategori',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
                     value: _selectedKategori,
                     hint: const Text('Pilih Kategori'),
                     decoration: const InputDecoration(
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.all(Radius.circular(8.0)),
                         borderSide: BorderSide(color: Colors.grey),
@@ -269,88 +310,125 @@ class _EditKegiatanScreenState extends State<EditKegiatanScreen> {
                     'Tanggal',
                     _tanggalController,
                     'Pilih tanggal pelaksanaan',
-                    suffixIcon: const Icon(Icons.calendar_today, color: Colors.grey),
-                  ),
-                  _buildTextField('Lokasi', _lokasiController, 'Masukkan Lokasi',
-                      isRequired: false),
-                  _buildTextField('Penanggung Jawab', _pjController,
-                      'Masukkan Penanggung Jawab'),
-                  _buildTextField(
-                      'Deskripsi', _deskripsiController, 'Tulis detail event...',
-                      maxLines: 5, isRequired: false),
-                  const SizedBox(height: 16),
-                  const Text('Upload Dokumentasi',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Maksimal 10 gambar (.png / .jpg), ukuran maksimal 5MB per gambar. (${_dokumentasiFiles.length}/10 terunggah)',
-                    style: const TextStyle(color: Colors.grey, fontSize: 12),
-                  ),
-                  const SizedBox(height: 8),
-                  if (_dokumentasiFiles.isNotEmpty)
-                    SizedBox(
-                      height: 100,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: _dokumentasiFiles.length,
-                        itemBuilder: (context, index) {
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 8.0),
-                            child: Stack(
-                              children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(8.0),
-                                  child: Image.file(
-                                    _dokumentasiFiles[index],
-                                    width: 100,
-                                    height: 100,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                                Positioned(
-                                  right: 0,
-                                  top: 0,
-                                  child: GestureDetector(
-                                    onTap: () => _removeImage(index),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.black54,
-                                        borderRadius:
-                                            BorderRadius.circular(10),
-                                      ),
-                                      padding: const EdgeInsets.all(2),
-                                      child: const Icon(Icons.close,
-                                          size: 16, color: Colors.white),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
+                    suffixIcon: const Icon(
+                      Icons.calendar_today,
+                      color: Colors.grey,
                     ),
+                  ),
+                  _buildTextField(
+                    'Lokasi',
+                    _lokasiController,
+                    'Masukkan Lokasi',
+                    isRequired: false,
+                  ),
+                  _buildTextField(
+                    'Penanggung Jawab',
+                    _pjController,
+                    'Masukkan Penanggung Jawab',
+                  ),
+                  _buildTextField(
+                    'Deskripsi',
+                    _deskripsiController,
+                    'Tulis detail event...',
+                    maxLines: 5,
+                    isRequired: false,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Upload Dokumentasi',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Maksimal 1 gambar (.png / .jpg), ukuran maksimal 5MB.',
+                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                  ),
                   const SizedBox(height: 8),
-                  InkWell(
-                    onTap: _pickImage,
-                    child: Container(
-                      height: 50,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
+                  if (_selectedImageBytes != null ||
+                      _selectedImageFile != null ||
+                      _existingImageUrl != null)
+                    Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8.0),
+                          child: _selectedImageBytes != null
+                              ? Image.memory(
+                                  _selectedImageBytes!,
+                                  width: double.infinity,
+                                  height: 200,
+                                  fit: BoxFit.cover,
+                                )
+                              : _selectedImageFile != null
+                              ? Image.file(
+                                  _selectedImageFile!,
+                                  width: double.infinity,
+                                  height: 200,
+                                  fit: BoxFit.cover,
+                                )
+                              : Image.network(
+                                  _existingImageUrl!,
+                                  width: double.infinity,
+                                  height: 200,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Container(
+                                        height: 200,
+                                        color: Colors.grey[200],
+                                        child: const Center(
+                                          child: Text('Gagal memuat gambar'),
+                                        ),
+                                      ),
+                                ),
+                        ),
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: GestureDetector(
+                            onTap: _removeImage,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.black54,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              padding: const EdgeInsets.all(4),
+                              child: const Icon(
+                                Icons.close,
+                                size: 20,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    InkWell(
+                      onTap: _pickImage,
+                      child: Container(
+                        height: 150,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
                           color: Colors.grey.shade100,
                           borderRadius: BorderRadius.circular(8.0),
-                          border: Border.all(color: Colors.grey.shade300)),
-                      child: Center(
-                        child: Text(
-                          _dokumentasiFiles.length < 10
-                              ? 'Upload Foto png/jpg'
-                              : 'Maksimum Gambar Tercapai',
-                          style: TextStyle(color: Colors.grey.shade700),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.add_a_photo,
+                              size: 40,
+                              color: Colors.grey.shade400,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Ketuk untuk upload/ganti foto',
+                              style: TextStyle(color: Colors.grey.shade700),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                  ),
                   const SizedBox(height: 32),
                   Padding(
                     padding: const EdgeInsets.only(bottom: 16.0),
@@ -362,8 +440,7 @@ class _EditKegiatanScreenState extends State<EditKegiatanScreen> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: batalColor,
                               foregroundColor: Colors.white,
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 14),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -371,7 +448,9 @@ class _EditKegiatanScreenState extends State<EditKegiatanScreen> {
                             child: const Text(
                               'Batal',
                               style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold),
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
@@ -382,8 +461,7 @@ class _EditKegiatanScreenState extends State<EditKegiatanScreen> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: simpanColor,
                               foregroundColor: Colors.white,
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 14),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -391,7 +469,9 @@ class _EditKegiatanScreenState extends State<EditKegiatanScreen> {
                             child: const Text(
                               'Simpan',
                               style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold),
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
@@ -406,9 +486,7 @@ class _EditKegiatanScreenState extends State<EditKegiatanScreen> {
           if (_isLoading)
             Container(
               color: Colors.black.withOpacity(0.5),
-              child: const Center(
-                child: CircularProgressIndicator(),
-              ),
+              child: const Center(child: CircularProgressIndicator()),
             ),
         ],
       ),

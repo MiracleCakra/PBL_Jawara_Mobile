@@ -11,20 +11,11 @@ class DetailTagihanScreen extends StatefulWidget {
   State<DetailTagihanScreen> createState() => _DetailTagihanScreenState();
 }
 
-class _DetailTagihanScreenState extends State<DetailTagihanScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _DetailTagihanScreenState extends State<DetailTagihanScreen> {
   final TextEditingController _alasanController = TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
-
-  @override
   void dispose() {
-    _tabController.dispose();
     _alasanController.dispose();
     super.dispose();
   }
@@ -110,66 +101,7 @@ class _DetailTagihanScreenState extends State<DetailTagihanScreen>
         foregroundColor: Colors.black,
         elevation: 0,
       ),
-      body: Column(
-        children: [
-          // Tab Bar
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
-            ),
-            child: TabBar(
-              controller: _tabController,
-              labelColor: Colors.white,
-              unselectedLabelColor: Colors.black87,
-              labelStyle: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-              indicator: const BoxDecoration(),
-              isScrollable: true,
-              tabAlignment: TabAlignment.center,
-              tabs: [
-                Tab(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF6366F1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Text('Detail'),
-                  ),
-                ),
-                Tab(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Text('Riwayat Pembayaran'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Tab Content
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [_buildDetailTab(), _buildRiwayatTab()],
-            ),
-          ),
-        ],
-      ),
+      body: _buildDetailTab(),
     );
   }
 
@@ -530,26 +462,6 @@ class _DetailTagihanScreenState extends State<DetailTagihanScreen>
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Divider(height: 1, color: Colors.grey[200]),
-    );
-  }
-
-  Widget _buildRiwayatTab() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.history, size: 64, color: Colors.grey[400]),
-          const SizedBox(height: 25),
-          Text(
-            'Belum ada riwayat pembayaran',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
     );
   }
 

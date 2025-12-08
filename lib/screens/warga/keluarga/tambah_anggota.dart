@@ -27,6 +27,7 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
   final _idCtl = TextEditingController();
   final _tempatLahirCtl = TextEditingController();
   final _teleponCtl = TextEditingController();
+  final _emailCtl = TextEditingController();
   final ImagePicker _picker = ImagePicker();
 
   DateTime? _tanggalLahir;
@@ -40,50 +41,41 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
   String? _pendidikan;
   String? _pekerjaan;
 
-  // Informasi Rumah
-  String? _rumahDropdown;
-  final _rumahManualCtl = TextEditingController();
-  final List<String> _daftarRumah = [
-    'Rumah A - Jl. Merdeka No. 1',
-    'Rumah B - Jl. Sudirman No. 5',
-    'Rumah C - Jl. Gatot Subroto No. 10',
-  ];
-
   File? _fotoKtpFile;
   bool _isSaving = false;
 
-  Future<void> _pickFotoKtp({required ImageSource source}) async {
-    try {
-      final picked = await _picker.pickImage(source: source);
+  // Future<void> _pickFotoKtp({required ImageSource source}) async {
+  //   try {
+  //     final picked = await _picker.pickImage(source: source);
 
-      if (picked == null) return;
+  //     if (picked == null) return;
 
-      File originalFile = File(picked.path);
+  //     File originalFile = File(picked.path);
 
-      // Validasi max 5MB
-      final bytes = await originalFile.length();
-      if (bytes > 5 * 1024 * 1024) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ukuran gambar maksimal 5 MB')),
-        );
-        return;
-      }
+  //     // Validasi max 5MB
+  //     final bytes = await originalFile.length();
+  //     if (bytes > 5 * 1024 * 1024) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(content: Text('Ukuran gambar maksimal 5 MB')),
+  //       );
+  //       return;
+  //     }
 
-      setState(() {
-        _fotoKtpFile = originalFile;
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Gagal mengambil gambar: $e')));
-    }
-  }
+  //     setState(() {
+  //       _fotoKtpFile = originalFile;
+  //     });
+  //   } catch (e) {
+  //     ScaffoldMessenger.of(
+  //       context,
+  //     ).showSnackBar(SnackBar(content: Text('Gagal mengambil gambar: $e')));
+  //   }
+  // }
 
-  void _removeFotoKtp() {
-    setState(() {
-      _fotoKtpFile = null;
-    });
-  }
+  // void _removeFotoKtp() {
+  //   setState(() {
+  //     _fotoKtpFile = null;
+  //   });
+  // }
 
   // =======================
   //  SAVE DATA
@@ -140,22 +132,26 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
         keluargaId: null,
         agama: _agama,
         fotoKtp: fotoKtpBase64,
-        email: null,
+        email: _emailCtl.text.isEmpty ? null : _emailCtl.text,
       );
 
-      await _wargaService.createWarga(warga);
+      // await _wargaService.createWarga(warga);
 
       if (mounted) {
-        await showResultModal(
-          context,
-          type: ResultType.success,
-          title: 'Berhasil',
-          description: 'Data warga berhasil disimpan.',
-          actionLabel: 'Selesai',
-          autoProceed: true,
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Data anggota keluarga berhasil ditambahkan'),
+            backgroundColor: Colors.grey.shade800,
+          ),
         );
 
-        if (mounted) context.pop(true);
+        // Return data anggota baru ke halaman daftar
+        context.pop({
+          'nama': _namaCtl.text,
+          'nik': _idCtl.text,
+          'jenisKelamin': _jenisKelamin?.value ?? '',
+          'peranKeluarga': _peranKeluarga ?? '',
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -178,6 +174,7 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
     _idCtl.dispose();
     _tempatLahirCtl.dispose();
     _teleponCtl.dispose();
+    _emailCtl.dispose();
     super.dispose();
   }
 
@@ -231,6 +228,13 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
               ),
               const SizedBox(height: 8),
               LabeledTextField(
+                label: 'Email (Opsional)',
+                controller: _emailCtl,
+                keyboardType: TextInputType.emailAddress,
+                hint: 'Masukkan email',
+              ),
+              const SizedBox(height: 8),
+              LabeledTextField(
                 label: 'Tempat Lahir',
                 controller: _tempatLahirCtl,
                 hint: 'Masukkan tempat lahir',
@@ -244,45 +248,6 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
                 },
                 placeholder: 'Pilih Tanggal',
               ),
-            ],
-          ),
-
-          // ================= INFORMASI RUMAH =================
-          SectionCard(
-            title: 'Informasi Rumah',
-            children: [
-              LabeledDropdown<String>(
-                label: 'Rumah',
-                value: _rumahDropdown,
-                onChanged: (v) => setState(() {
-                  _rumahDropdown = v;
-                  if (v != null && v != 'Lainnya') {
-                    _rumahManualCtl.clear();
-                  }
-                }),
-                items: [
-                  const DropdownMenuItem(
-                    value: null,
-                    child: Text('-- Pilih Rumah --'),
-                  ),
-                  ..._daftarRumah.map(
-                    (rumah) =>
-                        DropdownMenuItem(value: rumah, child: Text(rumah)),
-                  ),
-                  const DropdownMenuItem(
-                    value: 'Lainnya',
-                    child: Text('Lainnya (Isi Manual)'),
-                  ),
-                ],
-              ),
-              if (_rumahDropdown == 'Lainnya') ...[
-                const SizedBox(height: 8),
-                LabeledTextField(
-                  label: 'Alamat Rumah',
-                  controller: _rumahManualCtl,
-                  hint: 'Masukkan alamat rumah lengkap',
-                ),
-              ],
             ],
           ),
 
@@ -444,99 +409,99 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
             ],
           ),
 
-          // ================= FOTO KTP =================
-          SectionCard(
-            title: 'Foto KTP',
-            children: [
-              GestureDetector(
-                onTap: () {
-                  showModalBottomSheet(
-                    context: context,
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(16),
-                      ),
-                    ),
-                    builder: (_) => SafeArea(
-                      child: Wrap(
-                        children: [
-                          ListTile(
-                            leading: const Icon(Icons.photo_camera),
-                            title: const Text('Ambil dari Kamera'),
-                            onTap: () {
-                              Navigator.pop(context);
-                              _pickFotoKtp(source: ImageSource.camera);
-                            },
-                          ),
-                          ListTile(
-                            leading: const Icon(Icons.photo_library),
-                            title: const Text('Pilih dari Galeri'),
-                            onTap: () {
-                              Navigator.pop(context);
-                              _pickFotoKtp(source: ImageSource.gallery);
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-                child: Container(
-                  height: 160,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade300),
-                  ),
-                  child: _fotoKtpFile == null
-                      ? const Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.upload, size: 40, color: Colors.grey),
-                              SizedBox(height: 6),
-                              Text("Tap untuk upload foto KTP"),
-                            ],
-                          ),
-                        )
-                      : Stack(
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.file(
-                                _fotoKtpFile!,
-                                width: double.infinity,
-                                height: double.infinity,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                            Positioned(
-                              right: 8,
-                              top: 8,
-                              child: InkWell(
-                                onTap: _removeFotoKtp,
-                                child: Container(
-                                  decoration: const BoxDecoration(
-                                    color: Colors.black54,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  padding: const EdgeInsets.all(6),
-                                  child: const Icon(
-                                    Icons.close,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                ),
-              ),
-            ],
-          ),
+          // // ================= FOTO KTP =================
+          // SectionCard(
+          //   title: 'Foto Identitas',
+          //   children: [
+          //     GestureDetector(
+          //       onTap: () {
+          //         showModalBottomSheet(
+          //           context: context,
+          //           shape: const RoundedRectangleBorder(
+          //             borderRadius: BorderRadius.vertical(
+          //               top: Radius.circular(16),
+          //             ),
+          //           ),
+          //           builder: (_) => SafeArea(
+          //             child: Wrap(
+          //               children: [
+          //                 ListTile(
+          //                   leading: const Icon(Icons.photo_camera),
+          //                   title: const Text('Ambil dari Kamera'),
+          //                   onTap: () {
+          //                     Navigator.pop(context);
+          //                     _pickFotoKtp(source: ImageSource.camera);
+          //                   },
+          //                 ),
+          //                 ListTile(
+          //                   leading: const Icon(Icons.photo_library),
+          //                   title: const Text('Pilih dari Galeri'),
+          //                   onTap: () {
+          //                     Navigator.pop(context);
+          //                     _pickFotoKtp(source: ImageSource.gallery);
+          //                   },
+          //                 ),
+          //               ],
+          //             ),
+          //           ),
+          //         );
+          //       },
+          //       child: Container(
+          //         height: 160,
+          //         width: double.infinity,
+          //         decoration: BoxDecoration(
+          //           color: Colors.grey[100],
+          //           borderRadius: BorderRadius.circular(12),
+          //           border: Border.all(color: Colors.grey.shade300),
+          //         ),
+          //         child: _fotoKtpFile == null
+          //             ? const Center(
+          //                 child: Column(
+          //                   mainAxisSize: MainAxisSize.min,
+          //                   children: [
+          //                     Icon(Icons.upload, size: 40, color: Colors.grey),
+          //                     SizedBox(height: 6),
+          //                     Text("Tap untuk upload foto Identitas"),
+          //                   ],
+          //                 ),
+          //               )
+          //             : Stack(
+          //                 children: [
+          //                   ClipRRect(
+          //                     borderRadius: BorderRadius.circular(12),
+          //                     child: Image.file(
+          //                       _fotoKtpFile!,
+          //                       width: double.infinity,
+          //                       height: double.infinity,
+          //                       fit: BoxFit.cover,
+          //                     ),
+          //                   ),
+          //                   Positioned(
+          //                     right: 8,
+          //                     top: 8,
+          //                     child: InkWell(
+          //                       onTap: _removeFotoKtp,
+          //                       child: Container(
+          //                         decoration: const BoxDecoration(
+          //                           color: Colors.black54,
+          //                           shape: BoxShape.circle,
+          //                         ),
+          //                         padding: const EdgeInsets.all(6),
+          //                         child: const Icon(
+          //                           Icons.close,
+          //                           color: Colors.white,
+          //                         ),
+          //                       ),
+          //                     ),
+          //                   ),
+          //                 ],
+          //               ),
+          //       ),
+          //     ),
+          //   ],
+          // ),
 
-          const SizedBox(height: 12),
+          // const SizedBox(height: 12),
 
           // ================= BUTTON =================
           Padding(
@@ -564,7 +529,7 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
                           ),
                         ),
                       )
-                    : const Text('Kirim Pengajuan'),
+                    : const Text('Simpan'),
               ),
             ),
           ),

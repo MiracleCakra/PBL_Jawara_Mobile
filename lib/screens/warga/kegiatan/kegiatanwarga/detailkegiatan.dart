@@ -146,7 +146,8 @@ class _DetailKegiatanWargaScreenState extends State<DetailKegiatanWargaScreen> {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8.0),
                           child: Image.network(
-                            'https://plus.unsplash.com/premium_photo-1663061406443-48423f04e73d?w=1000&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8a2VyamElMjBiYWt0aXxlbnwwfHwwfHx8MA%3D%3D',
+                            kegiatan.gambarDokumentasi ??
+                                'https://placehold.co/600x400/CCCCCC/333333?text=Tidak+Ada+Dokumentasi',
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
                               return Center(
