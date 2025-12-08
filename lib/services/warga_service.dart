@@ -1,10 +1,12 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:jawara_pintar_kel_5/models/keluarga/warga_model.dart';
+import 'package:jawara_pintar_kel_5/services/activity_log_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class WargaService {
   final SupabaseClient _supabase = Supabase.instance.client;
+  final ActivityLogService _logService = ActivityLogService();
   
   Future<String> uploadFotoProfil({
     File? file,
@@ -85,7 +87,7 @@ class WargaService {
           .from('warga')
           .select('''
             id, nama, tanggal_lahir, tempat_lahir, telepon, gender, 
-            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, foto_profil, email,
+            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, foto_profil, email, role,
             keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga, rumah:alamat_rumah(alamat))
           ''')
           .eq('email', email)
@@ -105,7 +107,7 @@ class WargaService {
           .from('warga')
           .select('''
             id, nama, tanggal_lahir, tempat_lahir, telepon, gender, 
-            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, foto_profil, email,
+            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, foto_profil, email, role,
             keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga, rumah:alamat_rumah(alamat))
           ''')
           .order('nama');
@@ -124,7 +126,7 @@ class WargaService {
           .from('warga')
           .select('''
             id, nama, tanggal_lahir, tempat_lahir, telepon, gender, 
-            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, foto_profil, email,
+            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, foto_profil, email, role,
             keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga, rumah:alamat_rumah(alamat))
           ''')
           .eq('nik', nik)
@@ -143,7 +145,7 @@ class WargaService {
           .from('warga')
           .select('''
             id, nama, tanggal_lahir, tempat_lahir, telepon, gender, 
-            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, foto_profil, email,
+            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, foto_profil, email, role,
             keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga, rumah:alamat_rumah(alamat))
           ''')
           .eq('keluarga_id', keluargaId)
@@ -168,7 +170,7 @@ class WargaService {
           .from('warga')
           .select('''
             id, nama, tanggal_lahir, tempat_lahir, telepon, gender, 
-            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, foto_profil, email,
+            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, foto_profil, email, role,
             keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga, rumah:alamat_rumah(alamat))
           ''');
 
@@ -213,7 +215,7 @@ class WargaService {
           .insert(warga.toJson())
           .select('''
             id, nama, tanggal_lahir, tempat_lahir, telepon, gender, 
-            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, foto_profil, email,
+            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, foto_profil, email, role,
             keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga, rumah:alamat_rumah(alamat))
           ''')
           .single();
@@ -233,12 +235,20 @@ class WargaService {
           .eq('id', id) // DIGANTI dari nik ke id
           .select('''
             id, nama, tanggal_lahir, tempat_lahir, telepon, gender, 
-            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, foto_profil, email,
+            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, foto_profil, email, role,
             keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga, rumah:alamat_rumah(alamat))
           ''')
           .single();
 
-      return Warga.fromJson(response);
+      final updatedWarga = Warga.fromJson(response);
+
+      // Log
+      await _logService.createLog(
+        judul: 'Memperbarui Profil Warga: ${updatedWarga.nama}',
+        type: 'Profil',
+      );
+
+      return updatedWarga;
     } catch (e) {
       throw Exception('Error updating warga: $e');
     }
@@ -275,7 +285,7 @@ class WargaService {
           .from('warga')
           .select('''
             id, nama, tanggal_lahir, tempat_lahir, telepon, gender, 
-            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, foto_profil, email,
+            gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, foto_profil, email, role,
             keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga, rumah:alamat_rumah(alamat))
           ''')
           .eq('id', id)

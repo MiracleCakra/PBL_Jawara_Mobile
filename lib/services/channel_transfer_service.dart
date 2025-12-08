@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart'; // Untuk kIsWeb & Uint8List
+import 'package:jawara_pintar_kel_5/services/activity_log_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jawara_pintar_kel_5/models/keuangan/channel_transfer_model.dart';
 
@@ -7,6 +8,7 @@ class ChannelTransferService {
   final SupabaseClient _supabase = Supabase.instance.client;
   final String _tableName = 'channel_transfer';
   final String _bucketName = 'qristransfer_images';
+  final ActivityLogService _logService = ActivityLogService();
 
   Stream<List<ChannelTransferModel>> getChannelsStream() {
     return _supabase
@@ -87,6 +89,12 @@ class ChannelTransferService {
         ..remove('created_at');
 
       await _supabase.from(_tableName).insert(data);
+
+      // Log
+      await _logService.createLog(
+        judul: 'Menambah Channel: ${channel.nama}',
+        type: 'Channel Transfer',
+      );
     } catch (e) {
       throw Exception('Gagal membuat channel: $e');
     }
@@ -99,6 +107,12 @@ class ChannelTransferService {
         ..remove('created_at');
 
       await _supabase.from(_tableName).update(data).eq('id', id);
+
+      // Log
+      await _logService.createLog(
+        judul: 'Mengubah Channel: ${channel.nama}',
+        type: 'Channel Transfer',
+      );
     } catch (e) {
       throw Exception('Gagal update channel: $e');
     }
@@ -106,7 +120,16 @@ class ChannelTransferService {
 
   Future<void> deleteChannel(int id) async {
     try {
+      final data = await _supabase.from(_tableName).select('nama_bank').eq('id', id).single();
+      final String namaBank = data['nama_bank'] ?? 'Tanpa Nama';
+
       await _supabase.from(_tableName).delete().eq('id', id);
+
+      // Log
+      await _logService.createLog(
+        judul: 'Menghapus Channel: $namaBank',
+        type: 'Channel Transfer',
+      );
     } catch (e) {
       throw Exception('Gagal menghapus channel: $e');
     }

@@ -32,7 +32,8 @@ class TagihanModel {
           .from('tagihan_iuran')
           .select(
             '*, keluarga!id_keluarga(nama_keluarga, status_keluarga), iuran!id_iuran(nama, nominal), rumah!id_rumah(alamat)',
-          );
+          )
+          .order('status_pembayaran', ascending: true);
       debugPrint('Tagihan fetched successfully: $response');
       return response.map<TagihanModel>((item) {
         return TagihanModel(

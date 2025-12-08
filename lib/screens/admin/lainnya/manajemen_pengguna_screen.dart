@@ -212,8 +212,22 @@ class _ManajemenPenggunaScreenState extends State<ManajemenPenggunaScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7FB),
       appBar: AppBar(
-        title: const Text('Manajemen Pengguna', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
-        backgroundColor: Colors.white, elevation: 0, foregroundColor: Colors.black,
+        centerTitle: false,
+        elevation: 0,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: const Icon(Icons.chevron_left, color: Colors.black),
+        ),
+        title: const Text(
+          'Manajemen Pengguna',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
       body: SafeArea(
         child: Column(

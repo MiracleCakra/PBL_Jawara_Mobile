@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
+import 'package:jawara_pintar_kel_5/models/keuangan/laporan_keuangan_model.dart';
 import 'package:jawara_pintar_kel_5/widget/plot_bar_chart.dart';
 import 'package:moon_design/moon_design.dart';
 
@@ -27,6 +28,13 @@ class _KeuanganState extends State<Keuangan> {
   int? _selectedMonth;
   double _opacity = 0;
   int _selectedSegment = 0; // 0: Pemasukan, 1: Pengeluaran
+  LaporanKeuanganModel laporanKeuanganModel = LaporanKeuanganModel(
+    tanggal: DateTime.now(),
+    nama: "",
+    nominal: 0,
+    kategoriPemasukan: '',
+    buktiFoto: '',
+  );
 
   @override
   void initState() {
@@ -570,26 +578,68 @@ class _KeuanganState extends State<Keuangan> {
                       Row(
                         children: [
                           Expanded(
-                            child: totalX(
-                              title: 'Pemasukan',
-                              value: 'Rp 3.500.000',
-                              icon: Icons.trending_up,
-                              iconColor: ConstantColors.primary,
-                              color: Colors.white,
-                              valueColor: ConstantColors.primary,
-                              titleColor: Color(0xFF1F2937),
+                            child: FutureBuilder<dynamic>(
+                              future: laporanKeuanganModel
+                                  .countTotalPemasukanThisYear(), // Async call
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return Center(
+                                    child: CircularProgressIndicator(),
+                                  );
+                                } else if (snapshot.hasError) {
+                                  return Center(
+                                    child: Text('Error: ${snapshot.error}'),
+                                  );
+                                } else if (snapshot.hasData) {
+                                  return totalX(
+                                    title: 'Pemasukan',
+                                    value: 'Rp${snapshot.data}',
+                                    icon: Icons.trending_up,
+                                    iconColor: ConstantColors.primary,
+                                    color: Colors.white,
+                                    valueColor: ConstantColors.primary,
+                                    titleColor: Color(0xFF1F2937),
+                                  );
+                                } else {
+                                  return Center(
+                                    child: Text('No Data Available'),
+                                  );
+                                }
+                              },
                             ),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
-                            child: totalX(
-                              title: 'Pengeluaran',
-                              value: 'Rp 1.000.000',
-                              icon: Icons.trending_down,
-                              iconColor: Colors.red,
-                              color: Colors.white,
-                              valueColor: ConstantColors.primary,
-                              titleColor: Color(0xFF1F2937),
+                            child: FutureBuilder<dynamic>(
+                              future: laporanKeuanganModel
+                                  .countTotalPengeluaranThisYear(), // Async call
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return Center(
+                                    child: CircularProgressIndicator(),
+                                  );
+                                } else if (snapshot.hasError) {
+                                  return Center(
+                                    child: Text('Error: ${snapshot.error}'),
+                                  );
+                                } else if (snapshot.hasData) {
+                                  return totalX(
+                                    title: 'Pengeluaran',
+                                    value: 'Rp${snapshot.data}',
+                                    icon: Icons.trending_up,
+                                    iconColor: ConstantColors.primary,
+                                    color: Colors.white,
+                                    valueColor: ConstantColors.primary,
+                                    titleColor: Color(0xFF1F2937),
+                                  );
+                                } else {
+                                  return Center(
+                                    child: Text('No Data Available'),
+                                  );
+                                }
+                              },
                             ),
                           ),
                         ],

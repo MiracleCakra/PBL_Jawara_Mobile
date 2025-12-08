@@ -1,12 +1,14 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:jawara_pintar_kel_5/models/kegiatan/broadcast_model.dart';
+import 'package:jawara_pintar_kel_5/services/activity_log_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class BroadcastService {
   final SupabaseClient _supabase = Supabase.instance.client;
   final String _tableName = 'broadcast';
   final String _bucketName = 'broadcast_documents';
+  final ActivityLogService _logService = ActivityLogService();
 
   Stream<List<BroadcastModel>> getBroadcastsStream() {
     return _supabase
@@ -98,6 +100,12 @@ class BroadcastService {
           .select()
           .single();
 
+      // Log
+      await _logService.createLog(
+        judul: 'Menambah Broadcast: ${broadcast.judul}',
+        type: 'Broadcast',
+      );
+
       return BroadcastModel.fromMap(response);
     } catch (e) {
       throw Exception('Error creating broadcast: $e');
@@ -127,6 +135,12 @@ class BroadcastService {
           .select()
           .single();
 
+      // Log
+      await _logService.createLog(
+        judul: 'Mengubah Broadcast: ${broadcast.judul}',
+        type: 'Broadcast',
+      );
+
       return BroadcastModel.fromMap(response);
     } catch (e) {
       throw Exception('Error updating broadcast: $e');
@@ -136,7 +150,17 @@ class BroadcastService {
   /// Delete broadcast
   Future<void> deleteBroadcast(int id) async {
     try {
+      // Fetch title first
+      final data = await _supabase.from(_tableName).select('judul').eq('id', id).single();
+      final String judul = data['judul'] ?? 'Tanpa Judul';
+
       await _supabase.from(_tableName).delete().eq('id', id);
+      
+      // Log
+      await _logService.createLog(
+        judul: 'Menghapus Broadcast: $judul',
+        type: 'Broadcast',
+      );
     } catch (e) {
       throw Exception('Error deleting broadcast: $e');
     }

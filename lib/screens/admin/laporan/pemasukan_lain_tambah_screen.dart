@@ -1,8 +1,9 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:jawara_pintar_kel_5/models/keuangan/laporan_keuangan_model.dart';
 import 'package:moon_design/moon_design.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:io';
 
 class PemasukanLainTambahScreen extends StatefulWidget {
   const PemasukanLainTambahScreen({super.key});
@@ -21,6 +22,14 @@ class _PemasukanLainTambahScreenState extends State<PemasukanLainTambahScreen> {
   String? _selectedKategori;
   String? _buktiFotoPath;
   final ImagePicker _picker = ImagePicker();
+
+  LaporanKeuanganModel laporankeuanganmodel = LaporanKeuanganModel(
+    tanggal: DateTime.now(),
+    nama: "",
+    nominal: 0,
+    kategoriPemasukan: '',
+    buktiFoto: '',
+  );
 
   final List<String> _kategoriOptions = [
     'Donasi',
@@ -46,6 +55,43 @@ class _PemasukanLainTambahScreenState extends State<PemasukanLainTambahScreen> {
           context,
         ).showSnackBar(SnackBar(content: Text('Gagal mengambil gambar: $e')));
       }
+    }
+  }
+
+  // Fungsi untuk mengunggah foto ke Supabase
+  Future<String?> _uploadFoto(XFile image) async {
+    try {
+      final fileExt = image.path.split('.').last;
+      final fileName = '${DateTime.now().toIso8601String()}.$fileExt';
+      final filePath = 'foto-pemasukan/$fileName';
+
+      await Supabase.instance.client.storage
+          .from('foto-pemasukan')
+          .upload(
+            filePath,
+            File(image.path),
+            fileOptions: FileOptions(contentType: image.mimeType),
+          );
+      final imageUrl = Supabase.instance.client.storage
+          .from('foto-pemasukan')
+          .getPublicUrl(filePath);
+      return imageUrl;
+    } on StorageException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal mengunggah foto, Silakan coba lagi.')),
+        );
+        debugPrint('error: $e');
+      }
+      return null;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal mengunggah foto: $e')));
+      }
+      debugPrint('error: $e');
+      return null;
     }
   }
 
@@ -450,24 +496,38 @@ class _PemasukanLainTambahScreenState extends State<PemasukanLainTambahScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           if (_formKey.currentState!.validate()) {
-                            // Return data to previous screen
-                            final data = {
-                              'nama': _namaController.text,
-                              'tanggal': _selectedDate ?? DateTime.now(),
-                              'kategoriPemasukan': _selectedKategori,
-                              'nominal':
+                            // Upload foto sebelum menyimpan data
+                            if (_buktiFotoPath != null) {
+                              final XFile image = XFile(_buktiFotoPath!);
+                              final imageUrl = await _uploadFoto(image);
+                              if (imageUrl != null) {
+                                laporankeuanganmodel.savePemasukan(
+                                  _namaController.text,
                                   double.tryParse(_nominalController.text) ?? 0,
-                              'buktiFoto': _buktiFotoPath,
-                            };
+                                  _selectedKategori ?? '',
+                                  imageUrl,
+                                  _selectedDate ?? DateTime.now(),
+                                  Supabase
+                                          .instance
+                                          .client
+                                          .auth
+                                          .currentUser
+                                          ?.email ??
+                                      '',
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Pemasukan berhasil ditambahkan',
+                                    ),
+                                  ),
+                                );
 
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Pemasukan berhasil ditambahkan'),
-                              ),
-                            );
-                            Navigator.of(context).pop(data);
+                                Navigator.of(context).pop();
+                              }
+                            }
                           }
                         },
                         style: ElevatedButton.styleFrom(

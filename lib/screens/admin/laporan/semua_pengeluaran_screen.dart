@@ -15,14 +15,24 @@ class SemuaPengeluaranScreen extends StatefulWidget {
 
 class _SemuaPengeluaranScreenState extends State<SemuaPengeluaranScreen> {
   late final TextEditingController _textController;
+  List<LaporanKeuanganModel> _pengeluaranList = [];
   String _query = '';
   String _selectedKategori = 'Semua';
   DateTime? _selectedDari;
   DateTime? _selectedSampai;
 
+  LaporanKeuanganModel laporanKeuanganModel = LaporanKeuanganModel(
+    tanggal: DateTime.now(),
+    nama: "",
+    nominal: 0,
+    kategoriPengeluaran: '',
+    buktiFoto: '',
+  );
+
   @override
   void initState() {
     _textController = TextEditingController();
+    _loadPengeluaranData();
     super.initState();
   }
 
@@ -32,59 +42,15 @@ class _SemuaPengeluaranScreenState extends State<SemuaPengeluaranScreen> {
     super.dispose();
   }
 
-  final List<LaporanKeuanganModel> fakeData = [
-    LaporanKeuanganModel(
-      tanggal: DateTime(2024, 1, 1),
-      nama: "Pengeluaran 1",
-      nominal: 100000,
-      kategoriPengeluaran: 'Operasional',
-      buktiFoto:
-          'https://via.placeholder.com/400x300.png?text=Bukti+Pengeluaran+1',
-    ),
-    LaporanKeuanganModel(
-      tanggal: DateTime(2024, 1, 3),
-      nama: "Pengeluaran 2",
-      nominal: 300000,
-      kategoriPengeluaran: 'Pembangunan',
-      buktiFoto:
-          'https://via.placeholder.com/400x300.png?text=Bukti+Pengeluaran+2',
-    ),
-    LaporanKeuanganModel(
-      tanggal: DateTime(2024, 1, 5),
-      nama: "Pengeluaran 3",
-      nominal: 400000,
-      kategoriPengeluaran: 'Pemeliharaan',
-      buktiFoto:
-          'https://via.placeholder.com/400x300.png?text=Bukti+Pengeluaran+3',
-    ),
-    LaporanKeuanganModel(
-      tanggal: DateTime(2024, 1, 7),
-      nama: "Pengeluaran 4",
-      nominal: 500000,
-      kategoriPengeluaran: 'Kegiatan Sosial',
-      buktiFoto:
-          'https://via.placeholder.com/400x300.png?text=Bukti+Pengeluaran+4',
-    ),
-    LaporanKeuanganModel(
-      tanggal: DateTime(2024, 1, 9),
-      nama: "Pengeluaran 5",
-      nominal: 600000,
-      kategoriPengeluaran: 'Administrasi',
-      buktiFoto:
-          'https://via.placeholder.com/400x300.png?text=Bukti+Pengeluaran+5',
-    ),
-    LaporanKeuanganModel(
-      tanggal: DateTime(2024, 1, 10),
-      nama: "Pengeluaran 6",
-      nominal: 700000,
-      kategoriPengeluaran: 'Operasional',
-      buktiFoto:
-          'https://via.placeholder.com/400x300.png?text=Bukti+Pengeluaran+6',
-    ),
-  ];
+  Future<void> _loadPengeluaranData() async {
+    final fetchedTagihan = await laporanKeuanganModel.fetchPengeluaran();
+    setState(() {
+      _pengeluaranList = fetchedTagihan;
+    });
+  }
 
   List<LaporanKeuanganModel> get _filteredData {
-    var filtered = fakeData;
+    var filtered = _pengeluaranList;
 
     // Filter berdasarkan query pencarian
     final q = _query.trim().toLowerCase();
@@ -176,7 +142,7 @@ class _SemuaPengeluaranScreenState extends State<SemuaPengeluaranScreen> {
           );
           if (result != null && result is Map<String, dynamic>) {
             setState(() {
-              fakeData.add(
+              _pengeluaranList.add(
                 LaporanKeuanganModel(
                   tanggal: result['tanggal'] ?? DateTime.now(),
                   nama: result['nama'] ?? '',
@@ -558,7 +524,6 @@ class _SemuaPengeluaranScreenState extends State<SemuaPengeluaranScreen> {
                           },
                           label: const Text('Reset'),
                           backgroundColor: Colors.grey.shade200,
-
                         ),
                       ),
                       const SizedBox(width: 12),

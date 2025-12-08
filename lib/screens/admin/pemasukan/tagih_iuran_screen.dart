@@ -89,7 +89,7 @@ class _TagihIuranScreenState extends State<TagihIuranScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Iuran $_selectedJenisIuran berhasil ditagihkan'),
+        content: Text('Iuran berhasil ditagihkan untuk Semua Keluarga'),
         backgroundColor: const Color(0xFF6366F1),
       ),
     );

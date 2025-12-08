@@ -12,14 +12,12 @@ class PesanWargaScreen extends StatefulWidget {
 
 class _PesanWargaScreenState extends State<PesanWargaScreen> {
   String? _selectedStatus;
-
   String _searchText = '';
-
   final TextEditingController _searchController = TextEditingController();
-
   final AspirasiService _aspirasiService = AspirasiService();
-
-  late Stream<List<AspirasiModel>> _aspirasiStream;
+  
+  List<AspirasiModel> _allPesan = [];
+  bool _isLoading = true;
 
   bool get _isFilterActive =>
       _selectedStatus != null && _selectedStatus!.isNotEmpty;
@@ -27,8 +25,29 @@ class _PesanWargaScreenState extends State<PesanWargaScreen> {
   @override
   void initState() {
     super.initState();
+    _fetchData();
+  }
 
-    _aspirasiStream = _aspirasiService.getAspirations();
+  Future<void> _fetchData() async {
+    setState(() => _isLoading = true);
+    try {
+      final data = await _aspirasiService.getAspirations().first;
+      if (mounted) {
+        setState(() {
+          _allPesan = data;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
+  }
+
+  void _refreshData() {
+    _fetchData();
   }
 
   List<AspirasiModel> _filterPesan(List<AspirasiModel> allPesan) {
@@ -53,48 +72,34 @@ class _PesanWargaScreenState extends State<PesanWargaScreen> {
 
   Widget _buildStatusChip(String status) {
     Color color;
-
     Color textColor;
 
     switch (status) {
       case 'Pending':
         color = Colors.yellow.shade800;
-
         break;
-
       case 'Diterima':
         color = Colors.green.shade700;
-
         break;
-
       case 'Ditolak':
         color = Colors.red.shade700;
-
         break;
-
       default:
         color = Colors.grey;
     }
-
     textColor = color;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
-
         borderRadius: BorderRadius.circular(8),
       ),
-
       child: Text(
         status,
-
         style: TextStyle(
           color: textColor,
-
           fontSize: 14,
-
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -104,78 +109,60 @@ class _PesanWargaScreenState extends State<PesanWargaScreen> {
   Widget _buildPesanCard(AspirasiModel pesan) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
-
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
-
-        onTap: () {
-          Navigator.push(
+        onTap: () async {
+          final result = await Navigator.push(
             context,
-
             MaterialPageRoute(
               builder: (context) => DetailPesanWargaScreen(pesan: pesan),
             ),
           );
+          if (result == true) {
+            _refreshData();
+          }
         },
-
         child: Card(
           elevation: 1,
-
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
-
           color: Colors.white,
-
           child: Padding(
             padding: const EdgeInsets.all(14.0),
-
             child: Row(
               children: [
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-
                     children: [
                       Text(
                         pesan.judul,
-
                         style: const TextStyle(
                           fontSize: 16,
-
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-
                       const SizedBox(height: 4),
-
                       Text(
                         pesan.pengirim,
-
                         style: TextStyle(
                           fontSize: 14,
-
                           color: Colors.grey.shade700,
                         ),
                       ),
-
                       Text(
                         'Tanggal dibuat: ${pesan.tanggal}',
-
                         style: TextStyle(
                           fontSize: 13,
-
                           color: Colors.grey.shade600,
                         ),
                       ),
-
                       const SizedBox(height: 8),
-
                       _buildStatusChip(pesan.status),
                     ],
                   ),
                 ),
-
                 const Icon(Icons.chevron_right, color: Colors.grey, size: 28),
               ],
             ),
@@ -453,36 +440,25 @@ class _PesanWargaScreenState extends State<PesanWargaScreen> {
           _buildFilterBar(),
 
           Expanded(
-            child: StreamBuilder<List<AspirasiModel>>(
-              stream: _aspirasiStream,
-
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
-
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(
-                    child: Text("Tidak ada pesan yang ditemukan."),
-                  );
-                }
-
-                final filteredList = _filterPesan(snapshot.data!);
-
-                return ListView.builder(
-                  padding: const EdgeInsets.only(bottom: 80),
-
-                  itemCount: filteredList.length,
-
-                  itemBuilder: (context, index) =>
-                      _buildPesanCard(filteredList[index]),
-                );
-              },
-            ),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Builder(builder: (context) {
+                    final filteredList = _filterPesan(_allPesan);
+                    if (filteredList.isEmpty) {
+                      return const Center(
+                        child: Text("Tidak ada pesan yang ditemukan."),
+                      );
+                    }
+                    return RefreshIndicator(
+                      onRefresh: _fetchData,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.only(bottom: 80),
+                        itemCount: filteredList.length,
+                        itemBuilder: (context, index) =>
+                            _buildPesanCard(filteredList[index]),
+                      ),
+                    );
+                  }),
           ),
         ],
       ),

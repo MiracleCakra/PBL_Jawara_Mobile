@@ -1,12 +1,14 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:jawara_pintar_kel_5/models/kegiatan/kegiatan_model.dart';
+import 'package:jawara_pintar_kel_5/services/activity_log_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class KegiatanService {
   final SupabaseClient _supabase = Supabase.instance.client;
   final String _tableName = 'kegiatan';
   final String _bucketName = 'kegiatan_images';
+  final ActivityLogService _logService = ActivityLogService();
 
   Stream<List<KegiatanModel>> getKegiatanStream() {
     return _supabase
@@ -56,6 +58,12 @@ class KegiatanService {
           .select()
           .single();
 
+      // Log
+      await _logService.createLog(
+        judul: 'Menambah Kegiatan: ${kegiatan.judul}',
+        type: 'Kegiatan',
+      );
+
       return KegiatanModel.fromMap(response);
     } catch (e) {
       throw Exception('Error creating kegiatan: $e');
@@ -77,6 +85,12 @@ class KegiatanService {
           .select()
           .single();
 
+      // Log
+      await _logService.createLog(
+        judul: 'Mengubah Kegiatan: ${kegiatan.judul}',
+        type: 'Kegiatan',
+      );
+
       return KegiatanModel.fromMap(response);
     } catch (e) {
       throw Exception('Error updating kegiatan: $e');
@@ -86,7 +100,16 @@ class KegiatanService {
   /// Delete kegiatan
   Future<void> deleteKegiatan(int id) async {
     try {
+      final data = await _supabase.from(_tableName).select('judul').eq('id', id).single();
+      final String judul = data['judul'] ?? 'Tanpa Judul';
+
       await _supabase.from(_tableName).delete().eq('id', id);
+      
+      // Log
+      await _logService.createLog(
+        judul: 'Menghapus Kegiatan: $judul',
+        type: 'Kegiatan',
+      );
     } catch (e) {
       throw Exception('Error deleting kegiatan: $e');
     }

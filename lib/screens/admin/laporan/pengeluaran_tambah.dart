@@ -2,7 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:jawara_pintar_kel_5/models/keuangan/laporan_keuangan_model.dart';
 import 'package:moon_design/moon_design.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class PengeluaranTambahScreen extends StatefulWidget {
   const PengeluaranTambahScreen({super.key});
@@ -13,11 +15,19 @@ class PengeluaranTambahScreen extends StatefulWidget {
 }
 
 class _PengeluaranTambahScreenState extends State<PengeluaranTambahScreen> {
+  LaporanKeuanganModel laporankeuanganmodel = LaporanKeuanganModel(
+    tanggal: DateTime.now(),
+    nama: "",
+    nominal: 0,
+    kategoriPengeluaran: '',
+    buktiFoto: '',
+  );
+
   final _formKey = GlobalKey<FormState>();
   final _namaController = TextEditingController();
   final _nominalController = TextEditingController();
   final _tanggalController = TextEditingController();
-  final _kategoriController = TextEditingController();
+  KategoriPengeluaran? _selectedKategoriPengeluaran;
   DateTime? _selectedDate;
   String? _buktiFotoPath;
   final ImagePicker _picker = ImagePicker();
@@ -38,6 +48,43 @@ class _PengeluaranTambahScreenState extends State<PengeluaranTambahScreen> {
           context,
         ).showSnackBar(SnackBar(content: Text('Gagal mengambil gambar: $e')));
       }
+    }
+  }
+
+  // Fungsi untuk mengunggah foto ke Supabase
+  Future<String?> _uploadFoto(XFile image) async {
+    try {
+      final fileExt = image.path.split('.').last;
+      final fileName = '${DateTime.now().toIso8601String()}.$fileExt';
+      final filePath = 'foto-pengeluaran/$fileName';
+
+      await Supabase.instance.client.storage
+          .from('foto-pengeluaran')
+          .upload(
+            filePath,
+            File(image.path),
+            fileOptions: FileOptions(contentType: image.mimeType),
+          );
+      final imageUrl = Supabase.instance.client.storage
+          .from('foto-pengeluaran')
+          .getPublicUrl(filePath);
+      return imageUrl;
+    } on StorageException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal mengunggah foto, Silakan coba lagi.')),
+        );
+        debugPrint('error: $e');
+      }
+      return null;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal mengunggah foto: $e')));
+      }
+      debugPrint('error: $e');
+      return null;
     }
   }
 
@@ -78,7 +125,6 @@ class _PengeluaranTambahScreenState extends State<PengeluaranTambahScreen> {
     _namaController.dispose();
     _nominalController.dispose();
     _tanggalController.dispose();
-    _kategoriController.dispose();
     super.dispose();
   }
 
@@ -234,25 +280,29 @@ class _PengeluaranTambahScreenState extends State<PengeluaranTambahScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                TextFormField(
-                  controller: _kategoriController,
+                DropdownButtonFormField<KategoriPengeluaran>(
+                  initialValue: _selectedKategoriPengeluaran,
+                  onChanged: (KategoriPengeluaran? newValue) {
+                    setState(() {
+                      _selectedKategoriPengeluaran = newValue;
+                    });
+                  },
+                  items: KategoriPengeluaran.values
+                      .map<DropdownMenuItem<KategoriPengeluaran>>((
+                        KategoriPengeluaran value,
+                      ) {
+                        return DropdownMenuItem<KategoriPengeluaran>(
+                          value: value,
+                          child: Text(value.value),
+                        );
+                      })
+                      .toList(),
                   decoration: InputDecoration(
-                    hintText: 'Masukkan kategori pengeluaran',
+                    hintText: 'Pilih kategori pengeluaran',
                     hintStyle: TextStyle(color: Colors.grey.shade400),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF6366F1),
-                        width: 2,
-                      ),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -260,7 +310,7 @@ class _PengeluaranTambahScreenState extends State<PengeluaranTambahScreen> {
                     ),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value == null) {
                       return 'Kategori pengeluaran tidak boleh kosong';
                     }
                     return null;
@@ -439,30 +489,38 @@ class _PengeluaranTambahScreenState extends State<PengeluaranTambahScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           if (_formKey.currentState!.validate()) {
-                            // Return data to previous screen
-                            final data = {
-                              'nama': _namaController.text,
-                              'tanggal': _selectedDate ?? DateTime.now(),
-                              'kategoriPengeluaran':
-                                  _kategoriController.text.isEmpty
-                                  ? null
-                                  : _kategoriController.text,
-                              'nominal':
+                            // Upload foto sebelum menyimpan data
+                            if (_buktiFotoPath != null) {
+                              final XFile image = XFile(_buktiFotoPath!);
+                              final imageUrl = await _uploadFoto(image);
+                              if (imageUrl != null) {
+                                laporankeuanganmodel.savePengeluaran(
+                                  _namaController.text,
                                   double.tryParse(_nominalController.text) ?? 0,
-                              'jenisPengeluaran': 'Pengeluaran Lainnya',
-                              'buktiFoto': _buktiFotoPath,
-                            };
+                                  _selectedKategoriPengeluaran?.value ?? '',
+                                  imageUrl,
+                                  _selectedDate ?? DateTime.now(),
+                                  Supabase
+                                          .instance
+                                          .client
+                                          .auth
+                                          .currentUser
+                                          ?.email ??
+                                      '',
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Pengeluaran berhasil ditambahkan',
+                                    ),
+                                  ),
+                                );
 
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Pengeluaran berhasil ditambahkan',
-                                ),
-                              ),
-                            );
-                            Navigator.of(context).pop(data);
+                                Navigator.of(context).pop();
+                              }
+                            }
                           }
                         },
                         style: ElevatedButton.styleFrom(

@@ -1,17 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'log_filter_screen.dart';
 import 'dart:async';
-import 'package:jawara_pintar_kel_5/models/kegiatan/logaktivitas_model.dart';
-
-final List<LogAktivitas> allLogs = [
-  LogAktivitas(judul: 'Menghapus data rumah dengan alamat: Jl. Merpati', user: 'Admin Jawara', tanggal: '13 Oktober 2025', type: 'Hapus'),
-  LogAktivitas(judul: 'Mengedit data penduduk: Ahmad Dani', user: 'Admin Jawara', tanggal: '13 Oktober 2025', type: 'Edit'),
-  LogAktivitas(judul: 'Menambahkan data penduduk baru: Budi Santoso', user: 'Pak RT', tanggal: '13 Oktober 2025', type: 'Tambah'),
-  LogAktivitas(judul: 'Mengedit status iuran rumah: Jl. Mawar No. 5', user: 'Bendahara', tanggal: '14 Oktober 2025', type: 'Edit'),
-  LogAktivitas(judul: 'Memposting pengumuman: Kerjabakti Minggu Ini', user: 'Admin Jawara', tanggal: '15 Oktober 2025', type: 'Tambah'),
-  LogAktivitas(judul: 'Data Keuangan berhasil di-backup ke cloud', user: 'Admin Jawara', tanggal: '16 Oktober 2025', type: 'Lainnya'),
-];
+import 'package:jawara_pintar_kel_5/models/log/activity_log_model.dart';
+import 'package:jawara_pintar_kel_5/services/activity_log_service.dart';
 
 class LogAktivitasScreenAdmin extends StatelessWidget {
   const LogAktivitasScreenAdmin({super.key});
@@ -56,6 +47,7 @@ class LogAktivitasContent extends StatefulWidget {
 }
 
 class _LogAktivitasContentState extends State<LogAktivitasContent> {
+  final ActivityLogService _logService = ActivityLogService();
   String _searchText = '';
   DateTime? _filterStartDate;
   DateTime? _filterEndDate;
@@ -63,36 +55,7 @@ class _LogAktivitasContentState extends State<LogAktivitasContent> {
   bool isFilterActive = false;
 
   final Debouncer _debouncer = Debouncer(milliseconds: 300);
-  final DateFormat logDateFormat = DateFormat('dd MMMM yyyy', 'id_ID');
-  List<LogAktivitas> get _filteredLogs {
-    Iterable<LogAktivitas> result = allLogs;
-
-    final query = _searchText.toLowerCase();
-    if (_searchText.isNotEmpty) {
-      result = result.where((log) {
-        return log.judul.toLowerCase().contains(query) ||
-            log.user.toLowerCase().contains(query);
-      });
-    }
-
-    if (_filterStartDate != null) {
-      result = result.where((log) {
-        final logDate = logDateFormat.parse(log.tanggal);
-        return logDate.isAtSameMomentAs(_filterStartDate!) ||
-            logDate.isAfter(_filterStartDate!);
-      });
-    }
-
-    if (_filterEndDate != null) {
-      final end = _filterEndDate!.add(const Duration(days: 1));
-      result = result.where((log) {
-        final logDate = logDateFormat.parse(log.tanggal);
-        return logDate.isBefore(end);
-      });
-    }
-
-    return result.toList();
-  }
+  final DateFormat logDateFormat = DateFormat('dd MMMM yyyy, HH:mm', 'id_ID');
 
   void _onSearchChanged(String query) {
     _debouncer.run(() {
@@ -103,31 +66,49 @@ class _LogAktivitasContentState extends State<LogAktivitasContent> {
   }
 
   void _showFilterModal(BuildContext context) async {
-    final result = await showModalBottomSheet<Map<String, dynamic>?>(
+    final DateTimeRange? picked = await showDateRangePicker(
       context: context,
-      isScrollControlled: true,
-      builder: (modalContext) {
-        return SizedBox(
-          height: MediaQuery.of(context).size.height * 0.75,
-          child: LogFilterScreen(
-            initialStartDate: _filterStartDate,
-            initialEndDate: _filterEndDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+      initialDateRange: _filterStartDate != null && _filterEndDate != null
+          ? DateTimeRange(start: _filterStartDate!, end: _filterEndDate!)
+          : null,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF4E46B4),
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
           ),
+          child: child!,
         );
       },
     );
 
-    if (result != null) {
+    if (picked != null) {
       setState(() {
-        _filterStartDate = result['startDate'] as DateTime?;
-        _filterEndDate = result['endDate'] as DateTime?;
-        isFilterActive =
-            _filterStartDate != null || _filterEndDate != null;
+        _filterStartDate = picked.start;
+        _filterEndDate = picked.end;
+        isFilterActive = true;
       });
+    } else {
+        // Optional: Clear filter if cancelled? No, standard behavior is keep unless cleared.
+        // To clear, we might need a custom button or "Reset" in a custom modal.
+        // For now, let's just support setting range.
     }
   }
+  
+  void _clearFilter() {
+      setState(() {
+        _filterStartDate = null;
+        _filterEndDate = null;
+        isFilterActive = false;
+      });
+  }
 
-  Widget _buildLogItem(LogAktivitas log) {
+  Widget _buildLogItem(ActivityLogModel log) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -158,18 +139,56 @@ class _LogAktivitasContentState extends State<LogAktivitasContent> {
           Text(log.user,
               style:
                   TextStyle(color: Colors.grey.shade700, fontSize: 14)),
-          Text("Tanggal : ${log.tanggal}",
+          Text("Tanggal : ${logDateFormat.format(log.tanggal)}",
               style:
                   TextStyle(color: Colors.grey.shade600, fontSize: 14)),
+          const SizedBox(height: 4),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: Colors.blue.shade100),
+            ),
+            child: Text(
+              log.type,
+              style: TextStyle(fontSize: 12, color: Colors.blue.shade800),
+            ),
+          ),
         ],
       ),
     );
   }
 
+  List<ActivityLogModel> _applyFilters(List<ActivityLogModel> logs) {
+    return logs.where((log) {
+      final query = _searchText.toLowerCase();
+      final matchesSearch =
+          _searchText.isEmpty ||
+          log.judul.toLowerCase().contains(query) ||
+          log.user.toLowerCase().contains(query);
+
+      final logDate = log.tanggal;
+      bool matchesDate = true;
+
+      if (_filterStartDate != null) {
+        // Normalize to start of day
+        final start = DateTime(_filterStartDate!.year, _filterStartDate!.month, _filterStartDate!.day);
+        matchesDate = matchesDate && (logDate.isAtSameMomentAs(start) || logDate.isAfter(start));
+      }
+
+      if (_filterEndDate != null) {
+        // Normalize to end of day
+        final end = DateTime(_filterEndDate!.year, _filterEndDate!.month, _filterEndDate!.day, 23, 59, 59);
+        matchesDate = matchesDate && (logDate.isBefore(end));
+      }
+
+      return matchesSearch && matchesDate;
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final filteredList = _filteredLogs;
-
     return Column(
       children: [
         Padding(
@@ -235,10 +254,30 @@ class _LogAktivitasContentState extends State<LogAktivitasContent> {
                 borderRadius: BorderRadius.circular(8),
                 child: InkWell(
                   onTap: () {
-                    setState(() {
-                      isFilterActive = true;
-                    });
-                    _showFilterModal(context);
+                    if (isFilterActive) {
+                        // Show dialog to clear or change
+                        showDialog(context: context, builder: (c) => SimpleDialog(
+                            title: const Text('Filter Tanggal'),
+                            children: [
+                                SimpleDialogOption(
+                                    onPressed: () {
+                                        Navigator.pop(c);
+                                        _showFilterModal(context);
+                                    },
+                                    child: const Text('Ubah Rentang Tanggal'),
+                                ),
+                                SimpleDialogOption(
+                                    onPressed: () {
+                                        Navigator.pop(c);
+                                        _clearFilter();
+                                    },
+                                    child: const Text('Hapus Filter', style: TextStyle(color: Colors.red)),
+                                ),
+                            ],
+                        ));
+                    } else {
+                        _showFilterModal(context);
+                    }
                   },
                   borderRadius: BorderRadius.circular(8),
                   highlightColor: Colors.transparent,
@@ -252,8 +291,8 @@ class _LogAktivitasContentState extends State<LogAktivitasContent> {
                       border: Border.all(color: Colors.grey.shade300, width: 1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(
-                      Icons.tune,
+                    child: Icon(
+                      isFilterActive ? Icons.filter_alt_off : Icons.tune,
                       color: Colors.black,
                       size: 24,
                     ),
@@ -264,18 +303,51 @@ class _LogAktivitasContentState extends State<LogAktivitasContent> {
           ),
         ),
         Expanded(
-          child: filteredList.isEmpty
-              ? const Center(
-                  child: Text("Tidak ada aktivitas yang tercatat."))
-              : ListView.builder(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 8),
-                  itemCount: filteredList.length,
-                  itemBuilder: (context, index) =>
-                      _buildLogItem(filteredList[index]),
-                ),
+          child: StreamBuilder<List<ActivityLogModel>>(
+            stream: _logService.getLogsStream(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              }
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const Center(
+                    child: Text("Tidak ada aktivitas yang tercatat."));
+              }
+
+              final filteredLogs = _applyFilters(snapshot.data!);
+
+              if (filteredLogs.isEmpty) {
+                return const Center(child: Text("Data tidak ditemukan."));
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 8),
+                itemCount: filteredLogs.length,
+                itemBuilder: (context, index) =>
+                    _buildLogItem(filteredLogs[index]),
+              );
+            },
+          ),
         ),
       ],
     );
+  }
+}
+
+class Debouncer {
+  final int milliseconds;
+  Timer? _timer;
+
+  Debouncer({required this.milliseconds});
+
+  void run(VoidCallback action) {
+    if (_timer != null) {
+      _timer!.cancel();
+    }
+    _timer = Timer(Duration(milliseconds: milliseconds), action);
   }
 }
