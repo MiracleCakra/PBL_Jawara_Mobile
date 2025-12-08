@@ -134,14 +134,14 @@ class _DetailPesanWargaScreenState extends State<DetailPesanWargaScreen> {
                 const Divider(height: 1),
                 ListTile(
                   leading: Container(
-                    padding: const EdgeInsets.all(8),
+                    padding:  EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF3B82F6).withOpacity(0.1),
+                      color:  Colors.deepPurple.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
                       Icons.check,
-                      color: Color(0xFF3B82F6),
+                      color: Colors.deepPurple,
                       size: 24,
                     ),
                   ),
@@ -149,7 +149,7 @@ class _DetailPesanWargaScreenState extends State<DetailPesanWargaScreen> {
                     'Terima',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF3B82F6),
+                      color: Colors.deepPurple,
                     ),
                   ),
                   subtitle: Text(
@@ -186,14 +186,14 @@ class _DetailPesanWargaScreenState extends State<DetailPesanWargaScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: newStatus == 'Diterima'
-                      ? const Color(0xFF3B82F6).withOpacity(0.1)
+                      ? Colors.deepPurple.withOpacity(0.1)
                       : Colors.red.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   newStatus == 'Diterima' ? Icons.check : Icons.close,
                   color: newStatus == 'Diterima'
-                      ? const Color(0xFF3B82F6)
+                      ? Colors.deepPurple
                       : Colors.red,
                   size: 40,
                 ),
@@ -239,7 +239,7 @@ class _DetailPesanWargaScreenState extends State<DetailPesanWargaScreen> {
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: newStatus == 'Diterima'
-                            ? const Color(0xFF3B82F6)
+                            ? Colors.deepPurple
                             : Colors.red,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),

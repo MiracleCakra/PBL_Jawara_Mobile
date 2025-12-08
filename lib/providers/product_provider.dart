@@ -21,8 +21,12 @@ class ProductProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _products = await _productService.getAllProducts();
-      print('DEBUG ProductProvider: Fetched ${_products.length} products');
+      final allProducts = await _productService.getAllProducts();
+      // Filter produk yang stoknya > 0
+      _products = allProducts.where((p) => (p.stok ?? 0) > 0).toList();
+      print(
+        'DEBUG ProductProvider: Fetched ${_products.length} products with stock',
+      );
       if (_products.isNotEmpty) {
         print('DEBUG ProductProvider: First product: ${_products.first.nama}');
       }

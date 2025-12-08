@@ -1,5 +1,5 @@
 import 'dart:math' show max;
-
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
@@ -146,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
             final heightPercentage =
                 constraints.maxHeight / MediaQuery.of(context).size.height;
             final mascoutHeight =
-                MediaQuery.of(context).size.height * 0.4 * heightPercentage;
+                MediaQuery.of(context).size.height * 0.6 * heightPercentage;
             return SafeArea(
               child: Padding(
                 padding: const EdgeInsets.only(top: 8.0),
@@ -170,7 +170,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: GestureDetector(
                             onTap: () => _setShowLoginForm(false),
                             child: Image.asset(
-                              "assets/login_banner.webp",
+                              "assets/sapa_warga.webp",
                               key: const Key(
                                 'banner_image',
                               ), // ---> KEY DITAMBAHKAN
@@ -191,7 +191,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             children: [
                               LayoutBuilder(
                                 builder: (context, constraints) {
-                                  final textStyle =
+                                  /*final textStyle =
                                       MediaQuery.of(context).size.height > 600
                                       ? MoonTokens
                                             .light
@@ -202,15 +202,25 @@ class _LoginScreenState extends State<LoginScreen> {
                                             .light
                                             .typography
                                             .heading
-                                            .text24;
+                                            .text24;*/
+                                    final double titleSize =
+                                    MediaQuery.of(context).size.height > 600 ? 32 : 24;
                                   final children = [
                                     Text(
-                                      "Jawara ",
-                                      style: textStyle.copyWith(
+                                      "Sapa ",
+                                      style: GoogleFonts.poppins(
+                                        fontSize: titleSize,
+                                        fontWeight: FontWeight.bold,
                                         color: MoonTokens.light.colors.piccolo,
                                       ),
                                     ),
-                                    Text("Pintar", style: textStyle),
+                                    Text("Warga",
+                                     style: GoogleFonts.poppins(
+                                        fontSize: titleSize,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
+                                    ),
                                   ];
                                   if (constraints.maxWidth < 300) {
                                     return Column(
@@ -396,7 +406,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Align(
       alignment: AlignmentGeometry.centerLeft,
       child: Text(
-        'Login untuk mengakses sistem Jawara Pintar.',
+        'Warga Berdaya, Usaha Berjaya.',
         style: MoonTokens.light.typography.body.text14,
       ),
     );

@@ -5,9 +5,9 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:moon_design/moon_design.dart';
 import 'package:jawara_pintar_kel_5/models/keluarga/warga_model.dart';
 import 'package:jawara_pintar_kel_5/services/warga_service.dart';
+import 'package:moon_design/moon_design.dart';
 
 const Color _primaryColorApp = Color(0xFF6A5AE0);
 const Color _backgroundColor = Color(0xFFF7F7F7);
@@ -16,13 +16,11 @@ const Color _primaryTextColor = Color(0xFF1F2937);
 class WargaEditDataDiriScreen extends StatefulWidget {
   final Map<String, dynamic> initialData;
 
-  const WargaEditDataDiriScreen({
-    super.key,
-    this.initialData = const {},
-  });
+  const WargaEditDataDiriScreen({super.key, this.initialData = const {}});
 
   @override
-  State<WargaEditDataDiriScreen> createState() => _WargaEditDataDiriScreenState();
+  State<WargaEditDataDiriScreen> createState() =>
+      _WargaEditDataDiriScreenState();
 }
 
 class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
@@ -32,7 +30,7 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
 
   // Controllers for editable fields
   late final TextEditingController _phoneController;
-  
+
   // Dropdown values
   Gender? _selectedGender;
   GolonganDarah? _selectedBloodType;
@@ -44,13 +42,13 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
     'Katolik',
     'Hindu',
     'Buddha',
-    'Khonghucu'
+    'Khonghucu',
   ];
 
   // Data
   Warga? _currentWarga;
   bool _isLoading = false;
-  late String _nik = ''; 
+  late String _nik = '';
 
   // Images
   File? _imageFile;
@@ -61,8 +59,10 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
   @override
   void initState() {
     super.initState();
-    _phoneController = TextEditingController(text: widget.initialData['telepon']);
-    
+    _phoneController = TextEditingController(
+      text: widget.initialData['telepon'],
+    );
+
     _nik = widget.initialData['nik'] ?? widget.initialData['id'] ?? '';
 
     _fetchFullWargaData();
@@ -71,20 +71,21 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
   Future<void> _fetchFullWargaData() async {
     try {
       if (_nik.isNotEmpty && _nik != '-') {
-         final warga = await _wargaService.getWargaById(_nik);
-         if (mounted) {
-           setState(() {
-             _currentWarga = warga;
-             if (_phoneController.text.isEmpty) _phoneController.text = warga.telepon ?? '';
-             _selectedGender = warga.gender;
-             _selectedBloodType = warga.golDarah;
-             
-             // Set agama if matches list, otherwise null
-             if (warga.agama != null && _agamaList.contains(warga.agama)) {
-                _selectedAgama = warga.agama;
-             }
-           });
-         }
+        final warga = await _wargaService.getWargaById(_nik);
+        if (mounted) {
+          setState(() {
+            _currentWarga = warga;
+            if (_phoneController.text.isEmpty)
+              _phoneController.text = warga.telepon ?? '';
+            _selectedGender = warga.gender;
+            _selectedBloodType = warga.golDarah;
+
+            // Set agama if matches list, otherwise null
+            if (warga.agama != null && _agamaList.contains(warga.agama)) {
+              _selectedAgama = warga.agama;
+            }
+          });
+        }
       }
     } catch (e) {
       debugPrint("Error fetching full warga data: $e");
@@ -107,8 +108,8 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
       if (pickedFile != null) {
         final bytes = await pickedFile.readAsBytes();
         setState(() {
-          _imageFile = File(pickedFile.path); 
-          _imageBytes = bytes; 
+          _imageFile = File(pickedFile.path);
+          _imageBytes = bytes;
         });
       }
     } catch (e) {
@@ -138,10 +139,15 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
   Future<void> _saveData() async {
     if (!_formKey.currentState!.validate()) return;
     if (_currentWarga == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: const Text('Data warga belum dimuat sempurna. Mohon tunggu.'), backgroundColor: Colors.grey.shade800),
-        );
-        return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Data warga belum dimuat sempurna. Mohon tunggu.',
+          ),
+          backgroundColor: Colors.grey.shade800,
+        ),
+      );
+      return;
     }
 
     setState(() => _isLoading = true);
@@ -149,8 +155,9 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
     try {
       // 1. Upload Profile Picture
       String? fotoUrl = _currentWarga?.fotoProfil;
-      if (_imageBytes != null) { 
-        final fileName = 'pfp_${_currentWarga!.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      if (_imageBytes != null) {
+        final fileName =
+            'pfp_${_currentWarga!.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
         fotoUrl = await _wargaService.uploadFotoProfil(
           file: kIsWeb ? null : _imageFile,
           bytes: _imageBytes,
@@ -162,13 +169,14 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
       // 2. Upload KTP
       String? fotoKtpUrl = _currentWarga?.fotoKtp;
       if (_ktpBytes != null) {
-         final fileName = 'ktp_${_currentWarga!.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-         fotoKtpUrl = await _wargaService.uploadFotoKtp(
-            file: kIsWeb ? null : _ktpFile, 
-            bytes: _ktpBytes, 
-            fileName: fileName, 
-            contentType: 'image/jpeg'
-         );
+        final fileName =
+            'ktp_${_currentWarga!.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        fotoKtpUrl = await _wargaService.uploadFotoKtp(
+          file: kIsWeb ? null : _ktpFile,
+          bytes: _ktpBytes,
+          fileName: fileName,
+          contentType: 'image/jpeg',
+        );
       }
 
       // 3. Update Data
@@ -194,19 +202,89 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
       await _wargaService.updateWarga(_currentWarga!.id, updatedWarga);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Profil berhasil diperbarui!'),
-            backgroundColor: Colors.grey.shade800,
-            behavior: SnackBarBehavior.floating,
-          ),
+        await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: _primaryColorApp.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.check_circle_outline,
+                        color: _primaryColorApp,
+                        size: 48,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Berhasil!',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Profil berhasil diperbarui.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.black54,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          context.pop(true);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _primaryColorApp,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          'Selesai',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         );
-        context.pop(true);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal menyimpan: $e'), backgroundColor: Colors.grey.shade800),
+          SnackBar(
+            content: Text('Gagal menyimpan: $e'),
+            backgroundColor: Colors.grey.shade800,
+          ),
         );
       }
     } finally {
@@ -233,9 +311,9 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
 
     ImageProvider? ktpProvider;
     if (_ktpBytes != null) {
-        ktpProvider = MemoryImage(_ktpBytes!);
+      ktpProvider = MemoryImage(_ktpBytes!);
     } else if (_currentWarga?.fotoKtp != null) {
-        ktpProvider = NetworkImage(_currentWarga!.fotoKtp!);
+      ktpProvider = NetworkImage(_currentWarga!.fotoKtp!);
     }
 
     return Scaffold(
@@ -271,7 +349,6 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              
               // --- Foto Profil (Editable) ---
               Center(
                 child: Stack(
@@ -282,8 +359,14 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
                       backgroundImage: imageProvider,
                       child: imageProvider == null
                           ? Text(
-                              _currentWarga?.nama.isNotEmpty == true ? _currentWarga!.nama[0].toUpperCase() : 'A',
-                              style: const TextStyle(fontSize: 32, color: _primaryColorApp, fontWeight: FontWeight.bold),
+                              _currentWarga?.nama.isNotEmpty == true
+                                  ? _currentWarga!.nama[0].toUpperCase()
+                                  : 'A',
+                              style: const TextStyle(
+                                fontSize: 32,
+                                color: _primaryColorApp,
+                                fontWeight: FontWeight.bold,
+                              ),
                             )
                           : null,
                     ),
@@ -299,7 +382,11 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.white, width: 3),
                           ),
-                          child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                         ),
                       ),
                     ),
@@ -313,9 +400,15 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
                 title: 'Identitas',
                 children: [
                   // Nama (Disabled)
-                  _buildReadOnlyField(label: 'Nama Lengkap', value: _currentWarga?.nama ?? '-'),
+                  _buildReadOnlyField(
+                    label: 'Nama Lengkap',
+                    value: _currentWarga?.nama ?? '-',
+                  ),
                   // NIK (Disabled)
-                  _buildReadOnlyField(label: 'NIK', value: _currentWarga?.id ?? '-'),
+                  _buildReadOnlyField(
+                    label: 'NIK',
+                    value: _currentWarga?.id ?? '-',
+                  ),
                   // Jenis Kelamin (Editable)
                   _buildDropdownField<Gender>(
                     label: 'Jenis Kelamin',
@@ -330,7 +423,8 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
                     value: _selectedBloodType,
                     items: GolonganDarah.values,
                     itemLabel: (g) => g.value,
-                    onChanged: (val) => setState(() => _selectedBloodType = val),
+                    onChanged: (val) =>
+                        setState(() => _selectedBloodType = val),
                   ),
                   // Agama (Editable Dropdown)
                   _buildDropdownField<String>(
@@ -348,11 +442,14 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
               _buildInputGroup(
                 title: 'Kontak & Akun',
                 children: [
-                   // Email (Disabled)
-                  _buildReadOnlyField(label: 'Email', value: _currentWarga?.email ?? '-'),
-                   // Telepon (Editable)
+                  // Email (Disabled)
+                  _buildReadOnlyField(
+                    label: 'Email',
+                    value: _currentWarga?.email ?? '-',
+                  ),
+                  // Telepon (Editable)
                   _buildEditableField(
-                    label: 'Nomor Telepon', 
+                    label: 'Nomor Telepon',
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
                   ),
@@ -364,8 +461,15 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
               _buildInputGroup(
                 title: 'Detail Tempat Tinggal',
                 children: [
-                  _buildReadOnlyField(label: 'Alamat', value: _currentWarga?.keluarga?.alamatRumah ?? '-', maxLines: 3),
-                  _buildReadOnlyField(label: 'Status Warga', value: _currentWarga?.statusPenduduk?.value ?? '-'),
+                  _buildReadOnlyField(
+                    label: 'Alamat',
+                    value: _currentWarga?.keluarga?.alamatRumah ?? '-',
+                    maxLines: 3,
+                  ),
+                  _buildReadOnlyField(
+                    label: 'Status Warga',
+                    value: _currentWarga?.statusPenduduk?.value ?? '-',
+                  ),
                 ],
               ),
               const SizedBox(height: 24),
@@ -379,7 +483,11 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
                     children: [
                       const Text(
                         'Foto KTP',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: _primaryTextColor),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: _primaryTextColor,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       InkWell(
@@ -391,28 +499,47 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey.shade300, width: 1),
+                            border: Border.all(
+                              color: Colors.grey.shade300,
+                              width: 1,
+                            ),
                           ),
                           clipBehavior: Clip.antiAlias,
                           child: ktpProvider != null
                               ? Stack(
                                   fit: StackFit.expand,
                                   children: [
-                                    Image(image: ktpProvider, fit: BoxFit.cover),
+                                    Image(
+                                      image: ktpProvider,
+                                      fit: BoxFit.cover,
+                                    ),
                                     Container(
                                       color: Colors.black.withOpacity(0.3),
                                       child: const Center(
-                                        child: Icon(Icons.edit, color: Colors.white, size: 32),
+                                        child: Icon(
+                                          Icons.edit,
+                                          color: Colors.white,
+                                          size: 32,
+                                        ),
                                       ),
-                                    )
+                                    ),
                                   ],
                                 )
                               : Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.add_a_photo_outlined, size: 40, color: Colors.grey.shade400),
+                                    Icon(
+                                      Icons.add_a_photo_outlined,
+                                      size: 40,
+                                      color: Colors.grey.shade400,
+                                    ),
                                     const SizedBox(height: 8),
-                                    Text('Ketuk untuk unggah KTP', style: TextStyle(color: Colors.grey.shade500)),
+                                    Text(
+                                      'Ketuk untuk unggah KTP',
+                                      style: TextStyle(
+                                        color: Colors.grey.shade500,
+                                      ),
+                                    ),
                                   ],
                                 ),
                         ),
@@ -439,7 +566,11 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
                   ),
                   child: const Text(
                     'Simpan Perubahan',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
               ),
@@ -452,9 +583,13 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
   }
 
   // --- WIDGET HELPER ---
-  
+
   // 1. Read Only Field
-  Widget _buildReadOnlyField({required String label, required String value, int? maxLines = 1}) {
+  Widget _buildReadOnlyField({
+    required String label,
+    required String value,
+    int? maxLines = 1,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
@@ -462,7 +597,11 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
         children: [
           Text(
             label,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.grey),
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              color: Colors.grey,
+            ),
           ),
           const SizedBox(height: 8),
           TextFormField(
@@ -496,7 +635,11 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
         children: [
           Text(
             label,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: _primaryTextColor),
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              color: _primaryTextColor,
+            ),
           ),
           const SizedBox(height: 8),
           TextFormField(
@@ -530,7 +673,11 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
         children: [
           Text(
             label,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: _primaryTextColor),
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              color: _primaryTextColor,
+            ),
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<T>(
@@ -556,8 +703,12 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
 
   // 4. Input Decoration
   InputDecoration _inputDecoration({bool isReadOnly = false}) {
-    final Color borderColor = isReadOnly ? Colors.grey.shade200 : Colors.grey.shade300;
-    final Color focusedColor = isReadOnly ? Colors.grey.shade300 : _primaryColorApp.withOpacity(0.5);
+    final Color borderColor = isReadOnly
+        ? Colors.grey.shade200
+        : Colors.grey.shade300;
+    final Color focusedColor = isReadOnly
+        ? Colors.grey.shade300
+        : _primaryColorApp.withOpacity(0.5);
     final Color fillColor = isReadOnly ? Colors.grey.shade100 : Colors.white;
 
     return InputDecoration(
@@ -572,7 +723,10 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: const BorderRadius.all(Radius.circular(12.0)),
-        borderSide: BorderSide(color: focusedColor, width: isReadOnly ? 1 : 1.5),
+        borderSide: BorderSide(
+          color: focusedColor,
+          width: isReadOnly ? 1 : 1.5,
+        ),
       ),
       fillColor: fillColor,
       filled: true,
@@ -580,7 +734,10 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
   }
 
   // 5. Input Group Container
-  Column _buildInputGroup({required String title, required List<Widget> children}) {
+  Column _buildInputGroup({
+    required String title,
+    required List<Widget> children,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -606,9 +763,7 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
               ),
             ],
           ),
-          child: Column(
-            children: children,
-          ),
+          child: Column(children: children),
         ),
         const SizedBox(height: 12),
       ],

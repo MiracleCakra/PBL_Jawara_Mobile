@@ -1,11 +1,15 @@
-# Release Notes - Version 1.7.1
+# Release Notes - Version 1.8.1
 
 🚀 **New Features**:
 
-* Most are bug fixes
+* Updated app icon and application slogan for better branding.
+* Added/updated dialog components for improved user interaction.
+* Implemented unit tests for core modules to ensure stability.
 
 🐛 **Bug Fixes**:
 
+* Minor UI adjustments on dialogs for consistency.
+* Fixed layout or text issues revealed during unit testing.
 - Implemented photo removal functionality in the broadcast screen.
 - Enhanced document upload area with improved UI and functionality.
 - Updated the user interface for better clarity and usability in the broadcast screen.
@@ -19,6 +23,5 @@
 
 🔧 **Miscellaneous**:
 
-* Adjusted popup behavior throughout the app for consistent UX.
-* Various small improvements and refinements to layout, spacing, and dialogs.
-* Merge conflicts resolved and code cleanup performed for stability.
+* General code cleanup and improvements.
+* Test coverage enhanced for critical features.

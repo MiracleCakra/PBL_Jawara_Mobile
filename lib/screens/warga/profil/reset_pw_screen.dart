@@ -10,15 +10,16 @@ class GantiKataSandiScreen extends StatefulWidget {
 }
 
 class _GantiKataSandiScreenState extends State<GantiKataSandiScreen> {
-  static const Color _primaryColor = Color(0xFF6366F1); 
-  static const Color _textInputFillColor = Colors.white; 
-  static const Color _textInputOutlineColor = Color(0xFFE5E7EB); 
-  static const Color _successColor = Color.fromARGB(255, 14, 169, 102);
+  static const Color _primaryColor = Color(0xFF6366F1);
+  static const Color _textInputFillColor = Colors.white;
+  static const Color _textInputOutlineColor = Color(0xFFE5E7EB);
+  static const Color _successColor = Color(0xFF6366F1);
 
   final TextEditingController _passwordLamaController = TextEditingController();
   final TextEditingController _passwordBaruController = TextEditingController();
-  final TextEditingController _konfirmasiPasswordController = TextEditingController();
-  
+  final TextEditingController _konfirmasiPasswordController =
+      TextEditingController();
+
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -32,22 +33,91 @@ class _GantiKataSandiScreenState extends State<GantiKataSandiScreen> {
   void _gantiPassword() {
     if (_formKey.currentState!.validate()) {
       // TODO: Implementasi logika ganti password sebenarnya di sini
-  
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Kata sandi berhasil diperbarui!'),
-          backgroundColor: const Color.fromARGB(255, 141, 141, 141), 
-        ),
+
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          return Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: _successColor.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.check_circle_outline,
+                      color: _successColor,
+                      size: 48,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Berhasil!',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Kata sandi berhasil diperbarui.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.black54,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _passwordLamaController.clear();
+                        _passwordBaruController.clear();
+                        _konfirmasiPasswordController.clear();
+                        context.pop();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _successColor,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text(
+                        'Selesai',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       );
-      
-      _passwordLamaController.clear();
-      _passwordBaruController.clear();
-      _konfirmasiPasswordController.clear();
-      context.pop();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Terdapat input yang belum valid. Mohon periksa kembali.'),
+          content: Text(
+            'Terdapat input yang belum valid. Mohon periksa kembali.',
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -155,10 +225,7 @@ class _GantiKataSandiScreenState extends State<GantiKataSandiScreen> {
                   ),
                   child: const Text(
                     'Simpan Kata Sandi Baru',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -197,17 +264,20 @@ class _GantiKataSandiScreenState extends State<GantiKataSandiScreen> {
             hintText: hint,
             fillColor: _textInputFillColor,
             filled: true,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8), 
+              borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(color: _textInputOutlineColor),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8), 
-              borderSide: BorderSide(color: Colors.grey.shade300), 
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8), 
+              borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: _primaryColor, width: 2),
             ),
           ),
