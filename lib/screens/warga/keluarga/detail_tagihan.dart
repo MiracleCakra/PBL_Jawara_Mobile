@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jawara_pintar_kel_5/models/keuangan/warga_tagihan_model.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/keluarga/form_pembayaran.dart';
 
 class DetailTagihanWargaScreen extends StatefulWidget {
   final WargaTagihanModel tagihan;
@@ -190,7 +189,7 @@ class _DetailTagihanWargaScreenState extends State<DetailTagihanWargaScreen>
                     _buildDetailRow(
                       Icons.location_on_outlined,
                       'Alamat',
-                      'Blok A49 (Simulasi)',
+                      widget.tagihan.alamat,
                       Colors.red,
                     ),
                   ],
@@ -220,7 +219,7 @@ class _DetailTagihanWargaScreenState extends State<DetailTagihanWargaScreen>
                       _formatCurrency(widget.tagihan.nominal),
                     ),
                     const SizedBox(height: 12),
-                    
+
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -355,6 +354,7 @@ class _DetailTagihanWargaScreenState extends State<DetailTagihanWargaScreen>
               const SizedBox(height: 16),
 
               // --- BUKTI TRANSFER CARD ---
+              // --- BUKTI TRANSFER CARD ---
               if (widget.tagihan.status != 'Belum Dibayar')
                 Container(
                   width: double.infinity,
@@ -377,31 +377,78 @@ class _DetailTagihanWargaScreenState extends State<DetailTagihanWargaScreen>
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 12),
-                      Container(
-                        height: 200,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.image,
-                                size: 50,
-                                color: Colors.grey,
+                      // Checking if the 'bukti' value is not null or empty
+                      widget.tagihan.bukti != null &&
+                              widget.tagihan.bukti!.isNotEmpty
+                          ? Container(
+                              height: 200,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[200],
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              const SizedBox(height: 8),
-                              Text(
-                                "Gambar Bukti Transfer",
-                                style: TextStyle(color: Colors.grey[600]),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.network(
+                                  widget
+                                      .tagihan
+                                      .bukti!, // Use the bukti URL to load the image
+                                  fit: BoxFit
+                                      .cover, // Make the image cover the container
+                                  loadingBuilder: (context, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return Center(
+                                      child: CircularProgressIndicator(
+                                        value:
+                                            loadingProgress
+                                                    .expectedTotalBytes !=
+                                                null
+                                            ? loadingProgress
+                                                      .cumulativeBytesLoaded /
+                                                  (loadingProgress
+                                                          .expectedTotalBytes ??
+                                                      1)
+                                            : null,
+                                      ),
+                                    );
+                                  },
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Center(
+                                      child: Icon(
+                                        Icons.error,
+                                        color: Colors.red,
+                                        size: 50,
+                                      ),
+                                    );
+                                  },
+                                ),
                               ),
-                            ],
-                          ),
-                        ),
-                      ),
+                            )
+                          : Container(
+                              height: 200,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[200],
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(
+                                      Icons.image,
+                                      size: 50,
+                                      color: Colors.grey,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      "Gambar Bukti Transfer Tidak Tersedia",
+                                      style: TextStyle(color: Colors.grey[600]),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                     ],
                   ),
                 ),
@@ -480,17 +527,18 @@ class _DetailTagihanWargaScreenState extends State<DetailTagihanWargaScreen>
                       child: InkWell(
                         onTap: () async {
                           // 1. Tutup Bottom Sheet
-                          Navigator.pop(context); 
+                          Navigator.pop(context);
 
                           // 2. Navigasi menggunakan GoRouter dan tunggu hasilnya
-                          final result = await context.pushNamed( // Menggunakan pushNamed agar bisa menerima result
+                          final result = await context.pushNamed(
+                            // Menggunakan pushNamed agar bisa menerima result
                             'FormPembayaranWarga',
                             extra: {
                               'tagihan': widget.tagihan,
                               'channel': channel,
                             },
                           );
-                          
+
                           if (result == true && mounted) {
                             setState(() {
                               _currentStatus = 'Menunggu Verifikasi';

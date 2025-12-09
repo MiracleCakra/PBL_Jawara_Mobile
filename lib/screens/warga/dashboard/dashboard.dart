@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:jawara_pintar_kel_5/models/kegiatan/broadcast_model.dart';
 import 'package:jawara_pintar_kel_5/models/kegiatan/kegiatan_model.dart';
+import 'package:jawara_pintar_kel_5/models/keuangan/laporan_keuangan_model.dart';
 import 'package:jawara_pintar_kel_5/providers/product_provider.dart';
 import 'package:jawara_pintar_kel_5/services/broadcast_service.dart';
 import 'package:jawara_pintar_kel_5/services/kegiatan_service.dart';
@@ -10,45 +11,80 @@ import 'package:jawara_pintar_kel_5/services/marketplace/review_service.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
 import 'package:jawara_pintar_kel_5/widget/product_image.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-final List<Map<String, String>> dummyDataKegiatan = [
-  {
-    'judul': 'Pemberitahuan Kerja Bakti Lingkungan',
-    'pj': 'Pak Habibi',
-    'tanggal': '12/10/2025',
-    'kategori': 'Sosial',
-    'lokasi': 'Balai Warga RW 01',
-    'deskripsi':
-        'Kerja bakti membersihkan lingkungan dari sampah dan selokan untuk menjaga kebersihan dan keamanan lingkungan.',
-    'dibuat_oleh': 'Admin Jawara',
-    'has_docs': 'true',
-  },
-  {
-    'judul': 'Parkir Liar di Depan Gerbang',
-    'tanggal': '18/11/2025',
-    'kategori': 'Keamanan',
-    'lokasi': 'Pos Satpam',
-    'deskripsi': 'Rapat membahas penertiban parkir liar.',
-    'dibuat_oleh': 'Admin Jawara',
-    'has_docs': 'false',
-  },
-];
+int pemasukan = 0;
+int pengeluaran = 0;
+String? namaWarga = "Warga";
+String? namaTagihan = "Tidak Ada Tagihan";
+String? keluargaId = "";
+String? tanggal = "2025";
+int? nominal = 0;
 
-final List<Map<String, dynamic>> dummyFinancialData = [
-  {
-    'label': 'Pemasukan Kas RT',
-    'amount': 1500000,
-    'color': Colors.green.shade600,
-  },
-  {
-    'label': 'Pengeluaran Kas RT',
-    'amount': 500000,
-    'color': Colors.red.shade600,
-  },
-];
-
-class RumahDashboardScreen extends StatelessWidget {
+class RumahDashboardScreen extends StatefulWidget {
   const RumahDashboardScreen({super.key});
+  @override
+  State<RumahDashboardScreen> createState() => _RumahDashboardScreenState();
+}
+
+class _RumahDashboardScreenState extends State<RumahDashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    laporanKeuanganModel.countTotalPemasukanThisYear().then((value) {
+      setState(() {
+        pemasukan = value;
+      });
+    });
+
+    laporanKeuanganModel.countTotalPengeluaranThisYear().then((value) {
+      setState(() {
+        pengeluaran = value;
+      });
+    });
+
+    _loadProfilAndLatestTagihan();
+  }
+
+  LaporanKeuanganModel laporanKeuanganModel = LaporanKeuanganModel(
+    tanggal: DateTime.now(),
+    nama: "",
+    nominal: 0,
+    kategoriPengeluaran: '',
+    buktiFoto: '',
+  );
+
+  _loadProfilAndLatestTagihan() async {
+    final response = await Supabase.instance.client
+        .from('warga')
+        .select('nama, email, keluarga_id')
+        .eq('email', Supabase.instance.client.auth.currentUser?.email ?? '')
+        .single();
+
+    debugPrint("Warga: $response");
+
+    setState(() {
+      namaWarga = response['nama'];
+      keluargaId = response['id_keluarga'];
+    });
+
+    final tagihanResponse = await Supabase.instance.client
+        .from('tagihan_iuran')
+        .select('id_iuran, tgl_tagihan, iuran:id_iuran(nama, nominal)')
+        // .eq('id_keluarga', keluargaId ?? '')
+        .eq('status_pembayaran', "Belum Dibayar")
+        .order('tgl_tagihan', ascending: false)
+        .limit(1)
+        .single();
+
+    debugPrint("Tagihan: $tagihanResponse");
+
+    setState(() {
+      namaTagihan = tagihanResponse['iuran']['nama'];
+      tanggal = tagihanResponse['tgl_tagihan'];
+      nominal = tagihanResponse['iuran']['nominal'];
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -163,16 +199,12 @@ class _UserHeaderWidget extends StatelessWidget {
                 style: TextStyle(color: Colors.white),
               ),
               Text(
-                "Bapak Susanto",
+                namaWarga ?? "Warga",
                 style: TextStyle(
                   fontSize: isTablet ? 28 : 22,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
-              ),
-              Text(
-                "RT 001 / RW 001",
-                style: TextStyle(color: Colors.white.withOpacity(.9)),
               ),
             ],
           ),
@@ -189,8 +221,6 @@ class _StatusIuranCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const isOverdue = true;
-    const nominal = "Rp 50.000";
     const primaryColor = Color(0xFF6A5AE0);
 
     return Container(
@@ -217,13 +247,13 @@ class _StatusIuranCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "TAGIHAN IURAN KAS RT",
+                    Text(
+                      namaTagihan ?? "",
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      isOverdue ? nominal : "LUNAS",
+                      formatRupiah(nominal ?? 0).toString(),
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -231,32 +261,29 @@ class _StatusIuranCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      isOverdue
-                          ? "Jatuh Tempo: 30 November 2025"
-                          : "Hingga Desember 2025",
+                      tanggal ?? "",
                       style: const TextStyle(color: Colors.black54),
                     ),
                   ],
                 ),
               ),
-              if (isOverdue)
-                SizedBox(
-                  height: 40,
-                  child: FilledButton(
-                    onPressed: () => context.go("/warga/keluarga/tagihan"),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: primaryColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+              SizedBox(
+                height: 40,
+                child: FilledButton(
+                  onPressed: () => context.go("/warga/keluarga/tagihan"),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Text(
-                      "Bayar",
-                      style: TextStyle(color: Colors.white),
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                  ),
+                  child: const Text(
+                    "Bayar",
+                    style: TextStyle(color: Colors.white),
                   ),
                 ),
+              ),
             ],
           ),
         ),
@@ -274,17 +301,6 @@ class _FinancialSummarySection extends StatelessWidget {
   Widget build(BuildContext context) {
     final horizontalPadding = isTablet ? 32.0 : 16.0;
 
-    final totalIncome =
-        dummyFinancialData.firstWhere(
-              (data) => data['label'] == 'Pemasukan Kas RT',
-            )['amount']
-            as int;
-    final totalExpense =
-        dummyFinancialData.firstWhere(
-              (data) => data['label'] == 'Pengeluaran Kas RT',
-            )['amount']
-            as int;
-
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 0),
       child: Column(
@@ -296,22 +312,22 @@ class _FinancialSummarySection extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _FinancialCard(
+                child: FinancialCard(
                   title: "Pemasukan",
-                  amount: totalIncome,
+                  amount: pemasukan,
                   icon: Icons.arrow_downward_rounded,
                   color: Colors.green.shade600,
-                  onTap: () => context.go("/warga/dashboard/pemasukan"),
+                  // onTap: () => context.go("/warga/dashboard/pemasukan"),
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: _FinancialCard(
+                child: FinancialCard(
                   title: "Pengeluaran",
-                  amount: totalExpense,
+                  amount: pengeluaran,
                   icon: Icons.arrow_upward_rounded,
                   color: Colors.red.shade600,
-                  onTap: () => context.go("/warga/dashboard/pengeluaran"),
+                  // onTap: () => context.go("/warga/dashboard/pengeluaran"),
                 ),
               ),
             ],
@@ -323,7 +339,7 @@ class _FinancialSummarySection extends StatelessWidget {
   }
 }
 
-class _FinancialCard extends StatelessWidget {
+class FinancialCard extends StatefulWidget {
   final String title;
   final int amount;
   final IconData icon;
@@ -331,7 +347,8 @@ class _FinancialCard extends StatelessWidget {
   final bool isBalanceCard;
   final VoidCallback? onTap;
 
-  const _FinancialCard({
+  const FinancialCard({
+    super.key,
     required this.title,
     required this.amount,
     required this.icon,
@@ -340,6 +357,11 @@ class _FinancialCard extends StatelessWidget {
     this.onTap,
   });
 
+  @override
+  State<FinancialCard> createState() => _FinancialCardState();
+}
+
+class _FinancialCardState extends State<FinancialCard> {
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -355,10 +377,10 @@ class _FinancialCard extends StatelessWidget {
         ],
       ),
       child: InkWell(
-        onTap: onTap,
+        onTap: widget.onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: EdgeInsets.all(isBalanceCard ? 20 : 16),
+          padding: EdgeInsets.all(widget.isBalanceCard ? 20 : 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -367,25 +389,25 @@ class _FinancialCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
+                      color: widget.color.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
-                      icon,
-                      size: isBalanceCard ? 26 : 22,
-                      color: color,
+                      widget.icon,
+                      size: widget.isBalanceCard ? 26 : 22,
+                      color: widget.color,
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      title,
+                      widget.title,
                       style: TextStyle(
-                        fontWeight: isBalanceCard
+                        fontWeight: widget.isBalanceCard
                             ? FontWeight.bold
                             : FontWeight.w500,
                         color: Colors.black54,
-                        fontSize: isBalanceCard ? 16 : 14,
+                        fontSize: widget.isBalanceCard ? 16 : 14,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -394,10 +416,10 @@ class _FinancialCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                formatRupiah(amount),
+                formatRupiah(widget.amount),
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: isBalanceCard ? 26 : 18,
+                  fontSize: widget.isBalanceCard ? 26 : 18,
                   color: Colors.black87,
                 ),
                 overflow: TextOverflow.ellipsis,

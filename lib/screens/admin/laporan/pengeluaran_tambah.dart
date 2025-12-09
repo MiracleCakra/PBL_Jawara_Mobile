@@ -2,13 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-<<<<<<< HEAD
 import 'package:jawara_pintar_kel_5/models/keuangan/laporan_keuangan_model.dart';
 import 'package:moon_design/moon_design.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-=======
-import 'package:moon_design/moon_design.dart';
->>>>>>> e880963302028c513d6f88042d0ffc208416b69c
 
 class PengeluaranTambahScreen extends StatefulWidget {
   const PengeluaranTambahScreen({super.key});
@@ -19,7 +15,6 @@ class PengeluaranTambahScreen extends StatefulWidget {
 }
 
 class _PengeluaranTambahScreenState extends State<PengeluaranTambahScreen> {
-<<<<<<< HEAD
   LaporanKeuanganModel laporankeuanganmodel = LaporanKeuanganModel(
     tanggal: DateTime.now(),
     nama: "",
@@ -28,17 +23,11 @@ class _PengeluaranTambahScreenState extends State<PengeluaranTambahScreen> {
     buktiFoto: '',
   );
 
-=======
->>>>>>> e880963302028c513d6f88042d0ffc208416b69c
   final _formKey = GlobalKey<FormState>();
   final _namaController = TextEditingController();
   final _nominalController = TextEditingController();
   final _tanggalController = TextEditingController();
-<<<<<<< HEAD
   KategoriPengeluaran? _selectedKategoriPengeluaran;
-=======
-  final _kategoriController = TextEditingController();
->>>>>>> e880963302028c513d6f88042d0ffc208416b69c
   DateTime? _selectedDate;
   String? _buktiFotoPath;
   final ImagePicker _picker = ImagePicker();
@@ -62,7 +51,6 @@ class _PengeluaranTambahScreenState extends State<PengeluaranTambahScreen> {
     }
   }
 
-<<<<<<< HEAD
   // Fungsi untuk mengunggah foto ke Supabase
   Future<String?> _uploadFoto(XFile image) async {
     try {
@@ -100,8 +88,6 @@ class _PengeluaranTambahScreenState extends State<PengeluaranTambahScreen> {
     }
   }
 
-=======
->>>>>>> e880963302028c513d6f88042d0ffc208416b69c
   void _showImageSourcePicker() {
     showModalBottomSheet(
       context: context,
@@ -139,10 +125,6 @@ class _PengeluaranTambahScreenState extends State<PengeluaranTambahScreen> {
     _namaController.dispose();
     _nominalController.dispose();
     _tanggalController.dispose();
-<<<<<<< HEAD
-=======
-    _kategoriController.dispose();
->>>>>>> e880963302028c513d6f88042d0ffc208416b69c
     super.dispose();
   }
 
@@ -298,7 +280,6 @@ class _PengeluaranTambahScreenState extends State<PengeluaranTambahScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-<<<<<<< HEAD
                 DropdownButtonFormField<KategoriPengeluaran>(
                   initialValue: _selectedKategoriPengeluaran,
                   onChanged: (KategoriPengeluaran? newValue) {
@@ -318,42 +299,18 @@ class _PengeluaranTambahScreenState extends State<PengeluaranTambahScreen> {
                       .toList(),
                   decoration: InputDecoration(
                     hintText: 'Pilih kategori pengeluaran',
-=======
-                TextFormField(
-                  controller: _kategoriController,
-                  decoration: InputDecoration(
-                    hintText: 'Masukkan kategori pengeluaran',
->>>>>>> e880963302028c513d6f88042d0ffc208416b69c
                     hintStyle: TextStyle(color: Colors.grey.shade400),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(color: Colors.grey.shade300),
                     ),
-<<<<<<< HEAD
-=======
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF6366F1),
-                        width: 2,
-                      ),
-                    ),
->>>>>>> e880963302028c513d6f88042d0ffc208416b69c
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 12,
                     ),
                   ),
                   validator: (value) {
-<<<<<<< HEAD
                     if (value == null) {
-=======
-                    if (value == null || value.isEmpty) {
->>>>>>> e880963302028c513d6f88042d0ffc208416b69c
                       return 'Kategori pengeluaran tidak boleh kosong';
                     }
                     return null;
@@ -532,7 +489,6 @@ class _PengeluaranTambahScreenState extends State<PengeluaranTambahScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-<<<<<<< HEAD
                         onPressed: () async {
                           if (_formKey.currentState!.validate()) {
                             // Upload foto sebelum menyimpan data
@@ -565,32 +521,6 @@ class _PengeluaranTambahScreenState extends State<PengeluaranTambahScreen> {
                                 Navigator.of(context).pop();
                               }
                             }
-=======
-                        onPressed: () {
-                          if (_formKey.currentState!.validate()) {
-                            // Return data to previous screen
-                            final data = {
-                              'nama': _namaController.text,
-                              'tanggal': _selectedDate ?? DateTime.now(),
-                              'kategoriPengeluaran':
-                                  _kategoriController.text.isEmpty
-                                  ? null
-                                  : _kategoriController.text,
-                              'nominal':
-                                  double.tryParse(_nominalController.text) ?? 0,
-                              'jenisPengeluaran': 'Pengeluaran Lainnya',
-                              'buktiFoto': _buktiFotoPath,
-                            };
-
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Pengeluaran berhasil ditambahkan',
-                                ),
-                              ),
-                            );
-                            Navigator.of(context).pop(data);
->>>>>>> e880963302028c513d6f88042d0ffc208416b69c
                           }
                         },
                         style: ElevatedButton.styleFrom(

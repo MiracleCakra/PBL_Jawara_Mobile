@@ -1,15 +1,24 @@
-# Release Notes - Version 1.9.0
+# Release Notes - Version 1.10.0
 
-🚀 **New Features**:
+**Enhancements:**
 
-* Enhanced financial reporting with dynamic fetching of yearly income and expense totals across admin screens.
-* Added new income/expense fetch and save flows in `LaporanKeuanganModel` plus active-family filtering in `IuranModel`.
-* Updated admin financial UI components to display live data and improve data entry for income/expense additions.
+* **Streamlined Financial Reporting:**
+  Refactored `LaporanKeuanganModel` by removing unnecessary formatting for total income and expenses, simplifying the data structure and improving performance.
 
-🐛 **Bug Fixes**:
+* **WargaTagihanModel Improvements:**
+  Enhanced the `WargaTagihanModel` to include additional fields such as `alamat`, `bukti` (proof of payment), and `catatan` (notes). Additionally, updated the data fetching logic from Supabase to support these new fields, providing a more comprehensive view of the tagihan (billing) data.
 
-* Improved error handling for financial data fetching and image uploads in income/expense forms.
+* **UI Improvements:**
+  Updated various UI components across different screens to reflect the latest changes in financial data handling, including:
 
-🔧 **Miscellaneous**:
+  * Improved error handling for image uploads, ensuring a better user experience when uploading proof of payment images.
+  * Visual adjustments to the `Tagihan` section, ensuring consistency and clarity in displaying financial information.
 
-* General code cleanup and UI adjustments within financial reporting screens.
+**Refactor:**
+
+* **Refactored Payment Screens:**
+  Refactored the `PengeluaranTambahScreen` and `FormPembayaranScreen` to utilize new methods for saving and uploading payment evidence. This refactor improves the structure of payment handling and simplifies future updates or feature additions.
+
+**Bug Fixes:**
+
+* Fixed issues related to image upload failures, ensuring smoother interactions with proof of payment images.
