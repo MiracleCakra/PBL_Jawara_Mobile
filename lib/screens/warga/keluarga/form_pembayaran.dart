@@ -2,10 +2,10 @@ import 'dart:io';
 
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
-import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:jawara_pintar_kel_5/models/keuangan/warga_tagihan_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class FormPembayaranScreen extends StatefulWidget {
   final WargaTagihanModel tagihan;
@@ -23,8 +23,16 @@ class _FormPembayaranScreenState extends State<FormPembayaranScreen> {
   bool _isLoading = false;
   final TextEditingController _noteController = TextEditingController();
 
-  // Variabel untuk validasi nominal OCR
-  bool _isNominalValid = true;
+  WargaTagihanModel wargaTagihanModel = WargaTagihanModel(
+    namaKeluarga: '',
+    statusKeluarga: '',
+    iuran: '',
+    kodeTagihan: '',
+    nominal: 0.0,
+    periode: DateTime.now(),
+    status: '',
+    alamat: '',
+  );
 
   @override
   void dispose() {
@@ -41,84 +49,46 @@ class _FormPembayaranScreenState extends State<FormPembayaranScreen> {
 
       if (pickedFile != null) {
         setState(() => _imageFile = File(pickedFile.path));
-
-        // Jalankan OCR
-        await _scanStrukWithOCR(_imageFile!);
       }
     } catch (e) {
       debugPrint("Error picking image: $e");
     }
   }
 
-  Future<void> _scanStrukWithOCR(File imageFile) async {
-    final inputImage = InputImage.fromFile(imageFile);
-    final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
-
+  // Fungsi untuk mengunggah foto ke Supabase
+  Future<String?> _uploadFoto(XFile image) async {
     try {
-      final recognizedText = await textRecognizer.processImage(inputImage);
-      String scannedText = recognizedText.text;
-      debugPrint("Hasil OCR: $scannedText");
+      final fileExt = image.path.split('.').last;
+      final fileName = '${DateTime.now().toIso8601String()}.$fileExt';
+      final filePath = 'foto-pemasukan/$fileName';
 
-      if (scannedText.isEmpty) {
+      await Supabase.instance.client.storage
+          .from('bukti-pembayaran')
+          .upload(
+            filePath,
+            File(image.path),
+            fileOptions: FileOptions(contentType: image.mimeType),
+          );
+      final imageUrl = Supabase.instance.client.storage
+          .from('bukti-pembayaran')
+          .getPublicUrl(filePath);
+      return imageUrl;
+    } on StorageException catch (e) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text("Tidak ada teks yang terdeteksi pada gambar."),
-            backgroundColor: Colors.grey.shade800,
-          ),
+          SnackBar(content: Text('Gagal mengunggah foto, Silakan coba lagi.')),
         );
-        return;
+        debugPrint('error: $e');
       }
-
-      final regExp = RegExp(r'\d{1,3}(?:[.,]\d{3})*');
-      final match = regExp.firstMatch(scannedText);
-
-      if (match == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text("Nominal tidak dapat ditemukan di struk."),
-            backgroundColor: Colors.grey.shade800,
-          ),
-        );
-        return;
-      }
-
-      String scannedAmountStr = match
-          .group(0)!
-          .replaceAll('.', '')
-          .replaceAll(',', '');
-      double scannedAmount = double.tryParse(scannedAmountStr) ?? 0;
-
-      setState(() {
-        _isNominalValid = scannedAmount == widget.tagihan.nominal * 1000;
-      });
-
-      if (_isNominalValid) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text("Nominal struk sesuai dengan tagihan ✅"),
-            backgroundColor: Colors.grey.shade800,
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              "Nominal struk tidak sesuai! Tagihan: ${_formatCurrency(widget.tagihan.nominal)}",
-            ),
-            backgroundColor: Colors.grey.shade800,
-          ),
-        );
-      }
+      return null;
     } catch (e) {
-      debugPrint('OCR Error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text("Terjadi kesalahan saat memproses gambar."),
-          backgroundColor: Colors.grey.shade800,
-        ),
-      );
-    } finally {
-      textRecognizer.close();
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal mengunggah foto: $e')));
+      }
+      debugPrint('error: $e');
+      return null;
     }
   }
 
@@ -134,20 +104,12 @@ class _FormPembayaranScreenState extends State<FormPembayaranScreen> {
       return;
     }
 
-    if (!_isNominalValid) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text("Nominal struk tidak sesuai tagihan!"),
-          backgroundColor: Colors.grey.shade800,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
     setState(() => _isLoading = true);
-
-    await Future.delayed(const Duration(seconds: 2));
+    final XFile image = XFile(_imageFile!.path);
+    debugPrint('Uploading foto pemasukan... $image');
+    final imageUrl = await _uploadFoto(image);
+    debugPrint('Uploaded foto pemasukan: $imageUrl');
+    wargaTagihanModel.saveTagihan(imageUrl!, widget.tagihan.kodeTagihan);
 
     if (!mounted) return;
 
@@ -189,15 +151,6 @@ class _FormPembayaranScreenState extends State<FormPembayaranScreen> {
         ],
       ),
     );
-  }
-
-  String _formatCurrency(double amount) {
-    final realAmount = amount * 1000;
-    return NumberFormat.currency(
-      locale: 'id',
-      symbol: 'Rp ',
-      decimalDigits: 0,
-    ).format(realAmount);
   }
 
   @override

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jawara_pintar_kel_5/models/keluarga/warga_model.dart';
+import 'package:jawara_pintar_kel_5/screens/auth/auth_service.dart';
 import 'package:jawara_pintar_kel_5/services/warga_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -120,6 +121,7 @@ class _ProfilMenuWargaState extends State<ProfilMenuWarga> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () {
+                          AuthService().signOut();
                           Navigator.pop(context);
                           context.replace('/login');
                         },

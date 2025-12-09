@@ -175,13 +175,7 @@ class LaporanKeuanganModel {
             (a, b) => a + b,
           ); // Use fold to explicitly define types for the accumulation
 
-      // Format the total pemasukan with a thousands separator (titik)
-      var formattedTotal = NumberFormat(
-        "#,##0",
-        "id_ID",
-      ).format(totalPemasukan);
-
-      return formattedTotal; // Return the formatted string
+      return totalPemasukan; // Return the formatted string
     } catch (e) {
       debugPrint('Error: $e');
       return 0;
@@ -219,13 +213,7 @@ class LaporanKeuanganModel {
             (a, b) => a + b,
           ); // Use fold to explicitly define types for the accumulation
 
-      // Format the total pemasukan with a thousands separator (titik)
-      var formattedTotal = NumberFormat(
-        "#,##0",
-        "id_ID",
-      ).format(totalPengeluaran);
-
-      return formattedTotal; // Return the formatted string
+      return totalPengeluaran; // Return the formatted string
     } catch (e) {
       debugPrint('Error: $e');
       return 0;

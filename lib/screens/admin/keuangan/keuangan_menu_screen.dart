@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
 import 'package:jawara_pintar_kel_5/models/keuangan/laporan_keuangan_model.dart';
 import 'package:jawara_pintar_kel_5/widget/plot_bar_chart.dart';
@@ -582,6 +583,11 @@ class _KeuanganState extends State<Keuangan> {
                               future: laporanKeuanganModel
                                   .countTotalPemasukanThisYear(), // Async call
                               builder: (context, snapshot) {
+                                // Format the total pemasukan with a thousands separator (titik)
+                                var formattedTotal = NumberFormat(
+                                  "#,##0",
+                                  "id_ID",
+                                ).format(snapshot.data);
                                 if (snapshot.connectionState ==
                                     ConnectionState.waiting) {
                                   return Center(
@@ -594,7 +600,7 @@ class _KeuanganState extends State<Keuangan> {
                                 } else if (snapshot.hasData) {
                                   return totalX(
                                     title: 'Pemasukan',
-                                    value: 'Rp${snapshot.data}',
+                                    value: 'Rp$formattedTotal',
                                     icon: Icons.trending_up,
                                     iconColor: ConstantColors.primary,
                                     color: Colors.white,
@@ -615,6 +621,11 @@ class _KeuanganState extends State<Keuangan> {
                               future: laporanKeuanganModel
                                   .countTotalPengeluaranThisYear(), // Async call
                               builder: (context, snapshot) {
+                                // Format the total pemasukan with a thousands separator (titik)
+                                var formattedTotal = NumberFormat(
+                                  "#,##0",
+                                  "id_ID",
+                                ).format(snapshot.data);
                                 if (snapshot.connectionState ==
                                     ConnectionState.waiting) {
                                   return Center(
@@ -627,7 +638,7 @@ class _KeuanganState extends State<Keuangan> {
                                 } else if (snapshot.hasData) {
                                   return totalX(
                                     title: 'Pengeluaran',
-                                    value: 'Rp${snapshot.data}',
+                                    value: 'Rp$formattedTotal',
                                     icon: Icons.trending_up,
                                     iconColor: ConstantColors.primary,
                                     color: Colors.white,
