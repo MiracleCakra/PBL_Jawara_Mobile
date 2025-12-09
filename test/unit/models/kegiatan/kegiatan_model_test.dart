@@ -46,7 +46,7 @@ void main() {
       expect(map['lokasi'], 'Balai RW');
       expect(map['deskripsi'], 'Membersihkan selokan');
       expect(map['dibuat_oleh'], 'Admin');
-      expect(map['has_docs'], 'true'); // bool -> String
+      expect(map['has_docs'], true);
       expect(map['gambardokumentasi'], 'img1.png');
     });
 
