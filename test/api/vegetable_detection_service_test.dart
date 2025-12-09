@@ -37,6 +37,67 @@ void main() {
       });
     });
 
+    group('getAvailableClasses', () {
+      test('returns all classification classes', () {
+        if (kDebugMode) {
+          print('📝 Testing: Retrieve available classification classes');
+        }
+
+        // Arrange - Expected classes dari model
+        final expectedClasses = ['Segar', 'Layu', 'Busuk'];
+
+        // Act - Get dari service
+        final availableClasses =
+            VegetableDetectionService.getAvailableClasses();
+
+        // Assert
+        expect(availableClasses, isA<List<String>>());
+        expect(availableClasses.length, equals(3));
+        expect(availableClasses, containsAll(expectedClasses));
+
+        if (kDebugMode) {
+          print('✅ Passed: All classification classes available');
+          print('   Classes: ${availableClasses.join(", ")}');
+          print('   Total: ${availableClasses.length} classes\n');
+        }
+      });
+    });
+
+    group('getModelInformation', () {
+      test('returns model metadata', () {
+        if (kDebugMode) {
+          print('📝 Testing: Retrieve model information');
+        }
+
+        // Act
+        final modelInfo = VegetableDetectionService.getModelInformation();
+
+        // Assert
+        expect(modelInfo, isA<Map<String, dynamic>>());
+        expect(modelInfo.containsKey('name'), isTrue);
+        expect(modelInfo.containsKey('version'), isTrue);
+        expect(modelInfo.containsKey('classes'), isTrue);
+        expect(modelInfo.containsKey('description'), isTrue);
+        expect(modelInfo.containsKey('features'), isTrue);
+
+        expect(
+          modelInfo['name'],
+          equals('PCVK - Vegetable Freshness Classifier'),
+        );
+        expect(modelInfo['classes'], isA<List<String>>());
+        expect(modelInfo['classes'].length, equals(3));
+
+        if (kDebugMode) {
+          print('✅ Passed: Model information retrieved');
+          print('   Name: ${modelInfo['name']}');
+          print('   Version: ${modelInfo['version']}');
+          print('   Classes: ${modelInfo['classes']}');
+          print('   Description: ${modelInfo['description']}');
+          print('   Features: ${modelInfo['features']}\n');
+        }
+      });
+    });
+
     group('detectVegetableFreshness', () {
       test('returns prediction response on successful detection', () async {
         if (kDebugMode) {
