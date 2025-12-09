@@ -152,6 +152,7 @@ class _LainnyaScreenState extends State<LainnyaScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
+                        key: const Key('confirm_logout_button'),
                         onPressed: () {
                           Navigator.pop(context);
                           authService.signOut();
@@ -192,12 +193,14 @@ class _LainnyaScreenState extends State<LainnyaScreen> {
     required VoidCallback onTap,
     Color? iconColor,
     Color? iconBackgroundColor,
+    Key? key,
   }) {
     final effectiveIconColor = iconColor ?? ConstantColors.primary;
     final effectiveBackgroundColor =
         iconBackgroundColor ?? ConstantColors.primary.withOpacity(0.15);
 
     return InkWell(
+      key: key,
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Container(
@@ -453,6 +456,7 @@ class _LainnyaScreenState extends State<LainnyaScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: quickButton(
+                              key: const Key('logout_button'),
                               icon: Icons.logout,
                               label: 'Keluar',
                               onTap: () => _onLogout(context),
