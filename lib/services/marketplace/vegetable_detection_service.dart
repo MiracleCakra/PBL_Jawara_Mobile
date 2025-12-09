@@ -1,41 +1,67 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as http_parser;
 
 class VegetableDetectionService {
-
   // Hugging Face Spaces: https://huggingface.co/spaces/MiracleCakra/CMKESEGARANSAYUR
   static const String baseUrl =
       'https://miraclecakra-cmkesegaransayur.hf.space';
 
   /// Deteksi kesegaran sayur dari gambar
   /// Returns: Map dengan prediction, confidence, dan details
+  ///
+  /// CATATAN PENTING:
+  /// - Mobile hanya mengirim gambar yang sudah dinormalisasi (RGB, orientation-fixed)
+  /// - Backend (main.py) yang melakukan semua preprocessing & prediction:
+  ///   1. Resize 224x224 (cv2.INTER_LANCZOS4)
+  ///   2. U2Net Segmentation (crop tight + black background)
+  ///   3. Feature Extraction (1046 features: HSV, GLCM, LBP, HOG, etc)
+  ///   4. LightGBM Prediction
   Future<Map<String, dynamic>> detectVegetableFreshness(File imageFile) async {
     try {
       final uri = Uri.parse('$baseUrl/predict');
 
-      // Baca file original
+      // STEP 1: Baca file original
       final originalBytes = await imageFile.readAsBytes();
 
-      // Create multipart request - KIRIM FILE ORIGINAL tanpa modifikasi
+      // STEP 2: Decode & Fix EXIF Orientation
+      // Penting! Foto dari kamera phone bisa ter-rotate (landscape/portrait)
+      // Codec akan otomatis fix berdasarkan EXIF metadata
+      final codec = await ui.instantiateImageCodec(originalBytes);
+      final frame = await codec.getNextFrame();
+      final image = frame.image;
+
+      // STEP 3: Convert ke PNG (Lossless, RGB guaranteed)
+      // Backend expects RGB format, PNG ensures:
+      // - No compression artifacts (vs JPEG)
+      // - Consistent color space (RGB, not BGR/YUV)
+      // - Lossless quality
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      final pngBytes = byteData!.buffer.asUint8List();
+
+      // STEP 4: Kirim ke backend via multipart/form-data
       var request = http.MultipartRequest('POST', uri);
 
       var multipartFile = http.MultipartFile.fromBytes(
         'file',
-        originalBytes,
-        filename: 'image.jpg',
-        contentType: http_parser.MediaType('image', 'jpeg'),
+        pngBytes,
+        filename: 'vegetable.png',
+        contentType: http_parser.MediaType('image', 'png'),
       );
       request.files.add(multipartFile);
 
-      // DEBUG: Print request info
-      print('🔍 DEBUG REQUEST:');
+      // DEBUG: Info preprocessing yang dilakukan
+      print('🔍 DEBUG REQUEST (Mobile Preprocessing):');
       print('URL: $uri');
-      print('File path: ${imageFile.path}');
-      print('File size: ${originalBytes.length} bytes');
+      print('Source: ${imageFile.path}');
+      print('Original: ${originalBytes.length} bytes');
+      print('Normalized PNG: ${pngBytes.length} bytes');
+      print('Resolution: ${image.width}x${image.height}');
+      print('Format: PNG (RGB, orientation-fixed, lossless)');
 
       // Send request
       final streamedResponse = await request.send();

@@ -1,0 +1,13 @@
+# K6 Load Test Results
+pcvk_load_summary.html
+pcvk_load_summary.json
+
+# K6 Cloud Results
+.k6-cloud-*
+
+# Node modules (jika ada)
+node_modules/
+
+# Temporary files
+*.tmp
+*.log
