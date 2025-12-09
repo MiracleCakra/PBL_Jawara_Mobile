@@ -48,17 +48,39 @@ class _EditBroadcastScreenState extends State<EditBroadcastScreen> {
 
   Future<void> _pickPhoto() async {
     final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-    if (image != null) setState(() => _newPhoto = image);
+    try {
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      if (image != null) setState(() => _newPhoto = image);
+    } catch (e) {
+      // Handle error
+    }
   }
 
   Future<void> _pickDocument() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf'],
-      withData: true,
-    );
-    if (result != null) setState(() => _newDocument = result.files.single);
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+        withData: true,
+      );
+      if (result != null) setState(() => _newDocument = result.files.single);
+    } catch (e) {
+      // Handle error
+    }
+  }
+
+  void _removePhoto() {
+    setState(() {
+      _newPhoto = null;
+      _existingPhotoUrl = null;
+    });
+  }
+
+  void _removeDocument() {
+    setState(() {
+      _newDocument = null;
+      _existingDocUrl = null;
+    });
   }
 
   Future<void> _saveChanges() async {
@@ -132,81 +154,8 @@ class _EditBroadcastScreenState extends State<EditBroadcastScreen> {
     }
   }
 
-  Widget _buildFileStatus(
-    String label,
-    bool isNewSelected,
-    String? existingUrl,
-    VoidCallback onPick,
-    VoidCallback onClear,
-  ) {
-    bool hasFile = isNewSelected || (existingUrl != null);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        const SizedBox(height: 8),
-        InkWell(
-          onTap: onPick,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              border: Border.all(
-                color: hasFile ? Colors.blue : Colors.grey.shade300,
-              ),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  hasFile ? Icons.check_circle : Icons.upload_file,
-                  color: hasFile ? Colors.blue : Colors.grey,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    isNewSelected
-                        ? 'File Baru Terpilih (Siap Upload)'
-                        : (existingUrl != null
-                              ? 'File Lama Tersimpan'
-                              : 'Belum ada file'),
-                    style: TextStyle(
-                      color: hasFile ? Colors.black87 : Colors.grey,
-                    ),
-                  ),
-                ),
-                if (hasFile)
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Colors.red),
-                    onPressed: onClear, // Hapus file (jadi null)
-                  ),
-              ],
-            ),
-          ),
-        ),
-        if (existingUrl != null && !isNewSelected && label == 'Foto')
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Image.network(
-              existingUrl,
-              height: 100,
-              width: 100,
-              fit: BoxFit.cover,
-            ),
-          ),
-        const SizedBox(height: 20),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    // Import ConstantColors if not already imported
-    // import 'package:jawara_pintar_kel_5/constants/colors.dart';
     return Scaffold(
       appBar: AppBar(
         title: const Text("Edit Broadcast"),
@@ -219,49 +168,249 @@ class _EditBroadcastScreenState extends State<EditBroadcastScreen> {
         child: Form(
           key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const Text(
+                'Judul Broadcast',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 8),
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Judul',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  hintText: 'Masukkan Judul',
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
                 ),
-                validator: (v) => v!.isEmpty ? 'Wajib' : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _contentController,
-                maxLines: 5,
-                decoration: const InputDecoration(
-                  labelText: 'Isi',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) => v!.isEmpty ? 'Wajib' : null,
+                validator: (v) => v!.isEmpty ? 'Judul wajib diisi' : null,
               ),
               const SizedBox(height: 24),
 
-              // --- FILE HANDLERS ---
-              _buildFileStatus(
-                'Foto Lampiran',
-                _newPhoto != null,
-                _existingPhotoUrl,
-                _pickPhoto,
-                () => setState(() {
-                  _newPhoto = null;
-                  _existingPhotoUrl = null;
-                }),
+              const Text(
+                'Isi Broadcast',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _contentController,
+                maxLines: 5,
+                decoration: InputDecoration(
+                  hintText: 'Tulis isi broadcast...',
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                ),
+                validator: (v) => v!.isEmpty ? 'Isi wajib diisi' : null,
+              ),
+              const SizedBox(height: 24),
 
-              _buildFileStatus(
-                'Dokumen PDF',
-                _newDocument != null,
-                _existingDocUrl,
-                _pickDocument,
-                () => setState(() {
-                  _newDocument = null;
-                  _existingDocUrl = null;
-                }),
+              // --- UPLOAD FOTO ---
+              const Text(
+                'Upload Dokumentasi (Foto)',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
+              const SizedBox(height: 4),
+              const Text(
+                'Maksimal 1 gambar (.png / .jpg), max 5MB.',
+                style: TextStyle(color: Colors.grey, fontSize: 12),
+              ),
+              const SizedBox(height: 8),
+
+              if (_newPhoto != null)
+                // Tampilkan Foto Baru
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8.0),
+                      child: kIsWeb 
+                        ? Image.network(_newPhoto!.path, width: double.infinity, height: 200, fit: BoxFit.cover)
+                        : Image.file(File(_newPhoto!.path), width: double.infinity, height: 200, fit: BoxFit.cover),
+                    ),
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: GestureDetector(
+                        onTap: _removePhoto,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          padding: const EdgeInsets.all(4),
+                          child: const Icon(Icons.close, size: 20, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              else if (_existingPhotoUrl != null)
+                // Tampilkan Foto Lama
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8.0),
+                      child: Image.network(
+                        _existingPhotoUrl!,
+                        width: double.infinity,
+                        height: 200,
+                        fit: BoxFit.cover,
+                        errorBuilder: (ctx, err, stack) => Container(
+                          height: 200,
+                          color: Colors.grey.shade200,
+                          child: const Center(child: Icon(Icons.broken_image)),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: GestureDetector(
+                        onTap: _removePhoto,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          padding: const EdgeInsets.all(4),
+                          child: const Icon(Icons.close, size: 20, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              else
+                // Tombol Upload
+                InkWell(
+                  onTap: _pickPhoto,
+                  child: Container(
+                    height: 150,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8.0),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.add_a_photo, size: 40, color: Colors.grey.shade400),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Ketuk untuk upload foto',
+                          style: TextStyle(color: Colors.grey.shade700),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+              const SizedBox(height: 24),
+
+              // --- UPLOAD DOKUMEN ---
+              const Text(
+                'Upload Dokumen (PDF)',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Maksimal 1 file PDF, max 5MB.',
+                style: TextStyle(color: Colors.grey, fontSize: 12),
+              ),
+              const SizedBox(height: 8),
+
+              if (_newDocument != null)
+                // Dokumen Baru
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8.0),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.picture_as_pdf, color: Colors.red, size: 32),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _newDocument!.name,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.grey),
+                        onPressed: _removeDocument,
+                      ),
+                    ],
+                  ),
+                )
+              else if (_existingDocUrl != null)
+                // Dokumen Lama
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8.0),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.picture_as_pdf, color: Colors.red, size: 32),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Dokumen Tersimpan',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                            Text(
+                              _existingDocUrl!.split('/').last, // Try to show filename
+                              style: const TextStyle(fontSize: 12, color: Colors.grey),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.grey),
+                        onPressed: _removeDocument,
+                      ),
+                    ],
+                  ),
+                )
+              else
+                // Tombol Upload
+                InkWell(
+                  onTap: _pickDocument,
+                  child: Container(
+                    height: 100,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8.0),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.upload_file, size: 40, color: Colors.grey.shade400),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Ketuk untuk upload dokumen',
+                          style: TextStyle(color: Colors.grey.shade700),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
 
               const SizedBox(height: 32),
               Padding(

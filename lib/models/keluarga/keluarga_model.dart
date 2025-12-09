@@ -31,7 +31,9 @@ class Keluarga {
       id: json['id'] as String? ?? 'UNKNOWN_ID',
       namaKeluarga: json['nama_keluarga'] as String? ?? 'Nama Keluarga Tidak Tersedia',
       kepalaKeluargaId: json['kepala_keluarga_id'] as String? ?? '',
-      alamatRumah: json['alamat_rumah'] as String? ?? 'Alamat Tidak Ditemukan',
+      alamatRumah: (json['rumah'] != null && json['rumah']['alamat'] != null)
+          ? json['rumah']['alamat']
+          : (json['alamat_rumah'] as String? ?? 'Alamat Tidak Ditemukan'),
       statusKepemilikan: json['status_kepemilikan'] as String? ?? 'N/A',
       statusKeluarga: json['status_keluarga'] as String? ?? 'N/A',
       

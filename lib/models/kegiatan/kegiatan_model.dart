@@ -1,6 +1,4 @@
 import 'dart:convert';
-import 'package:intl/intl.dart';
-
 class KegiatanModel {
   final int? id;
   final String judul;
@@ -28,6 +26,7 @@ class KegiatanModel {
     this.createdAt,
   });
 
+  // copyWith wajib ada buat Edit screen
   KegiatanModel copyWith({
     int? id,
     String? judul,
@@ -58,36 +57,41 @@ class KegiatanModel {
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
+      if (id != null) 'id': id,
       'judul': judul,
       'pj': pj,
-      'tanggal': tanggal.toIso8601String(), // Use ISO 8601 format
+      'tanggal': tanggal.toIso8601String(),
       'kategori': kategori,
       'lokasi': lokasi,
       'deskripsi': deskripsi,
       'dibuat_oleh': dibuatOleh,
-      'has_docs': hasDocs.toString(), // Convert bool to String
+      'has_docs': hasDocs,
       'gambardokumentasi': gambarDokumentasi,
-      // 'created_at' is handled by the database
     };
   }
 
   factory KegiatanModel.fromMap(Map<String, dynamic> map) {
+    // Helper parsing bool yang bandel
+    bool? parseBool(dynamic val) {
+      if (val is bool) return val;
+      if (val is String) return val.toLowerCase() == 'true';
+      return false;
+    }
+
     return KegiatanModel(
-      id: map['id']?.toInt(),
-      judul: map['judul'] ?? '',
-      pj: map['pj'] ?? '',
-      tanggal: DateTime.parse(map['tanggal']), // Parse ISO 8601 format
-      kategori: map['kategori'] ?? '',
-      lokasi: map['lokasi'] ?? '',
-      deskripsi: map['deskripsi'] ?? '',
-      dibuatOleh: map['dibuat_oleh'],
-      // Convert String 'true'/'false' to bool
-      hasDocs: map['has_docs']?.toString().toLowerCase() == 'true',
-      gambarDokumentasi: map['gambardokumentasi'],
-      createdAt: map['created_at'] == null
-          ? null
-          : DateTime.parse(map['created_at']),
+      id: map['id'] is int ? map['id'] : int.tryParse(map['id'].toString()),
+      judul: map['judul']?.toString() ?? 'Tanpa Judul',
+      pj: map['pj']?.toString() ?? '-',
+      tanggal: DateTime.tryParse(map['tanggal'].toString()) ?? DateTime.now(),
+      kategori: map['kategori']?.toString() ?? 'Umum',
+      lokasi: map['lokasi']?.toString() ?? '-',
+      deskripsi: map['deskripsi']?.toString() ?? '',
+      dibuatOleh: map['dibuat_oleh']?.toString(),
+      hasDocs: parseBool(map['has_docs']),
+      gambarDokumentasi: map['gambardokumentasi']?.toString(),
+      createdAt: map['created_at'] != null 
+          ? DateTime.tryParse(map['created_at'].toString()) 
+          : null,
     );
   }
 
@@ -95,42 +99,4 @@ class KegiatanModel {
 
   factory KegiatanModel.fromJson(String source) =>
       KegiatanModel.fromMap(json.decode(source));
-
-  @override
-  String toString() {
-    return 'KegiatanModel(id: $id, judul: $judul, pj: $pj, tanggal: $tanggal, kategori: $kategori, lokasi: $lokasi, deskripsi: $deskripsi, dibuatOleh: $dibuatOleh, hasDocs: $hasDocs, gambarDokumentasi: $gambarDokumentasi, createdAt: $createdAt)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-
-    return other is KegiatanModel &&
-        other.id == id &&
-        other.judul == judul &&
-        other.pj == pj &&
-        other.tanggal == tanggal &&
-        other.kategori == kategori &&
-        other.lokasi == lokasi &&
-        other.deskripsi == deskripsi &&
-        other.dibuatOleh == dibuatOleh &&
-        other.hasDocs == hasDocs &&
-        other.gambarDokumentasi == gambarDokumentasi &&
-        other.createdAt == createdAt;
-  }
-
-  @override
-  int get hashCode {
-    return id.hashCode ^
-        judul.hashCode ^
-        pj.hashCode ^
-        tanggal.hashCode ^
-        kategori.hashCode ^
-        lokasi.hashCode ^
-        deskripsi.hashCode ^
-        dibuatOleh.hashCode ^
-        hasDocs.hashCode ^
-        gambarDokumentasi.hashCode ^
-        createdAt.hashCode;
-  }
 }

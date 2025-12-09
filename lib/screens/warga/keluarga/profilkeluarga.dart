@@ -1,11 +1,66 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/keluarga/keluarga_model.dart'; 
+import 'package:jawara_pintar_kel_5/models/keluarga/keluarga_model.dart';
+import 'package:jawara_pintar_kel_5/services/keluarga_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class ProfilKeluargaPage extends StatelessWidget {
-  final Keluarga keluarga;
+class ProfilKeluargaPage extends StatefulWidget {
+  final Keluarga? keluarga;
 
-  const ProfilKeluargaPage({super.key, required this.keluarga});
+  const ProfilKeluargaPage({super.key, this.keluarga});
+
+  @override
+  State<ProfilKeluargaPage> createState() => _ProfilKeluargaPageState();
+}
+
+class _ProfilKeluargaPageState extends State<ProfilKeluargaPage> {
+  final KeluargaService _keluargaService = KeluargaService();
+  Keluarga? _keluargaData;
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.keluarga != null) {
+      _keluargaData = widget.keluarga;
+      _isLoading = false;
+    } else {
+      _fetchKeluargaSaya();
+    }
+  }
+
+  Future<void> _fetchKeluargaSaya() async {
+    try {
+      final email = Supabase.instance.client.auth.currentUser?.email;
+      if (email == null) {
+        setState(() {
+          _errorMessage = 'Tidak ada pengguna yang login.';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final keluarga = await _keluargaService.getKeluargaByEmail(email);
+      
+      if (mounted) {
+        setState(() {
+          _keluargaData = keluarga;
+          _isLoading = false;
+          if (keluarga == null) {
+            _errorMessage = 'Anda belum tergabung dalam keluarga manapun.';
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Gagal memuat data keluarga: $e';
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,12 +78,44 @@ class ProfilKeluargaPage extends StatelessWidget {
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _buildInfoCard(context, keluarga),
-        ],
-      ),
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.family_restroom_outlined, size: 64, color: Colors.grey),
+              const SizedBox(height: 16),
+              Text(
+                _errorMessage!,
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_keluargaData == null) {
+      return const Center(child: Text("Data tidak ditemukan"));
+    }
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _buildInfoCard(context, _keluargaData!),
+      ],
     );
   }
 

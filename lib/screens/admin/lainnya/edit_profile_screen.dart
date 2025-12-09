@@ -135,6 +135,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         keluargaId: _currentUserWarga!.keluargaId,
         agama: _currentUserWarga!.agama,
         fotoKtp: _currentUserWarga!.fotoKtp,
+        role: _currentUserWarga!.role,
       );
 
       await _wargaService.updateWarga(_currentUserWarga!.id, updatedWarga);

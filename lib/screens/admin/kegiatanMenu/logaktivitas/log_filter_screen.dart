@@ -25,10 +25,9 @@ class _LogFilterScreenState extends State<LogFilterScreen> {
   @override
   void initState() {
     super.initState();
-
     _startDate = widget.initialStartDate;
     _endDate = widget.initialEndDate;
-      if (_startDate != null) {
+    if (_startDate != null) {
       _startDateController.text = _dateFormat.format(_startDate!);
     }
     if (_endDate != null) {
@@ -43,30 +42,28 @@ class _LogFilterScreenState extends State<LogFilterScreen> {
     super.dispose();
   }
 
-  // Fungsi  Date Picker
-  Future<void> _selectDate(BuildContext context, bool isStart) async {
+  Future<void> _selectStartDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: isStart ? (_startDate ?? DateTime.now()) : (_endDate ?? DateTime.now()),
-      firstDate: DateTime(2023),
+      initialDate: _startDate ?? DateTime.now(),
+      firstDate: DateTime(2020),
       lastDate: DateTime(2030),
-      helpText: isStart ? 'Pilih Tanggal Mulai' : 'Pilih Tanggal Selesai',
+      helpText: 'Pilih Tanggal',
     );
 
     if (picked != null) {
       setState(() {
-        if (isStart) {
-          _startDate = picked;
-          _startDateController.text = _dateFormat.format(picked);
-        } else {
-          _endDate = picked;
-          _endDateController.text = _dateFormat.format(picked);
+        _startDate = picked;
+        _startDateController.text = _dateFormat.format(picked);
+        // Reset End Date if it becomes invalid (before start date)
+        if (_endDate != null && _endDate!.isBefore(picked)) {
+          _endDate = null;
+          _endDateController.clear();
         }
       });
     }
   }
 
-  // Fungsi reset filter
   void _resetFilter() {
     setState(() {
       _startDate = null;
@@ -74,78 +71,42 @@ class _LogFilterScreenState extends State<LogFilterScreen> {
       _startDateController.clear();
       _endDateController.clear();
     });
-    
-    // Mengembalikan null untuk mereset filter di LogAktivitasTab
-    Navigator.pop(context, {'startDate': null, 'endDate': null}); 
+    Navigator.pop(context, {'startDate': null, 'endDate': null});
   }
 
-  // Fungsi filter
   void _applyFilter() {
-    if (_startDate != null && _endDate != null && _startDate!.isAfter(_endDate!)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tanggal Mulai tidak boleh setelah Tanggal Selesai!')),
-      );
-      return;
-    }
-    
-    // mngmbalikan data hasil filter
     final Map<String, dynamic> filterData = {
       'startDate': _startDate,
       'endDate': _endDate,
     };
-
     Navigator.pop(context, filterData);
   }
 
-  // Widget pembantu input tanggal
-  Widget _buildDateField(String label, TextEditingController controller, bool isStart) {
+  Widget _buildDateField(String label, TextEditingController controller, VoidCallback onTap, VoidCallback onClear, bool isSelected) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.normal, fontSize: 16, color: Colors.black87),
-        ),
+        Text(label, style: const TextStyle(fontWeight: FontWeight.normal, fontSize: 16, color: Colors.black87)),
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
-          readOnly: true, 
-          onTap: () => _selectDate(context, isStart), 
+          readOnly: true,
+          onTap: onTap,
           decoration: InputDecoration(
             hintText: '--/--/----',
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            border: const OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(8.0)),
-              borderSide: BorderSide(color: Colors.grey),
-            ),
+            border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8.0)), borderSide: BorderSide(color: Colors.grey)),
             suffixIcon: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Tombol Hapus
-                IconButton(
-                  icon: const Icon(Icons.close, color: Colors.grey),
-                  onPressed: () {
-                    setState(() {
-                      if (isStart) {
-                        _startDate = null;
-                      } else {
-                        _endDate = null;
-                      }
-                      controller.clear();
-                    });
-                  },
-                ),
-                // Tombol Kalender
-                IconButton(
-                  icon: const Icon(Icons.calendar_month, color: Colors.grey),
-                  onPressed: () => _selectDate(context, isStart),
-                ),
-                const SizedBox(width: 8), 
+                if (isSelected)
+                  IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: onClear),
+                IconButton(icon: const Icon(Icons.calendar_month, color: Colors.grey), onPressed: onTap),
+                const SizedBox(width: 8),
               ],
             ),
           ),
         ),
-        const SizedBox(height: 24),
       ],
     );
   }
@@ -153,53 +114,58 @@ class _LogFilterScreenState extends State<LogFilterScreen> {
   @override
   Widget build(BuildContext context) {
     final Color primaryColor = Theme.of(context).primaryColor;
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header Judul
-          const Text(
-            'Filter Berdasarkan Rentang Tanggal',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
+          Center(
+            child: Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
             ),
           ),
+          const SizedBox(height: 12),
+          const Text('Filter Log Aktivitas', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
           const Divider(height: 20),
-          _buildDateField('Dari Tanggal', _startDateController, true),
-          _buildDateField('Sampai Tanggal', _endDateController, false),
+          
+          // Input Tanggal
+          _buildDateField('Tanggal', _startDateController, () => _selectStartDate(context), () {
+             setState(() { _startDate = null; _startDateController.clear(); });
+          }, _startDate != null),
+
+          const SizedBox(height: 24),
+
           const Spacer(),
-          // Tombol Reset dan Terapkan
+
+          // Tombol Reset & Terapkan
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Tombol Reset Filter
               Expanded(
                 child: ElevatedButton(
                   onPressed: _resetFilter,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.grey.shade200,
                     foregroundColor: Colors.black,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0))
                   ),
                   child: const Text('Reset Filter'),
                 ),
               ),
               const SizedBox(width: 16),
-              // Tombol Terapkan
               Expanded(
                 child: ElevatedButton(
                   onPressed: _applyFilter,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
+                    backgroundColor: const Color(0xFF4E46B4), // Hardcoded primary from other screens if context primary isn't set
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0))
                   ),
                   child: const Text('Terapkan'),
                 ),

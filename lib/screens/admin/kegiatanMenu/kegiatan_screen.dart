@@ -4,16 +4,16 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
 import 'package:jawara_pintar_kel_5/models/pie_card_model.dart';
+import 'package:jawara_pintar_kel_5/services/kegiatan_service.dart';
+import 'package:jawara_pintar_kel_5/models/kegiatan/kegiatan_model.dart';
 import 'package:jawara_pintar_kel_5/widget/plot_bar_chart.dart';
 import 'package:jawara_pintar_kel_5/widget/plot_pie_card.dart';
-import 'package:moon_design/moon_design.dart';
 
 // Model menu item
 class MenuItem {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-
   MenuItem({required this.icon, required this.label, required this.onTap});
 }
 
@@ -25,15 +25,26 @@ class KegiatanScreen extends StatefulWidget {
 }
 
 class _KegiatanScreenState extends State<KegiatanScreen> {
+  late final KegiatanService _kegiatanService;
+  late Stream<List<KegiatanModel>> _kegiatanStream;
   double _opacity = 0;
   int _selectedSegment = 0; // 0: Per Kategori, 1: Per Bulan
 
   @override
   void initState() {
     super.initState();
+    _kegiatanService = KegiatanService();
+    _kegiatanStream = _kegiatanService.getKegiatanStream();
     Future.delayed(const Duration(milliseconds: 180), () {
       if (mounted) setState(() => _opacity = 1);
     });
+  }
+
+  Future<void> _handleRefresh() async {
+    setState(() {
+      _kegiatanStream = _kegiatanService.getKegiatanStream();
+    });
+    await Future.delayed(const Duration(seconds: 1));
   }
 
   Widget _buildSegmentButton(String label, int index) {
@@ -44,11 +55,7 @@ class _KegiatanScreenState extends State<KegiatanScreen> {
         color: isSelected ? ConstantColors.primary : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
         child: InkWell(
-          onTap: () {
-            setState(() {
-              _selectedSegment = index;
-            });
-          },
+          onTap: () => setState(() => _selectedSegment = index),
           borderRadius: BorderRadius.circular(8),
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 10),
@@ -73,7 +80,7 @@ class _KegiatanScreenState extends State<KegiatanScreen> {
       title: 'Distribusi Kategori Kegiatan',
       data: [
         PieCardModel(
-          label: 'Komunitas & Sosial',
+          label: 'Komunitas',
           data: PieChartSectionData(
             value: 40,
             color: ConstantColors.primary,
@@ -108,7 +115,7 @@ class _KegiatanScreenState extends State<KegiatanScreen> {
       title: '📅 Grafik Kegiatan Bulanan',
       titleTrailing: Text(
         '${DateTime.now().year}',
-        style: MoonTokens.light.typography.body.text14,
+        style: const TextStyle(fontSize: 14, color: Colors.grey),
       ),
       getTitlesWidget: (value, meta) {
         const months = [
@@ -134,25 +141,12 @@ class _KegiatanScreenState extends State<KegiatanScreen> {
         return const Text('');
       },
       barGroups: List.generate(12, (index) {
-        final kegiatanValues = [
-          5.0,
-          8.0,
-          6.0,
-          10.0,
-          7.0,
-          12.0,
-          9.0,
-          11.0,
-          14.0,
-          8.0,
-          10.0,
-          15.0,
-        ];
+        // Contoh data dummy, nanti bisa disambung ke data real kalau mau
         return BarChartGroupData(
           x: index,
           barRods: [
             BarChartRodData(
-              toY: kegiatanValues[index],
+              toY: (index + 2) * 2.0,
               color: ConstantColors.primary,
               width: 8,
               borderRadius: BorderRadius.circular(4),
@@ -163,7 +157,6 @@ class _KegiatanScreenState extends State<KegiatanScreen> {
     );
   }
 
-  // Quick Button (Menu Grid)
   Widget quickButton({
     required IconData icon,
     required String label,
@@ -246,8 +239,6 @@ class _KegiatanScreenState extends State<KegiatanScreen> {
               ],
             ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
               children: [
                 FittedBox(
                   fit: BoxFit.scaleDown,
@@ -280,31 +271,28 @@ class _KegiatanScreenState extends State<KegiatanScreen> {
     );
   }
 
-  // Daftar menu items
-  List<MenuItem> get menuItems {
-    return [
-      MenuItem(
-        icon: Icons.list_alt,
-        label: 'Daftar Kegiatan',
-        onTap: () => context.push('/admin/kegiatan/daftar'),
-      ),
-      MenuItem(
-        icon: Icons.campaign_outlined,
-        label: 'Daftar Broadcast',
-        onTap: () => context.push('/admin/kegiatan/broadcast/daftar'),
-      ),
-      MenuItem(
-        icon: Icons.message_outlined,
-        label: 'Pesan Warga',
-        onTap: () => context.push('/admin/kegiatan/pesanwarga'),
-      ),
-      MenuItem(
-        icon: Icons.history,
-        label: 'Log Aktivitas',
-        onTap: () => context.push('/admin/kegiatan/logaktivitas'),
-      ),
-    ];
-  }
+  List<MenuItem> get menuItems => [
+    MenuItem(
+      icon: Icons.list_alt,
+      label: 'Daftar Kegiatan',
+      onTap: () => context.push('/admin/kegiatan/daftar'),
+    ),
+    MenuItem(
+      icon: Icons.campaign_outlined,
+      label: 'Daftar Broadcast',
+      onTap: () => context.push('/admin/kegiatan/broadcast/daftar'),
+    ),
+    MenuItem(
+      icon: Icons.message_outlined,
+      label: 'Pesan Warga',
+      onTap: () => context.push('/admin/kegiatan/pesanwarga'),
+    ),
+    MenuItem(
+      icon: Icons.history,
+      label: 'Log Aktivitas',
+      onTap: () => context.push('/admin/kegiatan/logaktivitas'),
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -312,112 +300,244 @@ class _KegiatanScreenState extends State<KegiatanScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
-      body: AnimatedOpacity(
-        opacity: _opacity,
-        duration: const Duration(milliseconds: 450),
-        curve: Curves.easeOut,
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              // Header Gradient
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(24, 30, 24, 80),
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Color(0xFF3B82F6),
-                      Color(0xFF6366F1),
-                      Color(0xFF8B5CF6),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(30),
-                    bottomRight: Radius.circular(30),
-                  ),
-                ),
+      body: RefreshIndicator(
+        onRefresh: _handleRefresh,
+        color: ConstantColors.primary,
+        child: StreamBuilder<List<KegiatanModel>>(
+          stream: _kegiatanService.getKegiatanStream(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (snapshot.hasError) {
+              debugPrint("❌ Stream Error: ${snapshot.error}");
+              return Center(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      "Dashboard Kegiatan",
-                      style: GoogleFonts.poppins(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                    const Icon(
+                      Icons.error_outline,
+                      color: Colors.red,
+                      size: 48,
                     ),
-                    const SizedBox(height: 5),
-                    const Text(
-                      "Ringkasan kegiatan dan aktivitas warga",
-                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                    const SizedBox(height: 16),
+                    Text(
+                      "Terjadi kesalahan memuat data.\n${snapshot.error}",
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.red),
                     ),
                   ],
                 ),
-              ),
+              );
+            }
 
-              Transform.translate(
-                offset: const Offset(0, -60),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Card Ringkasan Kegiatan
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.12),
-                              blurRadius: 18,
-                              offset: const Offset(0, 8),
-                            ),
+            final List<KegiatanModel> dataKegiatan = snapshot.data ?? [];
+
+            final now = DateTime.now();
+            final today = DateTime(now.year, now.month, now.day);
+
+            int total = dataKegiatan.length;
+            int sudahLewat = 0;
+            int hariIni = 0;
+            int akanDatang = 0;
+
+            for (var k in dataKegiatan) {
+              final kDate = DateTime(
+                k.tanggal.year,
+                k.tanggal.month,
+                k.tanggal.day,
+              );
+              if (kDate.isBefore(today)) {
+                sudahLewat++;
+              } else if (kDate.isAtSameMomentAs(today)) {
+                hariIni++;
+              } else {
+                akanDatang++;
+              }
+            }
+
+            return AnimatedOpacity(
+              opacity: _opacity,
+              duration: const Duration(milliseconds: 450),
+              curve: Curves.easeOut,
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    // Header
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.fromLTRB(24, 30, 24, 80),
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Color(0xFF3B82F6),
+                            Color(0xFF6366F1),
+                            Color(0xFF8B5CF6),
                           ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(30),
+                          bottomRight: Radius.circular(30),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Dashboard Kegiatan",
+                            style: GoogleFonts.poppins(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          const Text(
+                            "Ringkasan kegiatan dan aktivitas warga",
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    Transform.translate(
+                      offset: const Offset(0, -60),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.event_note,
-                                  color: ConstantColors.primary,
-                                  size: 24,
-                                ),
-                                const SizedBox(width: 8),
-                                const Text(
-                                  'Kegiatan',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF374151),
+                            // Card Statistik
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.12),
+                                    blurRadius: 18,
+                                    offset: const Offset(0, 8),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
+                              child: Column(
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.event_note,
+                                        color: ConstantColors.primary,
+                                        size: 24,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      const Text(
+                                        'Kegiatan',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFF374151),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    children: [
+                                      const Text(
+                                        'Total:',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Color.fromARGB(
+                                            255,
+                                            62,
+                                            62,
+                                            63,
+                                          ),
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        '$total',
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w900,
+                                          color: ConstantColors.primary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    children: [
+                                      totalCard(
+                                        title: 'Sudah Lewat',
+                                        value: '$sudahLewat',
+                                        icon: Icons.history,
+                                        iconColor: const Color(0xFF9CA3AF),
+                                        color: Colors.white,
+                                        valueColor: ConstantColors.primary,
+                                        titleColor: const Color(0xFF1F2937),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      totalCard(
+                                        title: 'Hari Ini',
+                                        value: '$hariIni',
+                                        icon: Icons.today,
+                                        iconColor: const Color(0xFF3B82F6),
+                                        color: Colors.white,
+                                        valueColor: ConstantColors.primary,
+                                        titleColor: const Color(0xFF1F2937),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      totalCard(
+                                        title: 'Akan Datang',
+                                        value: '$akanDatang',
+                                        icon: Icons.upcoming,
+                                        iconColor: const Color(0xFF10B981),
+                                        color: Colors.white,
+                                        valueColor: ConstantColors.primary,
+                                        titleColor: const Color(0xFF1F2937),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 36),
+
+                            // Menu
+                            const Text(
+                              'Menu',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF374151),
+                              ),
                             ),
                             const SizedBox(height: 16),
                             Row(
                               children: [
-                                const Text(
-                                  'Total:',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Color.fromARGB(255, 62, 62, 63),
-                                    fontWeight: FontWeight.w500,
+                                Expanded(
+                                  child: quickButton(
+                                    icon: allMenuItems[0].icon,
+                                    label: allMenuItems[0].label,
+                                    onTap: allMenuItems[0].onTap,
                                   ),
                                 ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  '15',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w900,
-                                    color: ConstantColors.primary,
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: quickButton(
+                                    icon: allMenuItems[1].icon,
+                                    label: allMenuItems[1].label,
+                                    onTap: allMenuItems[1].onTap,
                                   ),
                                 ),
                               ],
@@ -425,151 +545,78 @@ class _KegiatanScreenState extends State<KegiatanScreen> {
                             const SizedBox(height: 12),
                             Row(
                               children: [
-                                totalCard(
-                                  title: 'Sudah Lewat',
-                                  value: '5',
-                                  icon: Icons.history,
-                                  iconColor: const Color(0xFF9CA3AF),
-                                  color: Colors.white,
-                                  valueColor: ConstantColors.primary,
-                                  titleColor: const Color(0xFF1F2937),
+                                Expanded(
+                                  child: quickButton(
+                                    icon: allMenuItems[2].icon,
+                                    label: allMenuItems[2].label,
+                                    onTap: allMenuItems[2].onTap,
+                                  ),
                                 ),
-                                const SizedBox(width: 10),
-                                totalCard(
-                                  title: 'Hari Ini',
-                                  value: '3',
-                                  icon: Icons.today,
-                                  iconColor: const Color(0xFF3B82F6),
-                                  color: Colors.white,
-                                  valueColor: ConstantColors.primary,
-                                  titleColor: const Color(0xFF1F2937),
-                                ),
-                                const SizedBox(width: 10),
-                                totalCard(
-                                  title: 'Akan Datang',
-                                  value: '7',
-                                  icon: Icons.upcoming,
-                                  iconColor: const Color(0xFF10B981),
-                                  color: Colors.white,
-                                  valueColor: ConstantColors.primary,
-                                  titleColor: const Color(0xFF1F2937),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: quickButton(
+                                    icon: allMenuItems[3].icon,
+                                    label: allMenuItems[3].label,
+                                    onTap: allMenuItems[3].onTap,
+                                  ),
                                 ),
                               ],
                             ),
+                            const SizedBox(height: 36),
+
+                            // Chart
+                            const Text(
+                              'Statistik Kegiatan',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF374151),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF3F4F6),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildSegmentButton(
+                                      'Per Kategori',
+                                      0,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: _buildSegmentButton('Per Bulan', 1),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 300),
+                              transitionBuilder: (child, animation) =>
+                                  FadeTransition(
+                                    opacity: animation,
+                                    child: child,
+                                  ),
+                              child: _selectedSegment == 0
+                                  ? _buildKategoriChart()
+                                  : _buildBulanChart(),
+                            ),
+                            const SizedBox(height: 40),
                           ],
                         ),
                       ),
-
-                      const SizedBox(height: 36),
-
-                      // Menu Section
-                      const Text(
-                        'Menu',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF374151),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Grid Menu 2x2
-                      Row(
-                        children: [
-                          Expanded(
-                            child: quickButton(
-                              icon: allMenuItems[0].icon,
-                              label: allMenuItems[0].label,
-                              onTap: allMenuItems[0].onTap,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: quickButton(
-                              icon: allMenuItems[1].icon,
-                              label: allMenuItems[1].label,
-                              onTap: allMenuItems[1].onTap,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: quickButton(
-                              icon: allMenuItems[2].icon,
-                              label: allMenuItems[2].label,
-                              onTap: allMenuItems[2].onTap,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: quickButton(
-                              icon: allMenuItems[3].icon,
-                              label: allMenuItems[3].label,
-                              onTap: allMenuItems[3].onTap,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 36),
-
-                      // Statistik Kegiatan
-                      const Text(
-                        'Statistik Kegiatan',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF374151),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Segment Control
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF3F4F6),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: _buildSegmentButton('Per Kategori', 0),
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: _buildSegmentButton('Per Bulan', 1),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // Chart dengan AnimatedSwitcher
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 300),
-                        transitionBuilder: (child, animation) {
-                          return FadeTransition(
-                            opacity: animation,
-                            child: child,
-                          );
-                        },
-                        child: _selectedSegment == 0
-                            ? _buildKategoriChart()
-                            : _buildBulanChart(),
-                      ),
-
-                      const SizedBox(height: 40),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

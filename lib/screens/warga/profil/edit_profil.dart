@@ -197,6 +197,7 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
         keluargaId: _currentWarga!.keluargaId,
         agama: _selectedAgama, // Editable (Dropdown)
         fotoKtp: fotoKtpUrl, // Editable
+        role: _currentWarga!.role, // Preserve existing role
       );
 
       await _wargaService.updateWarga(_currentWarga!.id, updatedWarga);

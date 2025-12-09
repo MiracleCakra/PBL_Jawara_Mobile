@@ -59,13 +59,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
 
       await supabase.from('warga').insert({
-        // use the .text values from controllers
         'nama': _namaController.text,
         'id': _nikController.text,
         'gender': _controllerJenisKelamin.text,
         'email': _controllerEmail.text,
         'telepon': _phoneController.text,
         'foto_ktp': fotoUrl,
+        'role': 'Warga',
       });
 
       // Navigasi ke halaman dashboard setelah berhasil login

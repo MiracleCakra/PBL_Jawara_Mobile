@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'package:jawara_pintar_kel_5/models/kegiatan/aspirasi_model.dart';
+import 'package:jawara_pintar_kel_5/services/activity_log_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AspirasiService {
   final SupabaseClient _supabase = Supabase.instance.client;
   final String _tableName = 'aspirasi';
+  final ActivityLogService _logService = ActivityLogService();
 
   // Stream to get all aspirations
   Stream<List<AspirasiModel>> getAspirations() {
@@ -34,6 +36,12 @@ class AspirasiService {
         data.remove('created_at'); 
       }
       await _supabase.from(_tableName).insert(data);
+
+      // Log
+      await _logService.createLog(
+        judul: 'Menambah Aspirasi: ${aspirasi.judul}',
+        type: 'Aspirasi',
+      );
     } catch (e) {
       throw Exception('Error creating aspiration: $e');
     }
@@ -49,6 +57,12 @@ class AspirasiService {
           .from(_tableName)
           .update(aspirasi.toMap())
           .eq('id', aspirasi.id!);
+
+      // Log
+      await _logService.createLog(
+        judul: 'Mengubah Aspirasi: ${aspirasi.judul}',
+        type: 'Aspirasi',
+      );
     } catch (e) {
       throw Exception('Error updating aspiration: $e');
     }
@@ -57,7 +71,16 @@ class AspirasiService {
   // Delete an aspiration
   Future<void> deleteAspiration(int id) async {
     try {
+      final data = await _supabase.from(_tableName).select('judul').eq('id', id).single();
+      final String judul = data['judul'] ?? 'Tanpa Judul';
+
       await _supabase.from(_tableName).delete().eq('id', id);
+
+      // Log
+      await _logService.createLog(
+        judul: 'Menghapus Aspirasi: $judul',
+        type: 'Aspirasi',
+      );
     } catch (e) {
       throw Exception('Error deleting aspiration: $e');
     }

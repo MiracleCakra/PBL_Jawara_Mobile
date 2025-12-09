@@ -1,9 +1,11 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:jawara_pintar_kel_5/models/keluarga/anggota_keluarga_model.dart';
+import 'package:jawara_pintar_kel_5/models/keluarga/warga_model.dart';
+import 'dart:io';
+import 'package:jawara_pintar_kel_5/services/warga_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:jawara_pintar_kel_5/models/keluarga/anggota_keluarga_model.dart'; 
 
 class DaftarAnggotaKeluargaPage extends StatefulWidget {
   const DaftarAnggotaKeluargaPage({super.key});
@@ -16,13 +18,16 @@ class DaftarAnggotaKeluargaPage extends StatefulWidget {
 class _DaftarAnggotaKeluargaPageState extends State<DaftarAnggotaKeluargaPage> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
+  final WargaService _wargaService = WargaService();
 
   String _query = '';
   String? _filterGender;
+  String? _filterStatus;
 
   List<Anggota> _allAnggota = [];
-  List<Anggota> _newAnggota = [];
+  List<Anggota> _newAnggota = []; 
   bool _isLoading = true;
+  bool _hasFamily = true; // New state variable
 
   @override
   void initState() {
@@ -31,51 +36,55 @@ class _DaftarAnggotaKeluargaPageState extends State<DaftarAnggotaKeluargaPage> {
   }
 
   Future<void> _loadData() async {
-    await Future.delayed(const Duration(milliseconds: 600));
+    setState(() => _isLoading = true);
+    try {
+      final email = Supabase.instance.client.auth.currentUser?.email;
+      if (email != null) {
+        final currentUser = await _wargaService.getWargaByEmail(email);
+        
+        if (currentUser != null && currentUser.keluargaId != null) {
+          final familyMembers = await _wargaService.getWargaByKeluargaId(currentUser.keluargaId!);
+          
+          final mappedMembers = familyMembers.map((w) => Anggota(
+            nama: w.nama,
+            nik: w.id, 
+            jenisKelamin: w.gender?.value ?? '-',
+            peranKeluarga: (w.anggotaKeluarga != null && w.anggotaKeluarga!.isNotEmpty) 
+                ? w.anggotaKeluarga!.first.peran ?? '-' 
+                : "Anggota Keluarga",
+            status: w.statusPenduduk?.value ?? '-',
+          )).toList();
 
-    final sample = <Anggota>[
-      Anggota(
-        nama: 'Pak Habibie',
-        nik: '1234567890',
-        jenisKelamin: 'Pria',
-        peranKeluarga: 'Kepala Keluarga',
-        status: 'Aktif',
-      ),
-      Anggota(
-        nama: 'Siti Aminah',
-        nik: '0987654321',
-        jenisKelamin: 'Wanita',
-        peranKeluarga: 'Istri',
-        status: 'Aktif',
-      ),
-      Anggota(
-        nama: 'Budi Raharjo',
-        nik: '1122334455',
-        jenisKelamin: 'Pria',
-        peranKeluarga: 'Anak',
-        status: 'Aktif',
-      ),
-      Anggota(
-        nama: 'Naomi',
-        nik: '0987650321',
-        jenisKelamin: 'Wanita',
-        peranKeluarga: 'Anak',
-        status: 'Pengajuan',
-      ),
-      Anggota(
-        nama: 'Agus',
-        nik: '1122334495',
-        jenisKelamin: 'Pria',
-        peranKeluarga: 'Anak',
-        status: 'Nonaktif',
-      ),
-    ];
-
-    if (mounted) {
-      setState(() {
-        _allAnggota = sample;
-        _isLoading = false;
-      });
+          if (mounted) {
+            setState(() {
+              _hasFamily = true;
+              _allAnggota = mappedMembers;
+              _isLoading = false;
+            });
+          }
+        } else {
+           if (mounted) {
+            setState(() {
+              _hasFamily = false; // User has no family
+              _allAnggota = [];
+              _isLoading = false;
+            });
+          }
+        }
+      } else {
+         if (mounted) {
+            setState(() {
+              _hasFamily = false;
+              _allAnggota = [];
+              _isLoading = false;
+            });
+          }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal memuat data: $e')));
+      }
     }
   }
 
@@ -91,7 +100,12 @@ class _DaftarAnggotaKeluargaPageState extends State<DaftarAnggotaKeluargaPage> {
           _filterGender!.isEmpty ||
           (a.jenisKelamin ?? '').toLowerCase() == _filterGender!.toLowerCase();
 
-      return matchesQuery && matchesGender;
+      final matchesStatus = 
+          _filterStatus == null ||
+          _filterStatus!.isEmpty ||
+          (a.status ?? '').toLowerCase() == _filterStatus!.toLowerCase();
+
+      return matchesQuery && matchesGender && matchesStatus;
     }).toList();
   }
 
@@ -107,18 +121,8 @@ class _DaftarAnggotaKeluargaPageState extends State<DaftarAnggotaKeluargaPage> {
 
   Future<void> _navigateToTambah() async {
     final result = await context.pushNamed('TambahAnggotaKeluarga');
-    if (result != null && result is Map<String, dynamic>) {
-      setState(() {
-        _newAnggota.add(
-          Anggota(
-            nama: result['nama'] ?? '',
-            nik: result['nik'] ?? '',
-            jenisKelamin: result['jenisKelamin'] ?? '',
-            peranKeluarga: result['peranKeluarga'] ?? '',
-            status: 'Pengajuan',
-          ),
-        );
-      });
+    if (result != null) {
+      _loadData();
     }
   }
 
@@ -159,123 +163,115 @@ class _DaftarAnggotaKeluargaPageState extends State<DaftarAnggotaKeluargaPage> {
   }
 
   void _openFilter() {
-    String? temp = _filterGender;
+    String? tempGender = _filterGender;
+    String? tempStatus = _filterStatus;
 
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true,
+      backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (c) {
+      builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-                left: 16,
-                right: 16,
-                top: 20,
-              ),
+              padding: const EdgeInsets.all(20),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // TITLE
-                  const Center(
-                    child: Text(
-                      "Filter",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 20),
-
                   const Text(
-                    "Jenis Kelamin",
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    'Filter Data',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
+                  const SizedBox(height: 16),
+                  
+                  // Filter Gender
+                  const Text('Jenis Kelamin', style: TextStyle(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 8),
-
-                  // DROPDOWN
                   DropdownButtonFormField<String>(
-                    value: temp,
-                    isExpanded: true,
+                    value: tempGender,
                     decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white,
-                      hintText: 'Pilih jenis kelamin',
-                      hintStyle: TextStyle(color: Colors.grey[400]),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFF4E46B4), width: 1.2),
-                      ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    items: const [
-                      DropdownMenuItem(value: '', child: Text("-- Semua --")),
-                      DropdownMenuItem(value: 'Pria', child: Text("Pria")),
-                      DropdownMenuItem(value: 'Wanita', child: Text("Wanita")),
-                    ],
-                    onChanged: (v) => setModalState(() => temp = v),
+                    hint: const Text("Semua"),
+                    items: ['Pria', 'Wanita']
+                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                        .toList(),
+                    onChanged: (val) => setModalState(() => tempGender = val),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Filter Status
+                  const Text('Status Penduduk', style: TextStyle(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    value: tempStatus,
+                    decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    hint: const Text("Semua"),
+                    items: ['Aktif', 'Nonaktif']
+                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                        .toList(),
+                    onChanged: (val) => setModalState(() => tempStatus = val),
                   ),
 
-                  const SizedBox(height: 25),
-
+                  const SizedBox(height: 24),
                   Row(
                     children: [
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () {
-                            setModalState(() => temp = null);
-                          },
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
+                          onPressed: () {
+                            setModalState(() {
+                              tempGender = null;
+                              tempStatus = null;
+                            });
+                          },
                           child: const Text("Reset"),
                         ),
                       ),
-
                       const SizedBox(width: 12),
-
-                      // TERAPKAN
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () {
-                            setState(() => _filterGender = temp);
-                            Navigator.pop(context);
-                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF4E46B4),
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
+                          onPressed: () {
+                            setState(() {
+                              _filterGender = tempGender;
+                              _filterStatus = tempStatus;
+                            });
+                            Navigator.pop(context);
+                          },
                           child: const Text(
                             "Terapkan",
-                            style: TextStyle(color: Colors.white),
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                           ),
                         ),
                       ),
                     ],
-                  ),
-
-                  const SizedBox(height: 20),
+                  )
                 ],
               ),
             );
@@ -402,30 +398,32 @@ class _DaftarAnggotaKeluargaPageState extends State<DaftarAnggotaKeluargaPage> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : _filtered.isEmpty && _newAnggota.isEmpty
-                ? const Center(child: Text("Tidak ada data"))
-                : ListView.separated(
-                    padding: const EdgeInsets.only(
-                      left: 16,
-                      right: 16,
-                      bottom: 80,
-                    ),
-                    itemCount: _filtered.length + _newAnggota.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (_, i) {
-                      if (i < _filtered.length) {
-                        return _AnggotaCard(
-                          anggota: _filtered[i],
-                          onTap: () => _navigateToDetail(_filtered[i]),
-                        );
-                      } else {
-                        return _AnggotaCard(
-                          anggota: _newAnggota[i - _filtered.length],
-                          onTap: () {},
-                        );
-                      }
-                    },
-                  ),
+                : !_hasFamily 
+                  ? const Center(child: Text("Tidak bergabung dalam keluarga apapun"))
+                  : _filtered.isEmpty && _newAnggota.isEmpty
+                    ? const Center(child: Text("Tidak ada data"))
+                    : ListView.separated(
+                        padding: const EdgeInsets.only(
+                          left: 16,
+                          right: 16,
+                          bottom: 80,
+                        ),
+                        itemCount: _filtered.length + _newAnggota.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        itemBuilder: (_, i) {
+                          if (i < _filtered.length) {
+                            return _AnggotaCard(
+                              anggota: _filtered[i],
+                              onTap: () => _navigateToDetail(_filtered[i]),
+                            );
+                          } else {
+                            return _AnggotaCard(
+                              anggota: _newAnggota[i - _filtered.length],
+                              onTap: () {},
+                            );
+                          }
+                        },
+                      ),
           ),
 
           if (_newAnggota.isNotEmpty)
@@ -780,7 +778,7 @@ class _AnggotaCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text("NIK: ${anggota.nik}"),
-                  Text("Keluarga: ${anggota.peranKeluarga ?? '-'}"),
+                  Text("Peran: ${anggota.peranKeluarga ?? '-'}"),
                   const SizedBox(height: 10),
 
                   Row(

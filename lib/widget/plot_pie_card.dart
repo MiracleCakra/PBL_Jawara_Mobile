@@ -37,7 +37,8 @@ class PlotPieCard extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: MoonTokens.light.typography.body.text14.copyWith(
+              style: TextStyle(
+                fontSize: 14,
                 color: ConstantColors.foreground2,
                 fontWeight: FontWeight.w600,
               ),
@@ -45,7 +46,8 @@ class PlotPieCard extends StatelessWidget {
           ),
           Text(
             '${percentage.toStringAsFixed(1)}%',
-            style: MoonTokens.light.typography.body.text14.copyWith(
+            style: TextStyle(
+              fontSize: 14,
               color: ConstantColors.primary,
               fontWeight: FontWeight.w700,
             ),
