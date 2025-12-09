@@ -2,18 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:jawara_pintar_kel_5/models/keuangan/warga_tagihan_model.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/keluarga/detail_tagihan.dart';
 
 class DaftarTagihanWargaScreen extends StatefulWidget {
   const DaftarTagihanWargaScreen({super.key});
 
   @override
-  State<DaftarTagihanWargaScreen> createState() => _DaftarTagihanWargaScreenState();
+  State<DaftarTagihanWargaScreen> createState() =>
+      _DaftarTagihanWargaScreenState();
 }
 
 class _DaftarTagihanWargaScreenState extends State<DaftarTagihanWargaScreen> {
   final TextEditingController _searchController = TextEditingController();
-  
+  WargaTagihanModel wargaTagihanModel = WargaTagihanModel(
+    namaKeluarga: '',
+    statusKeluarga: '',
+    iuran: '',
+    kodeTagihan: '',
+    nominal: 0.0,
+    periode: DateTime.now(),
+    status: '',
+    alamat: '',
+  );
+
   List<WargaTagihanModel> _allTagihan = [];
   List<WargaTagihanModel> _filteredList = [];
   String _selectedFilterStatus = 'Semua';
@@ -21,7 +31,14 @@ class _DaftarTagihanWargaScreenState extends State<DaftarTagihanWargaScreen> {
   @override
   void initState() {
     super.initState();
-    _allTagihan = WargaTagihanModel.getSampleData();
+    _loadTagihan();
+  }
+
+  Future<void> _loadTagihan() async {
+    final fetchedTagihan = await wargaTagihanModel.fetchTagihan();
+    setState(() {
+      _allTagihan = fetchedTagihan;
+    });
     _filteredList = _allTagihan;
   }
 
@@ -31,12 +48,14 @@ class _DaftarTagihanWargaScreenState extends State<DaftarTagihanWargaScreen> {
 
     setState(() {
       _filteredList = _allTagihan.where((tagihan) {
-        final matchQuery = tagihan.iuran.toLowerCase().contains(query) ||
-                           tagihan.kodeTagihan.toLowerCase().contains(query);
+        final matchQuery =
+            tagihan.iuran.toLowerCase().contains(query) ||
+            tagihan.kodeTagihan.toLowerCase().contains(query);
 
         bool matchStatus = true;
         if (_selectedFilterStatus == 'Belum Bayar') {
-          matchStatus = tagihan.status == 'Belum Dibayar' || tagihan.status == 'Ditolak';
+          matchStatus =
+              tagihan.status == 'Belum Dibayar' || tagihan.status == 'Ditolak';
         } else if (_selectedFilterStatus == 'Lunas') {
           matchStatus = tagihan.status == 'Diterima';
         } else if (_selectedFilterStatus == 'Proses') {
@@ -69,24 +88,30 @@ class _DaftarTagihanWargaScreenState extends State<DaftarTagihanWargaScreen> {
                 children: [
                   Center(
                     child: Container(
-                      width: 40, height: 4,
+                      width: 40,
+                      height: 4,
                       decoration: BoxDecoration(
-                        color: Colors.grey[300], 
+                        color: Colors.grey[300],
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
                   ),
                   const SizedBox(height: 20),
                   const Text(
-                    'Filter Status', 
+                    'Filter Status',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     value: tempStatus,
                     decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     items: ['Semua', 'Belum Bayar', 'Proses', 'Lunas']
                         .map((e) => DropdownMenuItem(value: e, child: Text(e)))
@@ -100,7 +125,9 @@ class _DaftarTagihanWargaScreenState extends State<DaftarTagihanWargaScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF4E46B4),
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                       onPressed: () {
                         setState(() {
@@ -110,11 +137,14 @@ class _DaftarTagihanWargaScreenState extends State<DaftarTagihanWargaScreen> {
                         Navigator.pop(context);
                       },
                       child: const Text(
-                        "Terapkan", 
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        "Terapkan",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                  )
+                  ),
                 ],
               ),
             );
@@ -127,23 +157,39 @@ class _DaftarTagihanWargaScreenState extends State<DaftarTagihanWargaScreen> {
   // --- STATUS HELPER ---
   Map<String, dynamic> _getStatusStyle(String status) {
     if (status == 'Diterima') {
-      return {'color': Colors.green, 'bg': Colors.green.shade50, 'icon': Icons.check_circle};
+      return {
+        'color': Colors.green,
+        'bg': Colors.green.shade50,
+        'icon': Icons.check_circle,
+      };
     } else if (status == 'Belum Dibayar' || status == 'Ditolak') {
-      return {'color': Colors.red, 'bg': Colors.red.shade50, 'icon': Icons.warning};
+      return {
+        'color': Colors.red,
+        'bg': Colors.red.shade50,
+        'icon': Icons.warning,
+      };
     } else {
-      return {'color': Colors.orange, 'bg': Colors.orange.shade50, 'icon': Icons.access_time};
+      return {
+        'color': Colors.orange,
+        'bg': Colors.orange.shade50,
+        'icon': Icons.access_time,
+      };
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final currencyFormatter = NumberFormat.currency(locale: 'id', symbol: 'Rp ', decimalDigits: 0);
+    final currencyFormatter = NumberFormat.currency(
+      locale: 'id',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
         title: const Text(
-          "Daftar Tagihan", 
+          "Daftar Tagihan",
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
         ),
         backgroundColor: Colors.white,
@@ -163,10 +209,16 @@ class _DaftarTagihanWargaScreenState extends State<DaftarTagihanWargaScreen> {
                     decoration: InputDecoration(
                       hintText: 'Cari kode atau jenis iuran...',
                       prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
                       filled: true,
                       fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                     ),
                   ),
                 ),
@@ -202,10 +254,8 @@ class _DaftarTagihanWargaScreenState extends State<DaftarTagihanWargaScreen> {
                     side: BorderSide(color: Colors.grey[200]!),
                   ),
                   child: InkWell(
-                    onTap: () => context.pushNamed(
-                      'DetailTagihanWarga',
-                      extra: item,
-                    ),
+                    onTap: () =>
+                        context.pushNamed('DetailTagihanWarga', extra: item),
                     borderRadius: BorderRadius.circular(16),
                     child: Padding(
                       padding: const EdgeInsets.all(16),
@@ -217,11 +267,15 @@ class _DaftarTagihanWargaScreenState extends State<DaftarTagihanWargaScreen> {
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF4E46B4).withOpacity(0.1),
+                                  color: const Color(
+                                    0xFF4E46B4,
+                                  ).withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Icon(
-                                  item.iuran == 'Agustusan' ? Icons.flag : Icons.receipt_long,
+                                  item.iuran == 'Agustusan'
+                                      ? Icons.flag
+                                      : Icons.receipt_long,
                                   color: const Color(0xFF4E46B4),
                                 ),
                               ),
@@ -232,16 +286,28 @@ class _DaftarTagihanWargaScreenState extends State<DaftarTagihanWargaScreen> {
                                   children: [
                                     Text(
                                       item.iuran,
-                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      DateFormat('dd MMMM yyyy', 'id_ID').format(item.periode),
-                                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                                      DateFormat(
+                                        'dd MMMM yyyy',
+                                        'id_ID',
+                                      ).format(item.periode),
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 13,
+                                      ),
                                     ),
                                     Text(
                                       item.kodeTagihan,
-                                      style: TextStyle(color: Colors.grey[400], fontSize: 11),
+                                      style: TextStyle(
+                                        color: Colors.grey[400],
+                                        fontSize: 11,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -256,17 +322,27 @@ class _DaftarTagihanWargaScreenState extends State<DaftarTagihanWargaScreen> {
                             children: [
                               Text(
                                 currencyFormatter.format(item.nominal * 1000),
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
                                 decoration: BoxDecoration(
                                   color: statusStyle['bg'],
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Row(
                                   children: [
-                                    Icon(statusStyle['icon'], size: 14, color: statusStyle['color']),
+                                    Icon(
+                                      statusStyle['icon'],
+                                      size: 14,
+                                      color: statusStyle['color'],
+                                    ),
                                     const SizedBox(width: 6),
                                     Text(
                                       item.status,
@@ -280,7 +356,7 @@ class _DaftarTagihanWargaScreenState extends State<DaftarTagihanWargaScreen> {
                                 ),
                               ),
                             ],
-                          )
+                          ),
                         ],
                       ),
                     ),

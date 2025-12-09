@@ -6,14 +6,10 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as http_parser;
 
 class VegetableDetectionService {
-  // URL API PCVK - Menggunakan Hugging Face Spaces (TIDAK perlu server lokal!)
+
   // Hugging Face Spaces: https://huggingface.co/spaces/MiracleCakra/CMKESEGARANSAYUR
   static const String baseUrl =
       'https://miraclecakra-cmkesegaransayur.hf.space';
-
-  // Alternatif jika mau pakai server lokal (harus jalankan start_pcvk_server.bat):
-  // static const String baseUrl = 'http://10.0.2.2:8000'; // Android Emulator
-  // static const String baseUrl = 'http://localhost:8000'; // iOS Simulator
 
   /// Deteksi kesegaran sayur dari gambar
   /// Returns: Map dengan prediction, confidence, dan details

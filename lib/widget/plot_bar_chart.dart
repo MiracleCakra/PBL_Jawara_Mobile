@@ -30,7 +30,7 @@ class PlotBarChart extends StatelessWidget {
           barTouchData: BarTouchData(
             enabled: true,
             touchTooltipData: BarTouchTooltipData(
-              getTooltipColor: (group) => MoonTokens.light.colors.jiren,
+              getTooltipColor: (group) => Colors.grey.shade800,
             ),
           ),
           titlesData: FlTitlesData(

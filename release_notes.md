@@ -1,27 +1,24 @@
-# Release Notes - Version 1.8.1
+# Release Notes - Version 1.10.0
 
-🚀 **New Features**:
+**Enhancements:**
 
-* Updated app icon and application slogan for better branding.
-* Added/updated dialog components for improved user interaction.
-* Implemented unit tests for core modules to ensure stability.
+* **Streamlined Financial Reporting:**
+  Refactored `LaporanKeuanganModel` by removing unnecessary formatting for total income and expenses, simplifying the data structure and improving performance.
 
-🐛 **Bug Fixes**:
+* **WargaTagihanModel Improvements:**
+  Enhanced the `WargaTagihanModel` to include additional fields such as `alamat`, `bukti` (proof of payment), and `catatan` (notes). Additionally, updated the data fetching logic from Supabase to support these new fields, providing a more comprehensive view of the tagihan (billing) data.
 
-* Minor UI adjustments on dialogs for consistency.
-* Fixed layout or text issues revealed during unit testing.
-- Implemented photo removal functionality in the broadcast screen.
-- Enhanced document upload area with improved UI and functionality.
-- Updated the user interface for better clarity and usability in the broadcast screen.
-- Updated the color for 'Pending' status from deep purple to yellow.
-- Refactored user management screen to fetch user data on initialization.
-- Added loading and error handling states for better user experience.
-- Streamlined filtering logic for user roles and statuses.
-- Converted user detail screen to stateful widget for better data management.
-- Added functionality to refresh user data after editing.
-- Added default role assignment for new users during registration process.
+* **UI Improvements:**
+  Updated various UI components across different screens to reflect the latest changes in financial data handling, including:
 
-🔧 **Miscellaneous**:
+  * Improved error handling for image uploads, ensuring a better user experience when uploading proof of payment images.
+  * Visual adjustments to the `Tagihan` section, ensuring consistency and clarity in displaying financial information.
 
-* General code cleanup and improvements.
-* Test coverage enhanced for critical features.
+**Refactor:**
+
+* **Refactored Payment Screens:**
+  Refactored the `PengeluaranTambahScreen` and `FormPembayaranScreen` to utilize new methods for saving and uploading payment evidence. This refactor improves the structure of payment handling and simplifies future updates or feature additions.
+
+**Bug Fixes:**
+
+* Fixed issues related to image upload failures, ensuring smoother interactions with proof of payment images.
