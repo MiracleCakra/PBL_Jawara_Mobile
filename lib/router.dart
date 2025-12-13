@@ -169,6 +169,7 @@ import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/pesanan_s
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/review_store.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/stok_produk_store.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/store_dashboard.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/store_deactivated.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/store_pending_validasi.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/store_product_detail.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/tambah_produk.dart';
@@ -1388,6 +1389,11 @@ final router = GoRouter(
                   builder: (_, __) => const StorePendingValidationScreen(),
                 ),
                 GoRoute(
+                  path: '/store-deactivated',
+                  name: 'StoreDeactivated',
+                  builder: (_, __) => const StoreDeactivatedScreen(),
+                ),
+                GoRoute(
                   path: '/store-pending-deactivation',
                   name: 'StorePendingDeactivation',
                   builder: (_, __) => const StorePendingDeactivationScreen(),
@@ -1650,7 +1656,8 @@ final router = GoRouter(
                 GoRoute(
                   path: 'edit-data',
                   builder: (context, state) {
-                    final initialData = state.extra as Map<String, dynamic>? ?? {};
+                    final initialData =
+                        state.extra as Map<String, dynamic>? ?? {};
                     return WargaEditDataDiriScreen(initialData: initialData);
                   },
                 ),

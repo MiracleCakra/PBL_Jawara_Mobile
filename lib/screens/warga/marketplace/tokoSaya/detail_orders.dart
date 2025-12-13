@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:jawara_pintar_kel_5/models/marketplace/order_model.dart';
 import 'package:jawara_pintar_kel_5/services/marketplace/order_service.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
+import 'package:jawara_pintar_kel_5/widget/marketplace/custom_dialog.dart';
 
 class MyStoreOrderDetail extends StatefulWidget {
   final OrderModel order;
@@ -62,11 +63,10 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
 
   Future<void> updateOrderStatus(String newStatus) async {
     if (widget.order.orderId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Order ID tidak valid"),
-          backgroundColor: Colors.red,
-        ),
+      CustomSnackbar.show(
+        context: context,
+        message: 'Order ID tidak valid',
+        type: DialogType.error,
       );
       return;
     }
@@ -79,12 +79,10 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
       if (mounted) {
         setState(() => currentStatus = newStatus);
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Status berhasil diubah: $newStatus"),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-          ),
+        CustomSnackbar.show(
+          context: context,
+          message: 'Status berhasil diubah: $newStatus',
+          type: DialogType.success,
         );
 
         // Return to previous screen with update flag
@@ -94,11 +92,10 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Gagal mengubah status: $e"),
-            backgroundColor: Colors.red,
-          ),
+        CustomSnackbar.show(
+          context: context,
+          message: 'Gagal mengubah status: $e',
+          type: DialogType.error,
         );
       }
     }

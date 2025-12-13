@@ -1,11 +1,13 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jawara_pintar_kel_5/models/marketplace/store_model.dart';
 import 'package:jawara_pintar_kel_5/providers/marketplace/store_provider.dart';
 import 'package:jawara_pintar_kel_5/services/marketplace/store_service.dart';
+import 'package:jawara_pintar_kel_5/widget/marketplace/custom_dialog.dart';
+import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class EditStoreProfileScreen extends StatefulWidget {
   const EditStoreProfileScreen({super.key});
@@ -78,11 +80,10 @@ class _EditStoreProfileScreenState extends State<EditStoreProfileScreen> {
       print('Error loading store data: $e');
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal memuat data toko: $e'),
-            backgroundColor: Colors.red,
-          ),
+        CustomSnackbar.show(
+          context: context,
+          message: 'Gagal memuat data toko: $e',
+          type: DialogType.error,
         );
       }
     }
@@ -129,23 +130,19 @@ class _EditStoreProfileScreenState extends State<EditStoreProfileScreen> {
 
   void _saveChanges(BuildContext context) async {
     if (!_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Terdapat input yang belum valid. Mohon periksa lagi...',
-          ),
-          backgroundColor: Colors.grey.shade800,
-        ),
+      CustomSnackbar.show(
+        context: context,
+        message: 'Terdapat input yang belum valid. Mohon periksa lagi...',
+        type: DialogType.warning,
       );
       return;
     }
 
     if (_storeId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Data toko tidak valid'),
-          backgroundColor: Colors.red,
-        ),
+      CustomSnackbar.show(
+        context: context,
+        message: 'Data toko tidak valid',
+        type: DialogType.error,
       );
       return;
     }
@@ -168,23 +165,25 @@ class _EditStoreProfileScreenState extends State<EditStoreProfileScreen> {
       await storeProvider.updateStore(_storeId!, updatedStore);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profil toko berhasil diperbarui!'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
+        CustomDialog.show(
+          context: context,
+          type: DialogType.success,
+          title: 'Berhasil!',
+          message: 'Profil toko berhasil diperbarui!',
+          buttonText: 'OK',
+          onConfirm: () {
+            Navigator.pop(context, 'updated');
+          },
         );
-
-        Navigator.pop(context, 'updated');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal menyimpan perubahan: $e'),
-            backgroundColor: Colors.red,
-          ),
+        CustomDialog.show(
+          context: context,
+          type: DialogType.error,
+          title: 'Gagal Menyimpan',
+          message: 'Gagal menyimpan perubahan: $e',
+          buttonText: 'Coba Lagi',
         );
       }
     }

@@ -7,6 +7,7 @@ import 'package:jawara_pintar_kel_5/providers/product_provider.dart';
 import 'package:jawara_pintar_kel_5/services/marketplace/product_service.dart';
 import 'package:jawara_pintar_kel_5/services/marketplace/store_service.dart';
 import 'package:jawara_pintar_kel_5/services/marketplace/vegetable_detection_service.dart';
+import 'package:jawara_pintar_kel_5/widget/marketplace/custom_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -180,20 +181,18 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
   void _saveProduct() async {
     if (!_formKey.currentState!.validate()) return;
     if (_imageFile == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Harap unggah foto produk terlebih dahulu!'),
-          backgroundColor: Colors.grey.shade800,
-        ),
+      CustomSnackbar.show(
+        context: context,
+        message: 'Harap unggah foto produk terlebih dahulu!',
+        type: DialogType.warning,
       );
       return;
     }
     if (_isProcessingCV) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Tunggu proses klasifikasi gambar selesai...'),
-          backgroundColor: Colors.grey.shade800,
-        ),
+      CustomSnackbar.show(
+        context: context,
+        message: 'Tunggu proses klasifikasi gambar selesai...',
+        type: DialogType.info,
       );
       return;
     }
@@ -204,11 +203,10 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
     // Get warga.id (NIK) from warga table using email
     final authUser = Supabase.instance.client.auth.currentUser;
     if (authUser?.email == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Silakan login terlebih dahulu'),
-          backgroundColor: Colors.red,
-        ),
+      CustomSnackbar.show(
+        context: context,
+        message: 'Silakan login terlebih dahulu',
+        type: DialogType.error,
       );
       return;
     }
@@ -222,11 +220,10 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
 
     if (wargaResponse == null) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Data warga tidak ditemukan'),
-            backgroundColor: Colors.red,
-          ),
+        CustomSnackbar.show(
+          context: context,
+          message: 'Data warga tidak ditemukan',
+          type: DialogType.error,
         );
       }
       return;
@@ -240,13 +237,12 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
 
     if (userStore == null || userStore.storeId == null) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
+        CustomSnackbar.show(
+          context: context,
+          message:
               'Anda belum memiliki toko. Silakan daftar toko terlebih dahulu.',
-            ),
-            backgroundColor: Colors.red,
-          ),
+          type: DialogType.warning,
+          duration: const Duration(seconds: 4),
         );
       }
       return;
@@ -273,19 +269,16 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
           setState(() {
             _isUploading = false;
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Gagal mengupload gambar!\n\n'
-                'Pastikan:\n'
+          CustomDialog.show(
+            context: context,
+            type: DialogType.error,
+            title: 'Upload Gagal',
+            message:
+                'Gagal mengupload gambar!\n\nPastikan:\n'
                 '1. Bucket "products" sudah dibuat di Supabase Storage\n'
                 '2. Storage Policies sudah diatur (INSERT & SELECT)\n'
-                '3. Bucket berstatus Public\n\n'
-                'Lihat file QUICK_SETUP_STORAGE.md untuk panduan.',
-              ),
-              backgroundColor: Colors.red,
-              duration: Duration(seconds: 8),
-            ),
+                '3. Bucket berstatus Public',
+            buttonText: 'Mengerti',
           );
         }
         return;
@@ -298,29 +291,34 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
       }
 
       if (mounted) {
+        String errorTitle = 'Upload Error';
         String errorMessage = 'Gagal mengupload gambar: $e';
 
         if (e.toString().contains('404')) {
+          errorTitle = 'Bucket Tidak Ditemukan';
           errorMessage =
-              '❌ Bucket "products" tidak ditemukan!\n\n'
+              'Bucket "products" tidak ditemukan!\n\n'
               'Solusi: Buat bucket di Supabase Storage.\n'
               'Lihat QUICK_SETUP_STORAGE.md';
         } else if (e.toString().contains('401') ||
             e.toString().contains('403')) {
+          errorTitle = 'Permission Denied';
           errorMessage =
-              '❌ Permission Denied!\n\n'
+              'Tidak ada izin untuk mengupload!\n\n'
               'Solusi: Setup Storage Policies di Supabase.\n'
               'Lihat QUICK_SETUP_STORAGE.md';
         } else if (e.toString().contains('409')) {
-          errorMessage = '❌ File sudah ada!\n\nCoba lagi.';
+          errorTitle = 'File Sudah Ada';
+          errorMessage =
+              'File dengan nama ini sudah ada!\n\nCoba lagi dengan file lain.';
         }
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 8),
-          ),
+        CustomDialog.show(
+          context: context,
+          type: DialogType.error,
+          title: errorTitle,
+          message: errorMessage,
+          buttonText: 'Tutup',
         );
       }
       return;
@@ -355,25 +353,26 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
 
       if (savedProduct != null) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Produk berhasil ditambahkan!'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
-            ),
+          CustomDialog.show(
+            context: context,
+            type: DialogType.success,
+            title: 'Berhasil!',
+            message: 'Produk berhasil ditambahkan ke toko Anda!',
+            buttonText: 'OK',
+            onConfirm: () {
+              Navigator.of(context).pop('added');
+            },
           );
-
-          Navigator.of(context).pop('added');
         }
       } else {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Gagal menambahkan produk: ${productProvider.errorMessage}',
-              ),
-              backgroundColor: Colors.red,
-            ),
+          CustomDialog.show(
+            context: context,
+            type: DialogType.error,
+            title: 'Gagal Menyimpan',
+            message:
+                'Gagal menambahkan produk: ${productProvider.errorMessage ?? "Terjadi kesalahan"}',
+            buttonText: 'Coba Lagi',
           );
         }
       }
@@ -382,8 +381,12 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
         setState(() {
           _isUploading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        CustomDialog.show(
+          context: context,
+          type: DialogType.error,
+          title: 'Terjadi Kesalahan',
+          message: 'Error: $e',
+          buttonText: 'Tutup',
         );
       }
     }

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:jawara_pintar_kel_5/models/marketplace/store_model.dart';
 import 'package:jawara_pintar_kel_5/services/marketplace/store_service.dart';
 import 'package:jawara_pintar_kel_5/services/store_status_service.dart';
+import 'package:jawara_pintar_kel_5/widget/marketplace/custom_dialog.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class WargaStoreRegisterScreen extends StatefulWidget {
@@ -208,11 +209,10 @@ class _WargaStoreRegisterScreenState extends State<WargaStoreRegisterScreen> {
 
                       if (wargaResponse == null) {
                         if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Data warga tidak ditemukan'),
-                              backgroundColor: Colors.red,
-                            ),
+                          CustomSnackbar.show(
+                            context: context,
+                            message: 'Data warga tidak ditemukan',
+                            type: DialogType.error,
                           );
                         }
                         setState(() => _isSubmitting = false);
@@ -226,13 +226,10 @@ class _WargaStoreRegisterScreenState extends State<WargaStoreRegisterScreen> {
                           .getStoreByUserId(userId);
                       if (existingStore != null) {
                         if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text(
-                                'Anda sudah memiliki toko yang terdaftar',
-                              ),
-                              backgroundColor: Colors.grey.shade800,
-                            ),
+                          CustomSnackbar.show(
+                            context: context,
+                            message: 'Anda sudah memiliki toko yang terdaftar',
+                            type: DialogType.info,
                           );
                         }
                         setState(() => _isSubmitting = false);
@@ -253,30 +250,28 @@ class _WargaStoreRegisterScreenState extends State<WargaStoreRegisterScreen> {
                       await StoreStatusService.setStoreStatus(1);
 
                       if (mounted) {
-                        context.goNamed("StorePendingValidation");
-                        Future.delayed(const Duration(milliseconds: 500), () {
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: const Text(
-                                  'Toko berhasil didaftarkan! Menunggu verifikasi admin.',
-                                ),
-                                backgroundColor: Colors.grey.shade800,
-                                duration: const Duration(seconds: 3),
-                              ),
-                            );
-                          }
-                        });
+                        CustomDialog.show(
+                          context: context,
+                          type: DialogType.success,
+                          title: 'Toko Berhasil Didaftarkan!',
+                          message:
+                              'Toko Anda telah berhasil didaftarkan dan sedang menunggu verifikasi dari admin.',
+                          buttonText: 'Lanjutkan',
+                          onConfirm: () {
+                            context.goNamed("StorePendingValidation");
+                          },
+                        );
                       }
                     }
                   } catch (e) {
                     print('Error creating store: $e');
                     if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Gagal mendaftarkan toko: $e'),
-                          backgroundColor: Colors.red,
-                        ),
+                      CustomDialog.show(
+                        context: context,
+                        type: DialogType.error,
+                        title: 'Pendaftaran Gagal',
+                        message: 'Gagal mendaftarkan toko: $e',
+                        buttonText: 'Coba Lagi',
                       );
                     }
                   } finally {
