@@ -291,48 +291,47 @@ class _WargaProductDetailScreenState extends State<WargaProductDetailScreen> {
           Row(
             children: [
               Expanded(
-                child: Row(
-                  children: [
-                    const Icon(Icons.star, color: Colors.amber, size: 17),
-                    const SizedBox(width: 8),
-                    Text(
-                      _averageRating.toStringAsFixed(1),
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Flexible(
-                      child: Text(
-                        '(${_reviews.length} ulasan)',
+                child: InkWell(
+                  onTap: () {
+                    context.pushNamed('AllReviews', extra: widget.product);
+                  },
+                  child: Row(
+                    children: [
+                      const Icon(Icons.star, color: Colors.amber, size: 17),
+                      const SizedBox(width: 8),
+                      Text(
+                        _averageRating.toStringAsFixed(1),
                         style: const TextStyle(
-                          color: Colors.grey,
                           fontSize: 15,
+                          fontWeight: FontWeight.bold,
                         ),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 10),
+                      Flexible(
+                        child: Text(
+                          '(${_reviews.length} ulasan)',
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 15,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
               if (_reviews.isNotEmpty)
                 TextButton(
                   onPressed: () {
-                    // TODO: Navigate to all reviews page
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Halaman semua ulasan (coming soon)'),
-                        duration: Duration(milliseconds: 800),
-                      ),
-                    );
+                    context.pushNamed('AllReviews', extra: widget.product);
                   },
-                  child: Text(
+                  child: const Text(
                     'Lihat Semua >',
                     style: TextStyle(
-                      color: Colors.blue.shade700,
+                      color: Color(0xFF6A5AE0),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
