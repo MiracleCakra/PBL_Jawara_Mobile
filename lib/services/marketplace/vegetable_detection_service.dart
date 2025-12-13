@@ -165,4 +165,27 @@ class VegetableDetectionService {
         };
     }
   }
+
+  /// Get available classification classes
+  /// Returns list of all possible predictions
+  static List<String> getAvailableClasses() {
+    return ['Segar', 'Layu', 'Busuk'];
+  }
+
+  /// Get model information and metadata
+  /// Returns details about the PCVK model
+  static Map<String, dynamic> getModelInformation() {
+    return {
+      'name': 'PCVK - Vegetable Freshness Classifier',
+      'version': '1.0.0',
+      'classes': ['Segar', 'Layu', 'Busuk'],
+      'description':
+          'Computer Vision model untuk klasifikasi kesegaran sayuran menggunakan U2Net segmentation dan LightGBM classifier',
+      'features': '1046 features (HSV, GLCM, LBP, HOG, Color Moments, etc)',
+      'backend':
+          'Hugging Face Spaces - https://miraclecakra-cmkesegaransayur.hf.space',
+      'preprocessing': 'U2Net segmentation, 224x224 resize, feature extraction',
+      'accuracy': 'Training accuracy ~95%',
+    };
+  }
 }
