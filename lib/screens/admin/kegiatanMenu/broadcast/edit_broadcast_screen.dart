@@ -176,6 +176,7 @@ class _EditBroadcastScreenState extends State<EditBroadcastScreen> {
               ),
               const SizedBox(height: 8),
               TextFormField(
+                key: const Key('edit_judul_broadcast_field'),
                 controller: _titleController,
                 decoration: InputDecoration(
                   hintText: 'Masukkan Judul',
@@ -195,6 +196,7 @@ class _EditBroadcastScreenState extends State<EditBroadcastScreen> {
               ),
               const SizedBox(height: 8),
               TextFormField(
+                key: const Key('edit_isi_broadcast_field'),
                 controller: _contentController,
                 maxLines: 5,
                 decoration: InputDecoration(
@@ -440,6 +442,7 @@ class _EditBroadcastScreenState extends State<EditBroadcastScreen> {
                     const SizedBox(width: 16),
                     Expanded(
                       child: ElevatedButton(
+                        key: const Key('simpan_edit_broadcast_button'),
                         onPressed: _isLoading ? null : _saveChanges,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: ConstantColors.primary,

@@ -70,7 +70,12 @@ class _DetailBroadcastScreenState extends State<DetailBroadcastScreen> {
               border: Border.all(color: Colors.grey.shade300),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Text(value),
+            child: Text(
+              value,
+              key: label == 'Judul Broadcast'
+                  ? const Key('broadcast_detail_title')
+                  : null,
+            ),
           ),
           const SizedBox(height: 16),
         ],
@@ -90,7 +95,12 @@ class _DetailBroadcastScreenState extends State<DetailBroadcastScreen> {
               border: Border.all(color: Colors.grey.shade300),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Text(value, style: const TextStyle(height: 1.5)),
+            child: Text(
+              value,
+              key: label == 'Isi Broadcast'
+                  ? const Key('broadcast_detail_content')
+                  : null,
+              style: const TextStyle(height: 1.5)),
           ),
           const SizedBox(height: 16),
         ],
@@ -260,8 +270,10 @@ class _DetailBroadcastScreenState extends State<DetailBroadcastScreen> {
     required String title,
     required String subtitle,
     required VoidCallback onTap,
+    Key? key,
   }) {
     return InkWell(
+      key: key,
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
@@ -330,6 +342,7 @@ class _DetailBroadcastScreenState extends State<DetailBroadcastScreen> {
               ),
               const Divider(height: 1, thickness: 1, color: Colors.grey),
               _buildOptionTile(
+                key: const Key('edit_broadcast_button'),
                 icon: Icons.edit_rounded,
                 color: editColor,
                 title: 'Edit Data',
@@ -340,6 +353,7 @@ class _DetailBroadcastScreenState extends State<DetailBroadcastScreen> {
                 },
               ),
               _buildOptionTile(
+                key: const Key('delete_broadcast_button'),
                 icon: Icons.delete_forever,
                 color: deleteColor,
                 title: 'Hapus Data',
@@ -387,6 +401,7 @@ class _DetailBroadcastScreenState extends State<DetailBroadcastScreen> {
             if (_isRefreshing)
               const Center(child: Padding(padding: EdgeInsets.only(right: 16), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))),
             IconButton(
+              key: const Key('more_actions_button'),
               icon: const Icon(Icons.more_vert, color: Colors.black),
               onPressed: () => _showActionBottomSheet(context),
               tooltip: 'Aksi Lain',

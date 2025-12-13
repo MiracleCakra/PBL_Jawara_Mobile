@@ -161,8 +161,10 @@ class _KegiatanScreenState extends State<KegiatanScreen> {
     required IconData icon,
     required String label,
     required VoidCallback onTap,
+    Key? key,
   }) {
     return InkWell(
+      key: key,
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Container(
@@ -527,6 +529,7 @@ class _KegiatanScreenState extends State<KegiatanScreen> {
                               children: [
                                 Expanded(
                                   child: quickButton(
+                                    key: const Key('daftar_kegiatan_button'),
                                     icon: allMenuItems[0].icon,
                                     label: allMenuItems[0].label,
                                     onTap: allMenuItems[0].onTap,
@@ -535,6 +538,7 @@ class _KegiatanScreenState extends State<KegiatanScreen> {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: quickButton(
+                                    key: const Key('daftar_broadcast_button'),
                                     icon: allMenuItems[1].icon,
                                     label: allMenuItems[1].label,
                                     onTap: allMenuItems[1].onTap,

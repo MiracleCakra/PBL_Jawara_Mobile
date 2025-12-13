@@ -285,6 +285,7 @@ class _DaftarKegiatanScreenState extends State<DaftarKegiatanScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
+        key: const Key('add_kegiatan_fab'),
         onPressed: () => _navigateToAddKegiatan(context),
         backgroundColor: ConstantColors.primary,
         shape: RoundedRectangleBorder(

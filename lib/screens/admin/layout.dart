@@ -75,18 +75,26 @@ class _AdminLayoutState extends State<AdminLayout>
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: List.generate(
               tabs.length,
-              (index) => BottomAppBarItem(
-                icon: Iconify(
-                  tabs.values.elementAt(index),
-                  size: 24,
-                  color: widget.navigationShell.currentIndex == index
-                      ? ConstantColors.primary
-                      : Colors.black,
-                ),
-                label: tabs.keys.elementAt(index),
-                active: widget.navigationShell.currentIndex == index,
-                onTap: () => _goTo(index),
-              ),
+              (index) {
+                final label = tabs.keys.elementAt(index);
+                return BottomAppBarItem(
+                  key: label == 'Kegiatan' 
+                      ? const Key('kegiatan_tab') 
+                      : label == 'Lainnya' 
+                          ? const Key('lainnya_tab') 
+                          : null,
+                  icon: Iconify(
+                    tabs.values.elementAt(index),
+                    size: 24,
+                    color: widget.navigationShell.currentIndex == index
+                        ? ConstantColors.primary
+                        : Colors.black,
+                  ),
+                  label: label,
+                  active: widget.navigationShell.currentIndex == index,
+                  onTap: () => _goTo(index),
+                );
+              },
             ).toList(),
           ),
         ),

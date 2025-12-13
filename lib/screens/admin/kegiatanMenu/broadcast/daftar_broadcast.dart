@@ -359,6 +359,7 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
+        key: const Key('add_broadcast_fab'),
         onPressed: _navigateToAddBroadcast,
         backgroundColor: ConstantColors.primary,
         shape: RoundedRectangleBorder(

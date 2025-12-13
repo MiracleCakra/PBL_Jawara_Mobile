@@ -195,6 +195,7 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
               ),
               const SizedBox(height: 8),
               TextFormField(
+                key: const Key('judul_broadcast_field'),
                 controller: _judulController,
                 decoration: InputDecoration(
                   hintText: 'Masukkan Judul Broadcast',
@@ -220,6 +221,7 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
               ),
               const SizedBox(height: 8),
               TextFormField(
+                key: const Key('isi_broadcast_field'),
                 controller: _isiController,
                 maxLines: 5,
                 decoration: InputDecoration(
@@ -394,6 +396,7 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
                     const SizedBox(width: 16),
                     Expanded(
                       child: ElevatedButton(
+                        key: const Key('simpan_broadcast_button'),
                         onPressed: _isLoading ? null : _simpanBroadcast,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: simpanColor,
