@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:jawara_pintar_kel_5/services/marketplace/review_service.dart';
 import 'package:jawara_pintar_kel_5/models/marketplace/ReviewModel.dart';
+import 'package:jawara_pintar_kel_5/services/marketplace/review_service.dart';
+import 'package:jawara_pintar_kel_5/widget/marketplace/custom_dialog.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class WriteReviewScreen extends StatefulWidget {
   final int productId;
@@ -19,10 +20,10 @@ class WriteReviewScreen extends StatefulWidget {
 
 class _WriteReviewScreenState extends State<WriteReviewScreen> {
   static const Color primaryColor = Color(0xFF6A5AE0);
-  
+
   final _reviewController = TextEditingController();
   final _reviewService = ReviewService();
-  
+
   int _selectedRating = 0;
   bool _isSubmitting = false;
   String? _userId;
@@ -41,7 +42,7 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
           .select('id')
           .eq('email', authUser!.email!)
           .maybeSingle();
-      
+
       if (wargaResponse != null) {
         setState(() => _userId = wargaResponse['id'] as String);
       }
@@ -50,31 +51,28 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
 
   Future<void> _submitReview() async {
     if (_selectedRating == 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pilih rating terlebih dahulu'),
-          backgroundColor: Colors.orange,
-        ),
+      CustomSnackbar.show(
+        context: context,
+        message: 'Pilih rating terlebih dahulu',
+        type: DialogType.warning,
       );
       return;
     }
 
     if (_reviewController.text.trim().length < 10) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Ulasan minimal 10 karakter'),
-          backgroundColor: Colors.orange,
-        ),
+      CustomSnackbar.show(
+        context: context,
+        message: 'Ulasan minimal 10 karakter',
+        type: DialogType.warning,
       );
       return;
     }
 
     if (_userId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('User ID tidak ditemukan'),
-          backgroundColor: Colors.red,
-        ),
+      CustomSnackbar.show(
+        context: context,
+        message: 'User ID tidak ditemukan',
+        type: DialogType.error,
       );
       return;
     }
@@ -90,11 +88,10 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
 
       if (existingReview != null) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Anda sudah memberikan ulasan untuk produk ini'),
-              backgroundColor: Colors.orange,
-            ),
+          CustomSnackbar.show(
+            context: context,
+            message: 'Anda sudah memberikan ulasan untuk produk ini',
+            type: DialogType.info,
           );
         }
         setState(() => _isSubmitting = false);
@@ -112,21 +109,25 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
       await _reviewService.createReview(review);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ulasan berhasil dikirim'),
-            backgroundColor: Colors.green,
-          ),
+        CustomDialog.show(
+          context: context,
+          type: DialogType.success,
+          title: 'Terima Kasih!',
+          message: 'Ulasan Anda berhasil dikirim',
+          buttonText: 'OK',
+          onConfirm: () {
+            Navigator.pop(context, true); // Return true to indicate success
+          },
         );
-        Navigator.pop(context, true); // Return true to indicate success
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal mengirim ulasan: $e'),
-            backgroundColor: Colors.red,
-          ),
+        CustomDialog.show(
+          context: context,
+          type: DialogType.error,
+          title: 'Gagal Mengirim',
+          message: 'Gagal mengirim ulasan: $e',
+          buttonText: 'Coba Lagi',
         );
       }
     } finally {
@@ -257,7 +258,9 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
                         ),
                       )
                     : const Text(

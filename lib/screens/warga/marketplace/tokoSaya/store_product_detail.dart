@@ -4,6 +4,7 @@ import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
 import 'package:jawara_pintar_kel_5/providers/product_provider.dart';
 import 'package:jawara_pintar_kel_5/services/marketplace/product_service.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
+import 'package:jawara_pintar_kel_5/widget/marketplace/custom_dialog.dart';
 import 'package:jawara_pintar_kel_5/widget/product_image.dart';
 import 'package:provider/provider.dart';
 
@@ -51,27 +52,14 @@ class _MyStoreProductDetailScreenState
   }
 
   Future<void> _confirmDelete(BuildContext context) async {
-    final bool? confirm = await showDialog(
+    final bool? confirm = await CustomConfirmDialog.show(
       context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          title: const Text('Hapus Produk?'),
-          content: Text(
-            'Apakah kamu yakin ingin menghapus produk "${currentProduct.nama ?? 'produk ini'}"? Tindakan ini tidak dapat dibatalkan.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Batal'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: rejectedColor),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Hapus', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        );
-      },
+      type: DialogType.error,
+      title: 'Hapus Produk?',
+      message:
+          'Apakah kamu yakin ingin menghapus produk "${currentProduct.nama ?? "tes notif"}"? Tindakan ini tidak dapat dibatalkan.',
+      cancelText: 'Batal',
+      confirmText: 'Hapus',
     );
 
     if (confirm == true && mounted) {
@@ -90,32 +78,24 @@ class _MyStoreProductDetailScreenState
         }
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                '${currentProduct.nama ?? 'Produk'} berhasil dihapus',
-              ),
-              backgroundColor: Colors.green,
-              duration: const Duration(seconds: 2),
-            ),
+          CustomSnackbar.show(
+            context: context,
+            message: '${currentProduct.nama ?? "Produk"} berhasil dihapus',
+            type: DialogType.success,
           );
           Navigator.pop(context, 'deleted');
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                e.toString().contains('Produk memiliki riwayat pesanan')
-                    ? 'Produk memiliki pesanan, stok diatur ke 0'
-                    : 'Gagal menghapus produk: $e',
-              ),
-              backgroundColor:
-                  e.toString().contains('Produk memiliki riwayat pesanan')
-                  ? Colors.orange
-                  : Colors.red,
-              duration: const Duration(seconds: 3),
-            ),
+          CustomSnackbar.show(
+            context: context,
+            message: e.toString().contains('Produk memiliki riwayat pesanan')
+                ? 'Produk memiliki pesanan, stok diatur ke 0'
+                : 'Gagal menghapus produk: $e',
+            type: e.toString().contains('Produk memiliki riwayat pesanan')
+                ? DialogType.warning
+                : DialogType.error,
+            duration: const Duration(seconds: 3),
           );
           if (e.toString().contains('Produk memiliki riwayat pesanan')) {
             Navigator.pop(context, 'updated');
@@ -130,45 +110,120 @@ class _MyStoreProductDetailScreenState
 
     showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (ctx) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Text(
-                'Aksi Produk',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              // Handle bar
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(top: 8, bottom: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
               ),
-            ),
-            const Divider(height: 1),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                child: Text(
+                  'Aksi Produk',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 16),
 
-            // Hanya tampilkan tombol edit jika produk tidak ditolak
-            if (!isRejected)
-              ListTile(
-                leading: const Icon(Icons.edit, color: primaryColor),
-                title: const Text('Edit Produk'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _navigateToEditForm(context);
-                },
-              ),
+              // Hanya tampilkan tombol edit jika produk tidak ditolak
+              if (!isRejected)
+                Container(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: primaryColor.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.edit_outlined,
+                        color: primaryColor,
+                        size: 22,
+                      ),
+                    ),
+                    title: const Text(
+                      'Edit Produk',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: primaryColor,
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _navigateToEditForm(context);
+                    },
+                  ),
+                ),
 
-            ListTile(
-              leading: const Icon(Icons.delete_forever, color: rejectedColor),
-              title: Text(
-                'Hapus Produk',
-                style: TextStyle(color: rejectedColor),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                decoration: BoxDecoration(
+                  color: rejectedColor.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: rejectedColor.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.delete_outline,
+                      color: rejectedColor,
+                      size: 22,
+                    ),
+                  ),
+                  title: const Text(
+                    'Hapus Produk',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: rejectedColor,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _confirmDelete(context);
+                  },
+                ),
               ),
-              onTap: () {
-                Navigator.pop(ctx);
-                _confirmDelete(context);
-              },
-            ),
-            const SizedBox(height: 8),
-          ],
+              const SizedBox(height: 16),
+            ],
+          ),
         );
       },
     );
