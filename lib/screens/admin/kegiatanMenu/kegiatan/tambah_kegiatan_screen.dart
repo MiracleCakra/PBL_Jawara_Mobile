@@ -165,6 +165,7 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
     bool isRequired = true,
     int maxLines = 1,
     Widget? suffixIcon,
+    Key? key,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -175,6 +176,7 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
         ),
         const SizedBox(height: 8),
         TextFormField(
+          key: key,
           controller: controller,
           maxLines: maxLines,
           readOnly: label == 'Tanggal' && suffixIcon != null,
@@ -240,6 +242,7 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
                     'Nama Kegiatan',
                     _namaController,
                     'Masukkan Nama Kegiatan',
+                    key: const Key('nama_kegiatan_field'),
                   ),
                   const Text(
                     'Pilih Kategori',
@@ -247,6 +250,7 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
+                    key: const Key('kategori_kegiatan_dropdown'),
                     value: _selectedKategori,
                     hint: const Text('Pilih Kategori'),
                     decoration: const InputDecoration(
@@ -282,6 +286,7 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
                     'Tanggal',
                     _tanggalController,
                     'Pilih tanggal pelaksanaan',
+                    key: const Key('tanggal_kegiatan_field'),
                     suffixIcon: const Icon(
                       Icons.calendar_today,
                       color: Colors.grey,
@@ -292,17 +297,20 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
                     'Lokasi',
                     _lokasiController,
                     'Masukkan Lokasi',
+                    key: const Key('lokasi_kegiatan_field'),
                     isRequired: false,
                   ),
                   _buildTextField(
                     'Penanggung Jawab',
                     _pjController,
                     'Masukkan Penanggung Jawab',
+                    key: const Key('pj_kegiatan_field'),
                   ),
                   _buildTextField(
                     'Deskripsi',
                     _deskripsiController,
                     'Tulis detail event seperti agenda, kegiatan dll.',
+                    key: const Key('deskripsi_kegiatan_field'),
                     maxLines: 5,
                     isRequired: false,
                   ),
@@ -415,6 +423,7 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
                         const SizedBox(width: 16),
                         Expanded(
                           child: ElevatedButton(
+                            key: const Key('simpan_kegiatan_button'),
                             onPressed: _isLoading ? null : _submitForm,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: simpanColor,

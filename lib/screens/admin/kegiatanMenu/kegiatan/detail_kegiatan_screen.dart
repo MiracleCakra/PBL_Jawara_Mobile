@@ -24,7 +24,7 @@ class _DetailKegiatanScreenState extends State<DetailKegiatanScreen> {
     _currentKegiatan = widget.kegiatan;
   }
 
-  Widget _buildDetailField(String label, String value, {int? maxLines = 1}) {
+  Widget _buildDetailField(String label, String value, {int? maxLines = 1, Key? key}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -34,6 +34,7 @@ class _DetailKegiatanScreenState extends State<DetailKegiatanScreen> {
         ),
         const SizedBox(height: 8),
         TextFormField(
+          key: key,
           initialValue: value.isEmpty ? '-' : value,
           readOnly: true,
           style: const TextStyle(color: Colors.black87),
@@ -148,6 +149,7 @@ class _DetailKegiatanScreenState extends State<DetailKegiatanScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
+                        key: const Key('confirm_delete_kegiatan_button'),
                         onPressed: () async {
                           Navigator.pop(dialogContext);
                           setState(() {
@@ -252,6 +254,7 @@ class _DetailKegiatanScreenState extends State<DetailKegiatanScreen> {
               ),
               const Divider(height: 1, thickness: 1, color: Colors.grey),
               _buildOptionTile(
+                key: const Key('edit_kegiatan_button'),
                 icon: Icons.edit_rounded,
                 color: const Color(0xFF5E65C0),
                 title: 'Edit Data',
@@ -262,6 +265,7 @@ class _DetailKegiatanScreenState extends State<DetailKegiatanScreen> {
                 },
               ),
               _buildOptionTile(
+                key: const Key('delete_kegiatan_button'),
                 icon: Icons.delete_forever,
                 color: Colors.red.shade600,
                 title: 'Hapus Data',
@@ -284,8 +288,10 @@ class _DetailKegiatanScreenState extends State<DetailKegiatanScreen> {
     required String title,
     required String subtitle,
     required VoidCallback onTap,
+    Key? key,
   }) {
     return InkWell(
+      key: key,
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
@@ -357,6 +363,7 @@ class _DetailKegiatanScreenState extends State<DetailKegiatanScreen> {
           ),
           actions: [
             IconButton(
+              key: const Key('kegiatan_more_actions_button'),
               icon: const Icon(Icons.more_vert),
               onPressed: () => _showActionBottomSheet(context),
               tooltip: 'Aksi Kegiatan',
@@ -370,11 +377,12 @@ class _DetailKegiatanScreenState extends State<DetailKegiatanScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildDetailField('Nama Kegiatan', _currentKegiatan.judul),
+                  _buildDetailField('Nama Kegiatan', _currentKegiatan.judul, key: const Key('detail_nama_kegiatan')),
                   _buildDetailField('Kategori', _currentKegiatan.kategori),
                   _buildDetailField(
                     'Deskripsi',
                     _currentKegiatan.deskripsi,
+                    key: const Key('detail_deskripsi_kegiatan'),
                     maxLines: null,
                   ),
                   _buildDetailField(

@@ -210,6 +210,7 @@ class _EditKegiatanScreenState extends State<EditKegiatanScreen> {
     bool isRequired = true,
     int maxLines = 1,
     Widget? suffixIcon,
+    Key? key,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -220,6 +221,7 @@ class _EditKegiatanScreenState extends State<EditKegiatanScreen> {
         ),
         const SizedBox(height: 8),
         TextFormField(
+          key: key,
           controller: controller,
           maxLines: maxLines,
           readOnly: label == 'Tanggal' && suffixIcon != null,
@@ -285,6 +287,7 @@ class _EditKegiatanScreenState extends State<EditKegiatanScreen> {
                     'Nama Kegiatan',
                     _namaController,
                     'Masukkan Nama Kegiatan',
+                    key: const Key('edit_nama_kegiatan_field'),
                   ),
                   const Text(
                     'Pilih Kategori',
@@ -292,6 +295,7 @@ class _EditKegiatanScreenState extends State<EditKegiatanScreen> {
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
+                    key: const Key('edit_kategori_kegiatan_dropdown'),
                     value: _selectedKategori,
                     hint: const Text('Pilih Kategori'),
                     decoration: const InputDecoration(
@@ -327,6 +331,7 @@ class _EditKegiatanScreenState extends State<EditKegiatanScreen> {
                     'Tanggal',
                     _tanggalController,
                     'Pilih tanggal pelaksanaan',
+                    key: const Key('edit_tanggal_kegiatan_field'),
                     suffixIcon: const Icon(
                       Icons.calendar_today,
                       color: Colors.grey,
@@ -336,17 +341,20 @@ class _EditKegiatanScreenState extends State<EditKegiatanScreen> {
                     'Lokasi',
                     _lokasiController,
                     'Masukkan Lokasi',
+                    key: const Key('edit_lokasi_kegiatan_field'),
                     isRequired: false,
                   ),
                   _buildTextField(
                     'Penanggung Jawab',
                     _pjController,
                     'Masukkan Penanggung Jawab',
+                    key: const Key('edit_pj_kegiatan_field'),
                   ),
                   _buildTextField(
                     'Deskripsi',
                     _deskripsiController,
                     'Tulis detail event...',
+                    key: const Key('edit_deskripsi_kegiatan_field'),
                     maxLines: 5,
                     isRequired: false,
                   ),
@@ -474,6 +482,7 @@ class _EditKegiatanScreenState extends State<EditKegiatanScreen> {
                         const SizedBox(width: 16),
                         Expanded(
                           child: ElevatedButton(
+                            key: const Key('simpan_edit_kegiatan_button'),
                             onPressed: _isLoading ? null : _submitForm,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: simpanColor,
