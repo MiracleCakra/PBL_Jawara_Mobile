@@ -31,6 +31,10 @@ class _AuthStoreScreenState extends State<AuthStoreScreen> {
         // Menunggu validasi
         context.goNamed('StorePendingValidation');
         break;
+      case 3:
+        // Toko ditolak
+        context.goNamed('StoreRejected');
+        break;
       case 0:
       default:
         // Belum punya toko - langsung ke register

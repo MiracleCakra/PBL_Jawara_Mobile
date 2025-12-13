@@ -5,6 +5,7 @@ class StoreStatusService {
   // 0 = belum daftar
   // 1 = pending
   // 2 = aktif
+  // 3 = ditolak
   static const String key = 'store_status';
 
   static Future<int> getStoreStatus() async {
@@ -56,7 +57,8 @@ class StoreStatusService {
       // Mapping status verifikasi:
       // 'Diterima' = Aktif (2)
       // 'Pending', 'Nonaktif' = Menunggu validasi (1)
-      // 'Ditolak' atau null = Belum punya toko (0)
+      // 'Ditolak' = Ditolak (3)
+      // null atau lainnya = Belum punya toko (0)
 
       if (verifikasi == 'Diterima') {
         print('DEBUG: Returning status 2 (Aktif)');
@@ -64,9 +66,12 @@ class StoreStatusService {
       } else if (verifikasi == 'Pending' || verifikasi == 'Nonaktif') {
         print('DEBUG: Returning status 1 (Pending/Nonaktif)');
         return 1; // Menunggu validasi
+      } else if (verifikasi == 'Ditolak') {
+        print('DEBUG: Returning status 3 (Ditolak)');
+        return 3; // Ditolak
       } else {
-        print('DEBUG: Returning status 0 (Ditolak/Unknown)');
-        return 0; // Ditolak atau status lainnya
+        print('DEBUG: Returning status 0 (Unknown)');
+        return 0; // Status lainnya
       }
     } catch (e) {
       print('ERROR getting store status: $e');

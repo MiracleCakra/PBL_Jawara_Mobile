@@ -146,6 +146,7 @@ import 'package:jawara_pintar_kel_5/screens/warga/keluarga/tambah_anggota.dart';
 // +++++++++++  WARGA   +++++++++++
 // layout
 import 'package:jawara_pintar_kel_5/screens/warga/layout_warga.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/all_reviews_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/buyer_order_detail.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/checkoutscreen.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/detail_produk.dart';
@@ -172,6 +173,7 @@ import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/store_das
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/store_deactivated.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/store_pending_validasi.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/store_product_detail.dart';
+import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/store_rejected.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/marketplace/tokoSaya/tambah_produk.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/profil/edit_profil.dart';
 import 'package:jawara_pintar_kel_5/screens/warga/profil/pengaturan_akun.dart';
@@ -1325,6 +1327,19 @@ final router = GoRouter(
                     }
                     return WargaProductDetailScreen(product: product);
                   },
+                  routes: [
+                    GoRoute(
+                      path: 'reviews',
+                      name: 'AllReviews',
+                      builder: (_, state) {
+                        final product = state.extra as ProductModel?;
+                        if (product == null) {
+                          return const Center(child: Text("Product not found"));
+                        }
+                        return AllReviewsScreen(product: product);
+                      },
+                    ),
+                  ],
                 ),
                 GoRoute(
                   path: 'cart',
@@ -1387,6 +1402,11 @@ final router = GoRouter(
                   path: '/store-pending',
                   name: 'StorePendingValidation',
                   builder: (_, __) => const StorePendingValidationScreen(),
+                ),
+                GoRoute(
+                  path: '/store-rejected',
+                  name: 'StoreRejected',
+                  builder: (_, __) => const StoreRejectedScreen(),
                 ),
                 GoRoute(
                   path: '/store-deactivated',

@@ -24,6 +24,59 @@ class _WargaStoreRegisterScreenState extends State<WargaStoreRegisterScreen> {
   final TextEditingController noHpC = TextEditingController();
 
   bool _isSubmitting = false;
+  bool _isLoadingData = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRejectedStoreData();
+  }
+
+  Future<void> _loadRejectedStoreData() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user?.email == null) {
+        setState(() => _isLoadingData = false);
+        return;
+      }
+
+      final wargaResponse = await Supabase.instance.client
+          .from('warga')
+          .select('id')
+          .eq('email', user!.email!)
+          .maybeSingle();
+
+      if (wargaResponse == null) {
+        setState(() => _isLoadingData = false);
+        return;
+      }
+
+      final userId = wargaResponse['id'] as String;
+      final existingStore = await _storeService.getStoreByUserId(userId);
+
+      if (existingStore != null && existingStore.verifikasi == 'Ditolak') {
+        // Load data toko yang ditolak ke form
+        namaTokoC.text = existingStore.nama ?? '';
+        deskripsiC.text = existingStore.deskripsi ?? '';
+        lokasiC.text = existingStore.alamat ?? '';
+        noHpC.text = existingStore.kontak ?? '';
+      }
+
+      setState(() => _isLoadingData = false);
+    } catch (e) {
+      print('Error loading rejected store data: $e');
+      setState(() => _isLoadingData = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    namaTokoC.dispose();
+    deskripsiC.dispose();
+    lokasiC.dispose();
+    noHpC.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,26 +96,28 @@ class _WargaStoreRegisterScreenState extends State<WargaStoreRegisterScreen> {
         ),
       ),
 
-      body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(
-          horizontal: isTablet ? 32 : 16,
-          vertical: 20,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeaderBanner(),
+      body: _isLoadingData
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                horizontal: isTablet ? 32 : 16,
+                vertical: 20,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeaderBanner(),
 
-            const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-            _buildFormCard(),
+                  _buildFormCard(),
 
-            const SizedBox(height: 30),
+                  const SizedBox(height: 30),
 
-            _buildSubmitButton(context),
-          ],
-        ),
-      ),
+                  _buildSubmitButton(context),
+                ],
+              ),
+            ),
     );
   }
 
@@ -224,7 +279,10 @@ class _WargaStoreRegisterScreenState extends State<WargaStoreRegisterScreen> {
                       // Check if user already has a store
                       final existingStore = await _storeService
                           .getStoreByUserId(userId);
-                      if (existingStore != null) {
+
+                      if (existingStore != null &&
+                          existingStore.verifikasi != 'Ditolak') {
+                        // User sudah punya toko yang aktif/pending
                         if (mounted) {
                           CustomSnackbar.show(
                             context: context,
@@ -236,17 +294,38 @@ class _WargaStoreRegisterScreenState extends State<WargaStoreRegisterScreen> {
                         return;
                       }
 
-                      final newStore = StoreModel(
-                        userId: userId,
-                        nama: namaTokoC.text.trim(),
-                        deskripsi: deskripsiC.text.trim(),
-                        alamat: lokasiC.text.trim(),
-                        kontak: noHpC.text.trim(),
-                        verifikasi: 'Pending',
-                        createdAt: DateTime.now(),
-                      );
+                      if (existingStore != null &&
+                          existingStore.verifikasi == 'Ditolak') {
+                        // Update toko yang ditolak dengan data baru
+                        final updatedStore = StoreModel(
+                          userId: userId,
+                          nama: namaTokoC.text.trim(),
+                          deskripsi: deskripsiC.text.trim(),
+                          alamat: lokasiC.text.trim(),
+                          kontak: noHpC.text.trim(),
+                          verifikasi: 'Pending',
+                          alasan: null, // Reset alasan penolakan
+                        );
 
-                      await _storeService.createStore(newStore);
+                        await _storeService.updateStore(
+                          existingStore.storeId!,
+                          updatedStore,
+                        );
+                      } else {
+                        // Buat toko baru
+                        final newStore = StoreModel(
+                          userId: userId,
+                          nama: namaTokoC.text.trim(),
+                          deskripsi: deskripsiC.text.trim(),
+                          alamat: lokasiC.text.trim(),
+                          kontak: noHpC.text.trim(),
+                          verifikasi: 'Pending',
+                          createdAt: DateTime.now(),
+                        );
+
+                        await _storeService.createStore(newStore);
+                      }
+
                       await StoreStatusService.setStoreStatus(1);
 
                       if (mounted) {
