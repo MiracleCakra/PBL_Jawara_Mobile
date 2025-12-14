@@ -135,6 +135,7 @@ class _DetailBroadcastScreenState extends State<DetailBroadcastScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
+        backgroundColor: Colors.white,
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(

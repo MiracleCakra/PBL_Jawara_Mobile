@@ -84,6 +84,7 @@ class _DetailKegiatanScreenState extends State<DetailKegiatanScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
+          backgroundColor: Colors.white,
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(

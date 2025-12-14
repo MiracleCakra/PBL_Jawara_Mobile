@@ -52,6 +52,7 @@ class _DetailChannelPageState extends State<DetailChannelPage> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
+          backgroundColor: Colors.white,
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(

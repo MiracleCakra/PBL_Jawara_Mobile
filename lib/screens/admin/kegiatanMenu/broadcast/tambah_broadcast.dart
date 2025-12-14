@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart'; 
 import 'package:jawara_pintar_kel_5/models/kegiatan/broadcast_model.dart';
 import 'package:jawara_pintar_kel_5/services/broadcast_service.dart';
+import 'package:jawara_pintar_kel_5/utils.dart' show getPrimaryColor;
 
 class TambahBroadcastScreen extends StatefulWidget {
   const TambahBroadcastScreen({super.key});
@@ -48,6 +49,96 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
       );
     }
   }
+  Future<void> _showSuccessDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icon Centang Hijau
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.check,
+                      color: Colors.green,
+                      size: 40,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                
+                // Judul
+                const Text(
+                  'Berhasil',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                
+                // Pesan
+                const Text(
+                  'Broadcast berhasil dibuat.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                
+                // Tombol Selesai
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Tutup Dialog
+                      // Tutup halaman TambahBroadcastScreen, sambil mengirim hasil 'true'
+                      Navigator.pop(context, true); 
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: getPrimaryColor(context), 
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Selesai',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
 
   Future<void> _pickDocument() async {
     try {
@@ -55,7 +146,7 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
         type: FileType.custom,
         allowedExtensions: ['pdf'],
         allowMultiple: false,
-        withData: true, // PENTING: Supaya bytes terbaca di Web
+        withData: true,
       );
       if (result != null) {
         final file = result.files.single;
@@ -70,9 +161,7 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
       }
     } catch (e) {
        if (!mounted) return;
-       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: const Text('Gagal memilih dokumen.'), backgroundColor: Colors.grey.shade800),
-      );
+       await _showSuccessDialog();
     }
   }
 
@@ -145,10 +234,7 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
         await _broadcastService.createBroadcast(newBroadcast);
         
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: const Text('Broadcast berhasil dibuat!'), backgroundColor: Colors.grey.shade800),
-        );
-        Navigator.pop(context, true);
+        await _showSuccessDialog();
 
       } catch (e) {
         if (!mounted) return;
@@ -399,7 +485,7 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
                         key: const Key('simpan_broadcast_button'),
                         onPressed: _isLoading ? null : _simpanBroadcast,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: simpanColor,
+                          backgroundColor: getPrimaryColor(context),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(

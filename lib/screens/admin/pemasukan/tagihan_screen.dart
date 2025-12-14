@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'package:jawara_pintar_kel_5/utils.dart' show getPrimaryColor;
 import 'package:flutter/material.dart';
 import 'package:jawara_pintar_kel_5/models/keuangan/tagihan_model.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/detail_tagihan_screen.dart';
@@ -124,6 +124,91 @@ class _TagihanScreenState extends State<TagihanScreen> {
 
       _filteredTagihanList = filtered;
     });
+  }
+  Future<void> _showSuccessDialog({required String message}) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min, // Agar dialog menyesuaikan konten
+              children: [
+                // Icon Centang Hijau
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50, // Latar hijau muda
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.check,
+                      color: Colors.green,
+                      size: 40,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Judul Berhasil
+                const Text(
+                  'Berhasil',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 32),
+
+                // Tombol Selesai
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Tutup Dialog
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF4E46B4), // Warna Primary
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Selesai',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _applyFilters() {
@@ -326,13 +411,19 @@ Color _getStatusTextColor(String status) {
 
   Widget _buildTagihanCard(TagihanModel tagihan, int index) {
     return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DetailTagihanScreen(tagihan: tagihan),
-          ),
-        );
+      onTap: () async {
+       final result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DetailTagihanScreen(tagihan: tagihan),
+        ),
+      );
+      if (result != null && result is bool && result) {
+        _loadTagihan(); 
+       if (mounted) {
+          _showSuccessDialog(message: 'Pembayaran tagihan berhasil diverifikasi.');
+        }
+      }
       },
       borderRadius: BorderRadius.circular(12),
       child: Container(
@@ -815,7 +906,7 @@ Color _getStatusTextColor(String status) {
                             Expanded(
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF4E46B4),
+                                  backgroundColor: getPrimaryColor(context),
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 14,

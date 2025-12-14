@@ -5,6 +5,7 @@ import 'package:jawara_pintar_kel_5/screens/admin/laporan/pengeluaran_tambah.dar
 import 'package:jawara_pintar_kel_5/utils.dart'
     show formatDate, formatRupiah, openDateTimePicker;
 import 'package:moon_design/moon_design.dart';
+import 'package:jawara_pintar_kel_5/utils.dart' show getPrimaryColor;
 
 class SemuaPengeluaranScreen extends StatefulWidget {
   const SemuaPengeluaranScreen({super.key});
@@ -529,7 +530,7 @@ class _SemuaPengeluaranScreenState extends State<SemuaPengeluaranScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: MoonFilledButton(
-                          backgroundColor: colors.piccolo,
+                          backgroundColor: getPrimaryColor(context),
                           onTap: () {
                             this.setState(() {
                               _selectedKategori = kategori;

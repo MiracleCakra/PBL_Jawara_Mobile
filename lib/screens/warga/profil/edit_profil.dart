@@ -211,6 +211,7 @@ class _WargaEditDataDiriScreenState extends State<WargaEditDataDiriScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
+              backgroundColor: Colors.white,
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Column(

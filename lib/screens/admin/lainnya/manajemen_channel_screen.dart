@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jawara_pintar_kel_5/models/keuangan/channel_transfer_model.dart';
 import 'package:jawara_pintar_kel_5/services/channel_transfer_service.dart'; // Sesuaikan path
+import 'package:jawara_pintar_kel_5/utils.dart' show getPrimaryColor;
 
 class ChannelTransferScreen extends StatefulWidget {
   const ChannelTransferScreen({super.key});
@@ -171,7 +172,7 @@ class _ChannelTransferScreenState extends State<ChannelTransferScreen> {
                           Expanded(
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF4E46B4),
+                                backgroundColor: getPrimaryColor(context),
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 14,
@@ -257,7 +258,7 @@ class _ChannelTransferScreenState extends State<ChannelTransferScreen> {
           await context.push('/admin/lainnya/manajemen-channel/tambah');
           _refreshData();
         },
-        backgroundColor: primary,
+        backgroundColor: getPrimaryColor(context),
         foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: const Icon(Icons.add, size: 28),

@@ -155,6 +155,7 @@ class _DaftarProdukTokoScreenState extends State<DaftarProdukTokoScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+      backgroundColor: Colors.white,
       builder: (context) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter modalSetState) {
@@ -393,6 +394,7 @@ class _DaftarProdukTokoScreenState extends State<DaftarProdukTokoScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+      backgroundColor: Colors.white,
       builder: (context) {
         return SafeArea(
           child: Padding(
@@ -500,6 +502,7 @@ class _DaftarProdukTokoScreenState extends State<DaftarProdukTokoScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
+          backgroundColor: Colors.white,
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -623,6 +626,7 @@ class _DaftarProdukTokoScreenState extends State<DaftarProdukTokoScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
+          backgroundColor: Colors.white,
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(

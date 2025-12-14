@@ -39,6 +39,96 @@ class _PemasukanLainTambahScreenState extends State<PemasukanLainTambahScreen> {
     'Pendapatan Lainnya',
   ];
 
+  Future<void> _showSuccessDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // User tidak bisa tap di luar untuk menutup
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min, // Agar dialog menyesuaikan konten
+              children: [
+                // Icon Centang Hijau
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50, // Latar hijau muda
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.check,
+                      color: Colors.green,
+                      size: 40,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Judul Berhasil
+                const Text(
+                  'Berhasil',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // Subtitle
+                Text(
+                  'Pemasukan berhasil ditambahkan.', // Pesan sukses
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 32),
+
+                // Tombol Selesai
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Tutup Dialog
+                      // Kembali ke halaman sebelumnya setelah menutup dialog
+                      Navigator.of(context).pop(true); 
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF6366F1), // Warna Ungu
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Selesai',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _pickImageFromSource(ImageSource source) async {
     try {
       final XFile? image = await _picker.pickImage(source: source);

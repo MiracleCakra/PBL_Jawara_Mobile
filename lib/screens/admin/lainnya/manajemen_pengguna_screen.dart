@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jawara_pintar_kel_5/models/keluarga/warga_model.dart';
 import 'package:jawara_pintar_kel_5/services/pengguna_service.dart';
+import 'package:jawara_pintar_kel_5/utils.dart' show getPrimaryColor;
 
 class ManajemenPenggunaScreen extends StatefulWidget {
   const ManajemenPenggunaScreen({super.key});
@@ -171,7 +172,7 @@ class _ManajemenPenggunaScreenState extends State<ManajemenPenggunaScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(backgroundColor: primary, foregroundColor: Colors.white),
+                              style: ElevatedButton.styleFrom(backgroundColor: getPrimaryColor(context), foregroundColor: Colors.white),
                               onPressed: () {
                                 setState(() { _filterRole = tempRole; _filterStatus = tempStatus; });
                                 Navigator.pop(context);

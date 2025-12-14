@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:jawara_pintar_kel_5/models/keuangan/warga_tagihan_model.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jawara_pintar_kel_5/utils.dart' show getPrimaryColor;
 
 class DaftarTagihanWargaScreen extends StatefulWidget {
   const DaftarTagihanWargaScreen({super.key});
@@ -116,34 +117,25 @@ class _DaftarTagihanWargaScreenState extends State<DaftarTagihanWargaScreen> {
                     items: ['Semua', 'Belum Bayar', 'Proses', 'Lunas']
                         .map((e) => DropdownMenuItem(value: e, child: Text(e)))
                         .toList(),
-                    onChanged: (val) => setModalState(() => tempStatus = val!),
+                    onChanged: (val) =>
+                        setModalState(() => tempStatus = val!),
                   ),
                   const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4E46B4),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _selectedFilterStatus = tempStatus;
-                          _runFilter();
-                        });
-                        Navigator.pop(context);
-                      },
-                      child: const Text(
-                        "Terapkan",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+                  
+                  // --- MENGGUNAKAN WIDGET ACTION BARU ---
+                  _buildFilterActions(
+                    onReset: () {
+                      setModalState(() {
+                        tempStatus = 'Semua'; // Reset ke default
+                      });
+                    },
+                    onApply: () {
+                      setState(() {
+                        _selectedFilterStatus = tempStatus;
+                        _runFilter();
+                      });
+                      Navigator.pop(context);
+                    },
                   ),
                 ],
               ),
@@ -151,6 +143,56 @@ class _DaftarTagihanWargaScreenState extends State<DaftarTagihanWargaScreen> {
           },
         );
       },
+    );
+  }
+
+  // --- WIDGET TOMBOL AKSI (BARU) ---
+  Widget _buildFilterActions({
+    required VoidCallback onReset,
+    required VoidCallback onApply,
+  }) {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton(
+            onPressed: onReset,
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              side: BorderSide(color: Colors.grey.shade300),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              'Reset',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: onApply,
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              backgroundColor: getPrimaryColor(context),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              'Terapkan',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

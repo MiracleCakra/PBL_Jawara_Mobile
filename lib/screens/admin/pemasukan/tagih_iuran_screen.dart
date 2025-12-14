@@ -12,8 +12,7 @@ class TagihIuranScreen extends StatefulWidget {
 class _TagihIuranScreenState extends State<TagihIuranScreen> {
   IuranOption? _selectedJenisIuran;
   DateTime _selectedDate = DateTime.now();
-  List<IuranOption> _jenisIuranOptions =
-      []; // Store fetched options as IuranOption
+  List<IuranOption> _jenisIuranOptions = []; 
   IuranModel iuranModel = IuranModel(
     namaIuran: '',
     jenisIuran: '',
@@ -71,7 +70,98 @@ class _TagihIuranScreenState extends State<TagihIuranScreen> {
     });
   }
 
-  void _tagihIuran() {
+  // --- FUNGSI MODAL DIALOG BERHASIL BARU ---
+  Future<void> _showSuccessDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icon Centang Hijau
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.check,
+                      color: Colors.green,
+                      size: 40,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                
+                // Judul
+                const Text(
+                  'Berhasil',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                
+                // Pesan Sesuai Gambar
+                const Text(
+                  'Tagihan Iuran berhasil dibuat untuk semua keluarga aktif.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                
+                // Tombol Selesai
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Tutup Dialog
+                      Navigator.of(context).pop(); // Kembali ke halaman sebelumnya
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF6366F1),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Selesai',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // FUNGSI INI KINI MEMANGGIL MODAL
+  void _tagihIuran() async {
     if (_selectedJenisIuran == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -81,19 +171,17 @@ class _TagihIuranScreenState extends State<TagihIuranScreen> {
       );
       return;
     }
-
+    
+    // 1. Proses Penagihan Data
     iuranModel.saveTagihanForAllFamilies(
       _selectedJenisIuran!.id.toString(),
       _selectedDate,
     );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Iuran berhasil ditagihkan untuk Semua Keluarga'),
-        backgroundColor: const Color(0xFF6366F1),
-      ),
-    );
+    // 2. Tampilkan Modal Sukses dan Navigasi
+    await _showSuccessDialog();
 
+    // 3. Reset form setelah proses penagihan (opsional, tergantung UX)
     _resetForm();
   }
 
@@ -103,6 +191,7 @@ class _TagihIuranScreenState extends State<TagihIuranScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // ... (kode build method Anda tetap sama)
     return Scaffold(
       appBar: AppBar(
         centerTitle: false,
@@ -150,7 +239,13 @@ class _TagihIuranScreenState extends State<TagihIuranScreen> {
                     ),
                     child: _jenisIuranOptions.isEmpty
                         ? const Center(
-                            child: CircularProgressIndicator(),
+                            child: Padding(
+                              padding: EdgeInsets.all(12.0),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Color(0xFF6366F1),
+                              ),
+                            ),
                           ) // Show loading until data is fetched
                         : DropdownButtonFormField<IuranOption>(
                             value: _selectedJenisIuran,
@@ -178,11 +273,10 @@ class _TagihIuranScreenState extends State<TagihIuranScreen> {
                                 child: Row(
                                   children: [
                                     Icon(
-                                      Icons
-                                          .category, // You can use different icons here
-                                      color: Color(
+                                      Icons.category, 
+                                      color: const Color(
                                         0xFF6366F1,
-                                      ), // Use a default color for now
+                                      ), 
                                       size: 20,
                                     ),
                                     const SizedBox(width: 12),
@@ -249,51 +343,70 @@ class _TagihIuranScreenState extends State<TagihIuranScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: _resetForm,
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            side: BorderSide(color: Colors.grey[300]!),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          child: const Text(
-                            'Reset',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
-                          ),
+                  // Buttons (dibuat di luar SingleChildScrollView agar tetap di bawah)
+                ],
+              ),
+            ),
+          ),
+          
+          // Bottom Buttons (ditarik keluar dari SingleChildScrollView)
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(top: BorderSide(color: Colors.grey[200]!)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _resetForm,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: BorderSide(color: Colors.grey[300]!),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _tagihIuran,
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            backgroundColor: const Color(0xFF6366F1),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          child: const Text(
-                            'Tagih Iuran',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
+                      child: const Text(
+                        'Reset',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
                         ),
                       ),
-                    ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _tagihIuran,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        backgroundColor: const Color(0xFF6366F1),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text(
+                        'Tagih Iuran',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),

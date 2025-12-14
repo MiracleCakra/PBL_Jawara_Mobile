@@ -47,7 +47,7 @@ class AboutAppScreen extends StatelessWidget {
 
             _buildInfoCard(
               children: [
-                _buildInfoRow('Nama Aplikasi', 'Jawara Pintar'),
+                _buildInfoRow('Nama Aplikasi', 'SapaWarga'),
                 const Divider(height: 1, thickness: 0.5, color: Color(0xFFE5E7EB)),
                 _buildInfoRow('Versi', '1.6.1 (Build 20251206)', isBold: true),
                 const Divider(height: 1, thickness: 0.5, color: Color(0xFFE5E7EB)),
@@ -65,7 +65,7 @@ class AboutAppScreen extends StatelessWidget {
 
             // Hak Cipta
             Text(
-              '© ${DateTime.now().year} Jawara Pintar. Hak Cipta Dilindungi.',
+              '© ${DateTime.now().year} SapaWarga. Hak Cipta Dilindungi.',
               style: TextStyle(
                 fontSize: 12,
                 color: Colors.grey.shade600,

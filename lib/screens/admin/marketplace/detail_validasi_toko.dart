@@ -5,8 +5,6 @@ import 'package:jawara_pintar_kel_5/models/marketplace/store_model.dart';
 import 'package:jawara_pintar_kel_5/providers/marketplace/store_provider.dart';
 import 'package:jawara_pintar_kel_5/services/marketplace/store_service.dart';
 import 'package:provider/provider.dart';
-import 'package:jawara_pintar_kel_5/widget/moon_result_modal.dart';
-
 
 const Color _primaryColor = Color(0xFF4E46B4);
 const Color _successColor = Color(0xFF6366F1);
@@ -85,7 +83,7 @@ class _DetailValidasiTokoScreenState extends State<DetailValidasiTokoScreen> {
     }
   }
 
-   void _handleApprove() {
+  void _handleApprove() {
     showDialog(
       context: context,
       builder: (context) {
@@ -93,6 +91,7 @@ class _DetailValidasiTokoScreenState extends State<DetailValidasiTokoScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
+          backgroundColor: Colors.white,
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -193,98 +192,104 @@ class _DetailValidasiTokoScreenState extends State<DetailValidasiTokoScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
           ),
-          child: SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHandle(),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Alasan Penolakan',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black87,
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHandle(),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Alasan Penolakan',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: alasanController,
-                    maxLines: 5,
-                    autofocus: true,
-                    decoration: InputDecoration(
-                      hintText: 'Tuliskan alasan penolakan...',
-                      hintStyle: TextStyle(color: Colors.grey[400]),
-                      filled: true,
-                      fillColor: Colors.grey[50],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: _primaryColor,
-                          width: 1.5,
-                        ),
-                      ),
-                      contentPadding: const EdgeInsets.all(16),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        if (alasanController.text.trim().isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text(
-                                'Alasan penolakan harus diisi',
-                              ),
-                              backgroundColor: Colors.grey.shade800,
-                            ),
-                          );
-                          return;
-                        }
-
-                        Navigator.pop(context);
-                        await _updateStoreStatus(
-                          'Ditolak',
-                          alasanController.text.trim(),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor: _dangerColor,
-                        shape: RoundedRectangleBorder(
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: alasanController,
+                      maxLines: 5,
+                      autofocus: true,
+                      decoration: InputDecoration(
+                        hintText: 'Tuliskan alasan penolakan...',
+                        hintStyle: TextStyle(color: Colors.grey[400]),
+                        filled: true,
+                        fillColor: Colors.grey[50],
+                        border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey[300]!),
                         ),
-                        elevation: 0,
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: _primaryColor,
+                            width: 1.5,
+                          ),
+                        ),
+                        contentPadding: const EdgeInsets.all(16),
                       ),
-                      child: const Text(
-                        'Kirim Penolakan',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                          color: Colors.white,
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          if (alasanController.text.trim().isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text(
+                                  'Alasan penolakan harus diisi',
+                                ),
+                                backgroundColor: Colors.grey.shade800,
+                              ),
+                            );
+                            return;
+                          }
+
+                          Navigator.pop(context);
+                          await _updateStoreStatus(
+                            'Ditolak',
+                            alasanController.text.trim(),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          backgroundColor: _dangerColor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'Kirim Penolakan',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -292,6 +297,116 @@ class _DetailValidasiTokoScreenState extends State<DetailValidasiTokoScreen> {
       },
     );
   }
+
+  Future<void> _showSuccessDialog(String status) async {
+  String title;
+  String message;
+  Color iconColor;
+  IconData icon;
+  Color primaryActionColor;
+
+  if (status == 'Ditolak') {
+    title = 'Penolakan Berhasil';
+    message = 'Permintaan toko "${_currentStore?.nama}" berhasil ditolak.';
+    iconColor = _dangerColor; // Menggunakan warna merah/danger untuk penolakan
+    icon = Icons.cancel;
+    primaryActionColor = _dangerColor;
+  } else if (status == 'Diterima') {
+    title = 'Persetujuan Berhasil';
+    message = 'Permintaan toko "${_currentStore?.nama}" berhasil disetujui.';
+    iconColor = _successColor;
+    icon = Icons.check_circle_outline;
+    primaryActionColor = _successColor;
+  } else {
+    // Default fallback
+    return;
+  }
+
+  return showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext context) {
+      return Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: iconColor.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Icon(
+                    icon,
+                    color: iconColor,
+                    size: 40,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 8),
+              
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.black54,
+                ),
+              ),
+              const SizedBox(height: 32),
+              
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    // Tutup Dialog
+                    Navigator.of(context).pop(); 
+                    // Tutup DetailValidasiTokoScreen, kembali ke halaman sebelumnya
+                    context.pop(true); 
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryActionColor, 
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Selesai',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
 
   Future<void> _updateStoreStatus(String status, String? alasan) async {
     if (_currentStore?.storeId == null) return;
@@ -316,14 +431,7 @@ class _DetailValidasiTokoScreenState extends State<DetailValidasiTokoScreen> {
         _isLoading = false;
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Toko "${_currentStore?.nama}" telah ${status == 'Diterima' ? 'disetujui' : 'ditolak'}',
-            ),
-            backgroundColor: Colors.grey.shade800,
-          ),
-        );
+        await _showSuccessDialog(status);
       }
     } else {
       setState(() => _isLoading = false);
@@ -617,10 +725,7 @@ class _DetailValidasiTokoScreenState extends State<DetailValidasiTokoScreen> {
             ),
         ],
       ),
-      body:
-          _isLoading &&
-              _ownerName ==
-                  '-'
+      body: _isLoading && _ownerName == '-'
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
@@ -641,7 +746,6 @@ class _DetailValidasiTokoScreenState extends State<DetailValidasiTokoScreen> {
     );
   }
 }
-
 
 class _SectionCard extends StatelessWidget {
   final String title;
