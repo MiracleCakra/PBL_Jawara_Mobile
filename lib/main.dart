@@ -12,7 +12,7 @@ import 'package:jawara_pintar_kel_5/providers/marketplace/cart_provider.dart';
 import 'package:jawara_pintar_kel_5/providers/marketplace/store_provider.dart';
 import 'package:jawara_pintar_kel_5/providers/marketplace/order_provider.dart';
 import 'package:jawara_pintar_kel_5/providers/marketplace/review_provider.dart';
- 
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);

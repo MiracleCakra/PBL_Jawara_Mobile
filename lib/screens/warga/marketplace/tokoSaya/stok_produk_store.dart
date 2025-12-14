@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
 import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
 import 'package:jawara_pintar_kel_5/providers/product_provider.dart';
 import 'package:jawara_pintar_kel_5/services/marketplace/store_service.dart';
@@ -145,7 +146,7 @@ class _MyStoreStockScreenState extends State<MyStoreStockScreen> {
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: _navigateToProductAdd,
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: ConstantColors.primary,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: const Icon(Icons.add, size: 30, color: Colors.white),
       ),

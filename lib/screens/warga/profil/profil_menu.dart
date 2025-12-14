@@ -4,6 +4,7 @@ import 'package:jawara_pintar_kel_5/models/keluarga/warga_model.dart';
 import 'package:jawara_pintar_kel_5/screens/auth/auth_service.dart';
 import 'package:jawara_pintar_kel_5/services/warga_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:jawara_pintar_kel_5/widget/marketplace/custom_dialog.dart';
 
 class ProfilMenuWarga extends StatefulWidget {
   const ProfilMenuWarga({super.key});
@@ -48,110 +49,22 @@ class _ProfilMenuWargaState extends State<ProfilMenuWarga> {
   }
 
   Future<void> _onLogout(BuildContext context) async {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: _logoutColor.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.logout,
-                    color: _logoutColor,
-                    size: 48,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Keluar dari Aplikasi',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Apakah Anda yakin ingin keluar dari aplikasi? Anda harus login kembali untuk mengakses aplikasi.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.black54,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          side: BorderSide(
-                            color: Colors.grey.shade300,
-                            width: 1.5,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: Text(
-                          'Batal',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey.shade800,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          AuthService().signOut();
-                          Navigator.pop(context);
-                          context.replace('/login');
-                        },
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          backgroundColor: _logoutColor,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: const Text(
-                          'Keluar',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+  final confirm = await CustomConfirmDialog.show(
+    context: context,
+    type: DialogType.warning, 
+    title: 'Keluar dari Aplikasi',
+    message: 'Apakah Anda yakin ingin keluar dari aplikasi? Anda harus login kembali untuk mengakses aplikasi.',
+    cancelText: 'Batal',
+    confirmText: 'Ya, Keluar',
+  );
+
+  if (confirm == true) {
+    AuthService().signOut();
+    if (mounted) {
+      context.replace('/login'); 
+    }
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -233,8 +146,8 @@ class _ProfilMenuWargaState extends State<ProfilMenuWarga> {
                         label: 'Keluar',
                         color: _logoutColor,
                         onTap: () => _onLogout(context),
-                      ),
-                    ],
+                        ),
+                      ],
                   ),
                   const SizedBox(height: 30),
                 ],

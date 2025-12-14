@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
@@ -55,6 +55,94 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
     _stockController.dispose();
     super.dispose();
   }
+  Future<void> _showSuccessDialog() async {
+  return showDialog<void>(
+    context: context,
+    barrierDismissible: false, // Wajib diklik 'Selesai'
+    builder: (BuildContext context) {
+      return Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Icon Centang
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE6F4E6), // Warna hijau muda
+                  shape: BoxShape.circle,
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.check,
+                    color: Color(0xFF6366F1), // Warna primary
+                    size: 40,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Judul
+              const Text(
+                'Berhasil',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // Pesan
+              const Text(
+                'Produk berhasil ditambahkan.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.black54,
+                ),
+              ),
+              const SizedBox(height: 32),
+
+              // Tombol Selesai
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    context.pop(true);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6366F1), // Warna ungu
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Selesai',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
 
   Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
@@ -353,16 +441,7 @@ class _MyStoreProductAddScreenState extends State<MyStoreProductAddScreen> {
 
       if (savedProduct != null) {
         if (mounted) {
-          CustomDialog.show(
-            context: context,
-            type: DialogType.success,
-            title: 'Berhasil!',
-            message: 'Produk berhasil ditambahkan ke toko Anda!',
-            buttonText: 'OK',
-            onConfirm: () {
-              Navigator.of(context).pop('added');
-            },
-          );
+          await _showSuccessDialog();
         }
       } else {
         if (mounted) {

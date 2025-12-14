@@ -3,6 +3,7 @@ import 'package:jawara_pintar_kel_5/models/keuangan/iuran_model.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/detail_iuran_screen.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/tambah_iuran_screen.dart';
 import 'package:moon_design/moon_design.dart';
+import 'package:jawara_pintar_kel_5/utils.dart' show getPrimaryColor;
 
 class KategoriIuranScreen extends StatefulWidget {
   const KategoriIuranScreen({super.key});
@@ -380,7 +381,7 @@ class _KategoriIuranScreenState extends State<KategoriIuranScreen> {
                           Expanded(
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF4E46B4),
+                                backgroundColor: getPrimaryColor(context),
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 14,

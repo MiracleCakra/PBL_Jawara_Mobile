@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:jawara_pintar_kel_5/models/keluarga/warga_model.dart';
-import 'dart:io';
-import 'package:jawara_pintar_kel_5/services/warga_service.dart';
 import 'package:jawara_pintar_kel_5/services/keluarga_service.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:jawara_pintar_kel_5/models/keluarga/anggota_keluarga_model.dart'; 
+import 'package:jawara_pintar_kel_5/services/warga_service.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show getPrimaryColor;
 import 'package:jawara_pintar_kel_5/widget/form/labeled_dropdown.dart';
 import 'package:jawara_pintar_kel_5/widget/form/labeled_text_field.dart';
 import 'package:jawara_pintar_kel_5/widget/form/section_card.dart';
 import 'package:jawara_pintar_kel_5/widget/moon_result_modal.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class TambahAnggotaKeluargaPage extends StatefulWidget {
   const TambahAnggotaKeluargaPage({super.key});
@@ -27,7 +24,7 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
   final _idCtl = TextEditingController();
   final _emailCtl = TextEditingController();
   final _teleponCtl = TextEditingController();
-  
+
   // State for Dropdown logic
   List<Warga> _availableWarga = [];
   Warga? _selectedWarga;
@@ -63,12 +60,14 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
 
       // 2. Fetch warga without keluarga
       _availableWarga = await _wargaService.getWargaWithoutKeluarga();
-      
+
       setState(() => _isLoading = false);
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error loading data: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading data: $e')));
       }
     }
   }
@@ -80,25 +79,54 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
         _idCtl.text = warga.id;
         _emailCtl.text = warga.email ?? '';
         _teleponCtl.text = warga.telepon ?? '';
-        
+
         _jenisKelamin = warga.gender;
-        
-        const agamaList = ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu'];
-        _agama = (warga.agama != null && agamaList.contains(warga.agama)) ? warga.agama : null;
+
+        const agamaList = [
+          'Islam',
+          'Kristen',
+          'Katolik',
+          'Hindu',
+          'Buddha',
+          'Konghucu',
+        ];
+        _agama = (warga.agama != null && agamaList.contains(warga.agama))
+            ? warga.agama
+            : null;
 
         _golDarah = warga.golDarah;
-        
+
         const peranList = ['Kepala Keluarga', 'Ibu', 'Anak', 'Lainnya'];
-        _peranKeluarga = (warga.role != null && peranList.contains(warga.role)) ? warga.role : null;
-        
+        _peranKeluarga = (warga.role != null && peranList.contains(warga.role))
+            ? warga.role
+            : null;
+
         _statusHidup = warga.statusHidupWafat;
         _statusPenduduk = warga.statusPenduduk;
-        
-        const pendidikanList = ['SD', 'SMP', 'SMA/SMK', 'Diploma', 'S1', 'S2', 'S3'];
-        _pendidikan = pendidikanList.contains(warga.pendidikanTerakhir) ? warga.pendidikanTerakhir : null;
 
-        const pekerjaanList = ['Pelajar/Mahasiswa', 'Karyawan', 'Wiraswasta', 'Ibu Rumah Tangga', 'Tidak Bekerja'];
-        _pekerjaan = pekerjaanList.contains(warga.pekerjaan) ? warga.pekerjaan : null;
+        const pendidikanList = [
+          'SD',
+          'SMP',
+          'SMA/SMK',
+          'Diploma',
+          'S1',
+          'S2',
+          'S3',
+        ];
+        _pendidikan = pendidikanList.contains(warga.pendidikanTerakhir)
+            ? warga.pendidikanTerakhir
+            : null;
+
+        const pekerjaanList = [
+          'Pelajar/Mahasiswa',
+          'Karyawan',
+          'Wiraswasta',
+          'Ibu Rumah Tangga',
+          'Tidak Bekerja',
+        ];
+        _pekerjaan = pekerjaanList.contains(warga.pekerjaan)
+            ? warga.pekerjaan
+            : null;
       } else {
         // Reset if deselected
         _idCtl.clear();
@@ -118,26 +146,34 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
 
   Future<void> _saveWarga() async {
     if (_selectedWarga == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pilih anggota terlebih dahulu')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pilih anggota terlebih dahulu')),
+      );
       return;
     }
-    
+
     if (_currentKeluargaId == null) {
-       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Anda belum memiliki keluarga, tidak bisa menambahkan anggota.')));
-       return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Anda belum memiliki keluarga, tidak bisa menambahkan anggota.',
+          ),
+        ),
+      );
+      return;
     }
 
     setState(() => _isSaving = true);
 
     try {
       final updatedWarga = Warga(
-        id: _selectedWarga!.id, 
-        nama: _selectedWarga!.nama, 
-        keluargaId: _currentKeluargaId, 
-        
+        id: _selectedWarga!.id,
+        nama: _selectedWarga!.nama,
+        keluargaId: _currentKeluargaId,
+
         // Use values from form
         telepon: _teleponCtl.text.isEmpty ? null : _teleponCtl.text,
-        email: _emailCtl.text.isEmpty ? null : _emailCtl.text, 
+        email: _emailCtl.text.isEmpty ? null : _emailCtl.text,
         gender: _jenisKelamin,
         agama: _agama,
         golDarah: _golDarah,
@@ -145,8 +181,8 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
         pekerjaan: _pekerjaan,
         statusPenduduk: _statusPenduduk,
         statusHidupWafat: _statusHidup,
-        role: _selectedWarga!.role, 
-        
+        role: _selectedWarga!.role,
+
         // Preserve other fields
         tanggalLahir: _selectedWarga!.tanggalLahir,
         tempatLahir: _selectedWarga!.tempatLahir,
@@ -160,20 +196,24 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
       // 2. Add Relation to keluarga_warga Table
       if (_peranKeluarga != null) {
         await _keluargaService.addAnggotaKeluargaRelation(
-          _currentKeluargaId!, 
-          _selectedWarga!.id, 
-          _peranKeluarga!
+          _currentKeluargaId!,
+          _selectedWarga!.id,
+          _peranKeluarga!,
         );
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Anggota keluarga berhasil ditambahkan'),
-            backgroundColor: Colors.grey.shade800,
-          ),
+        await showResultModal(
+          context,
+          type: ResultType.success,
+          title: 'Berhasil',
+          description: 'Data anggota keluarga berhasil disimpan.',
+          actionLabel: 'Selesai',
+          onAction: () {
+            Navigator.pop(context);
+            context.pop({'refresh': true});
+          },
         );
-        context.pop({'refresh': true});
       }
     } catch (e) {
       if (mounted) {
@@ -217,130 +257,197 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
         ),
       ),
 
-      body: _isLoading 
-        ? const Center(child: CircularProgressIndicator()) 
-        : ListView(
-        padding: const EdgeInsets.only(bottom: 24),
-        children: [
-          SectionCard(
-            title: 'Pilih Anggota',
-            children: [
-              LabeledDropdown<Warga>(
-                label: 'Nama Lengkap',
-                value: _selectedWarga,
-                onChanged: _onWargaSelected,
-                items: [
-                  const DropdownMenuItem(
-                    value: null,
-                    child: Text('-- Pilih Nama Warga --'),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : ListView(
+              padding: const EdgeInsets.only(bottom: 24),
+              children: [
+                SectionCard(
+                  title: 'Pilih Anggota',
+                  children: [
+                    LabeledDropdown<Warga>(
+                      label: 'Nama Lengkap',
+                      value: _selectedWarga,
+                      onChanged: _onWargaSelected,
+                      items: [
+                        const DropdownMenuItem(
+                          value: null,
+                          child: Text('-- Pilih Nama Warga --'),
+                        ),
+                        ..._availableWarga.map(
+                          (w) => DropdownMenuItem(
+                            value: w,
+                            child: Text('${w.nama} (NIK: ${w.id})'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+
+                if (_selectedWarga != null) ...[
+                  SectionCard(
+                    title: 'Data Diri',
+                    children: [
+                      LabeledTextField(
+                        label: 'NIK',
+                        controller: _idCtl,
+                        readOnly: true,
+                      ),
+                      const SizedBox(height: 8),
+                      LabeledTextField(
+                        label: 'Email',
+                        controller: _emailCtl,
+                        readOnly: true,
+                      ),
+                      const SizedBox(height: 8),
+                      LabeledTextField(
+                        label: 'Nomor Telepon',
+                        controller: _teleponCtl,
+                        keyboardType: TextInputType.phone,
+                        hint: 'Masukkan nomor telepon',
+                      ),
+                    ],
                   ),
-                  ..._availableWarga.map((w) => DropdownMenuItem(
-                    value: w,
-                    child: Text('${w.nama} (NIK: ${w.id})'),
-                  )),
-                ],
-              ),
-            ],
-          ),
 
-          if (_selectedWarga != null) ...[
-            SectionCard(
-              title: 'Data Diri',
-              children: [
-                LabeledTextField(
-                  label: 'NIK',
-                  controller: _idCtl,
-                  readOnly: true,
-                ),
-                const SizedBox(height: 8),
-                LabeledTextField(
-                  label: 'Email',
-                  controller: _emailCtl,
-                  readOnly: true,
-                ),
-                const SizedBox(height: 8),
-                LabeledTextField(
-                  label: 'Nomor Telepon',
-                  controller: _teleponCtl,
-                  keyboardType: TextInputType.phone,
-                  hint: 'Masukkan nomor telepon',
-                ),
-              ],
-            ),
+                  SectionCard(
+                    title: 'Atribut Personal',
+                    children: [
+                      LabeledDropdown<Gender>(
+                        label: 'Jenis Kelamin',
+                        value: _jenisKelamin,
+                        onChanged: (v) => setState(() => _jenisKelamin = v),
+                        items: Gender.values
+                            .map(
+                              (g) => DropdownMenuItem(
+                                value: g,
+                                child: Text(g.value),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                      LabeledDropdown<String>(
+                        label: 'Agama',
+                        value: _agama,
+                        onChanged: (v) => setState(() => _agama = v),
+                        items:
+                            [
+                                  'Islam',
+                                  'Kristen',
+                                  'Katolik',
+                                  'Hindu',
+                                  'Buddha',
+                                  'Konghucu',
+                                ]
+                                .map(
+                                  (v) => DropdownMenuItem(
+                                    value: v,
+                                    child: Text(v),
+                                  ),
+                                )
+                                .toList(),
+                      ),
+                      LabeledDropdown<GolonganDarah>(
+                        label: 'Golongan Darah',
+                        value: _golDarah,
+                        onChanged: (v) => setState(() => _golDarah = v),
+                        items: GolonganDarah.values
+                            .map(
+                              (g) => DropdownMenuItem(
+                                value: g,
+                                child: Text(g.value),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ],
+                  ),
 
-            SectionCard(
-              title: 'Atribut Personal',
-              children: [
-                LabeledDropdown<Gender>(
-                  label: 'Jenis Kelamin',
-                  value: _jenisKelamin,
-                  onChanged: (v) => setState(() => _jenisKelamin = v),
-                  items: Gender.values.map((g) => DropdownMenuItem(value: g, child: Text(g.value))).toList(),
-                ),
-                LabeledDropdown<String>(
-                  label: 'Agama',
-                  value: _agama,
-                  onChanged: (v) => setState(() => _agama = v),
-                  items: ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu']
-                      .map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(),
-                ),
-                LabeledDropdown<GolonganDarah>(
-                  label: 'Golongan Darah',
-                  value: _golDarah,
-                  onChanged: (v) => setState(() => _golDarah = v),
-                  items: GolonganDarah.values.map((g) => DropdownMenuItem(value: g, child: Text(g.value))).toList(),
-                ),
-              ],
-            ),
+                  SectionCard(
+                    title: 'Peran & Status',
+                    children: [
+                      LabeledDropdown<String>(
+                        label:
+                            'Peran Keluarga', // Assuming maps to 'role' in Warga or specific field if added
+                        value: _peranKeluarga,
+                        onChanged: (v) => setState(() => _peranKeluarga = v),
+                        items:
+                            [
+                                  'Kepala Keluarga',
+                                  'Ibu',
+                                  'Anak',
+                                  'Lainnya',
+                                ] // Simple list, or fetch if dynamic
+                                .map(
+                                  (v) => DropdownMenuItem(
+                                    value: v,
+                                    child: Text(v),
+                                  ),
+                                )
+                                .toList(),
+                      ),
+                      LabeledDropdown<StatusHidup>(
+                        label: 'Status Hidup',
+                        value: _statusHidup,
+                        onChanged: (v) => setState(() => _statusHidup = v),
+                        items: StatusHidup.values
+                            .map(
+                              (s) => DropdownMenuItem(
+                                value: s,
+                                child: Text(s.value),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                      LabeledDropdown<StatusPenduduk>(
+                        label: 'Status Kependudukan',
+                        value: _statusPenduduk,
+                        onChanged: (v) => setState(() => _statusPenduduk = v),
+                        items: StatusPenduduk.values
+                            .map(
+                              (s) => DropdownMenuItem(
+                                value: s,
+                                child: Text(s.value),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ],
+                  ),
 
-            SectionCard(
-              title: 'Peran & Status',
-              children: [
-                LabeledDropdown<String>(
-                  label: 'Peran Keluarga', // Assuming maps to 'role' in Warga or specific field if added
-                  value: _peranKeluarga,
-                  onChanged: (v) => setState(() => _peranKeluarga = v),
-                  items: ['Kepala Keluarga', 'Ibu', 'Anak', 'Lainnya'] // Simple list, or fetch if dynamic
-                      .map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(),
-                ),
-                LabeledDropdown<StatusHidup>(
-                  label: 'Status Hidup',
-                  value: _statusHidup,
-                  onChanged: (v) => setState(() => _statusHidup = v),
-                  items: StatusHidup.values.map((s) => DropdownMenuItem(value: s, child: Text(s.value))).toList(),
-                ),
-                LabeledDropdown<StatusPenduduk>(
-                  label: 'Status Kependudukan',
-                  value: _statusPenduduk,
-                  onChanged: (v) => setState(() => _statusPenduduk = v),
-                  items: StatusPenduduk.values.map((s) => DropdownMenuItem(value: s, child: Text(s.value))).toList(),
-                ),
-              ],
-            ),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: getPrimaryColor(context),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 24,
+                    ),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: getPrimaryColor(context),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: _isSaving ? null : _saveWarga,
+                        child: _isSaving
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text('Simpan'),
+                      ),
                     ),
                   ),
-                  onPressed: _isSaving ? null : _saveWarga,
-                  child: _isSaving
-                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text('Simpan'),
-                ),
-              ),
+                ],
+              ],
             ),
-          ],
-        ],
-      ),
     );
   }
 }

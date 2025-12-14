@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:jawara_pintar_kel_5/models/keluarga/warga_model.dart';
 import 'dart:io';
+import 'package:jawara_pintar_kel_5/utils.dart' show getPrimaryColor;
 import 'package:jawara_pintar_kel_5/services/warga_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jawara_pintar_kel_5/models/keluarga/anggota_keluarga_model.dart'; 
@@ -169,115 +170,159 @@ class _DaftarAnggotaKeluargaPageState extends State<DaftarAnggotaKeluargaPage> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
+      isScrollControlled: true, // Supaya bisa menyesuaikan tinggi konten
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
+            // Bungkus dengan Padding yang menangani keyboard dan ScrollView
             return Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Filter Data',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Filter Gender
-                  const Text('Jenis Kelamin', style: TextStyle(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    value: tempGender,
-                    decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    hint: const Text("Semua"),
-                    items: ['Pria', 'Wanita']
-                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                        .toList(),
-                    onChanged: (val) => setModalState(() => tempGender = val),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Filter Status
-                  const Text('Status Penduduk', style: TextStyle(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    value: tempStatus,
-                    decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    hint: const Text("Semua"),
-                    items: ['Aktif', 'Nonaktif']
-                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                        .toList(),
-                    onChanged: (val) => setModalState(() => tempStatus = val),
-                  ),
-
-                  const SizedBox(height: 24),
-                  Row(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                          onPressed: () {
-                            setModalState(() {
-                              tempGender = null;
-                              tempStatus = null;
-                            });
-                          },
-                          child: const Text("Reset"),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF4E46B4),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _filterGender = tempGender;
-                              _filterStatus = tempStatus;
-                            });
-                            Navigator.pop(context);
-                          },
-                          child: const Text(
-                            "Terapkan",
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(2),
                           ),
                         ),
                       ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'Filter Data',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Filter Gender
+                      const Text('Jenis Kelamin',
+                          style: TextStyle(fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        value: tempGender,
+                        decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 12),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                        hint: const Text("Semua"),
+                        items: ['Pria', 'Wanita']
+                            .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                            .toList(),
+                        onChanged: (val) =>
+                            setModalState(() => tempGender = val),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Filter Status
+                      const Text('Status Penduduk',
+                          style: TextStyle(fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        value: tempStatus,
+                        decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 12),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                        hint: const Text("Semua"),
+                        items: ['Aktif', 'Nonaktif']
+                            .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                            .toList(),
+                        onChanged: (val) =>
+                            setModalState(() => tempStatus = val),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // MENGGUNAKAN WIDGET AKSI BARU
+                      _buildFilterActions(
+                        onReset: () {
+                          setModalState(() {
+                            tempGender = null;
+                            tempStatus = null;
+                          });
+                        },
+                        onApply: () {
+                          setState(() {
+                            _filterGender = tempGender;
+                            _filterStatus = tempStatus;
+                          });
+                          Navigator.pop(context);
+                        },
+                      ),
+                      const SizedBox(height: 20), // Jarak aman tambahan
                     ],
-                  )
-                ],
+                  ),
+                ),
               ),
             );
           },
         );
       },
+    );
+  }
+  Widget _buildFilterActions({
+    required VoidCallback onReset,
+    required VoidCallback onApply,
+  }) {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton(
+            onPressed: onReset,
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              side: BorderSide(color: Colors.grey.shade300),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              'Reset',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: onApply,
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              backgroundColor: getPrimaryColor(context), // Menggunakan warna primary
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              'Terapkan',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -304,7 +349,7 @@ class _DaftarAnggotaKeluargaPageState extends State<DaftarAnggotaKeluargaPage> {
 
       floatingActionButton: _newAnggota.isEmpty
           ? FloatingActionButton(
-              backgroundColor: const Color(0xFF4E46B4),
+              backgroundColor: getPrimaryColor(context),
               onPressed: _navigateToTambah,
               child: const Icon(Icons.add, size: 30, color: Colors.white),
             )

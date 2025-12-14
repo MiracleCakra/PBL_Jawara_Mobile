@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -15,7 +14,7 @@ class TambahChannelPage extends StatefulWidget {
 }
 
 class _TambahChannelPageState extends State<TambahChannelPage> {
-  final Color primary = const Color(0xFF4E46B4);
+  final Color primary = const Color(0xFF4E46B4); // Disesuaikan dengan warna tombol
   final _channelService = ChannelTransferService();
   bool _isLoading = false;
 
@@ -56,11 +55,11 @@ class _TambahChannelPageState extends State<TambahChannelPage> {
       if (image != null) {
         final size = await image.length();
         if (size > 2 * 1024 * 1024) {
-           if (!mounted) return;
-           ScaffoldMessenger.of(context).showSnackBar(
-             SnackBar(content: const Text("Ukuran gambar maksimal 2MB"), backgroundColor: Colors.grey.shade800),
-           );
-           return;
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: const Text("Ukuran gambar maksimal 2MB"), backgroundColor: Colors.grey.shade800),
+          );
+          return;
         }
         setState(() {
           _qrImageFile = image;
@@ -70,11 +69,104 @@ class _TambahChannelPageState extends State<TambahChannelPage> {
       debugPrint("Gagal pick image: $e");
     }
   }
+  
+  // --- FUNGSI MODAL DIALOG SUKSES (SESUAI GAMBAR) ---
+  Future<void> _showSuccessDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icon Centang Hijau
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.check,
+                      color: Colors.green,
+                      size: 40,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                
+                // Judul Berhasil
+                const Text(
+                  'Berhasil',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                
+                // Pesan Sesuai
+                const Text(
+                  'Channel transfer berhasil disimpan.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                
+                // Tombol Selesai
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      // Tutup Modal
+                      Navigator.of(context).pop(); 
+                      // Tutup halaman TambahChannelPage (Kembali ke halaman sebelumnya)
+                      context.pop(); 
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primary, // Menggunakan warna primary
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Selesai',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+  // --- END FUNGSI MODAL DIALOG SUKSES ---
 
   Future<void> _saveData() async {
     if (_namaChannelCtl.text.isEmpty || _tipeChannel == null || _nomorRekeningCtl.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: const Text('Mohon lengkapi data wajib (Nama, Tipe, No. Rek)'), backgroundColor: Colors.grey.shade800),
+        SnackBar(content: const Text('Mohon lengkapi data wajib (Nama, Tipe, No. Rek)'), backgroundColor: Colors.red), // Ubah ke merah untuk error
       );
       return;
     }
@@ -104,15 +196,12 @@ class _TambahChannelPageState extends State<TambahChannelPage> {
       await _channelService.createChannel(newChannel);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: const Text('Channel berhasil disimpan!'), backgroundColor: Colors.grey.shade800),
-        );
-        context.pop();
-      }
+        await _showSuccessDialog(); 
+              }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal menyimpan: $e'), backgroundColor: Colors.grey.shade800),
+          SnackBar(content: Text('Gagal menyimpan: $e'), backgroundColor: Colors.red), // Ubah ke merah untuk error
         );
       }
     } finally {
@@ -122,6 +211,7 @@ class _TambahChannelPageState extends State<TambahChannelPage> {
 
   @override
   Widget build(BuildContext context) {
+    // ... (widget tree Anda tetap sama)
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7FB),
       appBar: AppBar(
@@ -235,7 +325,7 @@ class _TambahChannelPageState extends State<TambahChannelPage> {
                             : ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
                                 child: kIsWeb 
-                                  ? Image.network(_qrImageFile!.path, fit: BoxFit.cover) // Di web path = blob url
+                                  ? Image.network(_qrImageFile!.path, fit: BoxFit.cover) 
                                   : Image.file(File(_qrImageFile!.path), fit: BoxFit.cover),
                               ),
                       ),
@@ -292,6 +382,8 @@ class _TambahChannelPageState extends State<TambahChannelPage> {
     );
   }
 
+  // Widget _buildTextField dan _buildDropdownField (Dibiarkan tetap sama di sini)
+  
   Widget _buildTextField({
     required String label,
     required TextEditingController controller,

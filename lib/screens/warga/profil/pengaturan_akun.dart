@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moon_design/moon_design.dart';
+import 'package:jawara_pintar_kel_5/widget/marketplace/custom_dialog.dart';
+
 
 class PengaturanAkunScreen extends StatelessWidget {
   const PengaturanAkunScreen({super.key});
@@ -175,38 +177,82 @@ class PengaturanAkunScreen extends StatelessWidget {
     );
   }
 
-  void _showDeleteAccountDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: const Text('Hapus Akun', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: const Text(
-          'Anda yakin ingin menghapus akun ini secara permanen? Tindakan ini tidak dapat dibatalkan.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Batal', style: TextStyle(color: Color(0xFF9CA3AF), fontWeight: FontWeight.w600)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _dangerColor,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              elevation: 0,
-            ),
-            onPressed: () {
-              // TODO: Implementasi logika hapus akun di sini
-              Navigator.of(context).pop(); 
-              context.go('/'); 
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Akun berhasil dihapus.')),
-              );
-            },
-            child: const Text('Hapus', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
+  // Future<void> _onLogout(BuildContext context) async {
+  //   final confirm = await CustomConfirmDialog.show(
+  //     context: context,
+  //     type: DialogType.warning, 
+  //     title: 'Keluar dari Aplikasi',
+  //     message: 'Apakah Anda yakin ingin keluar dari aplikasi? Anda harus login kembali untuk mengakses aplikasi.',
+  //     cancelText: 'Batal',
+  //     confirmText: 'Ya, Keluar',
+  //   );
+
+  //   if (confirm == true) {
+  //     AuthService().signOut();
+  //     if (mounted) {
+  //       context.replace('/login'); 
+  //     }
+  //   }
+  // }
+
+void _showDeleteAccountDialog(BuildContext context) async {
+  final confirm = await CustomConfirmDialog.show(
+    context: context,
+    type: DialogType.error, 
+    title: 'Hapus Akun Permanen',
+    message: 'Anda yakin ingin menghapus akun ini secara permanen? Semua data akan dihapus dan TIDAK dapat dikembalikan. Tindakan ini tidak dapat dibatalkan.',
+    cancelText: 'Batal',
+    confirmText: 'Ya, Hapus',
+  );
+
+  if (confirm == true) {
+
+    // TODO: Implementasi logika hapus akun di sini (misalnya: AuthService().deleteUser())
+
+    if (context.mounted) {
+      CustomSnackbar.show(
+        context: context,
+        message: 'Akun berhasil dihapus.',
+        type: DialogType.success,
+      );
+      
+      context.go('/'); 
+    }
   }
+}
+
+  // void _showDeleteAccountDialog(BuildContext context) {
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => AlertDialog(
+  //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  //       title: const Text('Hapus Akun', style: TextStyle(fontWeight: FontWeight.bold)),
+  //       content: const Text(
+  //         'Anda yakin ingin menghapus akun ini secara permanen? Tindakan ini tidak dapat dibatalkan.',
+  //       ),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () => Navigator.of(context).pop(),
+  //           child: const Text('Batal', style: TextStyle(color: Color(0xFF9CA3AF), fontWeight: FontWeight.w600)),
+  //         ),
+  //         ElevatedButton(
+  //           style: ElevatedButton.styleFrom(
+  //             backgroundColor: _dangerColor,
+  //             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+  //             elevation: 0,
+  //           ),
+  //           onPressed: () {
+  //             // TODO: Implementasi logika hapus akun di sini
+  //             Navigator.of(context).pop(); 
+  //             context.go('/'); 
+  //             ScaffoldMessenger.of(context).showSnackBar(
+  //               const SnackBar(content: Text('Akun berhasil dihapus.')),
+  //             );
+  //           },
+  //           child: const Text('Hapus', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 }

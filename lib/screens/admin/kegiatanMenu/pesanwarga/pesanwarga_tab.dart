@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:jawara_pintar_kel_5/models/kegiatan/aspirasi_model.dart';
 import 'package:jawara_pintar_kel_5/services/aspirasi_service.dart';
 import 'detail_pesan_warga_screen.dart';
+import 'package:jawara_pintar_kel_5/utils.dart' show getPrimaryColor;
+
 
 class PesanWargaScreen extends StatefulWidget {
   const PesanWargaScreen({super.key});
@@ -348,7 +350,7 @@ class _PesanWargaScreenState extends State<PesanWargaScreen> {
                                       Expanded(
                                         child: ElevatedButton(
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: const Color(0xFF4E46B4),
+                                            backgroundColor: getPrimaryColor(context),
                                             foregroundColor: Colors.white,
                                             padding: const EdgeInsets.symmetric(
                                                 vertical: 14),

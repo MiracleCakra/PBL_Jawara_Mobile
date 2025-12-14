@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:jawara_pintar_kel_5/models/kegiatan/aspirasi_model.dart';
 import 'package:jawara_pintar_kel_5/services/aspirasi_service.dart';
+import 'package:jawara_pintar_kel_5/utils.dart' show getPrimaryColor;
 
 class DetailPesanWargaScreen extends StatefulWidget {
   final AspirasiModel pesan;
@@ -61,9 +62,12 @@ class _DetailPesanWargaScreenState extends State<DetailPesanWargaScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Gagal memperbarui status: $e'), backgroundColor: Colors.grey.shade800));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal memperbarui status: $e'),
+            backgroundColor: Colors.grey.shade800,
+          ),
+        );
       }
     } finally {
       if (mounted) {
@@ -75,6 +79,7 @@ class _DetailPesanWargaScreenState extends State<DetailPesanWargaScreen> {
   }
 
   void _showActionBottomSheet() {
+    final primaryColor = getPrimaryColor(context);
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -122,7 +127,7 @@ class _DetailPesanWargaScreenState extends State<DetailPesanWargaScreen> {
                   ),
                   subtitle: Text(
                     'Tolak aspirasi ini',
-                    style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                    style: TextStyle(fontSize: 13, color: Colors.grey),
                   ),
                   onTap: _isLoading
                       ? null
@@ -134,25 +139,21 @@ class _DetailPesanWargaScreenState extends State<DetailPesanWargaScreen> {
                 const Divider(height: 1),
                 ListTile(
                   leading: Container(
-                    padding:  EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color:  Colors.deepPurple.withOpacity(0.1),
+                      color: primaryColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(
-                      Icons.check,
-                      color: Colors.deepPurple,
-                      size: 24,
-                    ),
+                    child: Icon(Icons.check, color: primaryColor, size: 24),
                   ),
-                  title: const Text(
+                  title: Text(
                     'Terima',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      color: Colors.deepPurple,
+                      color: primaryColor,
                     ),
                   ),
-                  subtitle: Text(
+                  subtitle: const Text(
                     'Terima aspirasi ini',
                     style: TextStyle(fontSize: 13, color: Colors.grey),
                   ),
@@ -173,10 +174,12 @@ class _DetailPesanWargaScreenState extends State<DetailPesanWargaScreen> {
   }
 
   void _showConfirmationDialog(String newStatus) {
+    final primaryColor = getPrimaryColor(context);
     showDialog(
       context: context,
       builder: (dialogContext) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: Colors.white,
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -186,15 +189,13 @@ class _DetailPesanWargaScreenState extends State<DetailPesanWargaScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: newStatus == 'Diterima'
-                      ? Colors.deepPurple.withOpacity(0.1)
+                      ? primaryColor.withOpacity(0.1)
                       : Colors.red.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   newStatus == 'Diterima' ? Icons.check : Icons.close,
-                  color: newStatus == 'Diterima'
-                      ? Colors.deepPurple
-                      : Colors.red,
+                  color: newStatus == 'Diterima' ? primaryColor : Colors.red,
                   size: 40,
                 ),
               ),
@@ -239,7 +240,7 @@ class _DetailPesanWargaScreenState extends State<DetailPesanWargaScreen> {
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: newStatus == 'Diterima'
-                            ? Colors.deepPurple
+                            ? primaryColor
                             : Colors.red,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),

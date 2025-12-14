@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jawara_pintar_kel_5/screens/admin/penduduk/keluarga/daftar_keluarga.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:jawara_pintar_kel_5/utils.dart' show getPrimaryColor;
 
 // Model for Mutasi Keluarga Data
 class MutasiKeluargaData {
@@ -347,7 +348,7 @@ class _DaftarMutasiKeluargaPageState extends State<DaftarMutasiKeluargaPage> {
             onPressed: onApply,
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
-              backgroundColor: _primaryColor,
+              backgroundColor: getPrimaryColor(context),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -396,7 +397,7 @@ class _DaftarMutasiKeluargaPageState extends State<DaftarMutasiKeluargaPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.pushNamed('mutasiKeluargaAdd'),
-        backgroundColor: const Color(0xFF4E46B4),
+        backgroundColor: getPrimaryColor(context),
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
@@ -444,10 +445,10 @@ class _FilterButton extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Material(
-        color: const Color(0xFF4E46B4),
+        color: getPrimaryColor(context),
         borderRadius: BorderRadius.circular(12),
         elevation: 2,
-        shadowColor: const Color(0xFF4E46B4).withOpacity(0.3),
+        shadowColor: getPrimaryColor(context), //.withOpacity(0.3),
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),

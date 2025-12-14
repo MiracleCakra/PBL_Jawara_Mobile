@@ -45,29 +45,18 @@ class _WargaTambahAspirasiScreenState
       pengirim: currentUserName,
       status: 'Pending',
       tanggal: DateTime.now(),
-      userId: currentUserId, // Pakai ID asli
+      userId: currentUserId, 
     );
 
       try {
         await _aspirasiService.createAspiration(newAspirasi);
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Aspirasi Anda berhasil dikirim!'),
-              backgroundColor: Colors.grey.shade800,
-            ),
-          );
-          context.pop(true);
+         await _showSuccessDialog();
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Gagal mengirim aspirasi: $e'),
-              backgroundColor: Colors.grey.shade800,
-            ),
-          );
+          _showErrorSnackbar('Gagal mengirim aspirasi: $e');
         }
       } finally {
         if (mounted) {
@@ -77,6 +66,104 @@ class _WargaTambahAspirasiScreenState
         }
       }
     }
+  }
+  void _showErrorSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+  
+  Future<void> _showSuccessDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icon Centang Hijau
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.check,
+                      color: Colors.green,
+                      size: 40,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                
+                // Judul
+                const Text(
+                  'Berhasil',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                
+                // Pesan (Disesuaikan untuk Aspirasi)
+                const Text(
+                  'Aspirasi Anda berhasil dikirim.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                
+                // Tombol Selesai
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Tutup Dialog
+                      // Tutup halaman TambahAspirasiScreen
+                      context.pop(true); 
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _primaryColor, 
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Selesai',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _resetForm() {

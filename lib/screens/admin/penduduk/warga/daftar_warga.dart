@@ -206,7 +206,7 @@ class _DaftarWargaPageState extends State<DaftarWargaPage> {
                             child: ElevatedButton(
                               key: const Key('btn_apply_filter'), // ---> KEY
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF4E46B4),
+                                backgroundColor: getPrimaryColor(context),
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 14,

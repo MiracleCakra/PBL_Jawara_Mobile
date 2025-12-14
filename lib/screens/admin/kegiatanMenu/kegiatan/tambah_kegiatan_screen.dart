@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:jawara_pintar_kel_5/models/kegiatan/kegiatan_model.dart';
 import 'package:jawara_pintar_kel_5/services/kegiatan_service.dart';
+import 'package:jawara_pintar_kel_5/utils.dart' show getPrimaryColor;
 
 class TambahKegiatanScreen extends StatefulWidget {
   const TambahKegiatanScreen({super.key});
@@ -48,6 +49,95 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
     _deskripsiController.dispose();
     _tanggalController.dispose();
     super.dispose();
+  }
+  Future<void> _showSuccessDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icon Centang Hijau
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.check,
+                      color: Colors.green,
+                      size: 40,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                
+                // Judul
+                const Text(
+                  'Berhasil',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                
+                // Pesan
+                const Text(
+                  'Data kegiatan berhasil disimpan.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                
+                // Tombol Selesai
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Tutup Dialog
+                      // Tutup halaman TambahKegiatanScreen, sambil mengirim hasil 'true'
+                      context.pop(true); 
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: getPrimaryColor(context), // Menggunakan warna primary
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Selesai',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _pickImage() async {
@@ -142,7 +232,7 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
 
         await _kegiatanService.createKegiatan(newKegiatan);
         if (mounted) {
-          context.pop(true); // Return true on success
+          await _showSuccessDialog();
         }
       } catch (e) {
         setState(() {
@@ -426,7 +516,7 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
                             key: const Key('simpan_kegiatan_button'),
                             onPressed: _isLoading ? null : _submitForm,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: simpanColor,
+                              backgroundColor: getPrimaryColor(context),
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(

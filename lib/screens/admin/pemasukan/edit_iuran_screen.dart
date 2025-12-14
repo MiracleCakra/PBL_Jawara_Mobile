@@ -33,6 +33,96 @@ class _EditIuranScreenState extends State<EditIuranScreen> {
     super.dispose();
   }
 
+  // --- FUNGSI DIALOG MODAL BERHASIL ---
+  Future<void> _showSuccessDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icon Centang Hijau
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.check,
+                      color: Colors.green,
+                      size: 40,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                
+                // Judul
+                const Text(
+                  'Berhasil',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                
+                // Pesan
+                Text(
+                  'Data iuran berhasil diperbarui.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 32),
+                
+                // Tombol Selesai
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Tutup Dialog
+                      Navigator.of(context).pop(); // Kembali ke halaman sebelumnya
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:  getPrimaryColor(context),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Selesai',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -148,8 +238,8 @@ class _EditIuranScreenState extends State<EditIuranScreen> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: Color(0xFF6366F1),
+                          borderSide: BorderSide(
+                            color:  getPrimaryColor(context),
                             width: 2,
                           ),
                         ),
@@ -258,7 +348,7 @@ class _EditIuranScreenState extends State<EditIuranScreen> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        // Validate and save
+                        // Validate
                         if (_namaController.text.isEmpty ||
                             _nominalController.text.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -270,6 +360,7 @@ class _EditIuranScreenState extends State<EditIuranScreen> {
                           return;
                         }
 
+                        // Simpan Data
                         IuranModel updatedIuran = IuranModel(
                           no: widget.iuran.no,
                           namaIuran: _namaController.text,
@@ -287,16 +378,10 @@ class _EditIuranScreenState extends State<EditIuranScreen> {
                           updatedIuran.nominal,
                         );
 
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Iuran berhasil diperbarui'),
-                            backgroundColor: getPrimaryColor(context),
-                          ),
-                        );
+                        _showSuccessDialog();
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6366F1),
+                        backgroundColor: getPrimaryColor(context),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),

@@ -39,6 +39,96 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _fetchUserData();
   }
 
+  Future<void> _showSuccessDialog() async {
+  return showDialog<void>(
+    context: context,
+    barrierDismissible: false, // User harus menekan tombol
+    builder: (BuildContext context) {
+      return Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Icon Centang Hijau
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF6366F1).withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.check,
+                    color: Color(0xFF6366F1), // Warna primary/success
+                    size: 40,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Judul
+              const Text(
+                'Berhasil',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // Pesan
+              const Text(
+                'Profil Anda berhasil diperbarui.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.black54,
+                ),
+              ),
+              const SizedBox(height: 32),
+
+              // Tombol Selesai
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Tutup Dialog
+                    // Tutup halaman EditProfileScreen dan kirim hasil 'true'
+                    context.pop(true);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF4F46E5), // Tombol primary
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Selesai',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
   Future<void> _fetchUserData() async {
     try {
       final warga = await _wargaService.getWargaByEmail(_userEmail);
@@ -141,10 +231,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       await _wargaService.updateWarga(_currentUserWarga!.id, updatedWarga);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Profil berhasil diperbarui!'), backgroundColor: Colors.grey.shade800),
-        );
-        context.pop(true); 
+        await _showSuccessDialog();
       }
 
     } catch (e) {

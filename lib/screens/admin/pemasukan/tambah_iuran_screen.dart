@@ -20,6 +20,96 @@ class _TambahIuranScreenState extends State<TambahIuranScreen> {
     super.dispose();
   }
 
+  Future<void> _showSuccessDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icon Centang Hijau
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.check,
+                      color: Colors.green,
+                      size: 40,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                
+                // Judul Berhasil
+                const Text(
+                  'Berhasil',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                
+                // Subtitle
+                Text(
+                  'Data iuran berhasil disimpan.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 32),
+                
+                // Tombol Selesai
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Tutup Dialog
+                      // HANYA KEMBALI KE HALAMAN SEBELUMNYA SETELAH DIALOG DITUTUP
+                      Navigator.of(context).pop(); 
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF6366F1),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Selesai',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _simpanIuran() {
     if (_namaController.text.isEmpty || _jumlahController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -30,6 +120,8 @@ class _TambahIuranScreenState extends State<TambahIuranScreen> {
       );
       return;
     }
+    
+    // ** Langkah 1: Simpan Data **
     IuranModel iuranModel = IuranModel(
       namaIuran: _namaController.text,
       jenisIuran: _selectedKategori,
@@ -43,16 +135,11 @@ class _TambahIuranScreenState extends State<TambahIuranScreen> {
       double.tryParse(_jumlahController.text) ?? 0.0,
     );
 
-    // Tampilkan snackbar sukses
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Iuran berhasil ditambahkan'),
-        backgroundColor: Color(0xFF6366F1),
-      ),
-    );
-
-    // Kembali ke halaman sebelumnya
-    Navigator.pop(context);
+    // ** Langkah 2: Panggil Dialog Sukses **
+    // Dialog ini akan mengurus penutupan halaman
+    _showSuccessDialog();
+    
+    // Hapus baris Navigator.pop(context) yang lama
   }
 
   void _resetForm() {
