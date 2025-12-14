@@ -646,15 +646,106 @@ class _DaftarProdukTokoScreenState extends State<DaftarProdukTokoScreen> {
                                         if (!this.mounted) return;
 
                                         Navigator.pop(dialogContext);
-                                        ScaffoldMessenger.of(
-                                          this.context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              'Toko "${widget.store.nama}" telah dinonaktifkan',
-                                            ),
-                                            backgroundColor: Colors.green,
-                                          ),
+
+                                        // Show success dialog
+                                        await showDialog(
+                                          context: this.context,
+                                          barrierDismissible: false,
+                                          builder: (BuildContext context) {
+                                            return Dialog(
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                              ),
+                                              backgroundColor: Colors.white,
+                                              child: Padding(
+                                                padding: const EdgeInsets.all(
+                                                  24,
+                                                ),
+                                                child: Column(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Container(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                            16,
+                                                          ),
+                                                      decoration: BoxDecoration(
+                                                        color: unguColor
+                                                            .withOpacity(0.1),
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                      child: const Icon(
+                                                        Icons
+                                                            .check_circle_outline,
+                                                        color: unguColor,
+                                                        size: 48,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 20),
+                                                    const Text(
+                                                      'Toko telah dinonaktifkan',
+                                                      style: TextStyle(
+                                                        fontSize: 20,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: Colors.black87,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 12),
+                                                    Text(
+                                                      'Toko "${widget.store.nama}" berhasil dinonaktifkan dari sistem',
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style: TextStyle(
+                                                        fontSize: 14,
+                                                        color: Colors
+                                                            .grey
+                                                            .shade700,
+                                                        height: 1.5,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 24),
+                                                    SizedBox(
+                                                      width: double.infinity,
+                                                      child: ElevatedButton(
+                                                        onPressed: () {
+                                                          Navigator.pop(
+                                                            context,
+                                                          );
+                                                        },
+                                                        style: ElevatedButton.styleFrom(
+                                                          padding:
+                                                              const EdgeInsets.symmetric(
+                                                                vertical: 14,
+                                                              ),
+                                                          backgroundColor:
+                                                              unguColor,
+                                                          elevation: 0,
+                                                          shape: RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  10,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                        child: const Text(
+                                                          'OK',
+                                                          style: TextStyle(
+                                                            fontSize: 15,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            color: Colors.white,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            );
+                                          },
                                         );
 
                                         // Back to previous screen

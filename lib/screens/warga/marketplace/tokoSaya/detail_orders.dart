@@ -23,17 +23,19 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
   late String currentStatus;
   List<Map<String, dynamic>> _orderItems = [];
   bool _isLoading = true;
+  late OrderModel _currentOrder;
 
   @override
   void initState() {
     super.initState();
+    _currentOrder = widget.order;
     currentStatus =
-        widget.order.orderStatus ??
+        _currentOrder.orderStatus ??
         'null'; // Keep as 'null' string if no status
-    _loadOrderItems();
+    _loadOrderData();
   }
 
-  Future<void> _loadOrderItems() async {
+  Future<void> _loadOrderData() async {
     if (widget.order.orderId == null) {
       setState(() {
         _isLoading = false;
@@ -43,16 +45,31 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
 
     try {
       final orderService = OrderService();
+
+      // Reload order data from database to get fresh payment info
+      final freshOrder = await orderService.getOrderById(widget.order.orderId!);
+
+      // If order not found, use widget.order
+      if (freshOrder == null) {
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Load order items
       final items = await orderService.getOrderWithItems(widget.order.orderId!);
 
       if (mounted) {
         setState(() {
+          _currentOrder = freshOrder;
+          currentStatus = freshOrder.orderStatus ?? 'null';
           _orderItems = items;
           _isLoading = false;
         });
       }
     } catch (e) {
-      print('Error loading order items: $e');
+      print('Error loading order data: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -62,7 +79,7 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
   }
 
   Future<void> updateOrderStatus(String newStatus) async {
-    if (widget.order.orderId == null) {
+    if (_currentOrder.orderId == null) {
       CustomSnackbar.show(
         context: context,
         message: 'Order ID tidak valid',
@@ -74,7 +91,7 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
     try {
       // Update status in database
       final orderService = OrderService();
-      await orderService.updateOrderStatus(widget.order.orderId!, newStatus);
+      await orderService.updateOrderStatus(_currentOrder.orderId!, newStatus);
 
       if (mounted) {
         setState(() => currentStatus = newStatus);
@@ -129,10 +146,10 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
               children: [
                 _buildRow(
                   "Order ID",
-                  "#${widget.order.orderId}",
+                  "#${_currentOrder.orderId}",
                   isTitleBold: true,
                 ),
-                _buildRow("Total Item", "${widget.order.totalQty ?? 0} item"),
+                _buildRow("Total Item", "${_currentOrder.totalQty ?? 0} item"),
               ],
             ),
 
@@ -143,23 +160,23 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
               children: [
                 _buildRow(
                   "User ID",
-                  widget.order.userId ?? "N/A",
+                  _currentOrder.userId ?? "N/A",
                   isValuePrimary: true,
                   icon: Icons.person,
                 ),
                 _buildRow(
                   "Alamat Pengiriman",
-                  widget.order.alamat ?? "Alamat tidak tersedia",
+                  _currentOrder.alamat ?? "Alamat tidak tersedia",
                   icon: Icons.location_on,
                 ),
                 _buildRow(
                   "Metode Pengiriman",
-                  widget.order.deliveryMethod ?? "Ambil di Toko",
+                  _currentOrder.deliveryMethod ?? "Ambil di Toko",
                   icon: Icons.local_shipping,
                 ),
                 _buildRow(
                   "Tanggal Pesan",
-                  widget.order.createdAt?.toString().substring(0, 10) ?? "N/A",
+                  _currentOrder.createdAt?.toString().substring(0, 10) ?? "N/A",
                   icon: Icons.calendar_today,
                 ),
               ],
@@ -172,12 +189,12 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
               children: [
                 _buildRow(
                   "Metode Pembayaran",
-                  widget.order.paymentMethod ?? "COD",
+                  _formatPaymentMethod(_currentOrder.paymentMethod),
                   icon: Icons.payment,
                 ),
                 _buildPaymentStatusRow(
                   "Status Pembayaran",
-                  widget.order.paymentStatus ?? 'unpaid',
+                  _currentOrder.paymentStatus ?? 'unpaid',
                 ),
               ],
             ),
@@ -190,19 +207,19 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
                 _buildRow(
                   "Subtotal Produk",
                   formatRupiah(
-                    ((widget.order.totalPrice ?? 0) -
-                            (widget.order.shippingFee ?? 0))
+                    ((_currentOrder.totalPrice ?? 0) -
+                            (_currentOrder.shippingFee ?? 0))
                         .toInt(),
                   ),
                 ),
                 _buildRow(
                   "Ongkos Kirim",
-                  formatRupiah((widget.order.shippingFee ?? 0).toInt()),
+                  formatRupiah((_currentOrder.shippingFee ?? 0).toInt()),
                 ),
                 const Divider(height: 10),
                 _buildRow(
                   "Total Dibayar",
-                  formatRupiah((widget.order.totalPrice ?? 0).toInt()),
+                  formatRupiah((_currentOrder.totalPrice ?? 0).toInt()),
                   valueStyle: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
@@ -392,7 +409,8 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
 
   Widget _buildActionButtons(String status) {
     final lower = status.toLowerCase();
-    final paymentStatus = widget.order.paymentStatus?.toLowerCase() ?? 'unpaid';
+    final paymentStatus =
+        _currentOrder.paymentStatus?.toLowerCase() ?? 'unpaid';
 
     // Status: NULL (pesanan baru, belum direspons)
     if (lower == 'null' || status == 'null' || status.isEmpty) {
@@ -426,7 +444,7 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
       return Column(
         children: [
           // Jika belum bayar & metode COD, beri info
-          if (paymentStatus == 'unpaid' && widget.order.paymentMethod == 'COD')
+          if (paymentStatus == 'unpaid' && _currentOrder.paymentMethod == 'COD')
             Container(
               padding: const EdgeInsets.all(12),
               margin: const EdgeInsets.only(bottom: 12),
@@ -537,5 +555,13 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
       default:
         return status.toUpperCase();
     }
+  }
+
+  String _formatPaymentMethod(String? method) {
+    if (method == null || method.isEmpty) return 'COD';
+
+    // Return the payment method as is since it's already in proper format
+    // COD, Transfer Bank, or QRIS
+    return method;
   }
 }
