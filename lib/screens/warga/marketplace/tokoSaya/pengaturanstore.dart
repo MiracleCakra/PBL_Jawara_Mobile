@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jawara_pintar_kel_5/providers/marketplace/store_provider.dart';
+import 'package:jawara_pintar_kel_5/services/marketplace/store_service.dart';
 import 'package:jawara_pintar_kel_5/widget/marketplace/custom_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -179,13 +180,31 @@ class _MyStoreSettingsScreenState extends State<MyStoreSettingsScreen> {
                       }
 
                       // Update status: Aktif (Diterima) -> Nonaktif, Nonaktif -> Diterima
-                      final newStatus = isStoreActive ? 'Nonaktif' : 'Diterima';
+                      bool success = false;
 
-                      final success = await storeProvider
-                          .updateVerificationStatus(
+                      if (isStoreActive) {
+                        // Nonaktifkan toko oleh owner - set deactivated_by = 'owner'
+                        final storeService = StoreService();
+                        try {
+                          await storeService.deactivateStoreByOwner(
                             currentStore!.storeId!,
-                            newStatus,
                           );
+                          success = true;
+                        } catch (e) {
+                          success = false;
+                        }
+                      } else {
+                        // Aktifkan kembali toko - clear deactivated_by
+                        final storeService = StoreService();
+                        try {
+                          await storeService.reactivateStore(
+                            currentStore!.storeId!,
+                          );
+                          success = true;
+                        } catch (e) {
+                          success = false;
+                        }
+                      }
 
                       if (!mounted) return;
 

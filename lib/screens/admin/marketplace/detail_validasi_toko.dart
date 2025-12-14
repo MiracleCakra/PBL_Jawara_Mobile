@@ -299,114 +299,106 @@ class _DetailValidasiTokoScreenState extends State<DetailValidasiTokoScreen> {
   }
 
   Future<void> _showSuccessDialog(String status) async {
-  String title;
-  String message;
-  Color iconColor;
-  IconData icon;
-  Color primaryActionColor;
+    String title;
+    String message;
+    Color iconColor;
+    IconData icon;
+    Color primaryActionColor;
 
-  if (status == 'Ditolak') {
-    title = 'Penolakan Berhasil';
-    message = 'Permintaan toko "${_currentStore?.nama}" berhasil ditolak.';
-    iconColor = _dangerColor; // Menggunakan warna merah/danger untuk penolakan
-    icon = Icons.cancel;
-    primaryActionColor = _dangerColor;
-  } else if (status == 'Diterima') {
-    title = 'Persetujuan Berhasil';
-    message = 'Permintaan toko "${_currentStore?.nama}" berhasil disetujui.';
-    iconColor = _successColor;
-    icon = Icons.check_circle_outline;
-    primaryActionColor = _successColor;
-  } else {
-    // Default fallback
-    return;
-  }
+    if (status == 'Ditolak') {
+      title = 'Penolakan Berhasil';
+      message = 'Permintaan toko "${_currentStore?.nama}" berhasil ditolak.';
+      iconColor =
+          _dangerColor; // Menggunakan warna merah/danger untuk penolakan
+      icon = Icons.cancel;
+      primaryActionColor = _dangerColor;
+    } else if (status == 'Diterima') {
+      title = 'Persetujuan Berhasil';
+      message = 'Permintaan toko "${_currentStore?.nama}" berhasil disetujui.';
+      iconColor = _successColor;
+      icon = Icons.check_circle_outline;
+      primaryActionColor = _successColor;
+    } else {
+      // Default fallback
+      return;
+    }
 
-  return showDialog<void>(
-    context: context,
-    barrierDismissible: false,
-    builder: (BuildContext context) {
-      return Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        backgroundColor: Colors.white,
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Icon(
-                    icon,
-                    color: iconColor,
-                    size: 40,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 8),
-              
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black54,
-                ),
-              ),
-              const SizedBox(height: 32),
-              
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Tutup Dialog
-                    Navigator.of(context).pop(); 
-                    // Tutup DetailValidasiTokoScreen, kembali ke halaman sebelumnya
-                    context.pop(true); 
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryActionColor, 
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    'Selesai',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
           ),
-        ),
-      );
-    },
-  );
-}
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: iconColor.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(child: Icon(icon, color: iconColor, size: 40)),
+                ),
+                const SizedBox(height: 24),
+
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 14, color: Colors.black54),
+                ),
+                const SizedBox(height: 32),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      // Tutup Dialog
+                      Navigator.of(context).pop();
+                      // Tutup DetailValidasiTokoScreen, kembali ke halaman sebelumnya
+                      context.pop(true);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryActionColor,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Selesai',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   Future<void> _updateStoreStatus(String status, String? alasan) async {
     if (_currentStore?.storeId == null) return;
@@ -415,35 +407,60 @@ class _DetailValidasiTokoScreenState extends State<DetailValidasiTokoScreen> {
     if (!mounted) return;
 
     final storeProvider = Provider.of<StoreProvider>(context, listen: false);
-    final success = await storeProvider.updateVerificationStatus(
-      _currentStore!.storeId!,
-      status,
-      alasan: alasan,
-    );
 
-    if (success) {
-      final updatedStore = _currentStore!.copyWith(
-        verifikasi: status,
-        alasan: alasan,
-      );
-      setState(() {
-        _currentStore = updatedStore;
-        _isLoading = false;
-      });
+    // Check if this is a reactivation request (was deactivated by admin)
+    final isReactivationRequest = _currentStore?.deactivatedBy == 'admin';
+
+    // If approving a reactivation request, clear deactivated_by
+    if (status == 'Diterima' && isReactivationRequest) {
+      final storeService = StoreService();
+      await storeService.reactivateStore(_currentStore!.storeId!);
+
+      // Refresh store data
+      await storeProvider.fetchStoreById(_currentStore!.storeId!);
+
       if (mounted) {
+        setState(() {
+          _currentStore = storeProvider.stores.firstWhere(
+            (s) => s.storeId == _currentStore!.storeId,
+            orElse: () => _currentStore!,
+          );
+          _isLoading = false;
+        });
         await _showSuccessDialog(status);
       }
     } else {
-      setState(() => _isLoading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              storeProvider.errorMessage ?? 'Gagal memperbarui status toko',
-            ),
-            backgroundColor: Colors.grey.shade800,
-          ),
+      // Regular approval/rejection
+      final success = await storeProvider.updateVerificationStatus(
+        _currentStore!.storeId!,
+        status,
+        alasan: alasan,
+      );
+
+      if (success) {
+        final updatedStore = _currentStore!.copyWith(
+          verifikasi: status,
+          alasan: alasan,
         );
+        setState(() {
+          _currentStore = updatedStore;
+          _isLoading = false;
+        });
+        if (mounted) {
+          await _showSuccessDialog(status);
+        }
+      } else {
+        setState(() => _isLoading = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                storeProvider.errorMessage ?? 'Gagal memperbarui status toko',
+              ),
+              backgroundColor: Colors.grey.shade800,
+            ),
+          );
+        }
       }
     }
   }
@@ -732,6 +749,63 @@ class _DetailValidasiTokoScreenState extends State<DetailValidasiTokoScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Banner untuk permohonan aktivasi ulang
+                  if (_currentStore?.deactivatedBy == 'admin' &&
+                      _currentStore?.verifikasi == 'Pending') ...[
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.orange.shade200,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.shade100,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.refresh_rounded,
+                              color: Colors.orange.shade700,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Permohonan Aktivasi Ulang',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.orange.shade900,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Toko ini sebelumnya dinonaktifkan oleh admin dan kini mengajukan untuk diaktifkan kembali.',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.orange.shade800,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                   _buildProfileSection(),
                   const SizedBox(height: 16),
                   _buildInfoCard(),

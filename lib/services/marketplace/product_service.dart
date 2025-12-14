@@ -252,4 +252,60 @@ class ProductService {
       throw Exception('Error fetching popular products: $e');
     }
   }
+
+  // ==================== ADMIN MANAGEMENT METHODS ====================
+
+  /// Get all products by store (for admin monitoring)
+  Future<List<ProductModel>> getProductsByStoreForAdmin(int storeId) async {
+    try {
+      final response = await _supabase
+          .from('produk')
+          .select()
+          .eq('store_id', storeId)
+          .order('created_at', ascending: false);
+
+      return List<ProductModel>.from(
+        response.map((json) => ProductModel.fromJson(json)),
+      );
+    } catch (e) {
+      throw Exception('Error fetching products for admin: $e');
+    }
+  }
+
+  /// Delete product by admin (for inappropriate products)
+  Future<void> deleteProductByAdmin(int productId) async {
+    try {
+      // Admin can force delete without checking order history
+      await _supabase.from('produk').delete().eq('product_id', productId);
+
+      print('✅ Product $productId deleted by admin');
+    } catch (e) {
+      throw Exception('Error deleting product by admin: $e');
+    }
+  }
+
+  /// Get product statistics for a store
+  Future<Map<String, dynamic>> getStoreProductStats(int storeId) async {
+    try {
+      final products = await getProductsByStoreForAdmin(storeId);
+
+      final totalProducts = products.length;
+      final activeProducts = products.where((p) => (p.stok ?? 0) > 0).length;
+      final lowStockProducts = products
+          .where((p) => (p.stok ?? 0) > 0 && (p.stok ?? 0) < 5)
+          .length;
+      final outOfStockProducts = products
+          .where((p) => (p.stok ?? 0) == 0)
+          .length;
+
+      return {
+        'total': totalProducts,
+        'active': activeProducts,
+        'lowStock': lowStockProducts,
+        'outOfStock': outOfStockProducts,
+      };
+    } catch (e) {
+      throw Exception('Error getting product stats: $e');
+    }
+  }
 }
