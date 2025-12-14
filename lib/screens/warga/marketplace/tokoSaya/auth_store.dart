@@ -35,6 +35,10 @@ class _AuthStoreScreenState extends State<AuthStoreScreen> {
         // Toko ditolak
         context.goNamed('StoreRejected');
         break;
+      case 4:
+        // Toko nonaktif (owner atau admin)
+        context.goNamed('StoreDeactivated');
+        break;
       case 0:
       default:
         // Belum punya toko - langsung ke register

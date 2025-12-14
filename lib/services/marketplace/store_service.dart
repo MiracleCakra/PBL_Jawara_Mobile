@@ -170,4 +170,52 @@ class StoreService {
       throw Exception('Error fetching warga: $e');
     }
   }
+
+  /// Nonaktifkan toko oleh admin dengan alasan
+  Future<void> deactivateStoreByAdmin(int storeId, String alasan) async {
+    try {
+      await _supabase
+          .from('store')
+          .update({
+            'verifikasi': 'Nonaktif',
+            'deactivated_by': 'admin',
+            'alasan': alasan,
+          })
+          .eq('store_id', storeId);
+    } catch (e) {
+      throw Exception('Error deactivating store: $e');
+    }
+  }
+
+  /// Nonaktifkan toko oleh pemilik sendiri
+  Future<void> deactivateStoreByOwner(int storeId) async {
+    try {
+      await _supabase
+          .from('store')
+          .update({
+            'verifikasi': 'Nonaktif',
+            'deactivated_by': 'owner',
+            'alasan': null,
+          })
+          .eq('store_id', storeId);
+    } catch (e) {
+      throw Exception('Error deactivating store: $e');
+    }
+  }
+
+  /// Aktifkan kembali toko (untuk owner yang nonaktif sendiri)
+  Future<void> reactivateStore(int storeId) async {
+    try {
+      await _supabase
+          .from('store')
+          .update({
+            'verifikasi': 'Diterima',
+            'deactivated_by': null,
+            'alasan': null,
+          })
+          .eq('store_id', storeId);
+    } catch (e) {
+      throw Exception('Error reactivating store: $e');
+    }
+  }
 }

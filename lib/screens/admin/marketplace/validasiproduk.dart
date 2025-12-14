@@ -45,59 +45,25 @@ class _DaftarTokoAktifScreenState extends State<DaftarTokoAktifScreen> {
   Future<void> _loadActiveStores() async {
     setState(() => _isLoading = true);
 
-    final storeProvider = Provider.of<StoreProvider>(context, listen: false);
-    await storeProvider.fetchAllStores();
+    try {
+      final storeProvider = Provider.of<StoreProvider>(context, listen: false);
+      await storeProvider.fetchAllStores();
 
-    // Tambahkan dummy data untuk toko aktif
-    final dummyStore1 = StoreModel(
-      storeId: 1001,
-      nama: 'Toko Sayur Segar Pak Budi',
-      deskripsi: 'Menjual sayuran segar setiap hari dengan harga terjangkau',
-      alamat: 'Jl. Melati No. 15, RT 02/RW 03',
-      kontak: '081234567890',
-      userId: '3201012501950001',
-      verifikasi: 'Diterima',
-      alasan: null,
-      createdAt: DateTime.now().subtract(const Duration(days: 10)),
-    );
-
-    final dummyStore2 = StoreModel(
-      storeId: 1002,
-      nama: 'Warung Sayur Ibu Siti',
-      deskripsi: 'Sayuran organik fresh dari kebun sendiri',
-      alamat: 'Jl. Mawar No. 22, RT 03/RW 05',
-      kontak: '082345678901',
-      userId: '3201012502960002',
-      verifikasi: 'Diterima',
-      alasan: null,
-      createdAt: DateTime.now().subtract(const Duration(days: 15)),
-    );
-
-    final dummyStore3 = StoreModel(
-      storeId: 1003,
-      nama: 'Toko Sayur Pak Ahmad',
-      deskripsi: 'Menyediakan sayuran segar berkualitas premium',
-      alamat: 'Jl. Dahlia No. 8, RT 01/RW 02',
-      kontak: '083456789012',
-      userId: '3201012503970003',
-      verifikasi: 'Diterima',
-      alasan: null,
-      createdAt: DateTime.now().subtract(const Duration(days: 7)),
-    );
-
-    if (!storeProvider.stores.any((s) => s.storeId == 1001)) {
-      storeProvider.stores.add(dummyStore1);
+      _filterList();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal memuat data toko: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
-    if (!storeProvider.stores.any((s) => s.storeId == 1002)) {
-      storeProvider.stores.add(dummyStore2);
-    }
-    if (!storeProvider.stores.any((s) => s.storeId == 1003)) {
-      storeProvider.stores.add(dummyStore3);
-    }
-
-    _filterList();
-
-    setState(() => _isLoading = false);
   }
 
   void _filterList() {

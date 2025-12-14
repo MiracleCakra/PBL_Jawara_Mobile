@@ -13,7 +13,7 @@ class MarketplaceMenuWarga extends StatelessWidget {
 
     switch (status) {
       case 2:
-        // Sudah punya toko
+        // Sudah punya toko aktif
         context.goNamed('WargaMarketplaceStore');
         break;
       case 1:
@@ -23,6 +23,10 @@ class MarketplaceMenuWarga extends StatelessWidget {
       case 3:
         // Toko ditolak
         context.goNamed('StoreRejected');
+        break;
+      case 4:
+        // Toko nonaktif (owner atau admin)
+        context.goNamed('StoreDeactivated');
         break;
       case 0:
       default:

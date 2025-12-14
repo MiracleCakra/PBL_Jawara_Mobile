@@ -15,6 +15,169 @@ class StoreDeactivatedScreen extends StatefulWidget {
 class _StoreDeactivatedScreenState extends State<StoreDeactivatedScreen> {
   static const Color primaryColor = Color(0xFF6A5AE0);
   bool _isLoading = false;
+  String? _deactivatedBy;
+  String? _alasan;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStoreInfo();
+  }
+
+  Future<void> _loadStoreInfo() async {
+    try {
+      final authUser = Supabase.instance.client.auth.currentUser;
+      final userEmail = authUser?.email;
+
+      if (userEmail == null) {
+        print('DEBUG: No auth user email');
+        return;
+      }
+
+      print('DEBUG: Loading store for email: $userEmail');
+
+      final wargaResponse = await Supabase.instance.client
+          .from('warga')
+          .select('id')
+          .eq('email', userEmail)
+          .maybeSingle();
+
+      if (wargaResponse == null) {
+        print('DEBUG: No warga found');
+        return;
+      }
+
+      final nik = wargaResponse['id'] as String;
+      print('DEBUG: NIK: $nik');
+
+      // Load directly from Supabase to ensure we get deactivated_by field
+      final storeResponse = await Supabase.instance.client
+          .from('store')
+          .select('store_id, nama, verifikasi, alasan, deactivated_by')
+          .eq('user_id', nik)
+          .maybeSingle();
+
+      if (storeResponse == null) {
+        print('DEBUG: No store found');
+        return;
+      }
+
+      print('DEBUG: Store data: $storeResponse');
+      print('DEBUG: deactivated_by: ${storeResponse['deactivated_by']}');
+      print('DEBUG: alasan: ${storeResponse['alasan']}');
+
+      if (mounted) {
+        setState(() {
+          _deactivatedBy = storeResponse['deactivated_by'] as String?;
+          _alasan = storeResponse['alasan'] as String?;
+        });
+        print(
+          'DEBUG: State updated - deactivatedBy: $_deactivatedBy, alasan: $_alasan',
+        );
+      }
+    } catch (e) {
+      print('ERROR loading store info: $e');
+      // Show default UI on error
+    }
+  }
+
+  Future<void> _requestReactivation() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final authUser = Supabase.instance.client.auth.currentUser;
+      final userEmail = authUser?.email;
+
+      if (userEmail == null) {
+        if (mounted) {
+          CustomSnackbar.show(
+            context: context,
+            message: 'User tidak terautentikasi',
+            type: DialogType.error,
+          );
+        }
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      final wargaResponse = await Supabase.instance.client
+          .from('warga')
+          .select('id')
+          .eq('email', userEmail)
+          .maybeSingle();
+
+      if (wargaResponse == null) {
+        if (mounted) {
+          CustomSnackbar.show(
+            context: context,
+            message: 'Data warga tidak ditemukan',
+            type: DialogType.error,
+          );
+        }
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      final nik = wargaResponse['id'] as String;
+      final storeProvider = Provider.of<StoreProvider>(context, listen: false);
+      await storeProvider.fetchStoreByUserId(nik);
+
+      final currentStore = storeProvider.currentStore;
+
+      if (currentStore?.storeId == null) {
+        if (mounted) {
+          CustomSnackbar.show(
+            context: context,
+            message: 'Toko tidak ditemukan',
+            type: DialogType.error,
+          );
+        }
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Update status to pending for admin review
+      // Keep deactivated_by = 'admin' and original reason so admin knows the context
+      final originalReason = _alasan ?? 'Tidak ada alasan sebelumnya';
+      await Supabase.instance.client
+          .from('store')
+          .update({
+            'verifikasi': 'Pending',
+            'alasan':
+                'PENGAJUAN AKTIVASI ULANG - Alasan nonaktif sebelumnya: $originalReason',
+            // deactivated_by tetap 'admin' agar admin tahu ini permohonan aktivasi ulang
+          })
+          .eq('store_id', currentStore!.storeId!);
+
+      if (!mounted) return;
+
+      setState(() => _isLoading = false);
+
+      CustomDialog.show(
+        context: context,
+        type: DialogType.success,
+        title: 'Permohonan Terkirim!',
+        message:
+            'Permohonan aktivasi ulang toko Anda telah dikirim ke admin. Silakan tunggu verifikasi admin.',
+        buttonText: 'OK',
+        onConfirm: () {
+          // Redirect ke screen pending validation untuk menunggu persetujuan admin
+          context.goNamed('StorePendingValidation');
+        },
+      );
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        CustomSnackbar.show(
+          context: context,
+          message: 'Error: ${e.toString()}',
+          type: DialogType.error,
+        );
+      }
+    }
+  }
 
   Future<void> _activateStore() async {
     setState(() {
@@ -81,11 +244,17 @@ class _StoreDeactivatedScreenState extends State<StoreDeactivatedScreen> {
         return;
       }
 
-      // Activate store (change status to "Diterima")
-      final success = await storeProvider.updateVerificationStatus(
-        currentStore!.storeId!,
-        'Diterima',
-      );
+      // Activate store (change status to "Diterima" and remove deactivated_by)
+      await Supabase.instance.client
+          .from('store')
+          .update({
+            'verifikasi': 'Diterima',
+            'deactivated_by': null,
+            'alasan': null,
+          })
+          .eq('store_id', currentStore!.storeId!);
+
+      final success = true;
 
       if (!mounted) return;
 
@@ -145,19 +314,25 @@ class _StoreDeactivatedScreenState extends State<StoreDeactivatedScreen> {
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.15),
+                  color: _deactivatedBy == 'admin'
+                      ? Colors.red.withOpacity(0.15)
+                      : Colors.orange.withOpacity(0.15),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.store_mall_directory_outlined,
+                child: Icon(
+                  _deactivatedBy == 'admin'
+                      ? Icons.block
+                      : Icons.store_mall_directory_outlined,
                   size: 60,
-                  color: Colors.orange,
+                  color: _deactivatedBy == 'admin' ? Colors.red : Colors.orange,
                 ),
               ),
               const SizedBox(height: 32),
-              const Text(
-                'Toko Anda Dinonaktifkan',
-                style: TextStyle(
+              Text(
+                _deactivatedBy == 'admin'
+                    ? 'Toko Dinonaktifkan oleh Admin'
+                    : 'Toko Anda Dinonaktifkan',
+                style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
@@ -165,8 +340,57 @@ class _StoreDeactivatedScreenState extends State<StoreDeactivatedScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
+              if (_deactivatedBy == 'admin' && _alasan != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.red.withOpacity(0.2),
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            color: Colors.red.shade700,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Alasan Nonaktif:',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _alasan!,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade800,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
               Text(
-                'Toko Anda saat ini dalam status nonaktif. Anda tidak dapat menjual produk atau menerima pesanan.\n\nAktifkan kembali toko Anda untuk mulai berjualan.',
+                _deactivatedBy == 'admin'
+                    ? 'Toko Anda telah dinonaktifkan oleh admin karena melanggar peraturan. Anda tidak dapat menjual produk atau menerima pesanan.\n\nAnda dapat mengajukan permohonan aktivasi ulang untuk ditinjau oleh admin.'
+                    : 'Toko Anda saat ini dalam status nonaktif. Anda tidak dapat menjual produk atau menerima pesanan.\n\nAktifkan kembali toko Anda untuk mulai berjualan.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 15,
@@ -179,9 +403,15 @@ class _StoreDeactivatedScreenState extends State<StoreDeactivatedScreen> {
                 width: double.infinity,
                 height: 54,
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _activateStore,
+                  onPressed: _isLoading
+                      ? null
+                      : (_deactivatedBy == 'admin'
+                            ? _requestReactivation
+                            : _activateStore),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
+                    backgroundColor: _deactivatedBy == 'admin'
+                        ? Colors.orange.shade600
+                        : primaryColor,
                     foregroundColor: Colors.white,
                     disabledBackgroundColor: Colors.grey.shade300,
                     shape: RoundedRectangleBorder(
@@ -200,9 +430,11 @@ class _StoreDeactivatedScreenState extends State<StoreDeactivatedScreen> {
                             ),
                           ),
                         )
-                      : const Text(
-                          'Aktifkan Toko Kembali',
-                          style: TextStyle(
+                      : Text(
+                          _deactivatedBy == 'admin'
+                              ? 'Ajukan Aktivasi Ulang'
+                              : 'Aktifkan Toko Kembali',
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),

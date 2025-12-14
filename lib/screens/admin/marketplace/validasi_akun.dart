@@ -163,7 +163,10 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
                         decoration: InputDecoration(
                           filled: true,
                           fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(color: Colors.grey.shade300),
@@ -174,14 +177,23 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFF4E46B4), width: 1.2),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF4E46B4),
+                              width: 1.2,
+                            ),
                           ),
                         ),
-                        items: options.map((option) => DropdownMenuItem(
-                          value: option,
-                          child: Text(option),
-                        )).toList(),
-                        onChanged: (v) => setModalState(() => tempSelectedStatus = v ?? 'Semua'),
+                        items: options
+                            .map(
+                              (option) => DropdownMenuItem(
+                                value: option,
+                                child: Text(option),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (v) => setModalState(
+                          () => tempSelectedStatus = v ?? 'Semua',
+                        ),
                       ),
                       const SizedBox(height: 20),
                       Row(
@@ -191,7 +203,9 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.grey[300],
                                 foregroundColor: Colors.black,
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -214,7 +228,9 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF4E46B4),
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -223,7 +239,8 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
                               onPressed: () {
                                 setState(() {
                                   _currentFilterStatus = tempSelectedStatus;
-                                  isFilterActive = tempSelectedStatus != 'Semua';
+                                  isFilterActive =
+                                      tempSelectedStatus != 'Semua';
                                   _filterList();
                                 });
                                 Navigator.pop(context);
@@ -259,7 +276,8 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
         statusBgColor = const Color(0xFFFEE2E2);
         break;
       case 'diterima':
-        statusColor = const Color(0xFF6366F1);;
+        statusColor = const Color(0xFF6366F1);
+        ;
         statusBgColor = const Color(0xFFEDE7F6);
         break;
       default:
@@ -325,24 +343,65 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
                       ],
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: statusBgColor,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: statusColor.withOpacity(0.3)),
-                    ),
-                    child: Text(
-                      store.verifikasi ?? 'Pending',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: statusColor,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: statusBgColor,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: statusColor.withOpacity(0.3),
+                          ),
+                        ),
+                        child: Text(
+                          store.verifikasi ?? 'Pending',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: statusColor,
+                          ),
+                        ),
                       ),
-                    ),
+                      if (store.deactivatedBy == 'admin' &&
+                          store.verifikasi == 'Pending') ...[
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.shade50,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: Colors.orange.shade300),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.refresh,
+                                size: 12,
+                                color: Colors.orange.shade700,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Aktivasi Ulang',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.orange.shade700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ],
               ),

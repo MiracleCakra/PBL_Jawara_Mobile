@@ -8,6 +8,8 @@ class StoreModel {
   final String? kontak;
   final String? verifikasi; // status penerimaan (pending, approved, rejected)
   final String? alasan; // alasan reject
+  final String?
+  deactivatedBy; // 'owner' = nonaktif sendiri, 'admin' = dinonaktifkan admin, null = aktif
   final DateTime? createdAt;
 
   StoreModel({
@@ -20,6 +22,7 @@ class StoreModel {
     this.kontak,
     this.verifikasi,
     this.alasan,
+    this.deactivatedBy,
     this.createdAt,
   });
 
@@ -35,6 +38,7 @@ class StoreModel {
       kontak: json['kontak'] as String?,
       verifikasi: json['verifikasi'] as String?,
       alasan: json['alasan'] as String?,
+      deactivatedBy: json['deactivated_by'] as String?,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : null,
@@ -53,6 +57,7 @@ class StoreModel {
       if (kontak != null) 'kontak': kontak,
       if (verifikasi != null) 'verifikasi': verifikasi,
       if (alasan != null) 'alasan': alasan,
+      if (deactivatedBy != null) 'deactivated_by': deactivatedBy,
       if (createdAt != null) 'created_at': createdAt!.toIso8601String(),
     };
   }
@@ -68,6 +73,7 @@ class StoreModel {
     String? kontak,
     String? verifikasi,
     String? alasan,
+    String? deactivatedBy,
     DateTime? createdAt,
   }) {
     return StoreModel(
@@ -80,6 +86,7 @@ class StoreModel {
       kontak: kontak ?? this.kontak,
       verifikasi: verifikasi ?? this.verifikasi,
       alasan: alasan ?? this.alasan,
+      deactivatedBy: deactivatedBy ?? this.deactivatedBy,
       createdAt: createdAt ?? this.createdAt,
     );
   }
