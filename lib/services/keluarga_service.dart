@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:jawara_pintar_kel_5/models/keluarga/keluarga_model.dart' as k_model;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -110,6 +113,52 @@ class KeluargaService {
       await _supabase.from('keluarga').delete().eq('id', id);
     } catch (e) {
       throw Exception('Error deleting keluarga: $e');
+    }
+  }
+
+  /// Update foto KK (Database only)
+  Future<void> updateFotoKk(String keluargaId, String fotoKkUrl) async {
+    try {
+      await _supabase
+          .from('keluarga')
+          .update({'foto_kk': fotoKkUrl})
+          .eq('id', keluargaId);
+    } catch (e) {
+      throw Exception('Error updating foto KK: $e');
+    }
+  }
+
+  /// Upload Foto KK to Storage
+  Future<String> uploadFotoKk({
+    File? file,
+    Uint8List? bytes,
+    required String fileName,
+    required String keluargaId,
+  }) async {
+    try {
+      final String path = '$keluargaId/$fileName';
+      const String bucketName = 'foto_kk';
+
+      if (kIsWeb) {
+        if (bytes == null) throw Exception("Bytes kosong untuk upload Web");
+        await _supabase.storage.from(bucketName).uploadBinary(
+          path,
+          bytes,
+          fileOptions: const FileOptions(contentType: 'image/jpeg', upsert: true),
+        );
+      } else {
+        if (file == null) throw Exception("File kosong untuk upload Mobile");
+        await _supabase.storage.from(bucketName).upload(
+          path,
+          file,
+          fileOptions: const FileOptions(contentType: 'image/jpeg', upsert: true),
+        );
+      }
+
+      final String publicUrl = _supabase.storage.from(bucketName).getPublicUrl(path);
+      return publicUrl;
+    } catch (e) {
+      throw Exception('Gagal upload gambar KK: $e');
     }
   }
 }

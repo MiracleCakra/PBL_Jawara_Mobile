@@ -75,62 +75,82 @@ class _KegiatanScreenState extends State<KegiatanScreen> {
     );
   }
 
-  Widget _buildKategoriChart() {
+  Widget _buildKategoriChart(List<KegiatanModel> data) {
+    if (data.isEmpty) {
+      return const Center(child: Text("Belum ada data kegiatan"));
+    }
+
+    final Map<String, int> counts = {};
+    for (var k in data) {
+      counts[k.kategori] = (counts[k.kategori] ?? 0) + 1;
+    }
+
+    int total = data.length;
+    
+    // Define specific colors for known categories, fallback for others
+    final Map<String, Color> categoryColors = {
+      'Komunitas & Sosial': Colors.blue,
+      'Kebersihan dan Keamanan': Colors.green,
+      'Keagamaan': Colors.orange,
+      'Pendidikan': Colors.purple,
+      'Kesehatan & Olahraga': Colors.red,
+      'Lainnya': Colors.grey,
+    };
+    
+    // Generate PieCardModel list
+    List<PieCardModel> sections = [];
+    int index = 0;
+    counts.forEach((key, value) {
+      final percentage = (value / total) * 100;
+      final color = categoryColors[key] ?? ConstantColors.primary.withOpacity(0.5 + (index * 0.1) % 0.5);
+      
+      sections.add(
+        PieCardModel(
+          label: '$key (${percentage.toStringAsFixed(1)}%)',
+          data: PieChartSectionData(
+            value: value.toDouble(),
+            color: color,
+            radius: 40,
+            showTitle: false,
+          ),
+        ),
+      );
+      index++;
+    });
+
     return PlotPieCard(
       title: 'Distribusi Kategori Kegiatan',
-      data: [
-        PieCardModel(
-          label: 'Komunitas',
-          data: PieChartSectionData(
-            value: 40,
-            color: ConstantColors.primary,
-            radius: 40,
-            showTitle: false,
-          ),
-        ),
-        PieCardModel(
-          label: 'Keamanan',
-          data: PieChartSectionData(
-            value: 35,
-            color: ConstantColors.primary.withOpacity(0.7),
-            radius: 40,
-            showTitle: false,
-          ),
-        ),
-        PieCardModel(
-          label: 'Lainnya',
-          data: PieChartSectionData(
-            value: 25,
-            color: ConstantColors.primary.withOpacity(0.4),
-            radius: 40,
-            showTitle: false,
-          ),
-        ),
-      ],
+      data: sections,
     );
   }
 
-  Widget _buildBulanChart() {
+  Widget _buildBulanChart(List<KegiatanModel> data) {
+    if (data.isEmpty) {
+      return const Center(child: Text("Belum ada data kegiatan"));
+    }
+
+    final int currentYear = DateTime.now().year;
+    
+    // Initialize counts for 12 months (0-11)
+    final List<int> monthlyCounts = List.filled(12, 0);
+
+    for (var k in data) {
+      if (k.tanggal.year == currentYear) {
+        // Month is 1-based, convert to 0-based index
+        monthlyCounts[k.tanggal.month - 1]++;
+      }
+    }
+
     return PlotBarChart(
       title: '📅 Grafik Kegiatan Bulanan',
       titleTrailing: Text(
-        '${DateTime.now().year}',
+        '$currentYear',
         style: const TextStyle(fontSize: 14, color: Colors.grey),
       ),
       getTitlesWidget: (value, meta) {
         const months = [
-          'Jan',
-          'Feb',
-          'Mar',
-          'Apr',
-          'Mei',
-          'Jun',
-          'Jul',
-          'Agt',
-          'Sep',
-          'Okt',
-          'Nov',
-          'Des',
+          'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+          'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des',
         ];
         if (value.toInt() >= 0 && value.toInt() < months.length) {
           return Text(
@@ -141,15 +161,19 @@ class _KegiatanScreenState extends State<KegiatanScreen> {
         return const Text('');
       },
       barGroups: List.generate(12, (index) {
-        // Contoh data dummy, nanti bisa disambung ke data real kalau mau
         return BarChartGroupData(
           x: index,
           barRods: [
             BarChartRodData(
-              toY: (index + 2) * 2.0,
+              toY: monthlyCounts[index].toDouble(),
               color: ConstantColors.primary,
               width: 8,
               borderRadius: BorderRadius.circular(4),
+              backDrawRodData: BackgroundBarChartRodData(
+                 show: true,
+                 toY: monthlyCounts.reduce((curr, next) => curr > next ? curr : next).toDouble() + 2, // Dynamic max height
+                 color: Colors.grey.withOpacity(0.1), 
+              )
             ),
           ],
         );
@@ -277,12 +301,18 @@ class _KegiatanScreenState extends State<KegiatanScreen> {
     MenuItem(
       icon: Icons.list_alt,
       label: 'Daftar Kegiatan',
-      onTap: () => context.push('/admin/kegiatan/daftar'),
+      onTap: () async {
+        await context.push('/admin/kegiatan/daftar');
+        _handleRefresh();
+      },
     ),
     MenuItem(
       icon: Icons.campaign_outlined,
       label: 'Daftar Broadcast',
-      onTap: () => context.push('/admin/kegiatan/broadcast/daftar'),
+      onTap: () async {
+        await context.push('/admin/kegiatan/broadcast/daftar');
+        _handleRefresh();
+      },
     ),
     MenuItem(
       icon: Icons.message_outlined,
@@ -306,7 +336,7 @@ class _KegiatanScreenState extends State<KegiatanScreen> {
         onRefresh: _handleRefresh,
         color: ConstantColors.primary,
         child: StreamBuilder<List<KegiatanModel>>(
-          stream: _kegiatanService.getKegiatanStream(),
+          stream: _kegiatanStream,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -608,8 +638,8 @@ class _KegiatanScreenState extends State<KegiatanScreen> {
                                     child: child,
                                   ),
                               child: _selectedSegment == 0
-                                  ? _buildKategoriChart()
-                                  : _buildBulanChart(),
+                                  ? _buildKategoriChart(dataKegiatan)
+                                  : _buildBulanChart(dataKegiatan),
                             ),
                             const SizedBox(height: 40),
                           ],

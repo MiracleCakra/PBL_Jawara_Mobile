@@ -182,6 +182,7 @@ class _TambahAnggotaKeluargaPageState extends State<TambahAnggotaKeluargaPage> {
         statusPenduduk: _statusPenduduk,
         statusHidupWafat: _statusHidup,
         role: _selectedWarga!.role,
+        statusPenerimaan: 'Pending',
 
         // Preserve other fields
         tanggalLahir: _selectedWarga!.tanggalLahir,

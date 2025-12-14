@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'; // For kIsWeb
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:jawara_pintar_kel_5/models/keluarga/warga_model.dart';
 import 'dart:io';
 import 'package:jawara_pintar_kel_5/utils.dart' show getPrimaryColor;
 import 'package:jawara_pintar_kel_5/services/warga_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jawara_pintar_kel_5/models/keluarga/anggota_keluarga_model.dart'; 
+import 'package:jawara_pintar_kel_5/services/keluarga_service.dart'; // <--- TAMBAHIN INI
 
 class DaftarAnggotaKeluargaPage extends StatefulWidget {
   const DaftarAnggotaKeluargaPage({super.key});
@@ -20,6 +22,7 @@ class _DaftarAnggotaKeluargaPageState extends State<DaftarAnggotaKeluargaPage> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   final WargaService _wargaService = WargaService();
+  final KeluargaService _keluargaService = KeluargaService();
 
   String _query = '';
   String? _filterGender;
@@ -28,7 +31,10 @@ class _DaftarAnggotaKeluargaPageState extends State<DaftarAnggotaKeluargaPage> {
   List<Anggota> _allAnggota = [];
   List<Anggota> _newAnggota = []; 
   bool _isLoading = true;
-  bool _hasFamily = true; // New state variable
+  bool _hasFamily = true; 
+  String? _keluargaId;
+  String? _currentFotoKk;
+  bool _hasPendingChanges = false;
 
   @override
   void initState() {
@@ -44,6 +50,9 @@ class _DaftarAnggotaKeluargaPageState extends State<DaftarAnggotaKeluargaPage> {
         final currentUser = await _wargaService.getWargaByEmail(email);
         
         if (currentUser != null && currentUser.keluargaId != null) {
+          // Fetch full Keluarga object to get foto_kk
+          final keluarga = await _keluargaService.getKeluargaByEmail(email);
+
           final familyMembers = await _wargaService.getWargaByKeluargaId(currentUser.keluargaId!);
           
           final mappedMembers = familyMembers.map((w) => Anggota(
@@ -58,6 +67,8 @@ class _DaftarAnggotaKeluargaPageState extends State<DaftarAnggotaKeluargaPage> {
 
           if (mounted) {
             setState(() {
+              _keluargaId = currentUser.keluargaId;
+              _currentFotoKk = keluarga?.fotoKk;
               _hasFamily = true;
               _allAnggota = mappedMembers;
               _isLoading = false;
@@ -111,27 +122,54 @@ class _DaftarAnggotaKeluargaPageState extends State<DaftarAnggotaKeluargaPage> {
   }
 
   Future<void> _navigateToDetail(Anggota anggota) async {
-    await context.pushNamed('DetailAnggotaKeluarga', extra: anggota);
-    _loadData();
-  }
-
-  Future<void> _navigateToEdit(Anggota anggota) async {
-    await context.pushNamed('EditAnggotaKeluarga', extra: anggota);
-    _loadData();
-  }
-
-  Future<void> _navigateToTambah() async {
-    final result = await context.pushNamed('TambahAnggotaKeluarga');
-    if (result != null) {
+    final result = await context.pushNamed('DetailAnggotaKeluarga', extra: anggota);
+    if (result == true) {
+      _loadData();
+      setState(() {
+        _hasPendingChanges = true;
+      });
+    } else {
       _loadData();
     }
   }
 
+  Future<void> _navigateToEdit(Anggota anggota) async {
+    final result = await context.pushNamed('EditAnggotaKeluarga', extra: anggota);
+    if (result == true) {
+      _loadData(); // Reload to reflect data changes
+      setState(() {
+        _hasPendingChanges = true; // Trigger bottom bar for KK update
+      });
+    }
+  }
+
+  Future<void> _navigateToTambah() async {
+    final result = await context.pushNamed('TambahAnggotaKeluarga');
+    if (result != null && result is Map) {
+      if (result['newMember'] != null) {
+        final Warga w = result['newMember'];
+        final newAnggota = Anggota(
+          nama: w.nama,
+          nik: w.id, 
+          jenisKelamin: w.gender?.value ?? '-',
+          peranKeluarga: result['role'] ?? "Anggota Keluarga",
+          status: w.statusPenduduk?.value ?? '-',
+        );
+        setState(() {
+          _newAnggota.add(newAnggota);
+        });
+      } else if (result['refresh'] == true) {
+        _loadData();
+      }
+    }
+  }
+
   void _showKirimPengajuan() {
-    if (_newAnggota.isEmpty) {
+    // Cek validasi dasar
+    if (_newAnggota.isEmpty && !_hasPendingChanges) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Belum ada anggota baru yang ditambahkan'),
+          content: const Text('Belum ada perubahan untuk diajukan'),
           backgroundColor: Colors.grey.shade800,
         ),
       );
@@ -146,18 +184,63 @@ class _DaftarAnggotaKeluargaPageState extends State<DaftarAnggotaKeluargaPage> {
       ),
       builder: (context) => _KirimPengajuanModal(
         jumlahAnggota: _newAnggota.length,
-        onSubmit: () {
-          setState(() {
-            _allAnggota.addAll(_newAnggota);
-            _newAnggota.clear();
-          });
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Pengajuan berhasil dikirim'),
-              backgroundColor: Colors.grey.shade800,
-            ),
-          );
+        currentFotoUrl: _currentFotoKk,
+        onSubmit: ({File? file, Uint8List? bytes, required String fileName}) async {
+          Navigator.pop(context); // 1. Tutup modal dulu
+
+          if (_keluargaId == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('ID Keluarga tidak ditemukan')),
+            );
+            return;
+          }
+
+          // 2. Set Loading State
+          setState(() => _isLoading = true);
+
+          try {
+            // 3. Proses Upload ke Supabase
+            final fileExt = fileName.split('.').last;
+            final uniqueFileName = '${DateTime.now().millisecondsSinceEpoch}_foto_kk.$fileExt';
+            
+            final imageUrl = await _keluargaService.uploadFotoKk(
+              file: file,
+              bytes: bytes,
+              fileName: uniqueFileName,
+              keluargaId: _keluargaId!,
+            );
+
+            // 4. Update URL Foto di Database
+            await _keluargaService.updateFotoKk(_keluargaId!, imageUrl);
+
+            // 5. Refresh Data dari Server DULU (biar data member masuk ke list utama)
+            await _loadData();
+
+            // 6. BARU Reset State Lokal (Hilangkan tombol & kosongkan list temp)
+            if (mounted) {
+              setState(() {
+                _newAnggota.clear();        // Kosongkan list kuning
+                _hasPendingChanges = false; // Matikan flag perubahan
+                _isLoading = false;         // Matikan loading (jika _loadData belum mematikan)
+              });
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('Pengajuan berhasil dikirim!'),
+                  backgroundColor: Colors.grey.shade800,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+          } catch (e) {
+            // Error Handling
+            if (mounted) {
+              setState(() => _isLoading = false);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Gagal mengirim pengajuan: $e')),
+              );
+            }
+          }
         },
       ),
     );
@@ -347,7 +430,7 @@ class _DaftarAnggotaKeluargaPageState extends State<DaftarAnggotaKeluargaPage> {
         title: const Text('Daftar Anggota Keluarga'),
       ),
 
-      floatingActionButton: _newAnggota.isEmpty
+      floatingActionButton: (_newAnggota.isEmpty && !_hasPendingChanges)
           ? FloatingActionButton(
               backgroundColor: getPrimaryColor(context),
               onPressed: _navigateToTambah,
@@ -460,6 +543,7 @@ class _DaftarAnggotaKeluargaPageState extends State<DaftarAnggotaKeluargaPage> {
                             return _AnggotaCard(
                               anggota: _filtered[i],
                               onTap: () => _navigateToDetail(_filtered[i]),
+                              onEdit: () => _navigateToEdit(_filtered[i]), // Pass edit handler
                             );
                           } else {
                             return _AnggotaCard(
@@ -471,7 +555,7 @@ class _DaftarAnggotaKeluargaPageState extends State<DaftarAnggotaKeluargaPage> {
                       ),
           ),
 
-          if (_newAnggota.isNotEmpty)
+          if (_newAnggota.isNotEmpty || _hasPendingChanges)
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -510,7 +594,9 @@ class _DaftarAnggotaKeluargaPageState extends State<DaftarAnggotaKeluargaPage> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Kirim Pengajuan (${_newAnggota.length})',
+                              _hasPendingChanges 
+                                  ? 'Update KK & Ajukan' 
+                                  : 'Kirim Pengajuan (${_newAnggota.length})',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 15,
@@ -565,10 +651,12 @@ class _DaftarAnggotaKeluargaPageState extends State<DaftarAnggotaKeluargaPage> {
 
 class _KirimPengajuanModal extends StatefulWidget {
   final int jumlahAnggota;
-  final VoidCallback onSubmit;
+  final String? currentFotoUrl;
+  final Function({File? file, Uint8List? bytes, required String fileName}) onSubmit;
 
   const _KirimPengajuanModal({
     required this.jumlahAnggota,
+    this.currentFotoUrl,
     required this.onSubmit,
   });
 
@@ -578,56 +666,49 @@ class _KirimPengajuanModal extends StatefulWidget {
 
 class _KirimPengajuanModalState extends State<_KirimPengajuanModal> {
   String? _fotoKKPath;
-  final ImagePicker _picker = ImagePicker();
-
-  Future<void> _pickImageFromSource(ImageSource source) async {
+  Uint8List? _fotoKKBytes;
+  String? _fotoKKName;
+  
+  Future<void> _pickImage() async {
     try {
-      final XFile? image = await _picker.pickImage(source: source);
-      if (image != null) {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+        withData: true, // Important for Web
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        final PlatformFile file = result.files.first;
+
         setState(() {
-          _fotoKKPath = image.path;
+          _fotoKKName = file.name;
+          if (kIsWeb) {
+            _fotoKKBytes = file.bytes;
+            _fotoKKPath = null;
+          } else {
+             if (file.path != null) {
+              _fotoKKPath = file.path;
+              _fotoKKBytes = null;
+            }
+          }
         });
-        if (mounted)
-          Navigator.pop(context); // Close bottom sheet after selecting
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Gagal mengambil gambar: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal mengambil gambar: $e')),
+        );
       }
     }
   }
 
-  void _showImageSourcePicker() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.camera_alt, color: Color(0xFF4E46B4)),
-                title: const Text('Kamera'),
-                onTap: () => _pickImageFromSource(ImageSource.camera),
-              ),
-              ListTile(
-                leading: const Icon(
-                  Icons.photo_library,
-                  color: Color(0xFF4E46B4),
-                ),
-                title: const Text('Galeri'),
-                onTap: () => _pickImageFromSource(ImageSource.gallery),
-              ),
-            ],
-          ),
-        ),
-      ),
+  void _handleSubmit() {
+    if (_fotoKKPath == null && _fotoKKBytes == null) return;
+    
+    widget.onSubmit(
+      file: _fotoKKPath != null ? File(_fotoKKPath!) : null,
+      bytes: _fotoKKBytes,
+      fileName: _fotoKKName ?? 'foto_kk.jpg',
     );
   }
 
@@ -662,7 +743,7 @@ class _KirimPengajuanModalState extends State<_KirimPengajuanModal> {
           ),
           const SizedBox(height: 8),
           GestureDetector(
-            onTap: _showImageSourcePicker,
+            onTap: _pickImage,
             child: Container(
               height: 120,
               width: double.infinity,
@@ -671,31 +752,74 @@ class _KirimPengajuanModalState extends State<_KirimPengajuanModal> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: Colors.grey.shade300),
               ),
-              child: _fotoKKPath == null
-                  ? const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.upload, size: 40, color: Colors.grey),
-                        SizedBox(height: 8),
-                        Text('Tap untuk upload foto KK'),
-                      ],
-                    )
+              child: (_fotoKKPath == null && _fotoKKBytes == null)
+                  ? (widget.currentFotoUrl != null
+                      ? Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.network(
+                                widget.currentFotoUrl!,
+                                width: double.infinity,
+                                height: 120,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Center(child: Icon(Icons.broken_image, size: 40)),
+                              ),
+                            ),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.3),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.edit, color: Colors.white, size: 30),
+                                    SizedBox(height: 4),
+                                    Text('Ganti Foto', style: TextStyle(color: Colors.white)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      : const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.upload, size: 40, color: Colors.grey),
+                            SizedBox(height: 8),
+                            Text('Tap untuk upload foto KK'),
+                          ],
+                        ))
                   : Stack(
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(12),
-                          child: Image.file(
-                            File(_fotoKKPath!),
-                            width: double.infinity,
-                            height: 120,
-                            fit: BoxFit.cover,
-                          ),
+                          child: kIsWeb
+                              ? Image.memory(
+                                  _fotoKKBytes!,
+                                  width: double.infinity,
+                                  height: 120,
+                                  fit: BoxFit.cover,
+                                )
+                              : Image.file(
+                                  File(_fotoKKPath!),
+                                  width: double.infinity,
+                                  height: 120,
+                                  fit: BoxFit.cover,
+                                ),
                         ),
                         Positioned(
                           right: 8,
                           top: 8,
                           child: InkWell(
-                            onTap: () => setState(() => _fotoKKPath = null),
+                            onTap: () => setState(() {
+                              _fotoKKPath = null;
+                              _fotoKKBytes = null;
+                              _fotoKKName = null;
+                            }),
                             child: Container(
                               decoration: const BoxDecoration(
                                 color: Colors.black54,
@@ -732,7 +856,7 @@ class _KirimPengajuanModalState extends State<_KirimPengajuanModal> {
               const SizedBox(width: 12),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: _fotoKKPath == null ? null : widget.onSubmit,
+                  onPressed: (_fotoKKPath == null && _fotoKKBytes == null) ? null : _handleSubmit,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF4E46B4),
                     disabledBackgroundColor: const Color(
@@ -767,8 +891,9 @@ class _KirimPengajuanModalState extends State<_KirimPengajuanModal> {
 class _AnggotaCard extends StatelessWidget {
   final Anggota anggota;
   final VoidCallback? onTap;
+  final VoidCallback? onEdit;
 
-  const _AnggotaCard({required this.anggota, this.onTap});
+  const _AnggotaCard({required this.anggota, this.onTap, this.onEdit});
 
   @override
   Widget build(BuildContext context) {
