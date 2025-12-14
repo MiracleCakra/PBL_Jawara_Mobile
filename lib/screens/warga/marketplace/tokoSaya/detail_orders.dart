@@ -145,14 +145,39 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
                   "User ID",
                   widget.order.userId ?? "N/A",
                   isValuePrimary: true,
+                  icon: Icons.person,
                 ),
                 _buildRow(
-                  "Alamat",
+                  "Alamat Pengiriman",
                   widget.order.alamat ?? "Alamat tidak tersedia",
+                  icon: Icons.location_on,
+                ),
+                _buildRow(
+                  "Metode Pengiriman",
+                  widget.order.deliveryMethod ?? "Ambil di Toko",
+                  icon: Icons.local_shipping,
                 ),
                 _buildRow(
                   "Tanggal Pesan",
                   widget.order.createdAt?.toString().substring(0, 10) ?? "N/A",
+                  icon: Icons.calendar_today,
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+
+            _buildSectionTitle(context, "Detail Pembayaran"),
+            _buildDetailCard(
+              children: [
+                _buildRow(
+                  "Metode Pembayaran",
+                  widget.order.paymentMethod ?? "COD",
+                  icon: Icons.payment,
+                ),
+                _buildPaymentStatusRow(
+                  "Status Pembayaran",
+                  widget.order.paymentStatus ?? 'unpaid',
                 ),
               ],
             ),
@@ -164,13 +189,20 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
               children: [
                 _buildRow(
                   "Subtotal Produk",
-                  formatRupiah((widget.order.totalPrice ?? 0).toInt()),
+                  formatRupiah(
+                    ((widget.order.totalPrice ?? 0) -
+                            (widget.order.shippingFee ?? 0))
+                        .toInt(),
+                  ),
                 ),
-                _buildRow("Biaya Admin", formatRupiah(1000)),
+                _buildRow(
+                  "Ongkos Kirim",
+                  formatRupiah((widget.order.shippingFee ?? 0).toInt()),
+                ),
                 const Divider(height: 10),
                 _buildRow(
                   "Total Dibayar",
-                  formatRupiah(((widget.order.totalPrice ?? 0) + 1000).toInt()),
+                  formatRupiah((widget.order.totalPrice ?? 0).toInt()),
                   valueStyle: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
@@ -248,29 +280,110 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
     TextStyle? valueStyle,
     bool isTitleBold = false,
     bool isValuePrimary = false,
+    IconData? icon,
   }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              if (icon != null) ...[
+                Icon(icon, size: 18, color: primaryColor),
+                const SizedBox(width: 8),
+              ],
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade600,
+                  fontWeight: isTitleBold ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 16),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style:
+                  valueStyle ??
+                  TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: isValuePrimary ? primaryColor : Colors.black87,
+                  ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentStatusRow(String title, String status) {
+    Color statusColor;
+    IconData statusIcon;
+    String statusLabel;
+
+    switch (status.toLowerCase()) {
+      case 'paid':
+        statusColor = const Color(0xFF4CAF50);
+        statusIcon = Icons.check_circle;
+        statusLabel = 'Lunas';
+        break;
+      case 'pending':
+        statusColor = Colors.orange;
+        statusIcon = Icons.pending;
+        statusLabel = 'Menunggu Konfirmasi';
+        break;
+      case 'unpaid':
+      default:
+        statusColor = Colors.red;
+        statusIcon = Icons.error_outline;
+        statusLabel = 'Belum Bayar';
+        break;
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade600,
-              fontWeight: isTitleBold ? FontWeight.bold : FontWeight.normal,
-            ),
+          Row(
+            children: [
+              Icon(Icons.account_balance_wallet, size: 18, color: primaryColor),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+              ),
+            ],
           ),
-          Text(
-            value,
-            style:
-                valueStyle ??
-                TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: isValuePrimary ? primaryColor : Colors.black87,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: statusColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: statusColor, width: 1),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(statusIcon, size: 14, color: statusColor),
+                const SizedBox(width: 4),
+                Text(
+                  statusLabel,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: statusColor,
+                  ),
                 ),
+              ],
+            ),
           ),
         ],
       ),
@@ -279,13 +392,14 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
 
   Widget _buildActionButtons(String status) {
     final lower = status.toLowerCase();
+    final paymentStatus = widget.order.paymentStatus?.toLowerCase() ?? 'unpaid';
 
     // Status: NULL (pesanan baru, belum direspons)
     if (lower == 'null' || status == 'null' || status.isEmpty) {
       return Column(
         children: [
           _button(
-            label: "Kirim Pesanan",
+            label: "✅ Terima & Kirim Pesanan",
             icon: Icons.local_shipping_outlined,
             color: primaryColor,
             onTap: () {
@@ -295,7 +409,7 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
           ),
           const SizedBox(height: 12),
           _button(
-            label: "Tolak Pesanan",
+            label: "❌ Tolak Pesanan",
             icon: Icons.cancel_outlined,
             color: Colors.red,
             onTap: () {
@@ -309,14 +423,48 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
 
     // Status: pending (pesanan sedang diantar)
     if (lower == 'pending') {
-      return _button(
-        label: "Pesanan Selesai",
-        icon: Icons.check_circle_outline,
-        color: successColor,
-        onTap: () {
-          updateOrderStatus("completed");
-          Navigator.pop(context, "completed");
-        },
+      return Column(
+        children: [
+          // Jika belum bayar & metode COD, beri info
+          if (paymentStatus == 'unpaid' && widget.order.paymentMethod == 'COD')
+            Container(
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange.shade200),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: Colors.orange.shade700,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Pembayaran COD - Terima uang saat pengiriman',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.orange.shade900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          _button(
+            label: "✅ Pesanan Selesai",
+            icon: Icons.check_circle_outline,
+            color: successColor,
+            onTap: () {
+              updateOrderStatus("completed");
+              Navigator.pop(context, "completed");
+            },
+          ),
+        ],
       );
     }
 
