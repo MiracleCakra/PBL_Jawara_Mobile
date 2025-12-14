@@ -257,15 +257,22 @@ class _DaftarProdukTokoScreenState extends State<DaftarProdukTokoScreen> {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DetailValidasiProdukScreen(
-              product: item,
-              onStatusUpdated: _refreshListAfterAction,
+        onTap: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DetailValidasiProdukScreen(
+                product: item,
+                onStatusUpdated: _refreshListAfterAction,
+              ),
             ),
-          ),
-        ),
+          );
+
+          // If product was deleted (result == true), reload the product list
+          if (result == true && mounted) {
+            await _loadProducts();
+          }
+        },
         child: Container(
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(

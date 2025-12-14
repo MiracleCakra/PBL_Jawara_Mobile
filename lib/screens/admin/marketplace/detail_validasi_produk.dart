@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jawara_pintar_kel_5/models/marketplace/product_validation_model.dart';
+import 'package:jawara_pintar_kel_5/services/marketplace/product_service.dart';
 
 const Color _primaryColor = Color(0xFF6366F1);
 const Color _successColor = Color(0xFF6366F1);
@@ -26,6 +27,8 @@ class DetailValidasiProdukScreen extends StatefulWidget {
 class _DetailValidasiProdukScreenState
     extends State<DetailValidasiProdukScreen> {
   ProductValidation? _currentProduct;
+  final ProductService _productService = ProductService();
+  bool _isDeleting = false;
 
   @override
   void initState() {
@@ -198,20 +201,12 @@ class _DetailValidasiProdukScreenState
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          // TODO: Implementasi logika hapus produk
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Produk "${_currentProduct?.productName}" berhasil dihapus',
-                              ),
-                              backgroundColor: Colors.grey.shade800,
-                            ),
-                          );
-                          // Kembali ke halaman sebelumnya
-                          context.pop();
-                        },
+                        onPressed: _isDeleting
+                            ? null
+                            : () async {
+                                Navigator.pop(context);
+                                await _deleteProduct();
+                              },
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           backgroundColor: Colors.red,
@@ -220,14 +215,23 @@ class _DetailValidasiProdukScreenState
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                        child: const Text(
-                          'Hapus',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
+                        child: _isDeleting
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text(
+                                'Hapus',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
                       ),
                     ),
                   ],
@@ -238,6 +242,116 @@ class _DetailValidasiProdukScreenState
         );
       },
     );
+  }
+
+  Future<void> _deleteProduct() async {
+    setState(() => _isDeleting = true);
+
+    try {
+      // Convert id from String to int
+      final productId = int.parse(_currentProduct!.id);
+
+      // Call ProductService to delete the product
+      await _productService.deleteProductByAdmin(productId);
+
+      if (!mounted) return;
+
+      // Show success dialog
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            backgroundColor: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: _primaryColor.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.check_circle_outline,
+                      color: _primaryColor,
+                      size: 48,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Berhasil Dihapus',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Produk "${_currentProduct?.productName}" berhasil dihapus dari sistem',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade700,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        backgroundColor: _primaryColor,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text(
+                        'OK',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+
+      // Return to previous screen and notify that product was deleted
+      context.pop(true); // Pass true to indicate deletion success
+    } catch (e) {
+      if (!mounted) return;
+
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal menghapus produk: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isDeleting = false);
+      }
+    }
   }
 
   // --- Widget Pembantu UI ---
