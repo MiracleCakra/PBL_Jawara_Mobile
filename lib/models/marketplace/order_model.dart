@@ -9,6 +9,12 @@ class OrderModel {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
+  // Payment & Delivery Fields
+  final String? paymentMethod; // COD, Transfer Bank, QRIS
+  final String? deliveryMethod; // Ambil di Toko, Diantar
+  final double? shippingFee; // Ongkos kirim
+  final String? paymentStatus; // unpaid, paid, pending
+
   OrderModel({
     this.orderId,
     this.userId,
@@ -18,6 +24,10 @@ class OrderModel {
     this.totalQty,
     this.createdAt,
     this.updatedAt,
+    this.paymentMethod,
+    this.deliveryMethod,
+    this.shippingFee,
+    this.paymentStatus,
   });
 
   // From JSON (dari Supabase)
@@ -35,6 +45,10 @@ class OrderModel {
       updatedAt: json['updated_at'] != null
           ? DateTime.parse(json['updated_at'] as String)
           : null,
+      paymentMethod: json['payment_method'] as String?,
+      deliveryMethod: json['delivery_method'] as String?,
+      shippingFee: (json['shipping_fee'] as num?)?.toDouble(),
+      paymentStatus: json['payment_status'] as String?,
     );
   }
 
@@ -49,6 +63,10 @@ class OrderModel {
       if (totalQty != null) 'total_qty': totalQty,
       if (createdAt != null) 'created_at': createdAt!.toIso8601String(),
       if (updatedAt != null) 'updated_at': updatedAt!.toIso8601String(),
+      if (paymentMethod != null) 'payment_method': paymentMethod,
+      if (deliveryMethod != null) 'delivery_method': deliveryMethod,
+      if (shippingFee != null) 'shipping_fee': shippingFee,
+      if (paymentStatus != null) 'payment_status': paymentStatus,
     };
   }
 
@@ -62,6 +80,10 @@ class OrderModel {
     int? totalQty,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? paymentMethod,
+    String? deliveryMethod,
+    double? shippingFee,
+    String? paymentStatus,
   }) {
     return OrderModel(
       orderId: orderId ?? this.orderId,
@@ -72,6 +94,10 @@ class OrderModel {
       totalQty: totalQty ?? this.totalQty,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
+      deliveryMethod: deliveryMethod ?? this.deliveryMethod,
+      shippingFee: shippingFee ?? this.shippingFee,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
     );
   }
 
