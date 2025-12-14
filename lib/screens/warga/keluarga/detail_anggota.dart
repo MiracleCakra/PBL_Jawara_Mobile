@@ -95,10 +95,22 @@ class _DetailAnggotaKeluargaPageState extends State<DetailAnggotaKeluargaPage> {
               ),
               title: const Text('Edit Data'),
               subtitle: const Text('Ubah informasi anggota keluarga'),
-              onTap: () {
+              onTap: () async {
                 Navigator.pop(context);
                 // Pass updated data to edit screen if needed
-                context.pushNamed("EditAnggotaKeluarga", extra: data);
+                final result = await context.pushNamed("EditAnggotaKeluarga", extra: data);
+                
+                if (result == true) {
+                  if (context.mounted) {
+                     // If edit saved, go back to list (DaftarAnggota) to trigger KK update
+                     context.pop(true);
+                  }
+                } else {
+                  // If cancelled or no change, just refresh this detail page
+                  if (context.mounted) {
+                    _fetchFullDetails();
+                  }
+                }
               },
             ),
             const SizedBox(height: 16),

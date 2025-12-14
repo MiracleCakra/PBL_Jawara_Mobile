@@ -148,6 +148,7 @@ class _EditAnggotaPageState extends State<EditAnggotaPage> {
             fotoKtp: existingWarga.fotoKtp,
             fotoProfil: existingWarga.fotoProfil,
             role: existingWarga.role, // Preserve App Role
+            statusPenerimaan: 'Pending',
         );
 
         // 1. Update Warga

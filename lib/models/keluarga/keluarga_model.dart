@@ -12,6 +12,7 @@ class Keluarga {
   final String? jenisMutasi;
   final String? alasanMutasi;
   final DateTime? tanggalMutasi;
+  final String? fotoKk;
 
   Keluarga({
     required this.id,
@@ -24,6 +25,7 @@ class Keluarga {
     this.jenisMutasi,
     this.alasanMutasi,
     this.tanggalMutasi,
+    this.fotoKk,
   });
 
   factory Keluarga.fromJson(Map<String, dynamic> json) {
@@ -47,6 +49,7 @@ class Keluarga {
       tanggalMutasi: json['tanggal_mutasi'] != null
           ? DateTime.parse(json['tanggal_mutasi'] as String)
           : null,
+      fotoKk: json['foto_kk'] as String?,
     );
   }
 
@@ -61,6 +64,7 @@ class Keluarga {
       'jenis_mutasi': jenisMutasi,
       'alasan_mutasi': alasanMutasi,
       'tanggal_mutasi': tanggalMutasi?.toIso8601String(),
+      'foto_kk': fotoKk,
     };
   }
 
