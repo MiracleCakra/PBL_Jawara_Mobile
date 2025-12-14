@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:jawara_pintar_kel_5/services/marketplace/order_service.dart';
 import 'package:jawara_pintar_kel_5/models/marketplace/order_model.dart';
+import 'package:jawara_pintar_kel_5/services/marketplace/order_service.dart';
 import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MyOrdersScreen extends StatefulWidget {
   const MyOrdersScreen({super.key});
@@ -71,18 +71,18 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         title: const Text(
           'Pesanan Saya',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        foregroundColor: Colors.black,
+        backgroundColor: primaryColor,
+        elevation: 0,
+        foregroundColor: Colors.white,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, color: Colors.white),
             onPressed: _loadOrders,
           ),
         ],
@@ -143,15 +143,24 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
   Widget _buildOrderCard(OrderModel order) {
     final statusInfo = _getStatusInfo(order.orderStatus);
     
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 2,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: primaryColor.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: InkWell(
         onTap: () {
           context.pushNamed('BuyerOrderDetail', extra: order);
         },
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -169,21 +178,23 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: statusInfo['color'].withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(12),
+                      gradient: LinearGradient(
+                        colors: [statusInfo['color'].withOpacity(0.1), statusInfo['color'].withOpacity(0.05)],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: statusInfo['color'].withOpacity(0.5),
-                        width: 1.5,
+                        color: statusInfo['color'].withOpacity(0.3),
+                        width: 1,
                       ),
                     ),
                     child: Text(
                       statusInfo['label'],
                       style: TextStyle(
                         color: statusInfo['color'],
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -242,7 +253,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
     if (lower == 'null' || status == null) {
       return {
         'label': 'Menunggu Konfirmasi',
-        'color': Colors.orange,
+        'color': const Color(0xFFFB8C00),
         'icon': Icons.hourglass_empty,
       };
     }
@@ -251,19 +262,19 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
       case 'pending':
         return {
           'label': 'Sedang Dikirim',
-          'color': Colors.blue,
+          'color': const Color(0xFF42A5F5),
           'icon': Icons.local_shipping,
         };
       case 'completed':
         return {
           'label': 'Selesai',
-          'color': Colors.green,
+          'color': const Color(0xFF66BB6A),
           'icon': Icons.check_circle,
         };
       case 'canceled':
         return {
           'label': 'Ditolak',
-          'color': Colors.red,
+          'color': const Color(0xFFEF5350),
           'icon': Icons.cancel,
         };
       default:

@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
@@ -38,7 +39,10 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
 
     // Always refresh products from Supabase when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final productProvider = Provider.of<ProductProvider>(context, listen: false);
+      final productProvider = Provider.of<ProductProvider>(
+        context,
+        listen: false,
+      );
       productProvider.fetchAllProducts(); // Always refresh
     });
 
@@ -128,87 +132,158 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
     final gradeColor = p.grade == 'Grade A'
         ? primaryColor
         : p.grade == 'Grade B'
-            ? Colors.orange.shade600
-            : p.grade == 'Grade C'
-                ? Colors.pink.shade700
-                : Colors.grey;
+        ? Colors.orange.shade600
+        : p.grade == 'Grade C'
+        ? Colors.pink.shade700
+        : Colors.grey;
 
-    return SizedBox(
+    return Container(
       width: isTablet ? 170 : 140,
-      child: Card(
-        elevation: 3,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        child: InkWell(
-          onTap: () => context.pushNamed('WargaProductDetail', extra: p),
-          child: Column(
-            children: [
-              Expanded(
-                child: Stack(
-                  children: [
-                    ClipRRect(
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
-                      child: ProductImage(
-                        imagePath: p.gambar,
-                        width: double.infinity,
-                        height: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: gradeColor,
-                          borderRadius: const BorderRadius.only(
-                            topRight: Radius.circular(10),
-                            bottomLeft: Radius.circular(8),
-                          ),
-                        ),
-                        child: Text(
-                          p.grade?.replaceAll('Grade ', '') ?? 'A',
-                          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(p.nama ?? 'Produk', overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w500)),
-                    Text(formatRupiah(p.harga?.toInt() ?? 0), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
-                    const Row(
-                      children: [
-                        Icon(Icons.star, size: 12, color: Colors.amber),
-                        Text(" 0.0", style: TextStyle(fontSize: 12)),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: primaryColor.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
+        ],
+      ),
+      child: InkWell(
+        onTap: () => context.pushNamed('WargaProductDetail', extra: p),
+        borderRadius: BorderRadius.circular(12),
+        child: Column(
+          children: [
+            Expanded(
+              child: Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(12),
+                    ),
+                    child: ProductImage(
+                      imagePath: p.gambar,
+                      width: double.infinity,
+                      height: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [gradeColor, gradeColor.withOpacity(0.8)],
+                        ),
+                        borderRadius: const BorderRadius.only(
+                          topRight: Radius.circular(12),
+                          bottomLeft: Radius.circular(10),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: gradeColor.withOpacity(0.3),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        p.grade?.replaceAll('Grade ', '') ?? 'A',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    p.nama ?? 'Produk',
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    formatRupiah(p.harga?.toInt() ?? 0),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: primaryColor,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(Icons.star, size: 14, color: Colors.amber.shade600),
+                      const SizedBox(width: 2),
+                      const Text(
+                        "0.0",
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildSectionHeader(String title, {VoidCallback? onViewAll}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [primaryColor.withOpacity(0.1), Colors.white],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: primaryColor.withOpacity(0.3), width: 1),
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1F2937))),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: primaryColor,
+            ),
+          ),
           if (onViewAll != null)
             InkWell(
               onTap: onViewAll,
-              child: Text('Lihat Semua >', style: TextStyle(color: primaryColor, fontWeight: FontWeight.w600)),
+              child: Text(
+                'Lihat Semua >',
+                style: TextStyle(
+                  color: primaryColor,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
             ),
         ],
       ),
@@ -225,11 +300,17 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
     if (_selectedGrade == null) {
       filteredProducts = allProducts;
     } else {
-      filteredProducts = allProducts.where((p) => p.grade == 'Grade $_selectedGrade').toList();
+      filteredProducts = allProducts
+          .where((p) => p.grade == 'Grade $_selectedGrade')
+          .toList();
     }
 
-    String qualityHeader = _selectedGrade == null ? '🥇 Kualitas Terbaik (Semua Grade)' : '🥇 Kualitas Terbaik (Grade $_selectedGrade)';
-    String recommendationHeader = _selectedGrade == null ? '⭐ Rekomendasi Pilihan' : '⭐ Rekomendasi Grade $_selectedGrade';
+    String qualityHeader = _selectedGrade == null
+        ? '🥇 Kualitas Terbaik (Semua Grade)'
+        : '🥇 Kualitas Terbaik (Grade $_selectedGrade)';
+    String recommendationHeader = _selectedGrade == null
+        ? '⭐ Rekomendasi Pilihan'
+        : '⭐ Rekomendasi Grade $_selectedGrade';
 
     final displayQualityProducts = filteredProducts.take(6).toList();
     final recommendedProducts = filteredProducts.take(6).toList();
@@ -240,10 +321,19 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
         backgroundColor: Colors.white,
         elevation: 0.5,
         foregroundColor: Colors.black,
-        title: const Text('Marketplace Warga', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: const Text(
+          'Marketplace Warga',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
         actions: [
-          IconButton(onPressed: () => context.pushNamed('WargaProductSearch'), icon: const Icon(Icons.search, color: Colors.black)),
-          IconButton(onPressed: () => context.go('/warga/marketplace/cart'), icon: const Icon(Icons.shopping_cart_outlined, color: Colors.black)),
+          IconButton(
+            onPressed: () => context.pushNamed('WargaProductSearch'),
+            icon: const Icon(Icons.search, color: Colors.black),
+          ),
+          IconButton(
+            onPressed: () => context.go('/warga/marketplace/cart'),
+            icon: const Icon(Icons.shopping_cart_outlined, color: Colors.black),
+          ),
         ],
       ),
       body: ListView(
@@ -255,10 +345,23 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
               child: PageView.builder(
                 controller: _pageController,
                 itemCount: _banners.length,
-                onPageChanged: (index) => setState(() => _currentBanner = index),
+                onPageChanged: (index) =>
+                    setState(() => _currentBanner = index),
                 itemBuilder: (_, i) => ClipRRect(
                   borderRadius: BorderRadius.circular(16),
-                  child: Image.network(_banners[i], fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: Colors.grey.shade400, child: const Center(child: Text('Gagal Memuat Banner', style: TextStyle(color: Colors.white))))),
+                  child: Image.network(
+                    _banners[i],
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: Colors.grey.shade400,
+                      child: const Center(
+                        child: Text(
+                          'Gagal Memuat Banner',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -270,8 +373,16 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
               return Container(
                 width: 8.0,
                 height: 8.0,
-                margin: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 2.0),
-                decoration: BoxDecoration(shape: BoxShape.circle, color: _currentBanner == index ? primaryColor : Colors.grey.shade300),
+                margin: const EdgeInsets.symmetric(
+                  vertical: 10.0,
+                  horizontal: 2.0,
+                ),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _currentBanner == index
+                      ? primaryColor
+                      : Colors.grey.shade300,
+                ),
               );
             }).toList(),
           ),
@@ -279,7 +390,14 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
           _buildSectionHeader('Kualitas Sayur'),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [_categoryButton(grade: 'A'), _categoryButton(grade: 'B'), _categoryButton(grade: 'C')]),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _categoryButton(grade: 'A'),
+                _categoryButton(grade: 'B'),
+                _categoryButton(grade: 'C'),
+              ],
+            ),
           ),
           const SizedBox(height: 20),
           if (isLoading)
@@ -290,7 +408,10 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
                   children: [
                     CircularProgressIndicator(),
                     SizedBox(height: 16),
-                    Text('Memuat produk ...', style: TextStyle(color: Colors.grey)),
+                    Text(
+                      'Memuat produk ...',
+                      style: TextStyle(color: Colors.grey),
+                    ),
                   ],
                 ),
               ),
@@ -301,11 +422,19 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
               child: Center(
                 child: Column(
                   children: [
-                    Icon(Icons.shopping_basket_outlined, size: 80, color: Colors.grey.shade300),
+                    Icon(
+                      Icons.shopping_basket_outlined,
+                      size: 80,
+                      color: Colors.grey.shade300,
+                    ),
                     const SizedBox(height: 16),
                     const Text(
                       'Belum ada produk',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     const Text(
@@ -323,9 +452,17 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
               child: Center(
                 child: Column(
                   children: [
-                    const Icon(Icons.info_outline, size: 50, color: Colors.grey),
+                    const Icon(
+                      Icons.info_outline,
+                      size: 50,
+                      color: Colors.grey,
+                    ),
                     const SizedBox(height: 10),
-                    Text('Tidak ada produk Grade $_selectedGrade yang tersedia saat ini.', textAlign: TextAlign.center, style: const TextStyle(fontSize: 16, color: Colors.grey)),
+                    Text(
+                      'Tidak ada produk Grade $_selectedGrade yang tersedia saat ini.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
                   ],
                 ),
               ),
@@ -334,10 +471,30 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
             Column(
               children: [
                 _buildSectionHeader(qualityHeader),
-                SizedBox(height: 220, child: ListView.separated(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16), itemCount: displayQualityProducts.length, separatorBuilder: (_, __) => const SizedBox(width: 12), itemBuilder: (_, index) => _buildProductCard(displayQualityProducts[index]))),
+                SizedBox(
+                  height: 220,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: displayQualityProducts.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 12),
+                    itemBuilder: (_, index) =>
+                        _buildProductCard(displayQualityProducts[index]),
+                  ),
+                ),
                 const SizedBox(height: 20),
                 _buildSectionHeader(recommendationHeader),
-                SizedBox(height: 220, child: ListView.separated(scrollDirection: Axis.horizontal, padding: const EdgeInsets.fromLTRB(16, 0, 16, 20), itemCount: recommendedProducts.length, separatorBuilder: (_, __) => const SizedBox(width: 12), itemBuilder: (_, index) => _buildProductCard(recommendedProducts[index]))),
+                SizedBox(
+                  height: 220,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+                    itemCount: recommendedProducts.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 12),
+                    itemBuilder: (_, index) =>
+                        _buildProductCard(recommendedProducts[index]),
+                  ),
+                ),
               ],
             ),
           const SizedBox(height: 20),

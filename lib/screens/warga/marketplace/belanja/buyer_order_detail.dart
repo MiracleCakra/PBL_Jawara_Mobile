@@ -19,50 +19,75 @@ class _BuyerOrderDetailScreenState extends State<BuyerOrderDetailScreen> {
 
   List<Map<String, dynamic>> _orderItems = [];
   bool _isLoading = true;
+  late OrderModel _currentOrder;
 
   @override
   void initState() {
     super.initState();
-    _loadOrderItems();
+    _currentOrder = widget.order;
+    _loadOrderData();
   }
 
-  Future<void> _loadOrderItems() async {
-    if (widget.order.orderId == null) return;
+  Future<void> _loadOrderData() async {
+    if (widget.order.orderId == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
 
     try {
       final orderService = OrderService();
+
+      // Reload order data from database to get fresh info
+      final freshOrder = await orderService.getOrderById(widget.order.orderId!);
+
+      // If order not found, use widget.order
+      if (freshOrder == null) {
+        // Load order items only
+        final items = await orderService.getOrderWithItems(
+          widget.order.orderId!,
+        );
+        setState(() {
+          _orderItems = items;
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Load order items
       final items = await orderService.getOrderWithItems(widget.order.orderId!);
+
       setState(() {
+        _currentOrder = freshOrder;
         _orderItems = items;
         _isLoading = false;
       });
     } catch (e) {
-      print('Error loading order items: $e');
+      print('Error loading order data: $e');
       setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final statusInfo = _getStatusInfo(widget.order.orderStatus);
+    final statusInfo = _getStatusInfo(_currentOrder.orderStatus);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text(
           'Detail Pesanan',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        foregroundColor: Colors.black,
+        backgroundColor: primaryColor,
+        elevation: 0,
+        foregroundColor: Colors.white,
       ),
-      backgroundColor: const Color(0xFFF7F7F7),
+      backgroundColor: Colors.grey.shade50,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildStatusTimeline(widget.order.orderStatus),
+            _buildStatusTimeline(_currentOrder.orderStatus),
             const SizedBox(height: 20),
 
             _buildSectionTitle(context, "Informasi Pesanan"),
@@ -70,13 +95,13 @@ class _BuyerOrderDetailScreenState extends State<BuyerOrderDetailScreen> {
               children: [
                 _buildRow(
                   "Order ID",
-                  "#${widget.order.orderId}",
+                  "#${_currentOrder.orderId}",
                   isTitleBold: true,
                 ),
-                _buildRow("Total Item", "${widget.order.totalQty ?? 0} item"),
+                _buildRow("Total Item", "${_currentOrder.totalQty ?? 0} item"),
                 _buildRow(
                   "Tanggal Pesan",
-                  widget.order.createdAt?.toString().substring(0, 16) ?? "N/A",
+                  _currentOrder.createdAt?.toString().substring(0, 16) ?? "N/A",
                 ),
               ],
             ),
@@ -88,7 +113,7 @@ class _BuyerOrderDetailScreenState extends State<BuyerOrderDetailScreen> {
               children: [
                 _buildRow(
                   "Alamat",
-                  widget.order.alamat ?? "Alamat tidak tersedia",
+                  _currentOrder.alamat ?? "Alamat tidak tersedia",
                 ),
               ],
             ),
@@ -107,10 +132,18 @@ class _BuyerOrderDetailScreenState extends State<BuyerOrderDetailScreen> {
                       final price = product['harga'] as num? ?? 0;
                       final subtotal = qty * price;
 
-                      return Card(
+                      return Container(
                         margin: const EdgeInsets.only(bottom: 12),
-                        shape: RoundedRectangleBorder(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: primaryColor.withOpacity(0.08),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
                         child: Padding(
                           padding: const EdgeInsets.all(12),
@@ -120,12 +153,24 @@ class _BuyerOrderDetailScreenState extends State<BuyerOrderDetailScreen> {
                                 width: 60,
                                 height: 60,
                                 decoration: BoxDecoration(
-                                  color: Colors.grey.shade200,
-                                  borderRadius: BorderRadius.circular(8),
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      primaryColor.withOpacity(0.1),
+                                      primaryColor.withOpacity(0.05),
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: primaryColor.withOpacity(0.2),
+                                    width: 1,
+                                  ),
                                 ),
                                 child: Icon(
-                                  Icons.shopping_bag,
-                                  color: Colors.grey.shade400,
+                                  Icons.shopping_bag_outlined,
+                                  color: primaryColor,
+                                  size: 28,
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -138,6 +183,7 @@ class _BuyerOrderDetailScreenState extends State<BuyerOrderDetailScreen> {
                                       style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 14,
+                                        color: Colors.black87,
                                       ),
                                     ),
                                     const SizedBox(height: 4),
@@ -174,23 +220,23 @@ class _BuyerOrderDetailScreenState extends State<BuyerOrderDetailScreen> {
               children: [
                 _buildRow(
                   "Metode Pengiriman",
-                  widget.order.deliveryMethod ?? 'Ambil di Toko',
+                  _currentOrder.deliveryMethod ?? 'Ambil di Toko',
                   icon: Icons.local_shipping,
                 ),
                 _buildRow(
                   "Ongkos Kirim",
-                  formatRupiah((widget.order.shippingFee ?? 0).toInt()),
+                  formatRupiah((_currentOrder.shippingFee ?? 0).toInt()),
                   icon: Icons.delivery_dining,
                 ),
                 const Divider(height: 16),
                 _buildRow(
                   "Metode Pembayaran",
-                  widget.order.paymentMethod ?? 'COD',
+                  _formatPaymentMethod(_currentOrder.paymentMethod),
                   icon: Icons.payment,
                 ),
                 _buildPaymentStatusRow(
                   "Status Pembayaran",
-                  widget.order.paymentStatus ?? 'unpaid',
+                  _currentOrder.paymentStatus ?? 'unpaid',
                 ),
               ],
             ),
@@ -203,19 +249,19 @@ class _BuyerOrderDetailScreenState extends State<BuyerOrderDetailScreen> {
                 _buildRow(
                   "Subtotal Produk",
                   formatRupiah(
-                    ((widget.order.totalPrice ?? 0) -
-                            (widget.order.shippingFee ?? 0))
+                    ((_currentOrder.totalPrice ?? 0) -
+                            (_currentOrder.shippingFee ?? 0))
                         .toInt(),
                   ),
                 ),
                 _buildRow(
                   "Ongkos Kirim",
-                  formatRupiah((widget.order.shippingFee ?? 0).toInt()),
+                  formatRupiah((_currentOrder.shippingFee ?? 0).toInt()),
                 ),
                 const Divider(height: 16),
                 _buildRow(
                   "Total Dibayar",
-                  formatRupiah((widget.order.totalPrice ?? 0).toInt()),
+                  formatRupiah((_currentOrder.totalPrice ?? 0).toInt()),
                   valueStyle: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
@@ -228,7 +274,7 @@ class _BuyerOrderDetailScreenState extends State<BuyerOrderDetailScreen> {
             const SizedBox(height: 20),
 
             // Tombol Review jika order completed
-            if (widget.order.orderStatus?.toLowerCase() == 'completed')
+            if (_currentOrder.orderStatus?.toLowerCase() == 'completed')
               _buildReviewButton(),
 
             const SizedBox(height: 80),
@@ -285,9 +331,19 @@ class _BuyerOrderDetailScreenState extends State<BuyerOrderDetailScreen> {
     final isCompleted = lower == 'completed';
     final isCanceled = lower == 'canceled';
 
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 3,
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [statusInfo['color'].withOpacity(0.1), Colors.white],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: statusInfo['color'].withOpacity(0.3),
+          width: 1,
+        ),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -295,8 +351,19 @@ class _BuyerOrderDetailScreenState extends State<BuyerOrderDetailScreen> {
           children: [
             Row(
               children: [
-                Icon(statusInfo['icon'], color: statusInfo['color'], size: 24),
-                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: statusInfo['color'].withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    statusInfo['icon'],
+                    color: statusInfo['color'],
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
                 Text(
                   'Status: ${statusInfo['label']}',
                   style: TextStyle(
@@ -307,31 +374,31 @@ class _BuyerOrderDetailScreenState extends State<BuyerOrderDetailScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            _buildTimelineStep('Pesanan Dibuat', true, Colors.green),
+            const SizedBox(height: 20),
+            _buildTimelineStep('Pesanan Dibuat', true, primaryColor),
             _buildTimelineStep(
               'Menunggu Konfirmasi Penjual',
               isNull || isPending || isCompleted,
               isNull
-                  ? Colors.orange
-                  : (isPending || isCompleted ? Colors.green : Colors.grey),
+                  ? primaryColor
+                  : (isPending || isCompleted ? primaryColor : Colors.grey),
             ),
             _buildTimelineStep(
               'Sedang Dikirim',
               isPending || isCompleted,
-              isPending || isCompleted ? Colors.blue : Colors.grey,
+              isPending || isCompleted ? primaryColor : Colors.grey,
             ),
             _buildTimelineStep(
               'Pesanan Selesai',
               isCompleted,
-              isCompleted ? Colors.green : Colors.grey,
+              isCompleted ? primaryColor : Colors.grey,
               isLast: !isCanceled,
             ),
             if (isCanceled)
               _buildTimelineStep(
                 'Pesanan Ditolak',
                 true,
-                Colors.red,
+                const Color(0xFFEF5350),
                 isLast: true,
               ),
           ],
@@ -396,8 +463,8 @@ class _BuyerOrderDetailScreenState extends State<BuyerOrderDetailScreen> {
       child: Text(
         title,
         style: const TextStyle(
+          fontSize: 16,
           fontWeight: FontWeight.bold,
-          fontSize: 15,
           color: Colors.black87,
         ),
       ),
@@ -405,10 +472,18 @@ class _BuyerOrderDetailScreenState extends State<BuyerOrderDetailScreen> {
   }
 
   Widget _buildDetailCard({required List<Widget> children}) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 3,
-      color: Colors.white,
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: primaryColor.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -540,7 +615,7 @@ class _BuyerOrderDetailScreenState extends State<BuyerOrderDetailScreen> {
     if (lower == 'null' || status == null) {
       return {
         'label': 'Menunggu Konfirmasi',
-        'color': Colors.orange,
+        'color': const Color(0xFFFB8C00),
         'icon': Icons.hourglass_empty,
       };
     }
@@ -549,17 +624,21 @@ class _BuyerOrderDetailScreenState extends State<BuyerOrderDetailScreen> {
       case 'pending':
         return {
           'label': 'Sedang Dikirim',
-          'color': Colors.blue,
+          'color': const Color(0xFF42A5F5),
           'icon': Icons.local_shipping,
         };
       case 'completed':
         return {
           'label': 'Selesai',
-          'color': Colors.green,
+          'color': const Color(0xFF66BB6A),
           'icon': Icons.check_circle,
         };
       case 'canceled':
-        return {'label': 'Ditolak', 'color': Colors.red, 'icon': Icons.cancel};
+        return {
+          'label': 'Ditolak',
+          'color': const Color(0xFFEF5350),
+          'icon': Icons.cancel,
+        };
       default:
         return {
           'label': status ?? 'Unknown',
@@ -567,5 +646,13 @@ class _BuyerOrderDetailScreenState extends State<BuyerOrderDetailScreen> {
           'icon': Icons.help_outline,
         };
     }
+  }
+
+  String _formatPaymentMethod(String? method) {
+    if (method == null || method.isEmpty) return 'COD';
+
+    // Return the payment method as is since it's already in proper format
+    // COD, Transfer Bank, or QRIS
+    return method;
   }
 }
