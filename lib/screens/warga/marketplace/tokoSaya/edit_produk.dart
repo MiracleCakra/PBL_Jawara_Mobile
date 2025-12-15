@@ -1,14 +1,13 @@
 import 'dart:io';
 
+import 'package:SapaWarga_kel_2/models/marketplace/product_model.dart';
+import 'package:SapaWarga_kel_2/services/marketplace/product_service.dart';
+import 'package:SapaWarga_kel_2/utils.dart' show formatRupiah, unformatRupiah;
+import 'package:SapaWarga_kel_2/widget/marketplace/custom_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:SapaWarga_kel_2/models/marketplace/product_model.dart';
-import 'package:SapaWarga_kel_2/services/marketplace/product_service.dart';
-import 'package:SapaWarga_kel_2/utils.dart'
-    show formatRupiah, unformatRupiah;
-import 'package:SapaWarga_kel_2/widget/marketplace/custom_dialog.dart';
 
 class MyStoreProductEditScreen extends StatefulWidget {
   final ProductModel product;
@@ -143,7 +142,8 @@ class _MyStoreProductEditScreenState extends State<MyStoreProductEditScreen> {
                 context: context,
                 type: DialogType.error,
                 title: 'Upload Gagal',
-                message: 'Gagal mengupload gambar baru!\n\nPastikan:\n'
+                message:
+                    'Gagal mengupload gambar baru!\n\nPastikan:\n'
                     '1. Bucket "products" sudah dibuat\n'
                     '2. Storage Policies sudah diatur\n'
                     '3. Bucket berstatus Public',
@@ -195,17 +195,35 @@ class _MyStoreProductEditScreenState extends State<MyStoreProductEditScreen> {
         createdAt: widget.product.createdAt,
       );
 
-      if (mounted) {
-        CustomDialog.show(
-          context: context,
-          type: DialogType.success,
-          title: 'Berhasil!',
-          message: '${updatedProduct.nama} berhasil diperbarui',
-          buttonText: 'OK',
-          onConfirm: () {
-            context.pop(updatedProduct);
-          },
+      // Update product to database
+      try {
+        await _productService.updateProduct(
+          widget.product.productId!,
+          updatedProduct,
         );
+
+        if (mounted) {
+          CustomDialog.show(
+            context: context,
+            type: DialogType.success,
+            title: 'Berhasil!',
+            message: '${updatedProduct.nama} berhasil diperbarui',
+            buttonText: 'OK',
+            onConfirm: () {
+              context.pop('updated');
+            },
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          CustomDialog.show(
+            context: context,
+            type: DialogType.error,
+            title: 'Gagal!',
+            message: 'Gagal memperbarui produk: $e',
+            buttonText: 'OK',
+          );
+        }
       }
     }
   }
