@@ -1,10 +1,10 @@
 import 'dart:io';
 
+import 'package:SapaWarga_kel_2/models/keuangan/warga_tagihan_model.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:SapaWarga_kel_2/models/keuangan/warga_tagihan_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class FormPembayaranScreen extends StatefulWidget {
@@ -227,13 +227,17 @@ class _FormPembayaranScreenState extends State<FormPembayaranScreen> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Text(
-                        widget.channel?['account'] ?? "1234-5678-9012-3456",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1,
+                      Expanded(
+                        child: Text(
+                          widget.channel?['account'] ?? "1234-5678-9012-3456",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
                       ),
                     ],
