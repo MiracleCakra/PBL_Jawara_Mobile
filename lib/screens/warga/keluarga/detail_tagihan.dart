@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:go_router/go_router.dart';
 import 'package:SapaWarga_kel_2/models/keuangan/channel_transfer_model.dart';
 import 'package:SapaWarga_kel_2/models/keuangan/warga_tagihan_model.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 class DetailTagihanWargaScreen extends StatefulWidget {
   final WargaTagihanModel tagihan;
@@ -367,8 +367,6 @@ class _DetailTagihanWargaScreenState extends State<DetailTagihanWargaScreen>
 
               const SizedBox(height: 16),
 
-              // --- BUKTI TRANSFER CARD ---
-              // --- BUKTI TRANSFER CARD ---
               if (widget.tagihan.status != 'Belum Dibayar')
                 Container(
                   width: double.infinity,
@@ -473,7 +471,7 @@ class _DetailTagihanWargaScreenState extends State<DetailTagihanWargaScreen>
     );
   }
 
-  void _showChannelTransferBottomSheet() async {
+  /*void _showChannelTransferBottomSheet() async {
     debugPrint('=== Bottom sheet method called ===');
 
     debugPrint('Total channels: ${channels.length}');
@@ -618,6 +616,164 @@ class _DetailTagihanWargaScreenState extends State<DetailTagihanWargaScreen>
                   },
                 ),
               ],
+            ),
+          ),
+        );
+      },
+    );
+  }*/
+
+  void _showChannelTransferBottomSheet() async {
+    debugPrint('=== Bottom sheet method called ===');
+    debugPrint('Total channels: ${channels.length}');
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          top: false,
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(
+                20,
+              ).copyWith(bottom: MediaQuery.of(context).viewInsets.bottom + 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // --- Drag Handle ---
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  const Text(
+                    'Pilih Channel Transfer',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black87,
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: channels.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final channel = channels[index];
+
+                      final Map<String, String> channelMap = {
+                        'name': channel.nama,
+                        'type': channel.tipe,
+                        'account': channel.norek,
+                        'owner': channel.pemilik,
+                      };
+
+                      return Material(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: () async {
+                            Navigator.pop(context);
+
+                            final result = await context.pushNamed(
+                              'FormPembayaranWarga',
+                              extra: {
+                                'tagihan': widget.tagihan,
+                                'channel': channelMap,
+                              },
+                            );
+
+                            if (result == true && mounted) {
+                              setState(() {
+                                _currentStatus = 'Menunggu Verifikasi';
+                              });
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("Status tagihan diperbarui"),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: const Color(
+                                      0xFF6366F1,
+                                    ).withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(
+                                    channel.tipe == 'Bank'
+                                        ? Icons.account_balance
+                                        : channel.tipe == 'QRIS'
+                                        ? Icons.qr_code
+                                        : Icons.account_balance_wallet,
+                                    color: const Color(0xFF6366F1),
+                                    size: 24,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        channel.nama,
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        channel.pemilik,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         );
