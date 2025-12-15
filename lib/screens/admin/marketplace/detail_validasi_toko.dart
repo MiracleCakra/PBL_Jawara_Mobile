@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/store_model.dart';
-import 'package:jawara_pintar_kel_5/providers/marketplace/store_provider.dart';
-import 'package:jawara_pintar_kel_5/services/marketplace/store_service.dart';
+import 'package:SapaWarga_kel_2/models/marketplace/store_model.dart';
+import 'package:SapaWarga_kel_2/providers/marketplace/store_provider.dart';
+import 'package:SapaWarga_kel_2/services/marketplace/store_service.dart';
 import 'package:provider/provider.dart';
 
 const Color _primaryColor = Color(0xFF4E46B4);
@@ -648,12 +648,12 @@ class _DetailValidasiTokoScreenState extends State<DetailValidasiTokoScreen> {
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: _successColor.withOpacity(0.1),
+                      color: const Color(0xFF6A5AE0).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
                       Icons.check_circle_outline,
-                      color: _successColor,
+                      color: Color(0xFF6A5AE0),
                       size: 24,
                     ),
                   ),
@@ -662,7 +662,7 @@ class _DetailValidasiTokoScreenState extends State<DetailValidasiTokoScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: _successColor,
+                      color: Color(0xFF6A5AE0),
                     ),
                   ),
                   subtitle: Text(

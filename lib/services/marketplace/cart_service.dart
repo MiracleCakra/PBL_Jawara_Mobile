@@ -1,5 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/cart_model.dart';
+import 'package:SapaWarga_kel_2/models/marketplace/cart_model.dart';
 
 class CartService {
   final SupabaseClient _supabase = Supabase.instance.client;

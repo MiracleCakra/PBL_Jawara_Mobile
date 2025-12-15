@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/keuangan/channel_transfer_model.dart';
-import 'package:jawara_pintar_kel_5/services/channel_transfer_service.dart'; // Sesuaikan path
-import 'package:jawara_pintar_kel_5/utils.dart' show getPrimaryColor;
+import 'package:SapaWarga_kel_2/models/keuangan/channel_transfer_model.dart';
+import 'package:SapaWarga_kel_2/services/channel_transfer_service.dart'; // Sesuaikan path
+import 'package:SapaWarga_kel_2/utils.dart' show getPrimaryColor;
 
 class ChannelTransferScreen extends StatefulWidget {
   const ChannelTransferScreen({super.key});

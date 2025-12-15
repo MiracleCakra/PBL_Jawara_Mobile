@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:jawara_pintar_kel_5/models/kegiatan/kegiatan_model.dart';
-import 'package:jawara_pintar_kel_5/services/kegiatan_service.dart';
+import 'package:SapaWarga_kel_2/models/kegiatan/kegiatan_model.dart';
+import 'package:SapaWarga_kel_2/services/kegiatan_service.dart';
 
 class DetailKegiatanScreen extends StatefulWidget {
   final KegiatanModel kegiatan;
@@ -22,6 +22,28 @@ class _DetailKegiatanScreenState extends State<DetailKegiatanScreen> {
   void initState() {
     super.initState();
     _currentKegiatan = widget.kegiatan;
+    _fetchFullDetail(); // Fetch fresh data with images
+  }
+
+  Future<void> _fetchFullDetail() async {
+    if (_currentKegiatan.id == null) return;
+    
+    setState(() => _isLoading = true);
+    try {
+      final fullData = await _kegiatanService.getKegiatanById(_currentKegiatan.id!);
+      if (mounted) {
+        setState(() {
+          _currentKegiatan = fullData;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        // Optional: Show error or just stick with initial data
+        debugPrint("Error fetching full detail: $e");
+      }
+    }
   }
 
   Widget _buildDetailField(String label, String value, {int? maxLines = 1, Key? key}) {
@@ -34,7 +56,8 @@ class _DetailKegiatanScreenState extends State<DetailKegiatanScreen> {
         ),
         const SizedBox(height: 8),
         TextFormField(
-          key: key,
+          // Force rebuild when value changes by including it in the key
+          key: ValueKey("${key.toString()}_$value"), 
           initialValue: value.isEmpty ? '-' : value,
           readOnly: true,
           style: const TextStyle(color: Colors.black87),
@@ -63,6 +86,13 @@ class _DetailKegiatanScreenState extends State<DetailKegiatanScreen> {
 
     if (result != null) {
       if (mounted) {
+        // Refresh data dari database agar dapat URL gambar terbaru & update lain
+        await _fetchFullDetail();
+        
+        setState(() {
+          _isChanged = true;
+        });
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Data berhasil diperbarui'),
@@ -70,7 +100,6 @@ class _DetailKegiatanScreenState extends State<DetailKegiatanScreen> {
             duration: Duration(seconds: 1),
           ),
         );
-        context.pop('refresh');
       }
     }
   }
@@ -352,7 +381,7 @@ class _DetailKegiatanScreenState extends State<DetailKegiatanScreen> {
           foregroundColor: Colors.black,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios, size: 20),
-            onPressed: () => context.pop('updated'),
+            onPressed: () => context.pop(_isChanged ? 'refresh' : null),
           ),
           title: const Text(
             'Detail Kegiatan',
@@ -402,27 +431,62 @@ class _DetailKegiatanScreenState extends State<DetailKegiatanScreen> {
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   const SizedBox(height: 8),
-                  Container(
-                    height: 200,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8.0),
-                      color: Colors.grey.shade200,
+                  if (_currentKegiatan.images != null && _currentKegiatan.images!.isNotEmpty)
+                    SizedBox(
+                      height: 200,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _currentKegiatan.images!.length,
+                        separatorBuilder: (context, index) => const SizedBox(width: 8),
+                        itemBuilder: (context, index) {
+                          final imgUrl = _currentKegiatan.images![index].img;
+                          return ClipRRect(
+                            borderRadius: BorderRadius.circular(8.0),
+                            child: Image.network(
+                              imgUrl,
+                              width: 300,
+                              height: 200,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: 300,
+                                  height: 200,
+                                  color: Colors.grey.shade200,
+                                  child: Center(
+                                    child: Icon(Icons.broken_image, color: Colors.grey.shade400),
+                                  ),
+                                );
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    )
+                  else
+                    Container(
+                      height: 200,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8.0),
+                        color: Colors.grey.shade200,
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8.0),
+                        child: Image.network(
+                          _currentKegiatan.gambarDokumentasi ??
+                              'https://placehold.co/600x400/CCCCCC/333333?text=Tidak+Ada+Dokumentasi',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Center(
+                              child: Text(
+                                'Gagal memuat gambar',
+                                style: TextStyle(color: Colors.grey.shade600),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                     ),
-                    child: Image.network(
-                      _currentKegiatan.gambarDokumentasi ??
-                          'https://placehold.co/600x400/CCCCCC/333333?text=Tidak+Ada+Dokumentasi',
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Center(
-                          child: Text(
-                            'Gagal memuat gambar',
-                            style: TextStyle(color: Colors.grey.shade600),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
                   const SizedBox(height: 40),
                 ],
               ),

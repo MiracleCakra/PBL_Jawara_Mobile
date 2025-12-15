@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/keluarga/keluarga_model.dart';
-import 'package:jawara_pintar_kel_5/services/keluarga_service.dart';
+import 'package:SapaWarga_kel_2/models/keluarga/keluarga_model.dart';
+import 'package:SapaWarga_kel_2/services/keluarga_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ProfilKeluargaPage extends StatefulWidget {

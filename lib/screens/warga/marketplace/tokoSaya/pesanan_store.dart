@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/order_model.dart';
-import 'package:jawara_pintar_kel_5/services/marketplace/order_service.dart';
-import 'package:jawara_pintar_kel_5/services/marketplace/store_service.dart';
-import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
+import 'package:SapaWarga_kel_2/models/marketplace/order_model.dart';
+import 'package:SapaWarga_kel_2/services/marketplace/order_service.dart';
+import 'package:SapaWarga_kel_2/services/marketplace/store_service.dart';
+import 'package:SapaWarga_kel_2/utils.dart' show formatRupiah;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class Menupesanan extends StatefulWidget {
@@ -15,13 +15,31 @@ class Menupesanan extends StatefulWidget {
 
 class _MenupesananState extends State<Menupesanan> {
   List<Map<String, dynamic>> _orders = [];
+  List<Map<String, dynamic>> _filteredOrders = [];
   bool _isLoading = true;
   String? _errorMessage;
+  String _selectedFilter = 'Semua'; // Semua, Diantar, Selesai
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
     _loadOrders();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    setState(() {
+      _searchQuery = _searchController.text;
+      _applyFilter();
+    });
   }
 
   Future<void> _loadOrders() async {
@@ -90,6 +108,7 @@ class _MenupesananState extends State<Menupesanan> {
       if (mounted) {
         setState(() {
           _orders = orders;
+          _applyFilter();
           if (_isLoading) _isLoading = false;
         });
       }
@@ -104,22 +123,64 @@ class _MenupesananState extends State<Menupesanan> {
     }
   }
 
+  void _applyFilter() {
+    List<Map<String, dynamic>> filtered = _orders;
+
+    // Apply status filter
+    if (_selectedFilter == 'Diantar') {
+      filtered = filtered.where((orderData) {
+        final order = orderData['order'];
+        final status = (order['order_status'] as String? ?? '').toLowerCase();
+        return status == 'pending';
+      }).toList();
+    } else if (_selectedFilter == 'Selesai') {
+      filtered = filtered.where((orderData) {
+        final order = orderData['order'];
+        final status = (order['order_status'] as String? ?? '').toLowerCase();
+        return status == 'completed';
+      }).toList();
+    }
+
+    // Apply search filter
+    if (_searchQuery.isNotEmpty) {
+      filtered = filtered.where((orderData) {
+        final order = orderData['order'];
+        final product = orderData['produk'];
+        final orderId = (order['order_id'] ?? '').toString();
+        final productName = (product['nama'] as String? ?? '').toLowerCase();
+        final query = _searchQuery.toLowerCase();
+
+        return orderId.contains(query) || productName.contains(query);
+      }).toList();
+    }
+
+    _filteredOrders = filtered;
+  }
+
+  void _onFilterChanged(String filter) {
+    setState(() {
+      _selectedFilter = filter;
+      _applyFilter();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    const primaryColor = Color(0xFF6A5AE0);
     return Scaffold(
       appBar: AppBar(
         title: const Text(
           'Daftar Pesanan',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        foregroundColor: Colors.black,
+        backgroundColor: primaryColor,
+        elevation: 0,
+        foregroundColor: Colors.white,
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _loadOrders),
         ],
       ),
-      backgroundColor: const Color(0xFFF7F7F7),
+      backgroundColor: Colors.grey.shade50,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
@@ -154,17 +215,240 @@ class _MenupesananState extends State<Menupesanan> {
             )
           : _orders.isEmpty
           ? _buildEmptyOrders()
-          : RefreshIndicator(
-              onRefresh: _loadOrders,
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: _orders.length,
-                itemBuilder: (context, index) {
-                  final orderData = _orders[index];
-                  return _buildOrderCard(context, orderData);
-                },
+          : Column(
+              children: [
+                _buildSearchBar(primaryColor),
+                Expanded(
+                  child: _filteredOrders.isEmpty
+                      ? _buildEmptyFilteredOrders()
+                      : RefreshIndicator(
+                          onRefresh: _loadOrders,
+                          child: ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: _filteredOrders.length,
+                            itemBuilder: (context, index) {
+                              final orderData = _filteredOrders[index];
+                              return _buildOrderCard(context, orderData);
+                            },
+                          ),
+                        ),
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildSearchBar(Color primaryColor) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: primaryColor.withOpacity(0.08),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade300, width: 1),
+              ),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Cari Berdasarkan ID/Produk...',
+                  hintStyle: TextStyle(
+                    color: Colors.grey.shade500,
+                    fontSize: 14,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: Colors.grey.shade400,
+                    size: 20,
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                ),
+                style: const TextStyle(fontSize: 14),
               ),
             ),
+          ),
+          const SizedBox(width: 12),
+          GestureDetector(
+            onTap: () => _showFilterBottomSheet(primaryColor),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade300, width: 1),
+              ),
+              child: Icon(
+                Icons.filter_list,
+                color: Colors.grey.shade700,
+                size: 20,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showFilterBottomSheet(Color primaryColor) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(top: 12, bottom: 20),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: primaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.filter_alt,
+                        color: primaryColor,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Filter Pesanan',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              _buildFilterOption(
+                'Semua',
+                'Tampilkan semua pesanan',
+                primaryColor,
+              ),
+              _buildFilterOption(
+                'Diantar',
+                'Pesanan sedang diantar',
+                primaryColor,
+              ),
+              _buildFilterOption(
+                'Selesai',
+                'Pesanan telah selesai',
+                primaryColor,
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildFilterOption(
+    String label,
+    String description,
+    Color primaryColor,
+  ) {
+    final isSelected = _selectedFilter == label;
+    return InkWell(
+      onTap: () {
+        _onFilterChanged(label);
+        Navigator.pop(context);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          color: isSelected ? primaryColor.withOpacity(0.08) : Colors.white,
+          border: Border(
+            left: BorderSide(
+              color: isSelected ? primaryColor : Colors.transparent,
+              width: 4,
+            ),
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.w500,
+                      color: isSelected ? primaryColor : Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              Icon(Icons.check_circle, color: primaryColor, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyFilteredOrders() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.filter_alt_off, size: 50, color: Colors.grey.shade400),
+            const SizedBox(height: 10),
+            Text(
+              'Tidak ada pesanan $_selectedFilter',
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -188,6 +472,8 @@ class _MenupesananState extends State<Menupesanan> {
   }
 
   Widget _buildOrderCard(BuildContext context, Map<String, dynamic> orderData) {
+    const primaryColor = Color(0xFF6A5AE0);
+
     // Extract order data from nested structure
     final order = orderData['order'];
     final product = orderData['produk'];
@@ -224,16 +510,24 @@ class _MenupesananState extends State<Menupesanan> {
       }
     }
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 2,
-      color: Colors.white,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: primaryColor.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: ListTile(
         contentPadding: const EdgeInsets.all(12),
         leading: CircleAvatar(
-          backgroundColor: Colors.blue.shade50,
-          child: const Icon(Icons.shopping_bag, color: Colors.blue),
+          backgroundColor: primaryColor.withOpacity(0.1),
+          child: const Icon(Icons.shopping_bag, color: primaryColor),
         ),
         title: Text(
           'Order #$orderId',

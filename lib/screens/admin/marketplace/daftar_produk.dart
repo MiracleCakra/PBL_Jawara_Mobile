@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/product_validation_model.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/store_model.dart';
-import 'package:jawara_pintar_kel_5/services/marketplace/product_service.dart';
-import 'package:jawara_pintar_kel_5/services/marketplace/store_service.dart';
+import 'package:SapaWarga_kel_2/models/marketplace/product_model.dart';
+import 'package:SapaWarga_kel_2/models/marketplace/product_validation_model.dart';
+import 'package:SapaWarga_kel_2/models/marketplace/store_model.dart';
+import 'package:SapaWarga_kel_2/services/marketplace/product_service.dart';
+import 'package:SapaWarga_kel_2/services/marketplace/store_service.dart';
 
 import 'detail_validasi_produk.dart';
 
@@ -128,6 +128,9 @@ class _DaftarProdukTokoScreenState extends State<DaftarProdukTokoScreen> {
   void _filterList() {
     setState(() {
       _filteredProducts = _allProducts.where((item) {
+        // Only show active products (not out of stock)
+        bool isActive = item.status == 'Aktif';
+
         bool statusMatch =
             _currentFilterStatus == 'Semua' ||
             item.status == _currentFilterStatus;
@@ -141,7 +144,7 @@ class _DaftarProdukTokoScreenState extends State<DaftarProdukTokoScreen> {
               _currentSearchQuery.toLowerCase(),
             );
 
-        return statusMatch && searchMatch;
+        return isActive && statusMatch && searchMatch;
       }).toList();
     });
   }

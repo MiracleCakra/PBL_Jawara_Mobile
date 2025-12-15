@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/store_model.dart';
-import 'package:jawara_pintar_kel_5/providers/marketplace/store_provider.dart';
+import 'package:SapaWarga_kel_2/models/marketplace/store_model.dart';
+import 'package:SapaWarga_kel_2/providers/marketplace/store_provider.dart';
 import 'package:provider/provider.dart';
 
-const Color primaryColor = Colors.blue;
+const Color primaryColor = Color(0xFF6A5AE0);
 
 class Debouncer {
   final int milliseconds;
@@ -143,56 +143,89 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      const Text(
-                        'Filter Status Akun Toko',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF6A5AE0).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.filter_alt,
+                              color: Color(0xFF6A5AE0),
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Filter Status Akun Toko',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 16),
                       const Text(
                         'Status Verifikasi',
-                        style: TextStyle(fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
                       ),
                       const SizedBox(height: 8),
-                      DropdownButtonFormField<String>(
-                        key: const Key('dropdown_filter_status_verifikasi'),
-                        value: tempSelectedStatus,
-                        isExpanded: true,
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 12,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF4E46B4),
-                              width: 1.2,
-                            ),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.grey.shade300,
+                            width: 1,
                           ),
                         ),
-                        items: options
-                            .map(
-                              (option) => DropdownMenuItem(
-                                value: option,
-                                child: Text(option),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (v) => setModalState(
-                          () => tempSelectedStatus = v ?? 'Semua',
+                        child: DropdownButtonFormField<String>(
+                          key: const Key('dropdown_filter_status_verifikasi'),
+                          value: tempSelectedStatus,
+                          isExpanded: true,
+                          decoration: const InputDecoration(
+                            filled: false,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                          ),
+                          dropdownColor: Colors.white,
+                          icon: const Icon(
+                            Icons.keyboard_arrow_down,
+                            color: Color(0xFF6A5AE0),
+                          ),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.black87,
+                          ),
+                          items: options
+                              .map(
+                                (option) => DropdownMenuItem(
+                                  value: option,
+                                  child: Text(
+                                    option,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (v) => setModalState(
+                            () => tempSelectedStatus = v ?? 'Semua',
+                          ),
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -201,13 +234,17 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
                           Expanded(
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.grey[300],
-                                foregroundColor: Colors.black,
+                                backgroundColor: Colors.white,
+                                foregroundColor: Colors.grey.shade700,
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 14,
                                 ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
+                                  side: BorderSide(
+                                    color: Colors.grey.shade300,
+                                    width: 1,
+                                  ),
                                 ),
                                 elevation: 0,
                               ),
@@ -219,14 +256,20 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
                                 });
                                 Navigator.pop(context);
                               },
-                              child: const Text('Reset'),
+                              child: const Text(
+                                'Reset',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15,
+                                ),
+                              ),
                             ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF4E46B4),
+                                backgroundColor: const Color(0xFF6A5AE0),
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 14,
@@ -245,7 +288,13 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
                                 });
                                 Navigator.pop(context);
                               },
-                              child: const Text('Terapkan'),
+                              child: const Text(
+                                'Terapkan',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15,
+                                ),
+                              ),
                             ),
                           ),
                         ],

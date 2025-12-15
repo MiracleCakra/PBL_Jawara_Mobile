@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/store_model.dart';
+import 'package:SapaWarga_kel_2/models/marketplace/store_model.dart';
 
 void main() {
   group('StoreModel Test', () {

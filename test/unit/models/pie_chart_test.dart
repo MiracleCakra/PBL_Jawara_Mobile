@@ -1,7 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:jawara_pintar_kel_5/models/pie_card_model.dart';
+import 'package:SapaWarga_kel_2/models/pie_card_model.dart';
 
 void main() {
   group('PieCardModel', () {

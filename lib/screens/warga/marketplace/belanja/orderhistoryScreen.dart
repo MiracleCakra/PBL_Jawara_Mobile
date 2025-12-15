@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
+import 'package:SapaWarga_kel_2/utils.dart' show formatRupiah;
 
 class OrderModel {
   final String orderId;

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
-import 'package:jawara_pintar_kel_5/models/log/activity_log_model.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/kegiatanMenu/logaktivitas/log_filter_screen.dart';
-import 'package:jawara_pintar_kel_5/services/activity_log_service.dart';
+import 'package:SapaWarga_kel_2/models/log/activity_log_model.dart';
+import 'package:SapaWarga_kel_2/screens/admin/kegiatanMenu/logaktivitas/log_filter_screen.dart';
+import 'package:SapaWarga_kel_2/services/activity_log_service.dart';
 
 class LogAktivitasScreenAdmin extends StatelessWidget {
   const LogAktivitasScreenAdmin({super.key});

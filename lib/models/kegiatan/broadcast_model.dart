@@ -57,14 +57,17 @@ class BroadcastModel {
       'kategori': kategori,
       'konten': konten,
       'lampiranGambarUrl': lampiranGambarUrl,
-      'lampiranDokumen': lampiranDokumenUrl, // Map ke kolom text di DB
+      'lampiranDokumen': lampiranDokumenUrl,
     };
   }
 
   factory BroadcastModel.fromMap(Map<String, dynamic> map) {
     // Helper buat handle dokumen yang mungkin null atau string kosong
     String? docUrl;
-    if (map['lampiranDokumen'] != null && map['lampiranDokumen'].toString().isNotEmpty) {
+    if (map['lampiran_dokumen'] != null && map['lampiran_dokumen'].toString().isNotEmpty) {
+       docUrl = map['lampiran_dokumen'].toString();
+    } else if (map['lampiranDokumen'] != null && map['lampiranDokumen'].toString().isNotEmpty) {
+       // Fallback for mixed naming if exists or if schema is strict
        docUrl = map['lampiranDokumen'].toString();
     }
 
@@ -76,7 +79,7 @@ class BroadcastModel {
       kategori: map['kategori'] ?? '',
       konten: map['konten'] ?? '',
       lampiranGambarUrl: map['lampiranGambarUrl'] as String?,
-      lampiranDokumenUrl: docUrl, // Mapping langsung ke String
+      lampiranDokumenUrl: docUrl,
       createdAt: map['created_at'] == null
           ? null
           : DateTime.tryParse(map['created_at'].toString()),

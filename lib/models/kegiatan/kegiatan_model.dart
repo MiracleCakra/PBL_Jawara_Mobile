@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:SapaWarga_kel_2/models/kegiatan/kegiatan_img_model.dart';
+
 class KegiatanModel {
   final int? id;
   final String judul;
@@ -11,6 +13,7 @@ class KegiatanModel {
   final bool? hasDocs;
   final String? gambarDokumentasi;
   final DateTime? createdAt;
+  final List<KegiatanImageModel>? images;
 
   KegiatanModel({
     this.id,
@@ -24,6 +27,7 @@ class KegiatanModel {
     this.hasDocs,
     this.gambarDokumentasi,
     this.createdAt,
+    this.images,
   });
 
   // copyWith wajib ada buat Edit screen
@@ -39,6 +43,7 @@ class KegiatanModel {
     bool? hasDocs,
     String? gambarDokumentasi,
     DateTime? createdAt,
+    List<KegiatanImageModel>? images,
   }) {
     return KegiatanModel(
       id: id ?? this.id,
@@ -52,6 +57,7 @@ class KegiatanModel {
       hasDocs: hasDocs ?? this.hasDocs,
       gambarDokumentasi: gambarDokumentasi ?? this.gambarDokumentasi,
       createdAt: createdAt ?? this.createdAt,
+      images: images ?? this.images,
     );
   }
 
@@ -67,6 +73,7 @@ class KegiatanModel {
       'dibuat_oleh': dibuatOleh,
       'has_docs': hasDocs,
       'gambardokumentasi': gambarDokumentasi,
+      // Note: 'images' biasanya tidak di-insert langsung via toMap ke tabel kegiatan utama
     };
   }
 
@@ -76,6 +83,20 @@ class KegiatanModel {
       if (val is bool) return val;
       if (val is String) return val.toLowerCase() == 'true';
       return false;
+    }
+
+    String? primaryImage = map['gambardokumentasi']?.toString();
+    
+    // Parse images list first
+    List<KegiatanImageModel> parsedImages = map['kegiatan_img'] != null
+          ? (map['kegiatan_img'] as List)
+              .map((x) => KegiatanImageModel.fromMap(x))
+              .toList()
+          : [];
+
+    // Fallback: If gambardokumentasi is empty, use the first image from the list
+    if ((primaryImage == null || primaryImage.isEmpty) && parsedImages.isNotEmpty) {
+      primaryImage = parsedImages.first.img;
     }
 
     return KegiatanModel(
@@ -88,10 +109,11 @@ class KegiatanModel {
       deskripsi: map['deskripsi']?.toString() ?? '',
       dibuatOleh: map['dibuat_oleh']?.toString(),
       hasDocs: parseBool(map['has_docs']),
-      gambarDokumentasi: map['gambardokumentasi']?.toString(),
+      gambarDokumentasi: primaryImage,
       createdAt: map['created_at'] != null 
           ? DateTime.tryParse(map['created_at'].toString()) 
           : null,
+      images: parsedImages,
     );
   }
 

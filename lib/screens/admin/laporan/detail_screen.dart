@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:jawara_pintar_kel_5/models/keuangan/laporan_keuangan_model.dart';
-import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah, formatDate;
+import 'package:SapaWarga_kel_2/models/keuangan/laporan_keuangan_model.dart';
+import 'package:SapaWarga_kel_2/utils.dart' show formatRupiah, formatDate;
 import 'package:moon_design/moon_design.dart';
 
 class LaporanDetailScreen extends StatelessWidget {

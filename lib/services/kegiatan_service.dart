@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:jawara_pintar_kel_5/models/kegiatan/kegiatan_model.dart';
-import 'package:jawara_pintar_kel_5/services/activity_log_service.dart';
+import 'package:SapaWarga_kel_2/models/kegiatan/kegiatan_model.dart';
+import 'package:SapaWarga_kel_2/services/activity_log_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class KegiatanService {
@@ -28,8 +28,10 @@ class KegiatanService {
   /// Fetch semua kegiatan
   Future<List<KegiatanModel>> getKegiatan() async {
     try {
-      final response =
-          await _supabase.from(_tableName).select().order('tanggal', ascending: false);
+      final response = await _supabase
+          .from(_tableName)
+          .select('*, kegiatan_img(*)')
+          .order('tanggal', ascending: false);
       return List<KegiatanModel>.from(
           response.map((json) => KegiatanModel.fromMap(json)));
     } catch (e) {
@@ -42,7 +44,7 @@ class KegiatanService {
     try {
       final response = await _supabase
           .from(_tableName)
-          .select()
+          .select('*, kegiatan_img(*)')
           .eq('id', id)
           .single();
       return KegiatanModel.fromMap(response);
@@ -108,6 +110,10 @@ class KegiatanService {
       final data = await _supabase.from(_tableName).select('judul').eq('id', id).single();
       final String judul = data['judul'] ?? 'Tanpa Judul';
 
+      // 1. Hapus gambar terkait di tabel kegiatan_img terlebih dahulu (Manual Cascade)
+      await _supabase.from('kegiatan_img').delete().eq('id_kegiatan', id);
+
+      // 2. Hapus data kegiatan utama
       await _supabase.from(_tableName).delete().eq('id', id);
       
       // Log
@@ -148,6 +154,39 @@ class KegiatanService {
       return publicUrl;
     } catch (e) {
       throw Exception('Gagal upload gambar: $e');
+    }
+  }
+
+  Future<void> uploadMultipleImages({
+    required int idKegiatan,
+    List<File>? files,
+    List<Uint8List>? bytesList,
+    List<String>? fileNames,
+  }) async {
+    try {
+      if (files != null) {
+        for (int i = 0; i < files.length; i++) {
+          final fileName = fileNames?[i] ?? 'img_${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
+          final url = await uploadKegiatanImage(file: files[i], fileName: fileName);
+          
+          await _supabase.from('kegiatan_img').insert({
+            'id_kegiatan': idKegiatan,
+            'img': url,
+          });
+        }
+      } else if (bytesList != null) {
+        for (int i = 0; i < bytesList.length; i++) {
+          final fileName = fileNames?[i] ?? 'img_${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
+          final url = await uploadKegiatanImage(bytes: bytesList[i], fileName: fileName);
+          
+          await _supabase.from('kegiatan_img').insert({
+            'id_kegiatan': idKegiatan,
+            'img': url,
+          });
+        }
+      }
+    } catch (e) {
+      throw Exception('Gagal upload multiple images: $e');
     }
   }
 }

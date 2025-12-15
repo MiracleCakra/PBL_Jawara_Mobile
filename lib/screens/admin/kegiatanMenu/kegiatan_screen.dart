@@ -2,12 +2,12 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
-import 'package:jawara_pintar_kel_5/models/pie_card_model.dart';
-import 'package:jawara_pintar_kel_5/services/kegiatan_service.dart';
-import 'package:jawara_pintar_kel_5/models/kegiatan/kegiatan_model.dart';
-import 'package:jawara_pintar_kel_5/widget/plot_bar_chart.dart';
-import 'package:jawara_pintar_kel_5/widget/plot_pie_card.dart';
+import 'package:SapaWarga_kel_2/constants/constant_colors.dart';
+import 'package:SapaWarga_kel_2/models/pie_card_model.dart';
+import 'package:SapaWarga_kel_2/services/kegiatan_service.dart';
+import 'package:SapaWarga_kel_2/models/kegiatan/kegiatan_model.dart';
+import 'package:SapaWarga_kel_2/widget/plot_bar_chart.dart';
+import 'package:SapaWarga_kel_2/widget/plot_pie_card.dart';
 
 // Model menu item
 class MenuItem {

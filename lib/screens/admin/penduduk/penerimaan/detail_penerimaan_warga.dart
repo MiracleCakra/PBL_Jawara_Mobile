@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:jawara_pintar_kel_5/models/keluarga/warga_model.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/penerimaan/daftar_penerimaan_warga.dart';
-import 'package:jawara_pintar_kel_5/services/warga_service.dart';
-import 'package:jawara_pintar_kel_5/widget/moon_result_modal.dart';
+import 'package:SapaWarga_kel_2/models/keluarga/warga_model.dart';
+import 'package:SapaWarga_kel_2/screens/admin/penduduk/penerimaan/daftar_penerimaan_warga.dart';
+import 'package:SapaWarga_kel_2/services/warga_service.dart';
+import 'package:SapaWarga_kel_2/widget/moon_result_modal.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class DetailPenerimaanWargaPage extends StatefulWidget {

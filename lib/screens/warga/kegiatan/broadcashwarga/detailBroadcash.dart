@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:jawara_pintar_kel_5/models/kegiatan/broadcast_model.dart';
-import 'package:jawara_pintar_kel_5/services/broadcast_service.dart';
+import 'package:SapaWarga_kel_2/models/kegiatan/broadcast_model.dart';
+import 'package:SapaWarga_kel_2/services/broadcast_service.dart';
 
 class DetailBroadcastWargaScreen extends StatefulWidget {
   final int broadcastId;

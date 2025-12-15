@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/keluarga/warga_model.dart';
-import 'package:jawara_pintar_kel_5/screens/auth/auth_service.dart';
-import 'package:jawara_pintar_kel_5/services/warga_service.dart';
+import 'package:SapaWarga_kel_2/models/keluarga/warga_model.dart';
+import 'package:SapaWarga_kel_2/screens/auth/auth_service.dart';
+import 'package:SapaWarga_kel_2/services/warga_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:jawara_pintar_kel_5/widget/marketplace/custom_dialog.dart';
+import 'package:SapaWarga_kel_2/widget/marketplace/custom_dialog.dart';
 
 class ProfilMenuWarga extends StatefulWidget {
   const ProfilMenuWarga({super.key});

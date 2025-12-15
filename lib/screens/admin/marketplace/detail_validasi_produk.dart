@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/product_validation_model.dart';
-import 'package:jawara_pintar_kel_5/services/marketplace/product_service.dart';
+import 'package:SapaWarga_kel_2/models/marketplace/product_validation_model.dart';
+import 'package:SapaWarga_kel_2/services/marketplace/product_service.dart';
 
 const Color _primaryColor = Color(0xFF6366F1);
 const Color _successColor = Color(0xFF6366F1);
@@ -368,18 +368,50 @@ class _DetailValidasiProdukScreenState
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: Image.asset(
-              _currentProduct!.imageUrl,
-              width: double.infinity,
-              height: 180,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                width: double.infinity,
-                height: 180,
-                color: Colors.grey[300],
-                child: const Icon(Icons.image, size: 50, color: Colors.grey),
-              ),
-            ),
+            child: _currentProduct!.imageUrl.isNotEmpty
+                ? Image.network(
+                    _currentProduct!.imageUrl,
+                    width: double.infinity,
+                    height: 180,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        width: double.infinity,
+                        height: 180,
+                        color: Colors.grey[200],
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                : null,
+                            color: _primaryColor,
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      width: double.infinity,
+                      height: 180,
+                      color: Colors.grey[300],
+                      child: const Icon(
+                        Icons.image,
+                        size: 50,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  )
+                : Container(
+                    width: double.infinity,
+                    height: 180,
+                    color: Colors.grey[300],
+                    child: const Icon(
+                      Icons.image,
+                      size: 50,
+                      color: Colors.grey,
+                    ),
+                  ),
           ),
           const SizedBox(height: 16),
           Text(

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:jawara_pintar_kel_5/models/kegiatan/kegiatan_model.dart';
-import 'package:jawara_pintar_kel_5/services/kegiatan_service.dart';
+import 'package:SapaWarga_kel_2/models/kegiatan/kegiatan_model.dart';
+import 'package:SapaWarga_kel_2/services/kegiatan_service.dart';
 
 class DetailKegiatanWargaScreen extends StatefulWidget {
   final int kegiatanId;
@@ -137,29 +137,63 @@ class _DetailKegiatanWargaScreenState extends State<DetailKegiatanWargaScreen> {
                     title: 'Dokumentasi Event',
                     children: [
                       const SizedBox(height: 8),
-                      Container(
-                        height: 200,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8.0),
-                          child: Image.network(
-                            kegiatan.gambarDokumentasi ??
-                                'https://placehold.co/600x400/CCCCCC/333333?text=Tidak+Ada+Dokumentasi',
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Center(
-                                child: Text(
-                                  'Gagal memuat gambar',
-                                  style: TextStyle(color: Colors.grey.shade600),
+                      if (kegiatan.images != null && kegiatan.images!.isNotEmpty)
+                        SizedBox(
+                          height: 200,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: kegiatan.images!.length,
+                            separatorBuilder: (context, index) =>
+                                const SizedBox(width: 8),
+                            itemBuilder: (context, index) {
+                              final imgUrl = kegiatan.images![index].img;
+                              return ClipRRect(
+                                borderRadius: BorderRadius.circular(8.0),
+                                child: Image.network(
+                                  imgUrl,
+                                  width: 300,
+                                  height: 200,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      width: 300,
+                                      height: 200,
+                                      color: Colors.grey.shade200,
+                                      child: Center(
+                                        child: Icon(Icons.broken_image,
+                                            color: Colors.grey.shade400),
+                                      ),
+                                    );
+                                  },
                                 ),
                               );
                             },
                           ),
+                        )
+                      else
+                        Container(
+                          height: 200,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8.0),
+                            child: Image.network(
+                              kegiatan.gambarDokumentasi ??
+                                  'https://placehold.co/600x400/CCCCCC/333333?text=Tidak+Ada+Dokumentasi',
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Center(
+                                  child: Text(
+                                    'Gagal memuat gambar',
+                                    style: TextStyle(color: Colors.grey.shade600),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
                         ),
-                      ),
                     ],
                   ),
                   const SizedBox(height: 40),

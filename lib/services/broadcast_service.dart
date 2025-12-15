@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:jawara_pintar_kel_5/models/kegiatan/broadcast_model.dart';
-import 'package:jawara_pintar_kel_5/services/activity_log_service.dart';
+import 'package:SapaWarga_kel_2/models/kegiatan/broadcast_model.dart';
+import 'package:SapaWarga_kel_2/services/activity_log_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class BroadcastService {
@@ -89,11 +89,6 @@ class BroadcastService {
         ..remove('id')
         ..remove('created_at');
 
-      if (insertData.containsKey('lampiranDokumenUrl')) {
-         insertData['lampiranDokumen'] = insertData['lampiranDokumenUrl'];
-         insertData.remove('lampiranDokumenUrl');
-      }
-
       final response = await _supabase
           .from(_tableName)
           .insert(insertData)
@@ -122,11 +117,6 @@ class BroadcastService {
       final Map<String, dynamic> updateData = broadcast.toMap()
         ..remove('id')
         ..remove('created_at');
-
-      if (updateData.containsKey('lampiranDokumenUrl')) {
-        updateData['lampiranDokumen'] = updateData['lampiranDokumenUrl'];
-        updateData.remove('lampiranDokumenUrl');
-      }
 
       final response = await _supabase
           .from(_tableName)

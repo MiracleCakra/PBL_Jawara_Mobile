@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconify_flutter/iconify_flutter.dart' show Iconify;
-import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
-import 'package:jawara_pintar_kel_5/constants/iconify.dart';
-import 'package:jawara_pintar_kel_5/widget/bottom_app_bar_item.dart';
-import 'package:jawara_pintar_kel_5/widget/system_ui_style.dart';
+import 'package:SapaWarga_kel_2/constants/constant_colors.dart';
+import 'package:SapaWarga_kel_2/constants/iconify.dart';
+import 'package:SapaWarga_kel_2/widget/bottom_app_bar_item.dart';
+import 'package:SapaWarga_kel_2/widget/system_ui_style.dart';
 import 'package:moon_design/moon_design.dart';
 
 class WargaLayout extends StatefulWidget {

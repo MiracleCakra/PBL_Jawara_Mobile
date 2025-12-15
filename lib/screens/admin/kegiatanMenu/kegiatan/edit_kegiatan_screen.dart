@@ -5,10 +5,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:jawara_pintar_kel_5/models/kegiatan/kegiatan_model.dart';
-import 'package:jawara_pintar_kel_5/services/kegiatan_service.dart';
-import 'package:jawara_pintar_kel_5/widget/moon_result_modal.dart';
-import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
+import 'package:SapaWarga_kel_2/models/kegiatan/kegiatan_model.dart';
+import 'package:SapaWarga_kel_2/models/kegiatan/kegiatan_img_model.dart';
+import 'package:SapaWarga_kel_2/services/kegiatan_service.dart';
+import 'package:SapaWarga_kel_2/widget/moon_result_modal.dart';
+import 'package:SapaWarga_kel_2/constants/constant_colors.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class EditKegiatanScreen extends StatefulWidget {
   final KegiatanModel kegiatan;
@@ -42,10 +44,14 @@ class _EditKegiatanScreenState extends State<EditKegiatanScreen> {
   ];
 
   DateTime? _selectedDate;
-  File? _selectedImageFile; // Mobile: Path File
-  Uint8List? _selectedImageBytes; // Web: Bytes
-  String? _selectedImageName; // Nama file baru
-  String? _existingImageUrl; // URL gambar lama dari DB
+
+  // State untuk Gambar
+  List<KegiatanImageModel> _existingImages = [];
+  List<int> _deletedImageIds = [];
+  
+  List<File> _newFiles = []; // Mobile
+  List<Uint8List> _newBytes = []; // Web
+  List<String> _newNames = []; // Nama file
 
   @override
   void initState() {
@@ -58,10 +64,32 @@ class _EditKegiatanScreenState extends State<EditKegiatanScreen> {
     _deskripsiController.text = data.deskripsi;
     _tanggalController.text = DateFormat('dd.MM.yyyy').format(data.tanggal);
     _selectedDate = data.tanggal;
-    _existingImageUrl = data.gambarDokumentasi;
+    
+    // Inisialisasi gambar yang sudah ada
+    if (data.images != null) {
+      _existingImages = List.from(data.images!);
+    } 
+
+    // Fetch fresh images if list is empty, just to be safe (addressing previous issue)
+    if (_existingImages.isEmpty && data.id != null) {
+      _fetchFreshImages(data.id!);
+    }
 
     if (_kategoriList.contains(data.kategori)) {
       _selectedKategori = data.kategori;
+    }
+  }
+
+  Future<void> _fetchFreshImages(int id) async {
+    try {
+      final fullData = await _kegiatanService.getKegiatanById(id);
+      if (mounted && fullData.images != null && fullData.images!.isNotEmpty) {
+        setState(() {
+          _existingImages = List.from(fullData.images!);
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching fresh images: $e");
     }
   }
 
@@ -76,50 +104,73 @@ class _EditKegiatanScreenState extends State<EditKegiatanScreen> {
   }
 
   Future<void> _pickImage() async {
+    int currentCount = _existingImages.length + _newNames.length;
+    if (currentCount >= 10) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Maksimal 10 gambar yang diperbolehkan!'),
+            backgroundColor: Colors.grey.shade800,
+          ),
+        );
+      }
+      return;
+    }
+
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.image,
-      allowMultiple: false,
-      withData: true, // PENTING: Supaya bytes terbaca di Web
+      allowMultiple: true,
+      withData: true,
     );
 
     if (result != null && result.files.isNotEmpty) {
-      final PlatformFile file = result.files.first;
-
-      // Validasi 5MB
-      if (file.size > 5 * 1024 * 1024) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Ukuran gambar melebihi batas 5MB!'),
-              backgroundColor: Colors.grey.shade800,
-            ),
-          );
-        }
-        return;
+      int remaining = 10 - currentCount;
+      List<PlatformFile> files = result.files;
+      
+      if (files.length > remaining) {
+         files = files.take(remaining).toList();
+         if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Hanya sisa slot gambar yang ditambahkan.')),
+            );
+         }
       }
 
-      setState(() {
-        _selectedImageName = file.name;
+      for (var file in files) {
+        if (file.size > 5 * 1024 * 1024) continue; // Skip > 5MB
 
-        if (kIsWeb) {
-          _selectedImageBytes = file.bytes;
-          _selectedImageFile = null;
-        } else {
-          if (file.path != null) {
-            _selectedImageFile = File(file.path!);
-            _selectedImageBytes = null;
+        setState(() {
+          _newNames.add(file.name);
+          if (kIsWeb) {
+            _newBytes.add(file.bytes!);
+          } else {
+            if (file.path != null) {
+              _newFiles.add(File(file.path!));
+            }
           }
-        }
-      });
+        });
+      }
     }
   }
 
-  void _removeImage() {
+  void _removeExistingImage(int index) {
     setState(() {
-      _selectedImageFile = null;
-      _selectedImageBytes = null;
-      _selectedImageName = null;
-      _existingImageUrl = null; // Hapus gambar lama juga
+      final img = _existingImages[index];
+      if (img.id != null) {
+        _deletedImageIds.add(img.id!);
+      }
+      _existingImages.removeAt(index);
+    });
+  }
+
+  void _removeNewImage(int index) {
+    setState(() {
+      _newNames.removeAt(index);
+      if (kIsWeb) {
+        _newBytes.removeAt(index);
+      } else {
+        _newFiles.removeAt(index);
+      }
     });
   }
 
@@ -148,17 +199,27 @@ class _EditKegiatanScreenState extends State<EditKegiatanScreen> {
       });
 
       try {
-        String? imageUrl = _existingImageUrl;
-        if (_selectedImageBytes != null || _selectedImageFile != null) {
-          final String uniqueFileName =
-              '${DateTime.now().millisecondsSinceEpoch}_${_selectedImageName ?? 'update.jpg'}';
+        // 1. Hapus gambar yang dihapus user dari DB
+        if (_deletedImageIds.isNotEmpty) {
+           await Supabase.instance.client
+               .from('kegiatan_img')
+               .delete()
+               .filter('id', 'in', _deletedImageIds);
+        }
 
-          imageUrl = await _kegiatanService.uploadKegiatanImage(
-            file: _selectedImageFile,
-            bytes: _selectedImageBytes,
-            fileName: uniqueFileName,
+        // 2. Upload gambar baru
+        if (_newNames.isNotEmpty) {
+          await _kegiatanService.uploadMultipleImages(
+            idKegiatan: widget.kegiatan.id!,
+            files: kIsWeb ? null : _newFiles,
+            bytesList: kIsWeb ? _newBytes : null,
+            fileNames: _newNames.map((n) => '${DateTime.now().millisecondsSinceEpoch}_$n').toList(),
           );
         }
+
+        // 3. Update data kegiatan (teks)
+        // Kita set 'hasDocs' true jika ada gambar tersisa (lama atau baru)
+        bool hasImages = _existingImages.isNotEmpty || _newNames.isNotEmpty;
 
         final updatedKegiatan = widget.kegiatan.copyWith(
           judul: _namaController.text,
@@ -167,14 +228,15 @@ class _EditKegiatanScreenState extends State<EditKegiatanScreen> {
           lokasi: _lokasiController.text,
           pj: _pjController.text,
           deskripsi: _deskripsiController.text,
-          hasDocs: imageUrl != null,
-          gambarDokumentasi: imageUrl,
+          hasDocs: hasImages,
+          gambarDokumentasi: null, // Legacy field, biarkan null atau tidak diubah
         );
 
         final result = await _kegiatanService.updateKegiatan(
           widget.kegiatan.id!,
           updatedKegiatan,
         );
+
         if (mounted) {
           await showResultModal(
             context,
@@ -365,66 +427,118 @@ class _EditKegiatanScreenState extends State<EditKegiatanScreen> {
                   ),
                   const SizedBox(height: 4),
                   const Text(
-                    'Maksimal 1 gambar (.png / .jpg), ukuran maksimal 5MB.',
+                    'Maksimal 10 gambar (.png / .jpg), ukuran maksimal 5MB.',
                     style: TextStyle(color: Colors.grey, fontSize: 12),
                   ),
                   const SizedBox(height: 8),
-                  if (_selectedImageBytes != null ||
-                      _selectedImageFile != null ||
-                      _existingImageUrl != null)
-                    Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8.0),
-                          child: _selectedImageBytes != null
-                              ? Image.memory(
-                                  _selectedImageBytes!,
-                                  width: double.infinity,
-                                  height: 200,
-                                  fit: BoxFit.cover,
-                                )
-                              : _selectedImageFile != null
-                              ? Image.file(
-                                  _selectedImageFile!,
-                                  width: double.infinity,
-                                  height: 200,
-                                  fit: BoxFit.cover,
-                                )
-                              : Image.network(
-                                  _existingImageUrl!,
-                                  width: double.infinity,
-                                  height: 200,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      Container(
-                                        height: 200,
-                                        color: Colors.grey[200],
-                                        child: const Center(
-                                          child: Text('Gagal memuat gambar'),
-                                        ),
-                                      ),
+                  
+                  // Area Gambar Horizontal
+                  if (_existingImages.isNotEmpty || _newNames.isNotEmpty)
+                    SizedBox(
+                      height: 150,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        // Total item = existing + new + 1 (tombol add jika < 10)
+                        itemCount: _existingImages.length + _newNames.length + 
+                                   ((_existingImages.length + _newNames.length < 10) ? 1 : 0),
+                        separatorBuilder: (context, index) => const SizedBox(width: 8),
+                        itemBuilder: (context, index) {
+                          // 1. Tombol Add di paling akhir
+                          if (index == _existingImages.length + _newNames.length) {
+                             return InkWell(
+                              onTap: _pickImage,
+                              child: Container(
+                                width: 120,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  border: Border.all(color: Colors.grey.shade300),
                                 ),
-                        ),
-                        Positioned(
-                          right: 8,
-                          top: 8,
-                          child: GestureDetector(
-                            onTap: _removeImage,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.black54,
-                                borderRadius: BorderRadius.circular(20),
+                                child: Icon(
+                                  Icons.add_a_photo,
+                                  size: 30,
+                                  color: Colors.grey.shade400,
+                                ),
                               ),
-                              padding: const EdgeInsets.all(4),
-                              child: const Icon(
-                                Icons.close,
-                                size: 20,
-                                color: Colors.white,
+                            );
+                          }
+
+                          // 2. Existing Images
+                          if (index < _existingImages.length) {
+                            final img = _existingImages[index];
+                            return Stack(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  child: Image.network(
+                                    img.img,
+                                    width: 150,
+                                    height: 150,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) => Container(
+                                      width: 150, height: 150,
+                                      color: Colors.grey[200],
+                                      child: const Icon(Icons.broken_image, color: Colors.grey),
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  right: 4, top: 4,
+                                  child: GestureDetector(
+                                    onTap: () => _removeExistingImage(index),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.black54,
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      padding: const EdgeInsets.all(4),
+                                      child: const Icon(Icons.close, size: 16, color: Colors.white),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
+
+                          // 3. New Images
+                          final newIndex = index - _existingImages.length;
+                          final imageBytes = kIsWeb ? _newBytes[newIndex] : null;
+                          final imageFile = !kIsWeb ? _newFiles[newIndex] : null;
+
+                          return Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8.0),
+                                child: kIsWeb
+                                    ? Image.memory(
+                                        imageBytes!,
+                                        width: 150, height: 150,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Image.file(
+                                        imageFile!,
+                                        width: 150, height: 150,
+                                        fit: BoxFit.cover,
+                                      ),
                               ),
-                            ),
-                          ),
-                        ),
-                      ],
+                              Positioned(
+                                right: 4, top: 4,
+                                child: GestureDetector(
+                                  onTap: () => _removeNewImage(newIndex),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.black54,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    padding: const EdgeInsets.all(4),
+                                    child: const Icon(Icons.close, size: 16, color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
                     )
                   else
                     InkWell(

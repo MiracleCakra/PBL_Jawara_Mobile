@@ -2,16 +2,16 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
-import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
-import 'package:jawara_pintar_kel_5/router.dart';
+import 'package:SapaWarga_kel_2/constants/constant_colors.dart';
+import 'package:SapaWarga_kel_2/router.dart';
 import 'package:moon_design/moon_design.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'firebase_options.dart';
-import 'package:jawara_pintar_kel_5/providers/product_provider.dart';
-import 'package:jawara_pintar_kel_5/providers/marketplace/cart_provider.dart';
-import 'package:jawara_pintar_kel_5/providers/marketplace/store_provider.dart';
-import 'package:jawara_pintar_kel_5/providers/marketplace/order_provider.dart';
-import 'package:jawara_pintar_kel_5/providers/marketplace/review_provider.dart';
+import 'package:SapaWarga_kel_2/providers/product_provider.dart';
+import 'package:SapaWarga_kel_2/providers/marketplace/cart_provider.dart';
+import 'package:SapaWarga_kel_2/providers/marketplace/store_provider.dart';
+import 'package:SapaWarga_kel_2/providers/marketplace/order_provider.dart';
+import 'package:SapaWarga_kel_2/providers/marketplace/review_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,7 +40,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,
-        title: 'Jawara Pintar',
+        title: 'SapaWarga',
       theme: ThemeData.light().copyWith(
         colorScheme: ThemeData.light().colorScheme.copyWith(
           primary: ConstantColors.primary,

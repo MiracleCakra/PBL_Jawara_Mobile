@@ -1,4 +1,4 @@
-import 'package:jawara_pintar_kel_5/models/log/activity_log_model.dart';
+import 'package:SapaWarga_kel_2/models/log/activity_log_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ActivityLogService {
