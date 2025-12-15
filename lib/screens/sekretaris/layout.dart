@@ -1,11 +1,10 @@
-import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:iconify_flutter/iconify_flutter.dart' show Iconify;
 import 'package:SapaWarga_kel_2/constants/constant_colors.dart';
 import 'package:SapaWarga_kel_2/constants/iconify.dart';
 import 'package:SapaWarga_kel_2/widget/bottom_app_bar_item.dart';
 import 'package:SapaWarga_kel_2/widget/system_ui_style.dart';
-import 'package:moon_design/moon_design.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:iconify_flutter/iconify_flutter.dart' show Iconify;
 
 class SekretarisLayout extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
@@ -72,15 +71,13 @@ class _SekretarisLayoutState extends State<SekretarisLayout>
             children: List.generate(
               tabs.length,
               (index) => BottomAppBarItem(
-                icon: index == 0
-                    ? Icon(MoonIcons.generic_home_32_regular)
-                    : Iconify(
-                        tabs.values.elementAt(index),
-                        size: 24,
-                        color: widget.navigationShell.currentIndex == index
-                            ? ConstantColors.primary
-                            : Colors.black,
-                      ),
+                icon: Iconify(
+                  tabs.values.elementAt(index),
+                  size: 24,
+                  color: widget.navigationShell.currentIndex == index
+                      ? ConstantColors.primary
+                      : Colors.black,
+                ),
                 label: tabs.keys.elementAt(index),
                 active: widget.navigationShell.currentIndex == index,
                 onTap: () => _goTo(index),

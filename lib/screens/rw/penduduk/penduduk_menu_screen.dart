@@ -7,7 +7,7 @@ class RWMenuPenduduk extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FB),
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
         centerTitle: false,
         elevation: 0,
@@ -15,60 +15,68 @@ class RWMenuPenduduk extends StatelessWidget {
         foregroundColor: Colors.black,
         automaticallyImplyLeading: false,
         title: const Text(
-          'Penduduk',
+          'Menu Penduduk',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: GridView.count(
-          crossAxisCount: 2,
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 16,
-          childAspectRatio: 1.0,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildMenuItem(
-              icon: Icons.people_outline,
-              label: 'Daftar Warga',
-              color: const Color(0xFF6366F1),
-              onTap: () => context.pushNamed('rw_wargaList'),
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 2,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 1.0,
+              children: [
+                _buildMenuItem(
+                  icon: Icons.people_outline,
+                  label: 'Daftar Warga',
+                  color: const Color(0xFF6366F1),
+                  onTap: () => context.pushNamed('rw_wargaList'),
+                ),
+                _buildMenuItem(
+                  icon: Icons.home_outlined,
+                  label: 'Daftar Rumah',
+                  color: const Color(0xFF8B5CF6),
+                  onTap: () => context.pushNamed('rw_rumahList'),
+                ),
+                _buildMenuItem(
+                  icon: Icons.family_restroom_outlined,
+                  label: 'Daftar Keluarga',
+                  color: const Color(0xFFA855F7),
+                  onTap: () => context.pushNamed('rw_keluargaList'),
+                ),
+                _buildMenuItem(
+                  icon: Icons.swap_horiz,
+                  label: 'Mutasi Keluarga',
+                  color: const Color(0xFFD946EF),
+                  onTap: () => context.pushNamed('rw_mutasiKeluargaList'),
+                ),
+                _buildMenuItem(
+                  icon: Icons.person_add_outlined,
+                  label: 'Penerimaan Warga',
+                  color: const Color(0xFFEC4899),
+                  onTap: () => context.pushNamed('rw_penerimaanList'),
+                ),
+                _buildMenuItem(
+                  icon: Icons.event_outlined,
+                  label: 'Daftar Kegiatan',
+                  color: const Color(0xFF10B981),
+                  onTap: () => context.pushNamed('rw_kegiatanList'),
+                ),
+                _buildMenuItem(
+                  icon: Icons.campaign_outlined,
+                  label: 'Daftar Broadcast',
+                  color: const Color(0xFF14B8A6),
+                  onTap: () => context.pushNamed('rw_broadcastList'),
+                ),
+              ],
             ),
-            _buildMenuItem(
-              icon: Icons.home_outlined,
-              label: 'Daftar Rumah',
-              color: const Color(0xFF8B5CF6),
-              onTap: () => context.pushNamed('rw_rumahList'),
-            ),
-            _buildMenuItem(
-              icon: Icons.family_restroom_outlined,
-              label: 'Daftar Keluarga',
-              color: const Color(0xFFA855F7),
-              onTap: () => context.pushNamed('rw_keluargaList'),
-            ),
-            _buildMenuItem(
-              icon: Icons.swap_horiz,
-              label: 'Mutasi Keluarga',
-              color: const Color(0xFFD946EF),
-              onTap: () => context.pushNamed('rw_mutasiKeluargaList'),
-            ),
-            _buildMenuItem(
-              icon: Icons.person_add_outlined,
-              label: 'Penerimaan Warga',
-              color: const Color(0xFFEC4899),
-              onTap: () => context.pushNamed('rw_penerimaanList'),
-            ),
-            _buildMenuItem(
-              icon: Icons.event_outlined,
-              label: 'Daftar Kegiatan',
-              color: const Color(0xFF10B981),
-              onTap: () => context.pushNamed('rw_kegiatanList'),
-            ),
-            _buildMenuItem(
-              icon: Icons.campaign_outlined,
-              label: 'Daftar Broadcast',
-              color: const Color(0xFF14B8A6),
-              onTap: () => context.pushNamed('rw_broadcastList'),
-            ),
+            const SizedBox(height: 30),
           ],
         ),
       ),
@@ -83,16 +91,15 @@ class RWMenuPenduduk extends StatelessWidget {
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFE8E9F3), width: 1.5),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: color.withOpacity(0.1),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
