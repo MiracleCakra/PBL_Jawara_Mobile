@@ -1,41 +1,426 @@
+<div align="center">
+  
 # 📱 SapaWarga
-Aplikasi manajemen RT/RW Digital Berbasis Flutter
 
-## 📖 Deskripsi
-SapaWarga adalah aplikasi mobile berbasis Flutter (Dart) yang dikembangkan sebagai versi Android dari sistem informasi Jawara berbasis web. Aplikasi ini bertujuan untuk mempermudah pengelolaan data warga, keuangan, serta marketplace di tingkat RT/RW dengan dukungan teknologi Computer Vision dan Machine Learning.
+### Sistem Informasi Manajemen RT/RW Digital
 
-Aplikasi ini terintegrasi dengan backend Supabase untuk autentikasi, manajemen database, penyimpanan file, dan komunikasi data secara real-time.
+[![Flutter](https://img.shields.io/badge/Flutter-3.9.2+-02569B?logo=flutter)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-3.9.2+-0175C2?logo=dart)](https://dart.dev)
+[![Supabase](https://img.shields.io/badge/Supabase-Backend-3ECF8E?logo=supabase)](https://supabase.com)
+[![Firebase](https://img.shields.io/badge/Firebase-Core-FFCA28?logo=firebase)](https://firebase.google.com)
+[![License](https://img.shields.io/badge/License-Academic-blue.svg)]()
 
----
-## 📌 Ruang Lingkup Proyek
+_Aplikasi mobile berbasis Flutter untuk digitalisasi pengelolaan RT/RW dengan fitur Computer Vision untuk deteksi kesegaran sayuran_
 
-### 1.1 Latar Belakang
-Jawara merupakan sistem informasi berbasis web untuk manajemen data warga, keuangan, dan lain-lain di tingkat RT/RW.  
-Untuk meningkatkan aksesibilitas, fleksibilitas, dan kemudahan penggunaan, dikembangkan aplikasi mobile agar layanan dapat diakses kapan saja dan di mana saja oleh warga.
+[Fitur](#-fitur-utama) • [Teknologi](#-teknologi-stack) • [Instalasi](#-instalasi) • [Tim](#-tim-pengembang)
 
----
-### 1.2 Target Pengguna
-- Admin
-- Ketua RT
-- Ketua RW
-- Bendahara
-- Sekretaris
-- Warga
+</div>
 
 ---
 
-## 👥 Job Description Tim
+## 📖 Tentang Proyek
 
-| No | Nama                    | NIM        | Job Desk               |
-|----|-------------------------|------------|------------------------|
-| 1  | Afrizal Qurratul Faizin | 2341720083 | Backend Developer      |
-| 2  | Cakra Wangsa M.A.W      | 2341720032 | Fullstack Developer    |
-| 3  | Sirfaratih              | 2341720072 | Frontend Developer     |
-| 4  | Tionusa Catur Pamungkas | 2341720093 | Backend Developer      |
+**SapaWarga** adalah aplikasi mobile cross-platform yang dikembangkan sebagai solusi digitalisasi pengelolaan data dan administrasi tingkat RT/RW. Aplikasi ini merupakan versi mobile dari sistem informasi Jawara berbasis web, dengan pengembangan lebih lanjut untuk meningkatkan aksesibilitas dan kemudahan penggunaan.
+
+### 🎯 Latar Belakang
+
+Pengelolaan RT/RW secara konvensional seringkali menghadapi kendala dalam hal:
+
+- Pencatatan data warga yang tidak terstruktur
+- Pengelolaan keuangan yang kurang transparan
+- Komunikasi yang tidak efisien antara pengurus dan warga
+- Kesulitan akses informasi bagi warga
+
+SapaWarga hadir untuk mengatasi permasalahan tersebut dengan menyediakan platform digital yang dapat diakses kapan saja dan di mana saja.
+
+### ✨ Keunggulan
+
+- 📱 **Multi-Platform**: Support Android, iOS.
+- 🔐 **Secure Authentication**: Sistem autentikasi aman dengan Supabase Auth
+- 🥦 **Computer Vision**: Deteksi kesegaran sayur otomatis menggunakan LightGBM dan U-2-Net
+- 📊 **Real-time Data**: Sinkronisasi data real-time dengan Supabase PostgreSQL
+- 🎨 **Modern UI**: Desain intuitif menggunakan Moon Design System
+- 📈 **Analytics**: Visualisasi data dengan grafik interaktif (FL Chart)
+- 📄 **PDF Generation**: Cetak laporan keuangan dalam format PDF
+- 🛒 **Marketplace**: Platform UMKM warga dengan sistem review dan rating
 
 ---
 
-## 🧩 Arsitektur Sistem
+## 🎯 Fitur Utama
 
-## 📷 Showcase Aplikasi (Dokumentasi Halaman)
+### 👤 Manajemen Pengguna (Role-Based Access)
 
+- **6 Role Pengguna**: Admin, Ketua RT, Ketua RW, Bendahara, Sekretaris, Warga
+- Autentikasi dan authorization berbasis role
+- Manajemen profil dan data pribadi
+- Reset password dan keamanan akun
+
+### 👨‍👩‍👧‍👦 Manajemen Penduduk & Keluarga
+
+- Daftar warga per RT/RW dengan pencarian dan filter
+- Data keluarga dan anggota keluarga
+- Manajemen kartu keluarga (KK)
+- Statistik demografi warga
+- Detail informasi warga lengkap
+
+### 💰 Manajemen Keuangan
+
+- **Pemasukan**:
+  - Iuran warga (bulanan/tahunan)
+  - Pemasukan lain-lain dengan kategori
+  - Tracking status pembayaran per warga
+  - Upload bukti pembayaran
+- **Pengeluaran**:
+  - Pencatatan pengeluaran dengan bukti
+  - Kategorisasi pengeluaran
+  - Validasi pengeluaran oleh bendahara
+- **Laporan Keuangan**:
+  - Laporan real-time per bulan/tahun
+  - Visualisasi grafik pemasukan/pengeluaran (Bar Chart)
+  - Filter berdasarkan periode waktu
+  - Export laporan ke PDF
+  - Dashboard keuangan dengan ringkasan saldo
+  - Transparansi keuangan untuk semua warga
+
+### 📢 Kegiatan & Komunikasi
+
+- **Broadcast**: Pengumuman ke seluruh warga RT/RW
+- **Kegiatan**: Manajemen event dan kegiatan RT/RW dengan foto dokumentasi
+- **Aspirasi Warga**: Sistem pengaduan dan saran dari warga
+- **Log Aktivitas**: Tracking aktivitas pengguna dalam sistem
+- **Notifikasi**: Informasi kegiatan dan pengumuman penting
+
+### 🛒 Marketplace UMKM Warga
+
+- **Toko Online Warga**:
+  - Registrasi toko dengan validasi admin
+  - Manajemen produk (CRUD)
+  - Upload foto produk multiple
+  - **Computer Vision**: Deteksi kesegaran sayur otomatis menggunakan AI
+    - Model: LightGBM Classifier
+    - Segmentasi: U-2-Net (ONNX)
+    - Features: HOG, LBP, Color Histogram, Texture (GLCM)
+    - API: FastAPI hosted on HuggingFace Spaces
+  - Status toko: pending, approved, rejected, deactivated
+- **Shopping**:
+  - Browse produk dari warga dengan filter dan pencarian
+  - Keranjang belanja dengan update quantity real-time
+  - Sistem order dan checkout
+  - Rating dan review produk (bintang 1-5)
+  - History pembelian
+- **Manajemen Toko**:
+  - Dashboard penjualan untuk pemilik toko
+  - Manajemen pesanan (pending, processing, completed, cancelled)
+  - Validasi toko dan produk oleh admin
+  - Tracking status pesanan
+  - Statistik penjualan
+
+### 📊 Dashboard & Reporting
+
+- Dashboard berbeda untuk setiap role (Admin, RT, RW, Bendahara, Sekretaris, Warga)
+- Statistik dan visualisasi data real-time
+- Grafik interaktif menggunakan FL Chart (Bar Chart, Pie Chart)
+- Export laporan keuangan ke PDF dengan format profesional
+- Widget cards untuk ringkasan data penting
+- Filter dan pencarian data yang fleksibel
+
+---
+
+## 🛠 Teknologi Stack
+
+### Frontend
+
+- **Framework**: Flutter 3.9.2+ / Dart 3.9.2+
+- **State Management**: Provider 6.1.5+
+- **Routing**: GoRouter 16.2.4
+- **UI Library**: Moon Design 1.1.0
+- **Charts**: FL Chart 1.1.1
+- **Icons & Fonts**: Iconify Flutter, Google Fonts 6.2.1
+- **Text Formatting**: Auto Size Text 3.0.0, Intl 0.19.0
+- **Utilities**: UUID 4.5.2, Dotted Border 2.0.0
+
+### Backend & Database
+
+- **BaaS**: Supabase 2.10.3+
+  - PostgreSQL Database
+  - Authentication & Authorization (Row Level Security)
+  - Real-time Database Subscriptions
+  - Storage untuk foto/file (avatar, produk, bukti pembayaran)
+- **Alternative Database**: PostgreSQL Direct Connection (postgres 3.5.9)
+- **Firebase**: Firebase Core 4.2.1 (untuk konfigurasi project)
+
+### Computer Vision & ML
+
+- **Fresh Veggie Detection**:
+  - Backend: FastAPI (Python)
+  - ML Model: LightGBM Classifier
+  - Segmentation: U-2-Net (ONNX Runtime)
+  - Feature Extraction:
+    - HOG (Histogram of Oriented Gradients)
+    - LBP (Local Binary Patterns)
+    - GLCM (Gray-Level Co-occurrence Matrix) untuk texture
+    - Color Histogram (HSV)
+  - Deployment: HuggingFace Spaces
+  - Libraries: scikit-learn, scikit-image, OpenCV, NumPy, PIL
+
+### Tools & Libraries
+
+- **PDF**: PDF 3.10.1 & Printing 5.11.0
+- **File Handling**:
+  - File Picker 8.3.3
+  - Image Picker 1.1.2
+  - Path Provider 2.1.1
+  - Image Processing 4.3.0
+- **Sharing**: Share Plus 12.0.1
+- **Local Storage**: Shared Preferences 2.5.3
+- **HTTP Client**: HTTP 1.2.2
+- **Excel**: Excel 2.0.7
+- **Permissions**: Permission Handler 12.0.1
+- **UI Components**:
+  - Flutter SVG 2.2.2
+  - Dropdown Button2 2.3.9
+
+### Testing
+
+- **Unit Testing**: Test 1.24.0
+- **Widget Testing**: Flutter Test SDK
+- **Integration Testing**: Integration Test SDK
+- **Mocking**: Mocktail 1.0.0
+- **Build Tools**: Build Runner 2.4.0
+
+### DevOps & Build Tools
+
+- **Version Control**: Git
+- **Build System**:
+  - Gradle Kotlin DSL (Android)
+  - Native builds (iOS/Desktop)
+- **Asset Generation**:
+  - Flutter Launcher Icons 0.13.1
+  - Flutter Native Splash 2.3.1
+- **Code Quality**: Flutter Lints 5.0.0
+
+---
+
+## 📁 Struktur Proyek
+
+```
+lib/
+├── main.dart                 # Entry point aplikasi dengan Supabase & Firebase init
+├── router.dart               # Konfigurasi routing (GoRouter)
+├── firebase_options.dart     # Firebase configuration (auto-generated)
+├── utils.dart                # Helper functions & utilities
+├── constants/                # Konstanta (colors, strings, endpoints)
+├── models/                   # Data models
+│   ├── keluarga/            # Models warga, keluarga, KK
+│   ├── keuangan/            # Models laporan keuangan, transaksi
+│   ├── kegiatan/            # Models kegiatan, broadcast, aspirasi
+│   ├── log/                 # Models activity log
+│   └── marketplace/         # Models produk, toko, order, cart, review
+├── providers/               # State management (Provider pattern)
+│   ├── product_provider.dart
+│   └── marketplace/         # Cart, Store, Order, Review providers
+├── services/                # API services & business logic
+│   ├── warga_service.dart
+│   ├── keluarga_service.dart
+│   ├── kegiatan_service.dart
+│   ├── broadcast_service.dart
+│   ├── aspirasi_service.dart
+│   ├── pengguna_service.dart
+│   ├── activity_log_service.dart
+│   ├── channel_transfer_service.dart
+│   └── marketplace/         # Marketplace services
+│       ├── product_service.dart
+│       ├── store_service.dart
+│       ├── cart_service.dart
+│       ├── order_service.dart
+│       ├── review_service.dart
+│       ├── store_verification_helper.dart
+│       └── vegetable_detection_service.dart
+├── screens/                 # UI Screens by role
+│   ├── auth/               # Login, Register screens
+│   ├── admin/              # Admin screens (full access)
+│   ├── rt/                 # Ketua RT screens
+│   ├── rw/                 # Ketua RW screens
+│   ├── bendahara/          # Bendahara screens (finance focus)
+│   ├── sekretaris/         # Sekretaris screens
+│   └── warga/              # Warga screens (limited access)
+│       ├── dashboard/      # Dashboard warga
+│       ├── kegiatan/       # Kegiatan & broadcast
+│       ├── keluarga/       # Data keluarga
+│       ├── marketplace/    # Shopping, cart, orders
+│       └── profil/         # Profile management
+└── widget/                  # Reusable widgets & components
+
+PCVK/                        # Computer Vision API (Python FastAPI)
+├── main.py                  # FastAPI application
+├── models/                  # Pre-trained ML models (LightGBM, U-2-Net)
+│   ├── lgbm_model.pkl      # LightGBM classifier
+│   └── u2netp.onnx         # U-2-Net segmentation model
+├── requirements.txt         # Python dependencies
+├── Dockerfile              # Container configuration
+└── test/                   # API testing scripts
+
+integration_test/            # Integration tests (E2E)
+├── login_test.dart
+├── register_test.dart
+├── daftar_warga_test.dart
+└── end_to_end/             # Full flow tests
+
+test/                        # Unit & Widget tests
+├── unit/                   # Unit tests
+├── api/                    # API service tests
+├── fixtures/               # Test fixtures & mock data
+├── pytest/                 # Python API tests
+└── load/                   # Load testing scripts
+```
+
+---
+
+## 🚀 Instalasi
+
+### Prerequisites
+
+- Flutter SDK 3.9.2 atau lebih tinggi
+- Dart SDK 3.9.2 atau lebih tinggi
+- Android Studio / VS Code dengan Flutter extension
+- Git
+- Akun Firebase (untuk konfigurasi project)
+- Akun Supabase (untuk backend & database)
+
+### Clone Repository
+
+```bash
+git clone https://github.com/your-username/sapawarga-mobile.git
+cd sapawarga-mobile
+```
+
+### Install Dependencies
+
+```bash
+flutter pub get
+```
+
+### Konfigurasi
+
+1. **Firebase Setup**:
+
+   - Buat project baru di [Firebase Console](https://console.firebase.google.com/)
+   - Tambahkan aplikasi Android/iOS ke project
+   - Download `google-services.json` (Android) dan letakkan di `android/app/`
+   - Download `GoogleService-Info.plist` (iOS) dan letakkan di `ios/Runner/`
+   - Jalankan FlutterFire CLI untuk konfigurasi otomatis:
+     ```bash
+     dart pub global activate flutterfire_cli
+     flutterfire configure
+     ```
+
+2. **Supabase Setup**:
+
+   - Buat project baru di [Supabase Dashboard](https://app.supabase.com/)
+   - Salin **Project URL** dan **anon public key**
+   - Update di `lib/main.dart`:
+     ```dart
+     await Supabase.initialize(
+       url: 'YOUR_SUPABASE_PROJECT_URL',
+       anonKey: 'YOUR_SUPABASE_ANON_KEY',
+     );
+     ```
+   - Setup database schema dan Row Level Security policies sesuai kebutuhan
+
+3. **Assets Setup**:
+   - Pastikan file `assets/sapa_warga.webp` tersedia untuk icon dan splash screen
+   - Generate launcher icons:
+     ```bash
+     flutter pub run flutter_launcher_icons
+     ```
+   - Generate native splash:
+     ```bash
+     flutter pub run flutter_native_splash:create
+     ```
+
+### Run Aplikasi
+
+```bash
+# Jalankan di emulator/device (debug mode)
+flutter run
+
+# Build APK (Android release)
+flutter build apk --release
+
+# Build App Bundle (Android release - recommended for Play Store)
+flutter build appbundle --release
+
+# Build untuk iOS (memerlukan macOS & Xcode)
+flutter build ios --release
+
+# Build untuk Web
+flutter build web
+
+# Build untuk Windows
+flutter build windows
+
+# Build untuk macOS
+flutter build macos
+
+# Build untuk Linux
+flutter build linux
+```
+
+### Testing
+
+```bash
+# Unit tests
+flutter test
+
+# Integration tests
+flutter test integration_test/
+```
+
+---
+
+## 👥 Tim Pengembang
+
+| Avatar | Nama                        | NIM        | Role                | Kontribusi                                                                          |
+| :----: | --------------------------- | ---------- | ------------------- | ----------------------------------------------------------------------------------- |
+|   👨‍💻   | **Afrizal Qurratul Faizin** | 2341720083 | Backend Developer   | Backend logic, E2E Testing                                                          |
+|   👨‍💻   | **Cakra Wangsa M.A.W**      | 2341720032 | Fullstack Developer | Full-stack development, ML integration, Marketplace, Computer Vision                |
+|   👨‍💻   | **Sirfaratih**              | 2341720072 | Frontend Developer  | UI/UX design, Frontend implementation, Widget development                           |
+|   👨‍💻   | **Tionusa Catur Pamungkas** | 2341720093 | Backend Developer   | Backend logic, Authentication & Authorization, Integration testing, Database design |
+
+---
+
+## 🎓 Informasi Akademik
+
+**Institusi**: Politeknik Negeri Malang  
+**Program Studi**: D4 Teknik Informatika  
+**Mata Kuliah**: Project Based Learning (PBL) - Semester 5  
+**Tahun Ajaran**: 2024/2025 Ganjil  
+**Kelompok**: 2
+
+---
+
+## 📄 Lisensi
+
+Project ini dibuat untuk keperluan akademik dan pembelajaran. Tidak untuk dipublikasikan secara komersial tanpa izin.
+
+---
+
+## 🙏 Acknowledgments
+
+- Politeknik Negeri Malang - D4 Teknik Informatika
+- [Supabase](https://supabase.com) untuk Backend as a Service
+- [Firebase](https://firebase.google.com) untuk platform development
+- [Flutter Team](https://flutter.dev) & Flutter Community
+- [Moon Design System](https://moon-design-system.vercel.app/)
+- [HuggingFace](https://huggingface.co) untuk hosting ML model Computer Vision
+- Semua open-source contributors yang library-nya digunakan dalam project ini
+
+---
+
+<div align="center">
+
+**Made with ❤️ by Kelompok 2 - PBL Semester 5**
+
+⭐ Star repository ini jika bermanfaat!
+
+</div>

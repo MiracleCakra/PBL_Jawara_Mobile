@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:SapaWarga_kel_2/models/marketplace/order_item_model.dart';
 import 'package:SapaWarga_kel_2/models/marketplace/order_model.dart';
 import 'package:SapaWarga_kel_2/models/marketplace/product_model.dart';
@@ -7,6 +5,8 @@ import 'package:SapaWarga_kel_2/providers/marketplace/cart_provider.dart';
 import 'package:SapaWarga_kel_2/screens/warga/marketplace/belanja/keranjangScreen.dart';
 import 'package:SapaWarga_kel_2/services/marketplace/order_service.dart';
 import 'package:SapaWarga_kel_2/utils.dart' show formatRupiah;
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -103,17 +103,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         if (mounted) {
           setState(() {
             _userId = userId;
-            _checkoutItems = cartProvider.cartItems.map((cartItem) {
-              print(
-                'DEBUG Checkout: Processing cart item: ${cartItem['produk']['nama']}',
-              );
-              final product = ProductModel.fromJson(cartItem['produk']);
-              final quantity =
-                  cartItem['qty'] as int? ??
-                  1; // Get actual quantity from database
-              print('DEBUG Checkout: Quantity = $quantity');
-              return CartItem(product: product, quantity: quantity);
-            }).toList();
+            _checkoutItems = cartProvider.cartItems
+                .where((cartItem) {
+                  // Filter only items with stock > 0
+                  final product = ProductModel.fromJson(cartItem['produk']);
+                  return (product.stok ?? 0) > 0;
+                })
+                .map((cartItem) {
+                  print(
+                    'DEBUG Checkout: Processing cart item: ${cartItem['produk']['nama']}',
+                  );
+                  final product = ProductModel.fromJson(cartItem['produk']);
+                  final quantity =
+                      cartItem['qty'] as int? ??
+                      1; // Get actual quantity from database
+                  print('DEBUG Checkout: Quantity = $quantity');
+                  return CartItem(product: product, quantity: quantity);
+                })
+                .toList();
             _isLoading = false;
           });
           print(
