@@ -312,7 +312,10 @@ class WargaService {
           .select('''
             id, nama, tanggal_lahir, tempat_lahir, telepon, gender, 
             gol_darah, pendidikan_terakhir, pekerjaan, status_penduduk, keluarga_id, agama, foto_ktp, foto_profil, email, role, status_hidup_wafat,
-            keluarga:keluarga_id(id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga, rumah:alamat_rumah(alamat)),
+            keluarga:keluarga_id(
+              id, nama_keluarga, kepala_keluarga_id, alamat_rumah, status_kepemilikan, status_keluarga, 
+              rumah:alamat_rumah(alamat)
+            ),
             anggota_keluarga:keluarga_warga(peran)
           ''')
           .eq('id', id)
