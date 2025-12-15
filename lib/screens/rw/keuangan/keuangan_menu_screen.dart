@@ -7,16 +7,45 @@ class RWMenuKeuangan extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FB),
-      appBar: AppBar(
-        centerTitle: false,
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        automaticallyImplyLeading: false,
-        title: const Text(
-          'Keuangan',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+      backgroundColor: const Color(0xFFF5F3FF),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(70),
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: AppBar(
+            centerTitle: false,
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+            foregroundColor: Colors.white,
+            automaticallyImplyLeading: false,
+            title: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Keuangan',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 22,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  'Kelola keuangan RW',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white70,
+                    fontWeight: FontWeight.normal,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
       body: SingleChildScrollView(
@@ -123,54 +152,82 @@ class RWMenuKeuangan extends StatelessWidget {
   }) {
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [iconColor.withOpacity(0.8), iconColor],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
+        border: Border(top: BorderSide(color: iconColor, width: 3)),
         boxShadow: [
           BoxShadow(
-            color: iconColor.withOpacity(0.3),
-            blurRadius: 15,
+            color: iconColor.withOpacity(0.08),
+            blurRadius: 20,
             offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
+          Container(
             padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  iconColor.withOpacity(0.05),
+                  iconColor.withOpacity(0.02),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
+                    gradient: LinearGradient(
+                      colors: [iconColor, iconColor.withOpacity(0.8)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: iconColor.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  child: Icon(icon, color: Colors.white, size: 28),
+                  child: Icon(icon, color: Colors.white, size: 26),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: iconColor,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 4),
                       Text(
                         subtitle,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
@@ -180,36 +237,20 @@ class RWMenuKeuangan extends StatelessWidget {
             ),
           ),
           Container(
-            padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(20),
-                bottomRight: Radius.circular(20),
-              ),
+            padding: const EdgeInsets.all(20),
+            child: GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 2,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: itemCount == 4
+                  ? 1.4
+                  : itemCount == 2
+                  ? 1.6
+                  : 1.3,
+              children: children,
             ),
-            child: itemCount == 4
-                ? GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 1.5,
-                    children: children,
-                  )
-                : Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: children.map((child) {
-                      return SizedBox(
-                        width: itemCount == 2
-                            ? (MediaQuery.of(context).size.width - 80) / 2
-                            : (MediaQuery.of(context).size.width - 92) / 3,
-                        child: child,
-                      );
-                    }).toList(),
-                  ),
           ),
         ],
       ),
@@ -225,29 +266,31 @@ class RWMenuKeuangan extends StatelessWidget {
   }) {
     return InkWell(
       onTap: isDisabled ? null : onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(16),
       child: Container(
-        width: 90,
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isDisabled ? Colors.grey.shade200 : Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isDisabled ? Colors.grey.shade300 : const Color(0xFFE5E7EB),
+            color: isDisabled
+                ? Colors.grey.shade300
+                : const Color(0xFF6366F1).withOpacity(0.15),
             width: 1.5,
           ),
-          boxShadow: isDisabled
-              ? []
-              : [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+          boxShadow: [
+            BoxShadow(
+              color: isDisabled
+                  ? Colors.transparent
+                  : const Color(0xFF6366F1).withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Stack(
               clipBehavior: Clip.none,
@@ -255,31 +298,51 @@ class RWMenuKeuangan extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: isDisabled
-                        ? Colors.grey.shade300
-                        : const Color(0xFF6366F1).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
+                    gradient: isDisabled
+                        ? LinearGradient(
+                            colors: [
+                              Colors.grey.shade300,
+                              Colors.grey.shade300,
+                            ],
+                          )
+                        : const LinearGradient(
+                            colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: isDisabled
+                        ? []
+                        : [
+                            BoxShadow(
+                              color: const Color(0xFF6366F1).withOpacity(0.2),
+                              blurRadius: 6,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
                   ),
-                  child: Icon(
-                    icon,
-                    color: isDisabled
-                        ? Colors.grey.shade500
-                        : const Color(0xFF6366F1),
-                    size: 24,
-                  ),
+                  child: Icon(icon, color: Colors.white, size: 22),
                 ),
                 if (isViewOnly)
                   Positioned(
-                    top: -4,
-                    right: -4,
+                    top: -6,
+                    right: -6,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 4,
-                        vertical: 2,
-                      ),
+                      padding: const EdgeInsets.all(5),
                       decoration: BoxDecoration(
-                        color: Colors.orange,
-                        borderRadius: BorderRadius.circular(6),
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFF9800), Color(0xFFFFA726)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.orange.withOpacity(0.4),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: const Icon(
                         Icons.visibility,
@@ -290,14 +353,17 @@ class RWMenuKeuangan extends StatelessWidget {
                   ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(
               label,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 11.5,
                 fontWeight: FontWeight.w600,
-                color: isDisabled ? Colors.grey.shade500 : Colors.black87,
+                color: isDisabled
+                    ? Colors.grey.shade500
+                    : const Color(0xFF1F2937),
+                height: 1.3,
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
