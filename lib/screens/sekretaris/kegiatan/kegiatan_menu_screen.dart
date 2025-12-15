@@ -7,7 +7,7 @@ class SekretarisMenuKegiatan extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FB),
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
         centerTitle: false,
         elevation: 0,
@@ -15,36 +15,44 @@ class SekretarisMenuKegiatan extends StatelessWidget {
         foregroundColor: Colors.black,
         automaticallyImplyLeading: false,
         title: const Text(
-          'Kegiatan',
+          'Menu Kegiatan',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: GridView.count(
-          crossAxisCount: 2,
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 16,
-          childAspectRatio: 1.0,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildMenuItem(
-              icon: Icons.event_outlined,
-              label: 'Daftar Kegiatan',
-              color: const Color(0xFF6366F1),
-              onTap: () => context.pushNamed('sekretaris_kegiatanList'),
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 2,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 1.0,
+              children: [
+                _buildMenuItem(
+                  icon: Icons.event_outlined,
+                  label: 'Daftar Kegiatan',
+                  color: const Color(0xFF6366F1),
+                  onTap: () => context.pushNamed('sekretaris_kegiatanList'),
+                ),
+                _buildMenuItem(
+                  icon: Icons.campaign_outlined,
+                  label: 'Daftar Broadcast',
+                  color: const Color(0xFF8B5CF6),
+                  onTap: () => context.pushNamed('sekretaris_broadcastList'),
+                ),
+                _buildMenuItem(
+                  icon: Icons.history,
+                  label: 'Log Aktifitas',
+                  color: const Color(0xFFA855F7),
+                  onTap: () => context.pushNamed('sekretaris_logAktivitas'),
+                ),
+              ],
             ),
-            _buildMenuItem(
-              icon: Icons.campaign_outlined,
-              label: 'Daftar Broadcast',
-              color: const Color(0xFF8B5CF6),
-              onTap: () => context.pushNamed('sekretaris_broadcastList'),
-            ),
-            _buildMenuItem(
-              icon: Icons.history,
-              label: 'Log Aktifitas',
-              color: const Color(0xFFA855F7),
-              onTap: () => context.pushNamed('sekretaris_logAktivitas'),
-            ),
+            const SizedBox(height: 30),
           ],
         ),
       ),
@@ -59,16 +67,16 @@ class SekretarisMenuKegiatan extends StatelessWidget {
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
+              color: color.withOpacity(0.1),
+              blurRadius: 12,
               offset: const Offset(0, 4),
             ),
           ],
@@ -77,26 +85,25 @@ class SekretarisMenuKegiatan extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [color.withOpacity(0.8), color],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: color.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Icon(icon, color: Colors.white, size: 32),
+              child: Icon(icon, color: color, size: 32),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Text(
               label,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: Colors.black87,
+                color: Color(0xFF1F2937),
+                height: 1.3,
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
