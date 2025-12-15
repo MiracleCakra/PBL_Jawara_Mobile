@@ -1,12 +1,14 @@
 import 'dart:convert';
 
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 class ChannelTransferModel {
   final int? id;
   final String nama;
   final String tipe;
   final String norek;
   final String pemilik;
-  final String catatan;
+  final String? catatan;
   final String? qrisImg;
   final DateTime? createdAt;
 
@@ -16,7 +18,7 @@ class ChannelTransferModel {
     required this.tipe,
     required this.norek,
     required this.pemilik,
-    required this.catatan,
+    this.catatan,
     this.qrisImg,
     this.createdAt,
   });
@@ -71,6 +73,22 @@ class ChannelTransferModel {
           ? null
           : DateTime.tryParse(map['created_at'].toString()),
     );
+  }
+
+  static Future<List<ChannelTransferModel>> fetchChannels() async {
+    final response = await Supabase.instance.client
+        .from('channel_transfer')
+        .select();
+
+    // Map the response to the ChannelTransferModel
+    return response.map<ChannelTransferModel>((item) {
+      return ChannelTransferModel(
+        nama: item['nama'],
+        tipe: item['tipe'],
+        norek: item['norek'],
+        pemilik: item['pemilik'],
+      );
+    }).toList();
   }
 
   String toJson() => json.encode(toMap());
