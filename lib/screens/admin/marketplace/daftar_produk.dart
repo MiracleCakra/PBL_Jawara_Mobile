@@ -128,6 +128,9 @@ class _DaftarProdukTokoScreenState extends State<DaftarProdukTokoScreen> {
   void _filterList() {
     setState(() {
       _filteredProducts = _allProducts.where((item) {
+        // Only show active products (not out of stock)
+        bool isActive = item.status == 'Aktif';
+
         bool statusMatch =
             _currentFilterStatus == 'Semua' ||
             item.status == _currentFilterStatus;
@@ -141,7 +144,7 @@ class _DaftarProdukTokoScreenState extends State<DaftarProdukTokoScreen> {
               _currentSearchQuery.toLowerCase(),
             );
 
-        return statusMatch && searchMatch;
+        return isActive && statusMatch && searchMatch;
       }).toList();
     });
   }
