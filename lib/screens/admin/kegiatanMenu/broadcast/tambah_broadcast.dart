@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart'; 
 import 'package:file_picker/file_picker.dart'; 
-import 'package:jawara_pintar_kel_5/models/kegiatan/broadcast_model.dart';
-import 'package:jawara_pintar_kel_5/services/broadcast_service.dart';
-import 'package:jawara_pintar_kel_5/utils.dart' show getPrimaryColor;
+import 'package:SapaWarga_kel_2/models/kegiatan/broadcast_model.dart';
+import 'package:SapaWarga_kel_2/services/broadcast_service.dart';
+import 'package:SapaWarga_kel_2/utils.dart' show getPrimaryColor;
 
 class TambahBroadcastScreen extends StatefulWidget {
   const TambahBroadcastScreen({super.key});

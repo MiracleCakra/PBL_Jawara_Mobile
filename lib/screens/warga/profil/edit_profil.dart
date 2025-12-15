@@ -5,8 +5,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:jawara_pintar_kel_5/models/keluarga/warga_model.dart';
-import 'package:jawara_pintar_kel_5/services/warga_service.dart';
+import 'package:SapaWarga_kel_2/models/keluarga/warga_model.dart';
+import 'package:SapaWarga_kel_2/services/warga_service.dart';
 import 'package:moon_design/moon_design.dart';
 
 const Color _primaryColorApp = Color(0xFF6A5AE0);

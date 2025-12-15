@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:jawara_pintar_kel_5/models/kegiatan/aspirasi_model.dart';
-import 'package:jawara_pintar_kel_5/services/aspirasi_service.dart';
+import 'package:SapaWarga_kel_2/models/kegiatan/aspirasi_model.dart';
+import 'package:SapaWarga_kel_2/services/aspirasi_service.dart';
 import 'detail_pesan_warga_screen.dart';
-import 'package:jawara_pintar_kel_5/utils.dart' show getPrimaryColor;
+import 'package:SapaWarga_kel_2/utils.dart' show getPrimaryColor;
 
 
 class PesanWargaScreen extends StatefulWidget {

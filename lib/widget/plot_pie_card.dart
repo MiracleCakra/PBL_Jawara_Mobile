@@ -1,8 +1,8 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
-import 'package:jawara_pintar_kel_5/models/pie_card_model.dart';
-import 'package:jawara_pintar_kel_5/widget/custom_card.dart';
+import 'package:SapaWarga_kel_2/constants/constant_colors.dart';
+import 'package:SapaWarga_kel_2/models/pie_card_model.dart';
+import 'package:SapaWarga_kel_2/widget/custom_card.dart';
 import 'package:moon_design/moon_design.dart';
 
 class PlotPieCard extends StatelessWidget {

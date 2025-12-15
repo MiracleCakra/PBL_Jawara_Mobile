@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:jawara_pintar_kel_5/models/keluarga/warga_model.dart';
-import 'package:jawara_pintar_kel_5/services/activity_log_service.dart';
+import 'package:SapaWarga_kel_2/models/keluarga/warga_model.dart';
+import 'package:SapaWarga_kel_2/services/activity_log_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class WargaService {

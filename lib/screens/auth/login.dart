@@ -2,10 +2,10 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
-import 'package:jawara_pintar_kel_5/widget/login_button.dart';
-import 'package:jawara_pintar_kel_5/widget/system_ui_style.dart';
-import 'package:jawara_pintar_kel_5/widget/text_input_login.dart';
+import 'package:SapaWarga_kel_2/constants/constant_colors.dart';
+import 'package:SapaWarga_kel_2/widget/login_button.dart';
+import 'package:SapaWarga_kel_2/widget/system_ui_style.dart';
+import 'package:SapaWarga_kel_2/widget/text_input_login.dart';
 import 'package:moon_design/moon_design.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -181,10 +181,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             const SizedBox(height: 24),
 
-                            // Judul "Sapa Warga" (Sapa = Biru Primary)
                             _buildAnimatedTitle(primaryColor),
-
-                            // Slogan
                             AnimatedContainer(
                               duration: const Duration(milliseconds: 600),
                               padding: const EdgeInsets.only(top: 8.0),
@@ -203,8 +200,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
 
                       const SizedBox(height: 40),
-
-                      // --- INITIAL BUTTONS (Tampilan Awal) ---
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 500),
                         curve: Curves.easeInOut,
@@ -219,7 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   key: const Key('btn_show_login_form'),
                                   text: "Login",
                                   onTap: _toggleLoginForm,
-                                  withColor: true, // Akan menggunakan warna Primary
+                                  withColor: true,
                                 ),
                                 const SizedBox(height: 16),
                                 Row(
@@ -285,18 +280,15 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Header Form (Back + Title dengan Warna Primary)
                                 Row(
                                   children: [
                                     IconButton(
                                       onPressed: _toggleLoginForm,
-                                      // Panah Back jadi Biru Primary
                                       icon: Icon(Icons.arrow_back, color: primaryColor),
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
                                       "Login",
-                                      // Tulisan Login jadi Biru Primary
                                       style: GoogleFonts.poppins(
                                         fontSize: 28,
                                         fontWeight: FontWeight.bold,
@@ -395,7 +387,6 @@ class _LoginScreenState extends State<LoginScreen> {
           children: [
             Text(
               "Sapa",
-              // Tulisan "Sapa" jadi Biru Primary
               style: GoogleFonts.poppins(
                 fontSize: fontSize,
                 fontWeight: FontWeight.bold,

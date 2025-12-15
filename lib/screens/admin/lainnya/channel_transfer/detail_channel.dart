@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/keuangan/channel_transfer_model.dart'; // Sesuaikan path model
-import 'package:jawara_pintar_kel_5/services/channel_transfer_service.dart'; // Sesuaikan path service
+import 'package:SapaWarga_kel_2/models/keuangan/channel_transfer_model.dart'; // Sesuaikan path model
+import 'package:SapaWarga_kel_2/services/channel_transfer_service.dart'; // Sesuaikan path service
 
 class DetailChannelPage extends StatefulWidget {
   final ChannelTransferModel channel; // Ganti Map jadi Model

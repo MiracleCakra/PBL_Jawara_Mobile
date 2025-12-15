@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart'; // Untuk kIsWeb & Uint8List
-import 'package:jawara_pintar_kel_5/services/activity_log_service.dart';
+import 'package:SapaWarga_kel_2/services/activity_log_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:jawara_pintar_kel_5/models/keuangan/channel_transfer_model.dart';
+import 'package:SapaWarga_kel_2/models/keuangan/channel_transfer_model.dart';
 
 class ChannelTransferService {
   final SupabaseClient _supabase = Supabase.instance.client;

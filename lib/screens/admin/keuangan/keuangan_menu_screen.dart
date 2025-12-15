@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
-import 'package:jawara_pintar_kel_5/models/keuangan/laporan_keuangan_model.dart';
-import 'package:jawara_pintar_kel_5/widget/plot_bar_chart.dart';
+import 'package:SapaWarga_kel_2/constants/constant_colors.dart';
+import 'package:SapaWarga_kel_2/models/keuangan/laporan_keuangan_model.dart';
+import 'package:SapaWarga_kel_2/widget/plot_bar_chart.dart';
 import 'package:moon_design/moon_design.dart';
 
 // Class untuk model menu item

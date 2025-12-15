@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/review_model.dart';
+import 'package:SapaWarga_kel_2/models/marketplace/review_model.dart';
 
 void main() {
   group('ReviewModel Test', () {

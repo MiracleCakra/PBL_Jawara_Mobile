@@ -1,5 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/ReviewModel.dart';
+import 'package:SapaWarga_kel_2/models/marketplace/ReviewModel.dart';
 
 class ReviewService {
   final SupabaseClient _supabase = Supabase.instance.client;

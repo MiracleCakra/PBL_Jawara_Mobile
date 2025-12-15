@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:jawara_pintar_kel_5/main.dart' as app;
-import 'package:jawara_pintar_kel_5/models/keuangan/iuran_model.dart';
-import 'package:jawara_pintar_kel_5/router.dart' as app_router;
+import 'package:SapaWarga_kel_2/main.dart' as app;
+import 'package:SapaWarga_kel_2/models/keuangan/iuran_model.dart';
+import 'package:SapaWarga_kel_2/router.dart' as app_router;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {

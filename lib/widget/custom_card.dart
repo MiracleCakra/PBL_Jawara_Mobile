@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
+import 'package:SapaWarga_kel_2/constants/constant_colors.dart';
 import 'package:moon_design/moon_design.dart';
 
 class CustomCard extends StatelessWidget {

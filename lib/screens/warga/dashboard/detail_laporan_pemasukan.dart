@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:jawara_pintar_kel_5/models/keuangan/transaksi_model.dart'; 
-import 'package:jawara_pintar_kel_5/utils.dart' show formatDate, formatRupiah; 
+import 'package:SapaWarga_kel_2/models/keuangan/transaksi_model.dart'; 
+import 'package:SapaWarga_kel_2/utils.dart' show formatDate, formatRupiah; 
 import 'package:go_router/go_router.dart';
 
 class LaporanDetailPemasukanScreen extends StatelessWidget {

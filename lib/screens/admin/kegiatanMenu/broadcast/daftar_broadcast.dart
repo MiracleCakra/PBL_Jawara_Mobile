@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:jawara_pintar_kel_5/models/kegiatan/broadcast_model.dart';
-import 'package:jawara_pintar_kel_5/services/broadcast_service.dart';
-import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
+import 'package:SapaWarga_kel_2/models/kegiatan/broadcast_model.dart';
+import 'package:SapaWarga_kel_2/services/broadcast_service.dart';
+import 'package:SapaWarga_kel_2/constants/constant_colors.dart';
 import 'broadcast_filter_screen.dart';
 import 'detail_broadcast_screen.dart';
 import 'tambah_broadcast.dart';

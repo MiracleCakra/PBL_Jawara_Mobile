@@ -1,6 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/order_model.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/order_item_model.dart';
+import 'package:SapaWarga_kel_2/models/marketplace/order_model.dart';
+import 'package:SapaWarga_kel_2/models/marketplace/order_item_model.dart';
 
 class OrderService {
   final SupabaseClient _supabase = Supabase.instance.client;

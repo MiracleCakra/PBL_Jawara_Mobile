@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/order_model.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/marketplace/belanja/write_review_screen.dart';
-import 'package:jawara_pintar_kel_5/services/marketplace/order_service.dart';
-import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
+import 'package:SapaWarga_kel_2/models/marketplace/order_model.dart';
+import 'package:SapaWarga_kel_2/screens/warga/marketplace/belanja/write_review_screen.dart';
+import 'package:SapaWarga_kel_2/services/marketplace/order_service.dart';
+import 'package:SapaWarga_kel_2/utils.dart' show formatRupiah;
 
 class BuyerOrderDetailScreen extends StatefulWidget {
   final OrderModel order;

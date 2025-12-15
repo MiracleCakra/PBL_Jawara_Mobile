@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/product_validation_model.dart';
-import 'package:jawara_pintar_kel_5/services/marketplace/product_service.dart';
+import 'package:SapaWarga_kel_2/models/marketplace/product_validation_model.dart';
+import 'package:SapaWarga_kel_2/services/marketplace/product_service.dart';
 
 const Color _primaryColor = Color(0xFF6366F1);
 const Color _successColor = Color(0xFF6366F1);

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/pemasukan_lain_screen.dart';
+import 'package:SapaWarga_kel_2/screens/admin/pemasukan/pemasukan_lain_screen.dart';
 
 class DetailPemasukanLainScreen extends StatelessWidget {
   final PemasukanLainModel data;

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
-import 'package:jawara_pintar_kel_5/providers/product_provider.dart';
-import 'package:jawara_pintar_kel_5/services/marketplace/product_service.dart';
-import 'package:jawara_pintar_kel_5/utils.dart' show formatRupiah;
-import 'package:jawara_pintar_kel_5/widget/marketplace/custom_dialog.dart';
-import 'package:jawara_pintar_kel_5/widget/product_image.dart';
+import 'package:SapaWarga_kel_2/models/marketplace/product_model.dart';
+import 'package:SapaWarga_kel_2/providers/product_provider.dart';
+import 'package:SapaWarga_kel_2/services/marketplace/product_service.dart';
+import 'package:SapaWarga_kel_2/utils.dart' show formatRupiah;
+import 'package:SapaWarga_kel_2/widget/marketplace/custom_dialog.dart';
+import 'package:SapaWarga_kel_2/widget/product_image.dart';
 import 'package:provider/provider.dart';
 
 class MyStoreProductDetailScreen extends StatefulWidget {

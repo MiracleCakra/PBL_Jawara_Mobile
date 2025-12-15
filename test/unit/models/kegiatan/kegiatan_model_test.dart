@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:jawara_pintar_kel_5/models/kegiatan/kegiatan_model.dart';
+import 'package:SapaWarga_kel_2/models/kegiatan/kegiatan_model.dart';
 
 void main() {
   group('KegiatanModel Test', () {

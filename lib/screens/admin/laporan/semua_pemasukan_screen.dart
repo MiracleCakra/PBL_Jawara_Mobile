@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:jawara_pintar_kel_5/models/keuangan/laporan_keuangan_model.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/laporan/detail_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/laporan/pemasukan_lain_tambah_screen.dart';
-import 'package:jawara_pintar_kel_5/utils.dart'
+import 'package:SapaWarga_kel_2/models/keuangan/laporan_keuangan_model.dart';
+import 'package:SapaWarga_kel_2/screens/admin/laporan/detail_screen.dart';
+import 'package:SapaWarga_kel_2/screens/admin/laporan/pemasukan_lain_tambah_screen.dart';
+import 'package:SapaWarga_kel_2/utils.dart'
     show formatDate, formatRupiah, openDateTimePicker;
 import 'package:moon_design/moon_design.dart';
-import 'package:jawara_pintar_kel_5/utils.dart' show getPrimaryColor;
+import 'package:SapaWarga_kel_2/utils.dart' show getPrimaryColor;
 
 class SemuaPemasukanScreen extends StatefulWidget {
   const SemuaPemasukanScreen({super.key});
