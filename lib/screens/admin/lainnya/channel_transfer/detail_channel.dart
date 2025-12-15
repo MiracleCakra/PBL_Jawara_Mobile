@@ -367,7 +367,10 @@ class _DetailChannelPageState extends State<DetailChannelPage> {
                       value: data.pemilik,
                     ),
                     const SizedBox(height: 20),
-                    _buildDetailItem(label: 'Catatan', value: data.catatan),
+                    _buildDetailItem(
+                      label: 'Catatan',
+                      value: data.catatan ?? '',
+                    ),
 
                     // --- TAMPILKAN QRIS JIKA ADA ---
                     if (data.qrisImg != null && data.qrisImg!.isNotEmpty) ...[

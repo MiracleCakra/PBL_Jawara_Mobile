@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jawara_pintar_kel_5/models/keuangan/channel_transfer_model.dart';
 import 'package:jawara_pintar_kel_5/models/keuangan/warga_tagihan_model.dart';
 
 class DetailTagihanWargaScreen extends StatefulWidget {
@@ -17,6 +18,7 @@ class _DetailTagihanWargaScreenState extends State<DetailTagihanWargaScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late String _currentStatus;
+  List<ChannelTransferModel> channels = [];
 
   @override
   void initState() {
@@ -25,6 +27,7 @@ class _DetailTagihanWargaScreenState extends State<DetailTagihanWargaScreen>
     _tabController.addListener(() {
       setState(() {});
     });
+    _loadChannels();
     _currentStatus = widget.tagihan.status;
   }
 
@@ -32,6 +35,17 @@ class _DetailTagihanWargaScreenState extends State<DetailTagihanWargaScreen>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  _loadChannels() async {
+    try {
+      final fetchedChannels = await ChannelTransferModel.fetchChannels();
+      setState(() {
+        channels = fetchedChannels; // List<ChannelTransferModel>
+      });
+    } catch (e) {
+      debugPrint("Error fetching channels: $e");
+    }
   }
 
   // --- Helper Format Currency ---
@@ -459,23 +473,8 @@ class _DetailTagihanWargaScreenState extends State<DetailTagihanWargaScreen>
     );
   }
 
-  void _showChannelTransferBottomSheet() {
+  void _showChannelTransferBottomSheet() async {
     debugPrint('=== Bottom sheet method called ===');
-
-    final List<Map<String, String>> channels = [
-      {
-        'name': 'Transfer BCA',
-        'type': 'Bank',
-        'account': '4391061615',
-        'owner': 'Sirfara//Bendahara',
-      },
-      {
-        'name': 'Gopay Ketua RT 8',
-        'type': 'e-wallet',
-        'account': '081234567890',
-        'owner': 'Budi Santoso',
-      },
-    ];
 
     debugPrint('Total channels: ${channels.length}');
 
@@ -520,7 +519,15 @@ class _DetailTagihanWargaScreenState extends State<DetailTagihanWargaScreen>
                   itemCount: channels.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
-                    final channel = channels[index];
+                    final channel =
+                        channels[index]; // ChannelTransferModel instance
+                    final Map<String, String> channelMap = {
+                      'name': channel
+                          .nama, // Sesuaikan dengan properti yang ada pada ChannelTransferModel
+                      'type': channel.tipe,
+                      'account': channel.norek,
+                      'owner': channel.pemilik,
+                    };
                     return Material(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
@@ -531,11 +538,10 @@ class _DetailTagihanWargaScreenState extends State<DetailTagihanWargaScreen>
 
                           // 2. Navigasi menggunakan GoRouter dan tunggu hasilnya
                           final result = await context.pushNamed(
-                            // Menggunakan pushNamed agar bisa menerima result
                             'FormPembayaranWarga',
                             extra: {
                               'tagihan': widget.tagihan,
-                              'channel': channel,
+                              'channel': channelMap,
                             },
                           );
 
@@ -571,9 +577,9 @@ class _DetailTagihanWargaScreenState extends State<DetailTagihanWargaScreen>
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Icon(
-                                  channel['type'] == 'Bank'
+                                  channel.tipe == 'Bank'
                                       ? Icons.account_balance
-                                      : channel['type'] == 'QRIS'
+                                      : channel.tipe == 'QRIS'
                                       ? Icons.qr_code
                                       : Icons.account_balance_wallet,
                                   color: const Color(0xFF6366F1),
@@ -586,7 +592,7 @@ class _DetailTagihanWargaScreenState extends State<DetailTagihanWargaScreen>
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      channel['name'] ?? '-',
+                                      channel.nama,
                                       style: const TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w600,
@@ -595,7 +601,7 @@ class _DetailTagihanWargaScreenState extends State<DetailTagihanWargaScreen>
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      channel['owner'] ?? '-',
+                                      channel.pemilik,
                                       style: TextStyle(
                                         fontSize: 13,
                                         color: Colors.grey[600],

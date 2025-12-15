@@ -1,4 +1,6 @@
+import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:jawara_pintar_kel_5/models/keuangan/laporan_keuangan_model.dart';
 import 'package:jawara_pintar_kel_5/utils.dart'
     show formatDate, getPrimaryColor, openDateTimePicker;
 import 'package:jawara_pintar_kel_5/widget/moon_result_modal.dart'
@@ -16,6 +18,15 @@ class _CetakLaporanScreenState extends State<CetakLaporanScreen> {
   String _selectedType = 'pemasukan';
   DateTime? _startDate;
   DateTime? _endDate;
+  List<LaporanKeuanganModel> _laporanData = [];
+
+  LaporanKeuanganModel laporanKeuanganModel = LaporanKeuanganModel(
+    tanggal: DateTime.now(),
+    nama: "",
+    nominal: 0,
+    kategoriPengeluaran: '',
+    buktiFoto: '',
+  );
 
   // State untuk filter Kategori Iuran
   String _selectedCategory = 'Semua';
@@ -27,6 +38,65 @@ class _CetakLaporanScreenState extends State<CetakLaporanScreen> {
     'Iuran Khusus',
     // Tambahkan kategori lain jika ada
   ];
+
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   _loadLaporanData();
+  // }
+
+  _loadLaporanData() async {
+    debugPrint(
+      'Loading laporan data $_selectedType... (start: $_startDate, end: $_endDate)',
+    );
+
+    // Clear previous data
+    _laporanData.clear();
+
+    // Fetch data based on selected type and date range
+    try {
+      switch (_selectedType) {
+        case 'pemasukan':
+          var iuranData = await laporanKeuanganModel.fetchIuran(
+            startDate: _startDate,
+            endDate: _endDate,
+          );
+          var pemasukanData = await laporanKeuanganModel.fetchPemasukan(
+            startDate: _startDate,
+            endDate: _endDate,
+          );
+          _laporanData.addAll(iuranData);
+          _laporanData.addAll(pemasukanData);
+          break;
+        case 'pengeluaran':
+          var pengeluaranData = await laporanKeuanganModel.fetchPengeluaran(
+            startDate: _startDate,
+            endDate: _endDate,
+          );
+          _laporanData.addAll(pengeluaranData);
+          break;
+        default:
+          var allIuranData = await laporanKeuanganModel.fetchIuran(
+            startDate: _startDate,
+            endDate: _endDate,
+          );
+          var allPemasukanData = await laporanKeuanganModel.fetchPemasukan(
+            startDate: _startDate,
+            endDate: _endDate,
+          );
+          var allPengeluaranData = await laporanKeuanganModel.fetchPengeluaran(
+            startDate: _startDate,
+            endDate: _endDate,
+          );
+          _laporanData.addAll(allIuranData);
+          _laporanData.addAll(allPemasukanData);
+          _laporanData.addAll(allPengeluaranData);
+          break;
+      }
+    } catch (e) {
+      debugPrint('Error loading laporan data: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +135,9 @@ class _CetakLaporanScreenState extends State<CetakLaporanScreen> {
               decoration: ShapeDecoration(
                 color: Colors.white,
                 shape: MoonSquircleBorder(
-                  borderRadius: BorderRadius.circular(16).squircleBorderRadius(context),
+                  borderRadius: BorderRadius.circular(
+                    16,
+                  ).squircleBorderRadius(context),
                 ),
                 shadows: [
                   BoxShadow(
@@ -107,7 +179,9 @@ class _CetakLaporanScreenState extends State<CetakLaporanScreen> {
               decoration: ShapeDecoration(
                 color: Colors.white,
                 shape: MoonSquircleBorder(
-                  borderRadius: BorderRadius.circular(16).squircleBorderRadius(context),
+                  borderRadius: BorderRadius.circular(
+                    16,
+                  ).squircleBorderRadius(context),
                 ),
                 shadows: [
                   BoxShadow(
@@ -134,7 +208,9 @@ class _CetakLaporanScreenState extends State<CetakLaporanScreen> {
                       Expanded(
                         child: _DateField(
                           label: 'Dari tanggal',
-                          value: _startDate == null ? null : formatDate(_startDate!),
+                          value: _startDate == null
+                              ? null
+                              : formatDate(_startDate!),
                           onTap: () async {
                             final picked = await openDateTimePicker(context);
                             if (picked != null) {
@@ -147,7 +223,9 @@ class _CetakLaporanScreenState extends State<CetakLaporanScreen> {
                       Expanded(
                         child: _DateField(
                           label: 'Sampai tanggal',
-                          value: _endDate == null ? null : formatDate(_endDate!),
+                          value: _endDate == null
+                              ? null
+                              : formatDate(_endDate!),
                           onTap: () async {
                             final picked = await openDateTimePicker(context);
                             if (picked != null) {
@@ -166,7 +244,9 @@ class _CetakLaporanScreenState extends State<CetakLaporanScreen> {
                         flex: 3,
                         child: MoonFilledButton(
                           backgroundColor: getPrimaryColor(context),
-                          onTap: _printReport,
+                          onTap: () async {
+                            await _printReport();
+                          },
                           label: const Text('Cetak'),
                         ),
                       ),
@@ -183,107 +263,105 @@ class _CetakLaporanScreenState extends State<CetakLaporanScreen> {
   }
 
   void _showCategoryFilterModal() {
-  String tempSelected = _selectedCategory;
+    String tempSelected = _selectedCategory;
 
-  final primaryColor = getPrimaryColor(context);
+    final primaryColor = getPrimaryColor(context);
 
-  showMoonModalBottomSheet(
-    context: context,
-    enableDrag: true,
-    height: MediaQuery.of(context).size.height * 0.65,
-    builder: (BuildContext context) => StatefulBuilder(
-      builder: (context, setStateModal) {
-        return Column(
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              height: 4,
-              width: 40,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(40),
+    showMoonModalBottomSheet(
+      context: context,
+      enableDrag: true,
+      height: MediaQuery.of(context).size.height * 0.65,
+      builder: (BuildContext context) => StatefulBuilder(
+        builder: (context, setStateModal) {
+          return Column(
+            children: [
+              const SizedBox(height: 8),
+              Container(
+                height: 4,
+                width: 40,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(40),
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              "Filter Kategori",
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
+              const SizedBox(height: 12),
+              const Text(
+                "Filter Kategori",
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
               ),
-            ),
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            Expanded(
-              child: ListView(
-                children: List.generate(_jenisIuranOptions.length, (index) {
-                  final option = _jenisIuranOptions[index];
-                  final isSelected = tempSelected == option;
+              Expanded(
+                child: ListView(
+                  children: List.generate(_jenisIuranOptions.length, (index) {
+                    final option = _jenisIuranOptions[index];
+                    final isSelected = tempSelected == option;
 
-                  return MoonMenuItem(
-                    onTap: () {
-                      setStateModal(() => tempSelected = option);
-                    },
-                    label: Text(option),
-                    trailing: isSelected
-                        ? const Icon(MoonIcons.generic_check_alternative_32_light)
-                        : null,
-                  );
-                }),
+                    return MoonMenuItem(
+                      onTap: () {
+                        setStateModal(() => tempSelected = option);
+                      },
+                      label: Text(option),
+                      trailing: isSelected
+                          ? const Icon(
+                              MoonIcons.generic_check_alternative_32_light,
+                            )
+                          : null,
+                    );
+                  }),
+                ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: MoonFilledButton(
-                      backgroundColor: Colors.grey[300],
-                      label: const Text(
-                        "Reset",
-                        style: TextStyle(color: Colors.black),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: MoonFilledButton(
+                        backgroundColor: Colors.grey[300],
+                        label: const Text(
+                          "Reset",
+                          style: TextStyle(color: Colors.black),
+                        ),
+                        onTap: () {
+                          setState(() => _selectedCategory = "Semua");
+                          Navigator.pop(context);
+                        },
                       ),
-                      onTap: () {
-                        setState(() => _selectedCategory = "Semua");
-                        Navigator.pop(context);
-                      },
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: MoonFilledButton(
-                      backgroundColor: primaryColor,
-                      label: const Text("Terapkan"),
-                      onTap: () {
-                        setState(() => _selectedCategory = tempSelected);
-                        Navigator.pop(context);
-                      },
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: MoonFilledButton(
+                        backgroundColor: primaryColor,
+                        label: const Text("Terapkan"),
+                        onTap: () {
+                          setState(() => _selectedCategory = tempSelected);
+                          Navigator.pop(context);
+                        },
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            )
-          ],
-        );
-      },
-    ),
-  );
-}
-
+            ],
+          );
+        },
+      ),
+    );
+  }
 
   // Helper function untuk mendapatkan ikon
-  IconData _getJenisIcon(String jenis) {
-    switch (jenis) {
-      case 'Semua':
-        return Icons.apps;
-      case 'Iuran Bulanan':
-        return Icons.calendar_month;
-      case 'Iuran Khusus':
-        return Icons.star_outline;
-      default:
-        return Icons.category;
-    }
-  }
+  // IconData _getJenisIcon(String jenis) {
+  //   switch (jenis) {
+  //     case 'Semua':
+  //       return Icons.apps;
+  //     case 'Iuran Bulanan':
+  //       return Icons.calendar_month;
+  //     case 'Iuran Khusus':
+  //       return Icons.star_outline;
+  //     default:
+  //       return Icons.category;
+  //   }
+  // }
 
   // --- Utility & Display Helpers ---
 
@@ -314,15 +392,50 @@ class _CetakLaporanScreenState extends State<CetakLaporanScreen> {
         ? ' untuk kategori **$_selectedCategory**'
         : '';
 
-    await showResultModal(
-      context,
-      type: ResultType.success,
-      title: 'Laporan siap!',
-      description:
-          'Laporan **${_labelForType(_selectedType).toLowerCase()}**$categoryText periode $_periodLabel berhasil disiapkan.',
-      actionLabel: 'Selesai',
-      onAction: () {},
-    );
+    log('Printing laporan $_selectedType...', name: 'cetakLaporan');
+
+    // Load the report data asynchronously
+    await _loadLaporanData(); // Await the data loading
+
+    try {
+      // Attempt to export to Excel and save the file
+      bool isSaved = await laporanKeuanganModel.exportToExcel(_laporanData);
+
+      // Show success modal after the file is saved
+      if (isSaved) {
+        _laporanData.clear(); // Clear the data after saving
+        await showResultModal(
+          context,
+          type: ResultType.success,
+          title: 'Laporan siap!',
+          description:
+              'Laporan **${_labelForType(_selectedType).toLowerCase()}**$categoryText periode $_periodLabel berhasil disiapkan.',
+          actionLabel: 'Selesai',
+          onAction: () {},
+        );
+      } else {
+        // If the file wasn't saved, show an error message
+        await showResultModal(
+          context,
+          type: ResultType.error,
+          title: 'Gagal menyimpan laporan',
+          description:
+              'Terjadi kesalahan saat menyimpan laporan. Pastikan Anda memberi izin akses penyimpanan.',
+          actionLabel: 'Coba Lagi',
+          onAction: () {},
+        );
+      }
+    } catch (e) {
+      // If there's any error in the process, show an error message
+      await showResultModal(
+        context,
+        type: ResultType.error,
+        title: 'Terjadi Kesalahan',
+        description: 'Ada masalah dalam memproses laporan. Silakan coba lagi.',
+        actionLabel: 'Coba Lagi',
+        onAction: () {},
+      );
+    }
   }
 }
 
@@ -338,7 +451,7 @@ class _CategoryFilterBar extends StatelessWidget {
   });
 
   @override
-   Widget build(BuildContext context) {
+  Widget build(BuildContext context) {
     return Material(
       color: primaryColor,
       shape: MoonSquircleBorder(
@@ -362,7 +475,7 @@ class _CategoryFilterBar extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                   fontSize: 16,
                 ),
-              )
+              ),
             ],
           ),
         ),
@@ -370,7 +483,6 @@ class _CategoryFilterBar extends StatelessWidget {
     );
   }
 }
-
 
 class _TypeSegmented extends StatelessWidget {
   final String value;
