@@ -5,10 +5,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:jawara_pintar_kel_5/models/kegiatan/kegiatan_model.dart';
-import 'package:jawara_pintar_kel_5/services/kegiatan_service.dart';
-import 'package:jawara_pintar_kel_5/widget/moon_result_modal.dart';
-import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
+import 'package:SapaWarga_kel_2/models/kegiatan/kegiatan_model.dart';
+import 'package:SapaWarga_kel_2/services/kegiatan_service.dart';
+import 'package:SapaWarga_kel_2/widget/moon_result_modal.dart';
+import 'package:SapaWarga_kel_2/constants/constant_colors.dart';
 
 class EditKegiatanScreen extends StatefulWidget {
   final KegiatanModel kegiatan;

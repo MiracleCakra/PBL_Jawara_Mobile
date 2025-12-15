@@ -4,7 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:jawara_pintar_kel_5/services/marketplace/vegetable_detection_service.dart';
+import 'package:SapaWarga_kel_2/services/marketplace/vegetable_detection_service.dart';
 
 void main() {
   group('VegetableDetectionService - PCVK API Tests', () {

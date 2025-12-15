@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:jawara_pintar_kel_5/models/keuangan/iuran_model.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/pemasukan/edit_iuran_screen.dart';
-import 'package:jawara_pintar_kel_5/utils.dart';
+import 'package:SapaWarga_kel_2/models/keuangan/iuran_model.dart';
+import 'package:SapaWarga_kel_2/screens/admin/pemasukan/edit_iuran_screen.dart';
+import 'package:SapaWarga_kel_2/utils.dart';
 
 class DetailIuranScreen extends StatelessWidget {
   final IuranModel iuran;

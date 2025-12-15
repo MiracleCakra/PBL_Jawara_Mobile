@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/store_model.dart';
-import 'package:jawara_pintar_kel_5/services/store_status_service.dart';
+import 'package:SapaWarga_kel_2/models/marketplace/store_model.dart';
+import 'package:SapaWarga_kel_2/services/store_status_service.dart';
 import 'store_dashboard.dart';
 
 class WargaStoreLoginScreen extends StatefulWidget {

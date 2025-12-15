@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:jawara_pintar_kel_5/models/keuangan/pengeluaran_model.dart';
+import 'package:SapaWarga_kel_2/models/keuangan/pengeluaran_model.dart';
 
 class DetailPengeluaranScreen extends StatelessWidget {
   final PengeluaranModel pengeluaran;

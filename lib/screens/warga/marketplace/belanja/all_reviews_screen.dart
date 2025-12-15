@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
-import 'package:jawara_pintar_kel_5/services/marketplace/review_service.dart';
+import 'package:SapaWarga_kel_2/models/marketplace/product_model.dart';
+import 'package:SapaWarga_kel_2/services/marketplace/review_service.dart';
 
 class AllReviewsScreen extends StatefulWidget {
   final ProductModel product;

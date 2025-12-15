@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/product_validation_model.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/store_model.dart';
-import 'package:jawara_pintar_kel_5/services/marketplace/product_service.dart';
-import 'package:jawara_pintar_kel_5/services/marketplace/store_service.dart';
+import 'package:SapaWarga_kel_2/models/marketplace/product_model.dart';
+import 'package:SapaWarga_kel_2/models/marketplace/product_validation_model.dart';
+import 'package:SapaWarga_kel_2/models/marketplace/store_model.dart';
+import 'package:SapaWarga_kel_2/services/marketplace/product_service.dart';
+import 'package:SapaWarga_kel_2/services/marketplace/store_service.dart';
 
 import 'detail_validasi_produk.dart';
 

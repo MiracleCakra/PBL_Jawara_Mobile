@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/penduduk/rumah/daftar_rumah.dart';
-import 'package:jawara_pintar_kel_5/widget/moon_result_modal.dart';
+import 'package:SapaWarga_kel_2/screens/admin/penduduk/rumah/daftar_rumah.dart';
+import 'package:SapaWarga_kel_2/widget/moon_result_modal.dart';
 import 'package:moon_design/moon_design.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 

@@ -5,12 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
-import 'package:jawara_pintar_kel_5/screens/auth/auth_service.dart';
-import 'package:jawara_pintar_kel_5/widget/drop_down_trailing_arrow.dart';
-import 'package:jawara_pintar_kel_5/widget/login_button.dart';
-import 'package:jawara_pintar_kel_5/widget/system_ui_style.dart';
-import 'package:jawara_pintar_kel_5/widget/text_input_login.dart';
+import 'package:SapaWarga_kel_2/constants/constant_colors.dart';
+import 'package:SapaWarga_kel_2/screens/auth/auth_service.dart';
+import 'package:SapaWarga_kel_2/widget/drop_down_trailing_arrow.dart';
+import 'package:SapaWarga_kel_2/widget/login_button.dart';
+import 'package:SapaWarga_kel_2/widget/system_ui_style.dart';
+import 'package:SapaWarga_kel_2/widget/text_input_login.dart';
 import 'package:moon_design/moon_design.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 

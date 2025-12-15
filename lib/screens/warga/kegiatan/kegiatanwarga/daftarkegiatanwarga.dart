@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/kegiatan/kegiatan_model.dart';
-import 'package:jawara_pintar_kel_5/services/kegiatan_service.dart';
-import 'package:jawara_pintar_kel_5/screens/warga/kegiatan/kegiatanwarga/filter_kegiatan_warga.dart';
+import 'package:SapaWarga_kel_2/models/kegiatan/kegiatan_model.dart';
+import 'package:SapaWarga_kel_2/services/kegiatan_service.dart';
+import 'package:SapaWarga_kel_2/screens/warga/kegiatan/kegiatanwarga/filter_kegiatan_warga.dart';
 
 
 class DaftarKegiatanWargaScreen extends StatefulWidget {

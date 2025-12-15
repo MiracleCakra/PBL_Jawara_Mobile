@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:jawara_pintar_kel_5/main.dart' as app;
+import 'package:SapaWarga_kel_2/main.dart' as app;
 
 /// Helper function to perform login for integration tests.
 /// 

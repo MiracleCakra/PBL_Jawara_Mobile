@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/product_model.dart';
-import 'package:jawara_pintar_kel_5/services/marketplace/product_service.dart';
-import 'package:jawara_pintar_kel_5/utils.dart'
+import 'package:SapaWarga_kel_2/models/marketplace/product_model.dart';
+import 'package:SapaWarga_kel_2/services/marketplace/product_service.dart';
+import 'package:SapaWarga_kel_2/utils.dart'
     show formatRupiah, unformatRupiah;
-import 'package:jawara_pintar_kel_5/widget/marketplace/custom_dialog.dart';
+import 'package:SapaWarga_kel_2/widget/marketplace/custom_dialog.dart';
 
 class MyStoreProductEditScreen extends StatefulWidget {
   final ProductModel product;

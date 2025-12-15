@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moon_design/moon_design.dart';
-import 'package:jawara_pintar_kel_5/widget/marketplace/custom_dialog.dart';
+import 'package:SapaWarga_kel_2/widget/marketplace/custom_dialog.dart';
 
 
 class PengaturanAkunScreen extends StatelessWidget {

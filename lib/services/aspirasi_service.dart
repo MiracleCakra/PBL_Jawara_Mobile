@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:jawara_pintar_kel_5/models/kegiatan/aspirasi_model.dart';
-import 'package:jawara_pintar_kel_5/services/activity_log_service.dart';
+import 'package:SapaWarga_kel_2/models/kegiatan/aspirasi_model.dart';
+import 'package:SapaWarga_kel_2/services/activity_log_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AspirasiService {

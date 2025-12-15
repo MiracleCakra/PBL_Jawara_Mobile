@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/services/marketplace/store_verification_helper.dart';
+import 'package:SapaWarga_kel_2/services/marketplace/store_verification_helper.dart';
 
 /// Widget wrapper that checks store verification status before allowing access
 class StoreVerifiedWrapper extends StatefulWidget {

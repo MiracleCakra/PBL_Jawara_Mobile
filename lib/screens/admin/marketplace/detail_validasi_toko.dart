@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/store_model.dart';
-import 'package:jawara_pintar_kel_5/providers/marketplace/store_provider.dart';
-import 'package:jawara_pintar_kel_5/services/marketplace/store_service.dart';
+import 'package:SapaWarga_kel_2/models/marketplace/store_model.dart';
+import 'package:SapaWarga_kel_2/providers/marketplace/store_provider.dart';
+import 'package:SapaWarga_kel_2/services/marketplace/store_service.dart';
 import 'package:provider/provider.dart';
 
 const Color _primaryColor = Color(0xFF4E46B4);

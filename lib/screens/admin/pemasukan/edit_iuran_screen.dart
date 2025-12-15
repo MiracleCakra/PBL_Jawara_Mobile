@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:jawara_pintar_kel_5/models/keuangan/iuran_model.dart';
-import 'package:jawara_pintar_kel_5/utils.dart';
+import 'package:SapaWarga_kel_2/models/keuangan/iuran_model.dart';
+import 'package:SapaWarga_kel_2/utils.dart';
 
 class EditIuranScreen extends StatefulWidget {
   final IuranModel iuran;

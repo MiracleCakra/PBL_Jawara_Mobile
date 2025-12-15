@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/services/pengguna_service.dart';
-import 'package:jawara_pintar_kel_5/widget/moon_result_modal.dart';
+import 'package:SapaWarga_kel_2/services/pengguna_service.dart';
+import 'package:SapaWarga_kel_2/widget/moon_result_modal.dart';
 
 class EditPenggunaScreen extends StatefulWidget {
   final Map<String, dynamic> userData;

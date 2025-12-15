@@ -1,12 +1,12 @@
 import 'dart:io';
-import 'package:jawara_pintar_kel_5/constants/constant_colors.dart';
+import 'package:SapaWarga_kel_2/constants/constant_colors.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:jawara_pintar_kel_5/models/kegiatan/broadcast_model.dart';
-import 'package:jawara_pintar_kel_5/services/broadcast_service.dart';
-import 'package:jawara_pintar_kel_5/widget/moon_result_modal.dart';
+import 'package:SapaWarga_kel_2/models/kegiatan/broadcast_model.dart';
+import 'package:SapaWarga_kel_2/services/broadcast_service.dart';
+import 'package:SapaWarga_kel_2/widget/moon_result_modal.dart';
 
 class EditBroadcastScreen extends StatefulWidget {
   final BroadcastModel broadcast;

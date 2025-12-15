@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:jawara_pintar_kel_5/models/marketplace/ReviewModel.dart';
-import 'package:jawara_pintar_kel_5/services/marketplace/review_service.dart';
-import 'package:jawara_pintar_kel_5/widget/marketplace/custom_dialog.dart';
+import 'package:SapaWarga_kel_2/models/marketplace/ReviewModel.dart';
+import 'package:SapaWarga_kel_2/services/marketplace/review_service.dart';
+import 'package:SapaWarga_kel_2/widget/marketplace/custom_dialog.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class WriteReviewScreen extends StatefulWidget {

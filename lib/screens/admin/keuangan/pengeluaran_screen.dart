@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/pengeluaran/daftar_pengeluaran_screen.dart';
-import 'package:jawara_pintar_kel_5/screens/admin/pengeluaran/tambah_pengeluaran_screen.dart';
+import 'package:SapaWarga_kel_2/screens/admin/pengeluaran/daftar_pengeluaran_screen.dart';
+import 'package:SapaWarga_kel_2/screens/admin/pengeluaran/tambah_pengeluaran_screen.dart';
 
 class PengeluaranScreen extends StatelessWidget {
   const PengeluaranScreen({super.key});

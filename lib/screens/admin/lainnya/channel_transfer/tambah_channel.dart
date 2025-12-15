@@ -3,8 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:jawara_pintar_kel_5/models/keuangan/channel_transfer_model.dart';
-import 'package:jawara_pintar_kel_5/services/channel_transfer_service.dart';
+import 'package:SapaWarga_kel_2/models/keuangan/channel_transfer_model.dart';
+import 'package:SapaWarga_kel_2/services/channel_transfer_service.dart';
 
 class TambahChannelPage extends StatefulWidget {
   const TambahChannelPage({super.key});

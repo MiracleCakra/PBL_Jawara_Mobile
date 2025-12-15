@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/models/keluarga/warga_model.dart';
-import 'package:jawara_pintar_kel_5/services/pengguna_service.dart';
-import 'package:jawara_pintar_kel_5/utils.dart' show getPrimaryColor;
+import 'package:SapaWarga_kel_2/models/keluarga/warga_model.dart';
+import 'package:SapaWarga_kel_2/services/pengguna_service.dart';
+import 'package:SapaWarga_kel_2/utils.dart' show getPrimaryColor;
 
 class ManajemenPenggunaScreen extends StatefulWidget {
   const ManajemenPenggunaScreen({super.key});

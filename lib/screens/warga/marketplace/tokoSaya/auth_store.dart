@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jawara_pintar_kel_5/services/store_status_service.dart';
+import 'package:SapaWarga_kel_2/services/store_status_service.dart';
 import 'package:moon_design/moon_design.dart';
 
 class AuthStoreScreen extends StatefulWidget {

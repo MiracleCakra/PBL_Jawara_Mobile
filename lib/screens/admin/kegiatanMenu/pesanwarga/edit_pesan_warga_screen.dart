@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:jawara_pintar_kel_5/models/kegiatan/aspirasi_model.dart';
-import 'package:jawara_pintar_kel_5/services/aspirasi_service.dart';
+import 'package:SapaWarga_kel_2/models/kegiatan/aspirasi_model.dart';
+import 'package:SapaWarga_kel_2/services/aspirasi_service.dart';
 
 class EditPesanWargaScreen extends StatefulWidget {
   final AspirasiModel pesan;
