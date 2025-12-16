@@ -126,6 +126,46 @@ SapaWarga hadir untuk mengatasi permasalahan tersebut dengan menyediakan platfor
 
 ---
 
+## 🎯 Demo Video
+
+Rekaman demo diambil melalui web dikarenakan keterbatasan pada mobile dan beberapa fitur tidak ditunjukkan.
+
+### 👤 Manajemen Pengguna
+
+![](demo/ManajemenPengguna.gif)
+
+### 👨‍👩‍👧‍👦 Manajemen Penduduk & Keluarga
+
+#### Manajemen Keluarga (Warga)
+
+![](demo/MVPManajemenKeluarga.gif)
+
+#### Manajemen Penduduk (Admin)
+
+![](demo/MVPManajemenPenduduk.gif)
+
+### 💰 Manajemen Keuangan
+
+![](demo/MVPKeuanganAdmin.gif)
+
+### 📢 Kegiatan & Komunikasi
+
+#### Aspirasi Warga
+
+![](demo/MVPAspirasiWarga.gif)
+
+#### Manajemen Kegiatan (Admin)
+
+![](demo/MVPKegiatan.gif)
+
+### 🛒 Marketplace UMKM Warga
+
+#### Validasi Produk (Admin)
+
+![](demo/MVPValidateMarket.gif)
+
+---
+
 ## 📁 Struktur Proyek
 
 ```
