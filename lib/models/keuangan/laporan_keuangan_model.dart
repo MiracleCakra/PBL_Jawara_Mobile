@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:excel/excel.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -24,6 +25,10 @@ class LaporanKeuanganModel {
     this.buktiFoto,
   });
 
+  String formatDate(DateTime date) {
+    return DateFormat('yyyy-MM-dd').format(date);
+  }
+
   Future<List<LaporanKeuanganModel>> fetchIuran({
     DateTime? startDate,
     DateTime? endDate,
@@ -38,28 +43,12 @@ class LaporanKeuanganModel {
 
       // Apply start date filter if it is provided
       if (startDate != null) {
-        // Normalize the start date to ignore the time component
-        DateTime normalizedStartDate = DateTime(
-          startDate.year,
-          startDate.month,
-          startDate.day,
-        );
-        query.gte('tgl_bayar', normalizedStartDate.toIso8601String());
+        query.gte('tgl_bayar', formatDate(startDate));
       }
 
       // Apply end date filter if it is provided
       if (endDate != null) {
-        // Normalize the end date to ignore the time component and set it to the end of the day
-        DateTime normalizedEndDate = DateTime(
-          endDate.year,
-          endDate.month,
-          endDate.day,
-          23,
-          59,
-          59,
-          999,
-        );
-        query.lte('tgl_bayar', normalizedEndDate.toIso8601String());
+        query.lte('tgl_bayar', formatDate(endDate));
       }
 
       final response = await query;
@@ -91,28 +80,12 @@ class LaporanKeuanganModel {
 
       // Apply start date filter if it is provided
       if (startDate != null) {
-        // Normalize the start date to ignore the time component
-        DateTime normalizedStartDate = DateTime(
-          startDate.year,
-          startDate.month,
-          startDate.day,
-        );
-        query.gte('tanggal', normalizedStartDate.toIso8601String());
+        query.gte('tgl_bayar', formatDate(startDate));
       }
 
       // Apply end date filter if it is provided
       if (endDate != null) {
-        // Normalize the end date to ignore the time component and set it to the end of the day
-        DateTime normalizedEndDate = DateTime(
-          endDate.year,
-          endDate.month,
-          endDate.day,
-          23,
-          59,
-          59,
-          999,
-        );
-        query.lte('tanggal', normalizedEndDate.toIso8601String());
+        query.lte('tgl_bayar', formatDate(endDate));
       }
 
       final response = await query;
@@ -140,16 +113,18 @@ class LaporanKeuanganModel {
     DateTime? endDate,
   }) async {
     try {
-      final query = Supabase.instance.client.from('pengeluaran').select('*');
+      final query = Supabase.instance.client.from('pengeluaran').select();
 
       // Apply start date filter if it is provided
       if (startDate != null) {
-        query.gte('tanggal', startDate.toIso8601String());
+        query.gt('tanggal', formatDate(startDate));
+        debugPrint('debug tanggal: ${formatDate(startDate)}');
+        debugPrint('debug tanggal: $startDate}');
       }
 
       // Apply end date filter if it is provided
       if (endDate != null) {
-        query.lte('tanggal', endDate.toIso8601String());
+        query.lt('tanggal', formatDate(endDate));
       }
 
       final response = await query;

@@ -47,11 +47,12 @@ class _LoginScreenState extends State<LoginScreen> {
       final session = Supabase.instance.client.auth.currentSession;
       final response = await Supabase.instance.client
           .from('warga')
-          .select('role')
+          .select('role, status_penerimaan')
           .eq('email', email)
           .single();
 
-      if (session != null) {
+      String status = response['status_penerimaan'];  
+      if (session != null && status == 'Diterima') {
         final preferences = await SharedPreferences.getInstance();
         await preferences.setString('role', response['role']);
         String role = response['role'];
@@ -68,7 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
           default: ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Role tidak dikenal')));
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Session not found after login')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error cannot login')));
       }
     } catch (e) {
       if (mounted) {
