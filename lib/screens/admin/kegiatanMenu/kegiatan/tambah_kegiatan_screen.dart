@@ -37,9 +37,9 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
   ];
 
   DateTime? _selectedDate;
-  File? _selectedImageFile; // Untuk Mobile
-  Uint8List? _selectedImageBytes; // Untuk Web
-  String? _selectedImageName; // Nama file
+  List<File> _selectedFiles = []; // Untuk Mobile
+  List<Uint8List> _selectedBytes = []; // Untuk Web
+  List<String> _selectedNames = []; // Nama file
 
   @override
   void dispose() {
@@ -50,6 +50,8 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
     _tanggalController.dispose();
     super.dispose();
   }
+
+  // ... (existing _showSuccessDialog code remains same) ...
   Future<void> _showSuccessDialog() async {
     return showDialog<void>(
       context: context,
@@ -141,47 +143,82 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
   }
 
   Future<void> _pickImage() async {
+    // Cek limit 10
+    if (_selectedNames.length >= 10) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Maksimal 10 gambar yang diperbolehkan!'),
+            backgroundColor: Colors.grey.shade800,
+          ),
+        );
+      }
+      return;
+    }
+
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.image,
-      allowMultiple: false,
-      withData: true, // PENTING BUAT WEB: Biar bytes-nya ke-load
+      allowMultiple: true, // Allow multiple
+      withData: true, 
     );
 
     if (result != null && result.files.isNotEmpty) {
-      final PlatformFile file = result.files.first;
+      // Hitung sisa slot
+      int remainingSlots = 10 - _selectedNames.length;
+      List<PlatformFile> filesToProcess = result.files;
 
-      // Validasi Ukuran (5MB)
-      if (file.size > 5 * 1024 * 1024) {
+      if (filesToProcess.length > remainingSlots) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: const Text('Ukuran gambar melebihi batas 5MB!'), backgroundColor: Colors.grey.shade800),
+            SnackBar(
+              content: Text('Hanya $remainingSlots gambar lagi yang bisa ditambahkan.'),
+              backgroundColor: Colors.orange,
+            ),
           );
         }
-        return;
+        filesToProcess = filesToProcess.take(remainingSlots).toList();
       }
 
-      setState(() {
-        _selectedImageName = file.name;
-
-        if (kIsWeb) {
-          _selectedImageBytes = file.bytes; // Web pakai bytes
-        } else {
-          if (file.path != null) {
-            _selectedImageFile = File(file.path!); // Mobile pakai File Path
+      for (var file in filesToProcess) {
+        // Validasi Ukuran (5MB) per file
+        if (file.size > 5 * 1024 * 1024) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('File ${file.name} melebihi batas 5MB dan dilewati.'),
+                backgroundColor: Colors.red,
+              ),
+            );
           }
+          continue;
         }
-      });
+
+        setState(() {
+          _selectedNames.add(file.name);
+          if (kIsWeb) {
+            _selectedBytes.add(file.bytes!);
+          } else {
+            if (file.path != null) {
+              _selectedFiles.add(File(file.path!));
+            }
+          }
+        });
+      }
     }
   }
 
-  void _removeImage() {
+  void _removeImage(int index) {
     setState(() {
-      _selectedImageFile = null;
-      _selectedImageBytes = null;
-      _selectedImageName = null;
+      _selectedNames.removeAt(index);
+      if (kIsWeb) {
+        _selectedBytes.removeAt(index);
+      } else {
+        _selectedFiles.removeAt(index);
+      }
     });
   }
 
+  // ... (existing _selectDate code remains same) ...
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -206,18 +243,7 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
         _isLoading = true;
       });
       try {
-        String? imageUrl;
-        if (_selectedImageBytes != null || _selectedImageFile != null) {
-          final String uniqueFileName =
-              '${DateTime.now().millisecondsSinceEpoch}_${_selectedImageName ?? 'image.jpg'}';
-
-          imageUrl = await _kegiatanService.uploadKegiatanImage(
-            file: _selectedImageFile,
-            bytes: _selectedImageBytes,
-            fileName: uniqueFileName,
-          );
-        }
-
+        // 1. Create Kegiatan first
         final newKegiatan = KegiatanModel(
           judul: _namaController.text,
           kategori: _selectedKategori!,
@@ -225,12 +251,27 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
           lokasi: _lokasiController.text,
           pj: _pjController.text,
           deskripsi: _deskripsiController.text,
-          dibuatOleh: 'Admin', // Default value
-          hasDocs: imageUrl != null,
-          gambarDokumentasi: imageUrl,
+          dibuatOleh: 'Admin',
+          hasDocs: _selectedNames.isNotEmpty,
+          gambarDokumentasi: null, // Legacy field null, will rely on relation
         );
 
-        await _kegiatanService.createKegiatan(newKegiatan);
+        final createdKegiatan = await _kegiatanService.createKegiatan(newKegiatan);
+
+        // 2. Upload Images if any
+        if (_selectedNames.isNotEmpty) {
+          if (createdKegiatan.id == null) throw Exception("ID Kegiatan null setelah create");
+          
+          await _kegiatanService.uploadMultipleImages(
+            idKegiatan: createdKegiatan.id!,
+            files: kIsWeb ? null : _selectedFiles,
+            bytesList: kIsWeb ? _selectedBytes : null,
+            fileNames: _selectedNames.map((name) => 
+              '${DateTime.now().millisecondsSinceEpoch}_$name'
+            ).toList(),
+          );
+        }
+
         if (mounted) {
           await _showSuccessDialog();
         }
@@ -247,7 +288,8 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
       }
     }
   }
-
+  
+  // ... (existing _buildTextField code remains same) ...
   Widget _buildTextField(
     String label,
     TextEditingController controller,
@@ -299,6 +341,9 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
       ],
     );
   }
+  
+  // ... (build method updates below in separate replacement block or merged if concise)
+
 
   @override
   Widget build(BuildContext context) {
@@ -411,51 +456,82 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
                   ),
                   const SizedBox(height: 4),
                   const Text(
-                    'Maksimal 1 gambar (.png / .jpg), ukuran maksimal 5MB.',
+                    'Maksimal 10 gambar (.png / .jpg), ukuran maksimal 5MB per file.',
                     style: TextStyle(color: Colors.grey, fontSize: 12),
                   ),
                   const SizedBox(height: 8),
-                  if (_selectedImageBytes != null || _selectedImageFile != null)
-                    Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8.0),
-                          child: kIsWeb
-                              ? Image.memory(
-                                  // Web: Tampilkan dari memori (bytes)
-                                  _selectedImageBytes!,
-                                  width: double.infinity,
-                                  height: 200,
-                                  fit: BoxFit.cover,
-                                )
-                              : Image.file(
-                                  // Mobile: Tampilkan dari file path
-                                  _selectedImageFile!,
-                                  width: double.infinity,
-                                  height: 200,
-                                  fit: BoxFit.cover,
+                  if (_selectedNames.isNotEmpty)
+                    SizedBox(
+                      height: 150,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _selectedNames.length + (_selectedNames.length < 10 ? 1 : 0),
+                        separatorBuilder: (context, index) => const SizedBox(width: 8),
+                        itemBuilder: (context, index) {
+                          if (index == _selectedNames.length) {
+                            // Add button at the end
+                             return InkWell(
+                              onTap: _pickImage,
+                              child: Container(
+                                width: 120,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  border: Border.all(color: Colors.grey.shade300),
                                 ),
-                        ),
-                        Positioned(
-                          right: 8,
-                          top: 8,
-                          child: GestureDetector(
-                            onTap: _removeImage,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.black54,
-                                borderRadius: BorderRadius.circular(20),
+                                child: Icon(
+                                  Icons.add_a_photo,
+                                  size: 30,
+                                  color: Colors.grey.shade400,
+                                ),
                               ),
-                              padding: const EdgeInsets.all(4),
-                              child: const Icon(
-                                Icons.close,
-                                size: 20,
-                                color: Colors.white,
+                            );
+                          }
+
+                          final imageBytes = kIsWeb ? _selectedBytes[index] : null;
+                          final imageFile = !kIsWeb ? _selectedFiles[index] : null;
+
+                          return Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8.0),
+                                child: kIsWeb
+                                    ? Image.memory(
+                                        imageBytes!,
+                                        width: 150,
+                                        height: 150,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Image.file(
+                                        imageFile!,
+                                        width: 150,
+                                        height: 150,
+                                        fit: BoxFit.cover,
+                                      ),
                               ),
-                            ),
-                          ),
-                        ),
-                      ],
+                              Positioned(
+                                right: 4,
+                                top: 4,
+                                child: GestureDetector(
+                                  onTap: () => _removeImage(index),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.black54,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    padding: const EdgeInsets.all(4),
+                                    child: const Icon(
+                                      Icons.close,
+                                      size: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
                     )
                   else
                     InkWell(

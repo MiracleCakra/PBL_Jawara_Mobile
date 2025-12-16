@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:SapaWarga_kel_2/models/keluarga/warga_model.dart';
 import 'package:SapaWarga_kel_2/screens/admin/penduduk/penerimaan/daftar_penerimaan_warga.dart';
+import 'package:SapaWarga_kel_2/services/warga_service.dart';
 import 'package:SapaWarga_kel_2/widget/moon_result_modal.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -14,9 +17,43 @@ class DetailPenerimaanWargaPage extends StatefulWidget {
       _DetailPenerimaanWargaPageState();
 }
 
-class _DetailPenerimaanWargaPageState extends State<DetailPenerimaanWargaPage> {
+class _DetailPenerimaanWargaPageState
+    extends State<DetailPenerimaanWargaPage> {
   final supabase = Supabase.instance.client;
+  final WargaService _wargaService = WargaService();
+  
   static const Color _primaryColor = Color(0xFF4E46B4);
+
+  Warga? _detailWarga;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchDetailWarga();
+  }
+
+  Future<void> _fetchDetailWarga() async {
+    try {
+      final warga = await _wargaService.getWargaById(widget.penerimaan.nik);
+      if (mounted) {
+        setState(() {
+          _detailWarga = warga;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching detail warga: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memuat detail data: $e')),
+        );
+      }
+    }
+  }
 
   void _handleApprove() async {
     await supabase
@@ -291,28 +328,30 @@ class _DetailPenerimaanWargaPageState extends State<DetailPenerimaanWargaPage> {
             ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildProfileSection(),
-              const SizedBox(height: 16),
-              _buildInfoCard(),
-              const SizedBox(height: 16),
-              _buildDetailInfoCard(),
-              const SizedBox(height: 16),
-              _buildInformasiTambahanCard(),
-              const SizedBox(height: 16),
-              _buildStatusCard(),
-              const SizedBox(height: 16),
-              _buildFotoIdentitasCard(),
-              const SizedBox(height: 16),
-            ],
-          ),
-        ),
-      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildProfileSection(),
+                    const SizedBox(height: 16),
+                    _buildInfoCard(),
+                    const SizedBox(height: 16),
+                    _buildDetailInfoCard(),
+                    const SizedBox(height: 16),
+                    _buildInformasiTambahanCard(),
+                    const SizedBox(height: 16),
+                    _buildStatusCard(),
+                    const SizedBox(height: 16),
+                    _buildFotoIdentitasCard(),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+            ),
     );
   }
 
@@ -329,7 +368,8 @@ class _DetailPenerimaanWargaPageState extends State<DetailPenerimaanWargaPage> {
             radius: 35,
             backgroundColor: Colors.grey.shade300,
             child: Icon(
-              widget.penerimaan.jenisKelamin.toLowerCase() == 'laki-laki'
+              (widget.penerimaan.jenisKelamin.toLowerCase() == 'laki-laki' || 
+               (_detailWarga?.gender?.value.toLowerCase() == 'pria'))
                   ? Icons.male
                   : Icons.female,
               size: 40,
@@ -346,14 +386,14 @@ class _DetailPenerimaanWargaPageState extends State<DetailPenerimaanWargaPage> {
                   style: TextStyle(fontSize: 12, color: Colors.grey),
                 ),
                 Text(
-                  widget.penerimaan.nama,
+                  _detailWarga?.nama ?? widget.penerimaan.nama,
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
-                  'NIK: ${widget.penerimaan.nik}',
+                  'NIK: ${_detailWarga?.id ?? widget.penerimaan.nik}',
                   style: const TextStyle(fontSize: 12, color: Colors.black54),
                 ),
               ],
@@ -365,22 +405,40 @@ class _DetailPenerimaanWargaPageState extends State<DetailPenerimaanWargaPage> {
   }
 
   Widget _buildInfoCard() {
+    String formattedDate = '-';
+    if (_detailWarga?.tanggalLahir != null) {
+      formattedDate = DateFormat('d MMMM yyyy').format(_detailWarga!.tanggalLahir!);
+    }
+
     return _SectionCard(
       title: 'Data Diri',
       children: [
-        _IconTextRow(icon: Icons.phone, title: 'Nomor Telepon', value: '-'),
+        _IconTextRow(
+          icon: Icons.phone, 
+          title: 'Nomor Telepon', 
+          value: _detailWarga?.telepon ?? '-'
+        ),
         _IconTextRow(
           icon: Icons.email,
           title: 'Email (Opsional)',
-          value: widget.penerimaan.email ?? '-',
+          value: _detailWarga?.email ?? widget.penerimaan.email ?? '-',
         ),
         _IconTextRow(
           icon: Icons.location_city,
           title: 'Tempat Lahir',
-          value: '-',
+          value: _detailWarga?.tempatLahir ?? '-',
         ),
-        _IconTextRow(icon: Icons.event, title: 'Tanggal Lahir', value: '-'),
-        _IconTextRow(icon: Icons.home, title: 'Rumah Saat Ini', value: '-'),
+        _IconTextRow(
+          icon: Icons.event, 
+          title: 'Tanggal Lahir', 
+          value: formattedDate
+        ),
+        _IconTextRow(
+          icon: Icons.home, 
+          title: 'Rumah Saat Ini', 
+          value: _detailWarga?.keluarga?.alamatRumah ?? 
+                 '-'
+        ),
       ],
     );
   }
@@ -392,33 +450,46 @@ class _DetailPenerimaanWargaPageState extends State<DetailPenerimaanWargaPage> {
         _IconTextRow(
           icon: Icons.people,
           title: 'Jenis Kelamin',
-          value: widget.penerimaan.jenisKelamin,
+          value: _detailWarga?.gender?.value ?? widget.penerimaan.jenisKelamin,
         ),
-        _IconTextRow(icon: Icons.self_improvement, title: 'Agama', value: '-'),
+        _IconTextRow(
+          icon: Icons.self_improvement, 
+          title: 'Agama', 
+          value: _detailWarga?.agama ?? '-'
+        ),
         _IconTextRow(
           icon: Icons.bloodtype,
           title: 'Golongan Darah',
-          value: '-',
+          value: _detailWarga?.golDarah?.value ?? '-',
         ),
       ],
     );
   }
 
   Widget _buildInformasiTambahanCard() {
+    String roleInFamily = '-';
+    if (_detailWarga != null && _detailWarga!.anggotaKeluarga != null && _detailWarga!.anggotaKeluarga!.isNotEmpty) {
+      roleInFamily = _detailWarga!.anggotaKeluarga!.first.peran ?? '-';
+    }
+
     return _SectionCard(
       title: 'Peran & Latar Belakang',
       children: [
         _IconTextRow(
           icon: Icons.family_restroom,
           title: 'Peran Keluarga',
-          value: '-',
+          value: roleInFamily,
         ),
         _IconTextRow(
           icon: Icons.school,
           title: 'Pendidikan Terakhir',
-          value: '-',
+          value: _detailWarga?.pendidikanTerakhir ?? '-',
         ),
-        _IconTextRow(icon: Icons.work, title: 'Pekerjaan', value: '-'),
+        _IconTextRow(
+          icon: Icons.work, 
+          title: 'Pekerjaan', 
+          value: _detailWarga?.pekerjaan ?? '-'
+        ),
       ],
     );
   }
@@ -427,11 +498,15 @@ class _DetailPenerimaanWargaPageState extends State<DetailPenerimaanWargaPage> {
     return _SectionCard(
       title: 'Status',
       children: [
-        _IconTextRow(icon: Icons.favorite, title: 'Status Hidup', value: '-'),
+        _IconTextRow(
+          icon: Icons.favorite, 
+          title: 'Status Hidup', 
+          value: _detailWarga?.statusHidupWafat?.value ?? '-'
+        ),
         _IconTextRow(
           icon: Icons.verified,
           title: 'Status Kependudukan',
-          value: '-',
+          value: _detailWarga?.statusPenduduk?.value ?? '-',
         ),
         _IconTextRowWithBadge(
           icon: Icons.verified,
@@ -445,6 +520,10 @@ class _DetailPenerimaanWargaPageState extends State<DetailPenerimaanWargaPage> {
   }
 
   Widget _buildFotoIdentitasCard() {
+    // Foto dari PenerimaanWarga sudah diprioritaskan (Foto KK) dari list page
+    // Namun kita bisa cek lagi kalau di detailWarga ada info lebih lanjut (walaupun Warga model saat ini mungkin tidak punya foto_kk langsung jika tidak dijoin)
+    // Kita gunakan widget.penerimaan.foto karena itu yg dikirim dari list page yg sudah kita perbaiki query-nya.
+    
     return _SectionCard(
       title: 'Foto Kartu Keluarga',
       children: [
@@ -473,7 +552,7 @@ class _DetailPenerimaanWargaPageState extends State<DetailPenerimaanWargaPage> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Foto Identitas',
+                      'Foto KK',
                       style: TextStyle(color: Colors.grey[600]),
                     ),
                   ],
@@ -499,6 +578,13 @@ class _SectionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
@@ -510,7 +596,7 @@ class _SectionCard extends StatelessWidget {
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
-            const Divider(height: 1),
+            Divider(height: 1, color: Colors.grey[200]),
             const SizedBox(height: 8),
             ...children.map(
               (w) => Padding(
@@ -547,16 +633,16 @@ class _IconTextRow extends StatelessWidget {
             color: const Color.fromRGBO(78, 70, 180, 0.12),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, color: const Color(0xFF4E46B4)),
+          child: Icon(icon, color: const Color(0xFF4E46B4), size: 20),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
               const SizedBox(height: 4),
-              Text(value),
+              Text(value, style: const TextStyle(fontSize: 15, color: Colors.black87)),
             ],
           ),
         ),
@@ -591,14 +677,14 @@ class _IconTextRowWithBadge extends StatelessWidget {
             color: const Color.fromRGBO(78, 70, 180, 0.12),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, color: const Color(0xFF4E46B4)),
+          child: Icon(icon, color: const Color(0xFF4E46B4), size: 20),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
               const SizedBox(height: 4),
               Container(
                 padding: const EdgeInsets.symmetric(

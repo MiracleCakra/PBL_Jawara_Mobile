@@ -93,20 +93,26 @@ class _DaftarPenerimaanWargaPageState extends State<DaftarPenerimaanWargaPage> {
       );
       // ------------------------------------
 
-      final data = await supabase
-          .from('warga')
-          .select('id, nama, gender, status_penerimaan, email, foto_ktp');
+      final data = await supabase.from('warga').select(
+        'id, nama, gender, status_penerimaan, email, foto_ktp, keluarga_id, keluarga:keluarga_id(foto_kk)',
+      );
+
+      print("Raw Data from Supabase: $data"); // Debug print
 
       // Map data from Supabase to List<PenerimaanWarga>
       setState(() {
         _allPenerimaan = data.map<PenerimaanWarga>((item) {
+          final keluarga = item['keluarga'] as Map<String, dynamic>?;
+          final fotoKk = keluarga?['foto_kk'] as String?;
+          final fotoKtp = item['foto_ktp'] as String?;
+
           return PenerimaanWarga(
             nama: item['nama'] ?? '',
             nik: item['id'] ?? '',
             jenisKelamin: item['gender'] ?? '',
             status: item['status_penerimaan'] ?? '',
             email: item['email'] ?? '',
-            foto: item['foto_ktp'] ?? '',
+            foto: (fotoKk != null && fotoKk.isNotEmpty) ? fotoKk : (fotoKtp ?? ''),
             alamatRumah: item['alamat_rumah'] ?? '',
             namaKeluarga: item['nama_keluarga'] ?? '',
             anggotaKeluarga: item['anggota_keluarga'] ?? '',
@@ -118,66 +124,6 @@ class _DaftarPenerimaanWargaPageState extends State<DaftarPenerimaanWargaPage> {
       print("Error fetching data: $error");
     }
   }
-
-  // Sample data
-  /*final List<PenerimaanWarga> _allPenerimaan = const [
-    PenerimaanWarga(
-      nama: 'Ahmad Hidayat',
-      nik: '3201012501950001',
-      jenisKelamin: 'Laki-laki',
-      status: 'Pending',
-      email: 'ahmad.hidayat@gmail.com',
-    ),
-    PenerimaanWarga(
-      nama: 'Siti Nurhaliza',
-      nik: '3201012502960002',
-      jenisKelamin: 'Perempuan',
-      status: 'Diterima',
-      email: 'siti.nurhaliza@gmail.com',
-    ),
-    PenerimaanWarga(
-      nama: 'Budi Santoso',
-      nik: '3201012503970003',
-      jenisKelamin: 'Laki-laki',
-      status: 'Ditolak',
-      email: 'budi.santoso@gmail.com',
-    ),
-    PenerimaanWarga(
-      nama: 'Dewi Lestari',
-      nik: '3201012504980004',
-      jenisKelamin: 'Perempuan',
-      status: 'Pending',
-      email: 'dewi.lestari@gmail.com',
-    ),
-    PenerimaanWarga(
-      nama: 'Rudi Hartono',
-      nik: '3201012505990005',
-      jenisKelamin: 'Laki-laki',
-      status: 'Diterima',
-      email: 'rudi.hartono@gmail.com',
-    ),
-    PenerimaanWarga(
-      nama: 'Maya Kartika',
-      nik: '3201012506000006',
-      jenisKelamin: 'Perempuan',
-      status: 'Nonaktif',
-      email: 'maya.kartika@gmail.com',
-    ),
-    PenerimaanWarga(
-      nama: 'Andi Wijaya',
-      nik: '3201012507010007',
-      jenisKelamin: 'Laki-laki',
-      status: 'Pending',
-      email: 'andi.wijaya@gmail.com',
-    ),
-    PenerimaanWarga(
-      nama: 'Rina Susanti',
-      nik: '3201012508020008',
-      jenisKelamin: 'Perempuan',
-      status: 'Diterima',
-      email: 'rina.susanti@gmail.com',
-    ),
-  ];*/
 
   List<PenerimaanWarga> get _filteredPenerimaan {
     return _allPenerimaan.where((penerimaan) {

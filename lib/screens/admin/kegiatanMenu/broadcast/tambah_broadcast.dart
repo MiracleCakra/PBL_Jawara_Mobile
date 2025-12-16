@@ -109,9 +109,7 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.of(context).pop(); // Tutup Dialog
-                      // Tutup halaman TambahBroadcastScreen, sambil mengirim hasil 'true'
-                      Navigator.pop(context, true); 
+                      Navigator.pop(context);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: getPrimaryColor(context), 
@@ -186,11 +184,11 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
         String? docUrl;
 
         if (_selectedPhoto != null) {
-          final bytes = await _selectedPhoto!.readAsBytes();
           final fileName = '${DateTime.now().millisecondsSinceEpoch}_${_selectedPhoto!.name}';
           
           // Upload platform-aware
           if (kIsWeb) {
+            final bytes = await _selectedPhoto!.readAsBytes();
             imageUrl = await _broadcastService.uploadFile(
               bytes: bytes,
               file: null,
@@ -200,7 +198,7 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
             );
           } else {
             imageUrl = await _broadcastService.uploadFile(
-              bytes: bytes,
+              bytes: null, // Ensure bytes is null for mobile path based upload
               file: File(_selectedPhoto!.path),
               fileName: fileName,
               folderName: 'images',
@@ -212,13 +210,25 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
         if (_selectedDocument != null) {
           final fileName = '${DateTime.now().millisecondsSinceEpoch}_${_selectedDocument!.name}';
           
-          docUrl = await _broadcastService.uploadFile(
-            bytes: _selectedDocument!.bytes,
-            file: kIsWeb ? null : File(_selectedDocument!.path!),
-            fileName: fileName,
-            folderName: 'documents',
-            contentType: 'application/pdf',
-          );
+          // Document upload also needs platform check, but file_picker handles it better
+          // assuming kIsWeb check inside or just passing bytes if available
+          if (kIsWeb) {
+             docUrl = await _broadcastService.uploadFile(
+              bytes: _selectedDocument!.bytes,
+              file: null,
+              fileName: fileName,
+              folderName: 'documents',
+              contentType: 'application/pdf',
+            );
+          } else {
+             docUrl = await _broadcastService.uploadFile(
+              bytes: null,
+              file: File(_selectedDocument!.path!),
+              fileName: fileName,
+              folderName: 'documents',
+              contentType: 'application/pdf',
+            );
+          }
         }
 
         final newBroadcast = BroadcastModel(
@@ -235,6 +245,9 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
         
         if (!mounted) return;
         await _showSuccessDialog();
+        if (mounted) {
+          Navigator.pop(context, true);
+        }
 
       } catch (e) {
         if (!mounted) return;
@@ -345,7 +358,7 @@ class _TambahBroadcastScreenState extends State<TambahBroadcastScreen> {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8.0),
                       child: kIsWeb 
-                        ? Image.network(_selectedPhoto!.path, width: double.infinity, height: 200, fit: BoxFit.cover) // XFile on Web usually has blob url in path
+                        ? Image.network(_selectedPhoto!.path, width: double.infinity, height: 200, fit: BoxFit.cover) 
                         : Image.file(File(_selectedPhoto!.path), width: double.infinity, height: 200, fit: BoxFit.cover),
                     ),
                     Positioned(
