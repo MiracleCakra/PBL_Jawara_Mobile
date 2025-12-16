@@ -1,6 +1,6 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:SapaWarga_kel_2/models/marketplace/order_model.dart';
 import 'package:SapaWarga_kel_2/models/marketplace/order_item_model.dart';
+import 'package:SapaWarga_kel_2/models/marketplace/order_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class OrderService {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -160,6 +160,20 @@ class OrderService {
       print('Stock reduced for product $productId: $currentStock -> $newStock');
     } catch (e) {
       throw Exception('Error reducing stock: $e');
+    }
+  }
+
+  /// Update payment status
+  Future<void> updatePaymentStatus(int orderId, String newStatus) async {
+    try {
+      await _supabase
+          .from('order')
+          .update({'payment_status': newStatus})
+          .eq('order_id', orderId);
+
+      print('Payment status updated for order $orderId to $newStatus');
+    } catch (e) {
+      throw Exception('Error updating payment status: $e');
     }
   }
 }

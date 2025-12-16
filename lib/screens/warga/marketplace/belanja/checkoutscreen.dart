@@ -942,7 +942,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Text('Sudah Bayar'),
+            child: const Text('Lanjutkan'),
           ),
         ],
       ),
@@ -1075,7 +1075,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         paymentMethod: _selectedPaymentMethod, // COD, Transfer Bank, QRIS
         deliveryMethod: _selectedDeliveryOption, // Ambil di Toko / Diantar
         shippingFee: shippingCost,
-        paymentStatus: 'paid', // Langsung dibayar untuk semua metode
+        paymentStatus: 'unpaid', // Unpaid sampai penjual terima & pembeli bayar
       );
 
       print('📦 [CHECKOUT] Creating order...');
