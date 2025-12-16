@@ -17,11 +17,10 @@ class DetailPenerimaanWargaPage extends StatefulWidget {
       _DetailPenerimaanWargaPageState();
 }
 
-class _DetailPenerimaanWargaPageState
-    extends State<DetailPenerimaanWargaPage> {
+class _DetailPenerimaanWargaPageState extends State<DetailPenerimaanWargaPage> {
   final supabase = Supabase.instance.client;
   final WargaService _wargaService = WargaService();
-  
+
   static const Color _primaryColor = Color(0xFF4E46B4);
 
   Warga? _detailWarga;
@@ -48,9 +47,9 @@ class _DetailPenerimaanWargaPageState
         setState(() {
           _isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memuat detail data: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal memuat detail data: $e')));
       }
     }
   }
@@ -368,8 +367,8 @@ class _DetailPenerimaanWargaPageState
             radius: 35,
             backgroundColor: Colors.grey.shade300,
             child: Icon(
-              (widget.penerimaan.jenisKelamin.toLowerCase() == 'laki-laki' || 
-               (_detailWarga?.gender?.value.toLowerCase() == 'pria'))
+              (widget.penerimaan.jenisKelamin.toLowerCase() == 'laki-laki' ||
+                      (_detailWarga?.gender?.value.toLowerCase() == 'pria'))
                   ? Icons.male
                   : Icons.female,
               size: 40,
@@ -407,16 +406,18 @@ class _DetailPenerimaanWargaPageState
   Widget _buildInfoCard() {
     String formattedDate = '-';
     if (_detailWarga?.tanggalLahir != null) {
-      formattedDate = DateFormat('d MMMM yyyy').format(_detailWarga!.tanggalLahir!);
+      formattedDate = DateFormat(
+        'd MMMM yyyy',
+      ).format(_detailWarga!.tanggalLahir!);
     }
 
     return _SectionCard(
       title: 'Data Diri',
       children: [
         _IconTextRow(
-          icon: Icons.phone, 
-          title: 'Nomor Telepon', 
-          value: _detailWarga?.telepon ?? '-'
+          icon: Icons.phone,
+          title: 'Nomor Telepon',
+          value: _detailWarga?.telepon ?? '-',
         ),
         _IconTextRow(
           icon: Icons.email,
@@ -429,15 +430,14 @@ class _DetailPenerimaanWargaPageState
           value: _detailWarga?.tempatLahir ?? '-',
         ),
         _IconTextRow(
-          icon: Icons.event, 
-          title: 'Tanggal Lahir', 
-          value: formattedDate
+          icon: Icons.event,
+          title: 'Tanggal Lahir',
+          value: formattedDate,
         ),
         _IconTextRow(
-          icon: Icons.home, 
-          title: 'Rumah Saat Ini', 
-          value: _detailWarga?.keluarga?.alamatRumah ?? 
-                 '-'
+          icon: Icons.home,
+          title: 'Rumah Saat Ini',
+          value: _detailWarga?.keluarga?.alamatRumah ?? '-',
         ),
       ],
     );
@@ -453,9 +453,9 @@ class _DetailPenerimaanWargaPageState
           value: _detailWarga?.gender?.value ?? widget.penerimaan.jenisKelamin,
         ),
         _IconTextRow(
-          icon: Icons.self_improvement, 
-          title: 'Agama', 
-          value: _detailWarga?.agama ?? '-'
+          icon: Icons.self_improvement,
+          title: 'Agama',
+          value: _detailWarga?.agama ?? '-',
         ),
         _IconTextRow(
           icon: Icons.bloodtype,
@@ -468,7 +468,9 @@ class _DetailPenerimaanWargaPageState
 
   Widget _buildInformasiTambahanCard() {
     String roleInFamily = '-';
-    if (_detailWarga != null && _detailWarga!.anggotaKeluarga != null && _detailWarga!.anggotaKeluarga!.isNotEmpty) {
+    if (_detailWarga != null &&
+        _detailWarga!.anggotaKeluarga != null &&
+        _detailWarga!.anggotaKeluarga!.isNotEmpty) {
       roleInFamily = _detailWarga!.anggotaKeluarga!.first.peran ?? '-';
     }
 
@@ -478,7 +480,7 @@ class _DetailPenerimaanWargaPageState
         _IconTextRow(
           icon: Icons.family_restroom,
           title: 'Peran Keluarga',
-          value: roleInFamily,
+          value: widget.penerimaan.peran ?? roleInFamily,
         ),
         _IconTextRow(
           icon: Icons.school,
@@ -486,9 +488,9 @@ class _DetailPenerimaanWargaPageState
           value: _detailWarga?.pendidikanTerakhir ?? '-',
         ),
         _IconTextRow(
-          icon: Icons.work, 
-          title: 'Pekerjaan', 
-          value: _detailWarga?.pekerjaan ?? '-'
+          icon: Icons.work,
+          title: 'Pekerjaan',
+          value: _detailWarga?.pekerjaan ?? '-',
         ),
       ],
     );
@@ -499,9 +501,9 @@ class _DetailPenerimaanWargaPageState
       title: 'Status',
       children: [
         _IconTextRow(
-          icon: Icons.favorite, 
-          title: 'Status Hidup', 
-          value: _detailWarga?.statusHidupWafat?.value ?? '-'
+          icon: Icons.favorite,
+          title: 'Status Hidup',
+          value: _detailWarga?.statusHidupWafat?.value ?? '-',
         ),
         _IconTextRow(
           icon: Icons.verified,
@@ -523,7 +525,7 @@ class _DetailPenerimaanWargaPageState
     // Foto dari PenerimaanWarga sudah diprioritaskan (Foto KK) dari list page
     // Namun kita bisa cek lagi kalau di detailWarga ada info lebih lanjut (walaupun Warga model saat ini mungkin tidak punya foto_kk langsung jika tidak dijoin)
     // Kita gunakan widget.penerimaan.foto karena itu yg dikirim dari list page yg sudah kita perbaiki query-nya.
-    
+
     return _SectionCard(
       title: 'Foto Kartu Keluarga',
       children: [
@@ -551,10 +553,7 @@ class _DetailPenerimaanWargaPageState
                       color: Colors.grey[400],
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      'Foto KK',
-                      style: TextStyle(color: Colors.grey[600]),
-                    ),
+                    Text('Foto KK', style: TextStyle(color: Colors.grey[600])),
                   ],
                 ),
               );
@@ -564,7 +563,6 @@ class _DetailPenerimaanWargaPageState
       ],
     );
   }
-
 }
 
 class _SectionCard extends StatelessWidget {
@@ -640,9 +638,18 @@ class _IconTextRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+              ),
               const SizedBox(height: 4),
-              Text(value, style: const TextStyle(fontSize: 15, color: Colors.black87)),
+              Text(
+                value,
+                style: const TextStyle(fontSize: 15, color: Colors.black87),
+              ),
             ],
           ),
         ),
@@ -684,7 +691,13 @@ class _IconTextRowWithBadge extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+              ),
               const SizedBox(height: 4),
               Container(
                 padding: const EdgeInsets.symmetric(

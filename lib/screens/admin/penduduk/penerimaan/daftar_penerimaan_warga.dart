@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:SapaWarga_kel_2/utils.dart' show getPrimaryColor;
+
 // Model for Penerimaan Warga Data
 class PenerimaanWarga {
   final String nama;
@@ -13,6 +14,7 @@ class PenerimaanWarga {
   final String? alamatRumah;
   final String? namaKeluarga;
   final String? anggotaKeluarga;
+  final String? peran;
 
   const PenerimaanWarga({
     required this.nama,
@@ -24,6 +26,7 @@ class PenerimaanWarga {
     this.alamatRumah,
     this.namaKeluarga,
     this.anggotaKeluarga,
+    this.peran,
   });
 
   // Get status color
@@ -93,11 +96,14 @@ class _DaftarPenerimaanWargaPageState extends State<DaftarPenerimaanWargaPage> {
       );
       // ------------------------------------
 
-      final data = await supabase.from('warga').select(
-        'id, nama, gender, status_penerimaan, email, foto_ktp, keluarga_id, keluarga:keluarga_id(foto_kk)',
-      );
+      final data = await supabase
+          .from('warga')
+          .select(
+            'id, nama, gender, status_penerimaan, email, foto_ktp, keluarga_id, peran, keluarga:keluarga_id(foto_kk)',
+          )
+          .order('status_penerimaan', ascending: true);
 
-      print("Raw Data from Supabase: $data"); // Debug print
+      debugPrint("Raw Data from Supabase: $data"); // Debug print
 
       // Map data from Supabase to List<PenerimaanWarga>
       setState(() {
@@ -112,16 +118,19 @@ class _DaftarPenerimaanWargaPageState extends State<DaftarPenerimaanWargaPage> {
             jenisKelamin: item['gender'] ?? '',
             status: item['status_penerimaan'] ?? '',
             email: item['email'] ?? '',
-            foto: (fotoKk != null && fotoKk.isNotEmpty) ? fotoKk : (fotoKtp ?? ''),
+            foto: (fotoKk != null && fotoKk.isNotEmpty)
+                ? fotoKk
+                : (fotoKtp ?? ''),
             alamatRumah: item['alamat_rumah'] ?? '',
             namaKeluarga: item['nama_keluarga'] ?? '',
             anggotaKeluarga: item['anggota_keluarga'] ?? '',
+            peran: item['peran'] ?? '',
           );
         }).toList();
       });
-      print("Data fetched successfully: $_allPenerimaan");
+      debugPrint("Data fetched successfully: $_allPenerimaan");
     } catch (error) {
-      print("Error fetching data: $error");
+      debugPrint("Error fetching data: $error");
     }
   }
 

@@ -167,12 +167,12 @@ class _CetakLaporanScreenState extends State<CetakLaporanScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 12),
-            _CategoryFilterBar(
-              selectedCategory: _selectedCategory,
-              onTap: _showCategoryFilterModal,
-              primaryColor: getPrimaryColor(context),
-            ),
+            // const SizedBox(height: 12),
+            // _CategoryFilterBar(
+            //   selectedCategory: _selectedCategory,
+            //   onTap: _showCategoryFilterModal,
+            //   primaryColor: getPrimaryColor(context),
+            // ),
             const SizedBox(height: 12),
             // Form card
             Container(
@@ -263,92 +263,92 @@ class _CetakLaporanScreenState extends State<CetakLaporanScreen> {
     );
   }
 
-  void _showCategoryFilterModal() {
-    String tempSelected = _selectedCategory;
+  // void _showCategoryFilterModal() {
+  //   String tempSelected = _selectedCategory;
 
-    final primaryColor = getPrimaryColor(context);
+  //   final primaryColor = getPrimaryColor(context);
 
-    showMoonModalBottomSheet(
-      context: context,
-      enableDrag: true,
-      height: MediaQuery.of(context).size.height * 0.65,
-      builder: (BuildContext context) => StatefulBuilder(
-        builder: (context, setStateModal) {
-          return Column(
-            children: [
-              const SizedBox(height: 8),
-              Container(
-                height: 4,
-                width: 40,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(40),
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                "Filter Kategori",
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-              ),
-              const SizedBox(height: 16),
+  //   showMoonModalBottomSheet(
+  //     context: context,
+  //     enableDrag: true,
+  //     height: MediaQuery.of(context).size.height * 0.65,
+  //     builder: (BuildContext context) => StatefulBuilder(
+  //       builder: (context, setStateModal) {
+  //         return Column(
+  //           children: [
+  //             const SizedBox(height: 8),
+  //             Container(
+  //               height: 4,
+  //               width: 40,
+  //               decoration: BoxDecoration(
+  //                 color: Colors.grey[300],
+  //                 borderRadius: BorderRadius.circular(40),
+  //               ),
+  //             ),
+  //             const SizedBox(height: 12),
+  //             const Text(
+  //               "Filter Kategori",
+  //               style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+  //             ),
+  //             const SizedBox(height: 16),
 
-              Expanded(
-                child: ListView(
-                  children: List.generate(_jenisIuranOptions.length, (index) {
-                    final option = _jenisIuranOptions[index];
-                    final isSelected = tempSelected == option;
+  //             Expanded(
+  //               child: ListView(
+  //                 children: List.generate(_jenisIuranOptions.length, (index) {
+  //                   final option = _jenisIuranOptions[index];
+  //                   final isSelected = tempSelected == option;
 
-                    return MoonMenuItem(
-                      onTap: () {
-                        setStateModal(() => tempSelected = option);
-                      },
-                      label: Text(option),
-                      trailing: isSelected
-                          ? const Icon(
-                              MoonIcons.generic_check_alternative_32_light,
-                            )
-                          : null,
-                    );
-                  }),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: MoonFilledButton(
-                        backgroundColor: Colors.grey[300],
-                        label: const Text(
-                          "Reset",
-                          style: TextStyle(color: Colors.black),
-                        ),
-                        onTap: () {
-                          setState(() => _selectedCategory = "Semua");
-                          Navigator.pop(context);
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: MoonFilledButton(
-                        backgroundColor: primaryColor,
-                        label: const Text("Terapkan"),
-                        onTap: () {
-                          setState(() => _selectedCategory = tempSelected);
-                          Navigator.pop(context);
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
+  //                   return MoonMenuItem(
+  //                     onTap: () {
+  //                       setStateModal(() => tempSelected = option);
+  //                     },
+  //                     label: Text(option),
+  //                     trailing: isSelected
+  //                         ? const Icon(
+  //                             MoonIcons.generic_check_alternative_32_light,
+  //                           )
+  //                         : null,
+  //                   );
+  //                 }),
+  //               ),
+  //             ),
+  //             Padding(
+  //               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+  //               child: Row(
+  //                 children: [
+  //                   Expanded(
+  //                     child: MoonFilledButton(
+  //                       backgroundColor: Colors.grey[300],
+  //                       label: const Text(
+  //                         "Reset",
+  //                         style: TextStyle(color: Colors.black),
+  //                       ),
+  //                       onTap: () {
+  //                         setState(() => _selectedCategory = "Semua");
+  //                         Navigator.pop(context);
+  //                       },
+  //                     ),
+  //                   ),
+  //                   const SizedBox(width: 12),
+  //                   Expanded(
+  //                     child: MoonFilledButton(
+  //                       backgroundColor: primaryColor,
+  //                       label: const Text("Terapkan"),
+  //                       onTap: () {
+  //                         setState(() => _selectedCategory = tempSelected);
+  //                         Navigator.pop(context);
+  //                       },
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //           ],
+  //         );
+  //       },
+  //     ),
+  //   );
+  // }
 
   // Helper function untuk mendapatkan ikon
   // IconData _getJenisIcon(String jenis) {
@@ -440,50 +440,50 @@ class _CetakLaporanScreenState extends State<CetakLaporanScreen> {
   }
 }
 
-class _CategoryFilterBar extends StatelessWidget {
-  final String selectedCategory;
-  final VoidCallback onTap;
-  final Color primaryColor;
+// class _CategoryFilterBar extends StatelessWidget {
+//   final String selectedCategory;
+//   final VoidCallback onTap;
+//   final Color primaryColor;
 
-  const _CategoryFilterBar({
-    required this.selectedCategory,
-    required this.onTap,
-    required this.primaryColor,
-  });
+//   const _CategoryFilterBar({
+//     required this.selectedCategory,
+//     required this.onTap,
+//     required this.primaryColor,
+//   });
 
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: primaryColor,
-      shape: MoonSquircleBorder(
-        borderRadius: BorderRadius.circular(20).squircleBorderRadius(context),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20).squircleBorderRadius(context),
-        onTap: onTap,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.tune, color: Colors.white, size: 18),
-              const SizedBox(width: 10),
-              Text(
-                "Filter Kategori",
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return Material(
+//       color: primaryColor,
+//       shape: MoonSquircleBorder(
+//         borderRadius: BorderRadius.circular(20).squircleBorderRadius(context),
+//       ),
+//       child: InkWell(
+//         borderRadius: BorderRadius.circular(20).squircleBorderRadius(context),
+//         onTap: onTap,
+//         child: Container(
+//           width: double.infinity,
+//           padding: const EdgeInsets.symmetric(vertical: 14),
+//           child: Row(
+//             mainAxisAlignment: MainAxisAlignment.center,
+//             children: [
+//               const Icon(Icons.tune, color: Colors.white, size: 18),
+//               const SizedBox(width: 10),
+//               Text(
+//                 "Filter Kategori",
+//                 style: const TextStyle(
+//                   color: Colors.white,
+//                   fontWeight: FontWeight.w700,
+//                   fontSize: 16,
+//                 ),
+//               ),
+//             ],
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
 
 class _TypeSegmented extends StatelessWidget {
   final String value;

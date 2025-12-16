@@ -1,11 +1,11 @@
 import 'dart:io';
 
+import 'package:SapaWarga_kel_2/screens/admin/penduduk/rumah/daftar_rumah.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:SapaWarga_kel_2/constants/constant_colors.dart';
 import 'package:SapaWarga_kel_2/screens/auth/auth_service.dart';
 import 'package:SapaWarga_kel_2/widget/drop_down_trailing_arrow.dart';
 import 'package:SapaWarga_kel_2/widget/login_button.dart';
@@ -25,21 +25,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? errorMessage;
   XFile? _fotoKtp;
   final _imagePicker = ImagePicker();
+  List<Rumah> _allRumah = [];
 
   final supabase = Supabase.instance.client;
   final authService = AuthService();
 
-  final TextEditingController _controllerEmail = TextEditingController(text: '');
-  final TextEditingController _controllerPassword = TextEditingController(text: '');
+  final TextEditingController _controllerEmail = TextEditingController(
+    text: '',
+  );
+  final TextEditingController _controllerPassword = TextEditingController(
+    text: '',
+  );
 
   // --- LOGIC BACKEND ---
   Future<void> createUserWithEmailAndPassword() async {
     try {
-      await authService.signUpWithEmailPassword(
-        _controllerEmail.text,
-        _controllerPassword.text,
-      );
-
       String fotoUrl = '';
       if (_fotoKtp != null) {
         final uploadedUrl = await _uploadFotoKtp(_fotoKtp!);
@@ -56,22 +56,82 @@ class _RegisterScreenState extends State<RegisterScreen> {
         }
       }
 
+      await supabase.from('keluarga').insert({
+        'nama_keluarga': 'Keluarga ${_namaController.text}',
+        'status_keluarga': 'Aktif',
+      });
+
+      await supabase
+          .from('keluarga')
+          .select('id')
+          .eq('nama_keluarga', 'Keluarga ${_namaController.text}')
+          .single()
+          .then((value) {
+            _idKeluarga = value['id'];
+          });
+
       await supabase.from('warga').insert({
         'nama': _namaController.text,
         'id': _nikController.text,
-        'gender': _controllerJenisKelamin.text,
-        'email': _controllerEmail.text,
         'telepon': _phoneController.text,
+        'tempat_lahir': _tempatLahirController.text,
+        'tanggal_lahir': _tanggalLahir?.toIso8601String(),
+        'gender': _controllerJenisKelamin.text,
+        'agama': _agama,
+        'gol_darah': _golonganDarah,
+        'peran': _peranKeluarga,
+        'pendidikan_terakhir': _pendidikanTerakhir,
+        'pekerjaan': _pekerjaan,
+        'status_hidup_wafat': _statusHidup,
+        'status_penduduk': _statusKependudukan,
+        'email': _controllerEmail.text,
         'foto_ktp': fotoUrl,
         'role': 'Warga',
+        'keluarga_id': _idKeluarga,
       });
+
+      await supabase.from('rumah').upsert({
+        'alamat': _rumahSaatIni,
+        'status': 'Ditempati',
+        'keluarga_id': _idKeluarga,
+      }, onConflict: 'id');
+
+      await authService.signUpWithEmailPassword(
+        _controllerEmail.text,
+        _controllerPassword.text,
+      );
 
       if (mounted) context.go('/login');
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Registration failed: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Registration failed: $e')));
       }
+    }
+  }
+
+  fetchDaftarRumah() async {
+    try {
+      final response = await Supabase.instance.client
+          .from('rumah')
+          .select('*')
+          .eq('status', 'Tersedia');
+
+      // Map data from Supabase to List<PenerimaanWarga>
+      setState(() {
+        _allRumah = response.map<Rumah>((item) {
+          return Rumah(
+            id: item['id'],
+            alamat: item['alamat'] ?? '',
+            status: item['status'] ?? '',
+            residents: item['jumlah_penghuni'] ?? 0,
+          );
+        }).toList();
+      });
+      debugPrint("Data fetched successfully: $_allRumah");
+    } catch (e) {
+      debugPrint("Gagal memuat data warga: $e");
     }
   }
 
@@ -94,6 +154,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _statusHidup;
   String? _statusKependudukan;
   String? _rumahSaatIni;
+  String? _idRumah;
+  String? _idKeluarga;
   bool _isRumahManual = false;
 
   @override
@@ -107,6 +169,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _controllerJenisKelamin = TextEditingController();
     _tempatLahirController = TextEditingController();
     _rumahManualController = TextEditingController();
+    fetchDaftarRumah();
     super.initState();
   }
 
@@ -278,8 +341,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return null;
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Gagal mengunggah foto: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal mengunggah foto: $e')));
       }
       return null;
     }
@@ -343,7 +407,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: SingleChildScrollView(
                 key: const Key('scroll_view_register'),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 30,
+                  ),
                   child: Column(
                     children: [
                       // --- CARD PUTIH FORM REGISTER ---
@@ -372,11 +439,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   key: const Key('btn_back_nav'),
                                   onPressed: () => context.go('/login'),
                                   // Icon Panah Warna Biru Primary
-                                  icon: Icon(Icons.arrow_back, color: primaryColor),
+                                  icon: Icon(
+                                    Icons.arrow_back,
+                                    color: primaryColor,
+                                  ),
                                   padding: EdgeInsets.zero,
                                   constraints: const BoxConstraints(),
                                   style: const ButtonStyle(
-                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
                                   ),
                                 ),
                                 const SizedBox(width: 12),
@@ -439,7 +510,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   onTap: () async {
                                     final picked = await showDatePicker(
                                       context: context,
-                                      initialDate: _tanggalLahir ?? DateTime.now(),
+                                      initialDate:
+                                          _tanggalLahir ?? DateTime.now(),
                                       firstDate: DateTime(1900),
                                       lastDate: DateTime.now(),
                                     );
@@ -456,46 +528,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     onTapOutside: () =>
                                         setState(() => _showDdRumah = false),
                                     content: Column(
-                                      children: [
-                                        MoonMenuItem(
-                                          onTap: () => setState(() {
-                                            _rumahSaatIni = 'Blok A No. 1';
-                                            _showDdRumah = false;
-                                          }),
-                                          label: const Text('Blok A No. 1'),
-                                        ),
-                                        MoonMenuItem(
-                                          onTap: () => setState(() {
-                                            _rumahSaatIni = 'Blok A No. 2';
-                                            _showDdRumah = false;
-                                          }),
-                                          label: const Text('Blok A No. 2'),
-                                        ),
-                                        MoonMenuItem(
-                                          onTap: () => setState(() {
-                                            _rumahSaatIni = 'Blok B No. 1';
-                                            _showDdRumah = false;
-                                          }),
-                                          label: const Text('Blok B No. 1'),
-                                        ),
-                                        MoonMenuItem(
-                                          onTap: () => setState(() {
-                                            _isRumahManual = true;
-                                            _rumahSaatIni = null;
-                                            _showDdRumah = false;
-                                          }),
-                                          label: const Text('Lainnya'),
-                                        ),
-                                      ],
+                                      children: _allRumah.isNotEmpty
+                                          ? _allRumah.map((rumah) {
+                                              return MoonMenuItem(
+                                                onTap: () => setState(() {
+                                                  _rumahSaatIni = rumah
+                                                      .alamat; // Set selected rumah
+                                                  _idRumah = rumah.id;
+                                                  _showDdRumah = false;
+                                                }),
+                                                label: Text(rumah.alamat),
+                                              );
+                                            }).toList()
+                                          : [
+                                              // Default message if no homes available
+                                              MoonMenuItem(
+                                                onTap: () => {},
+                                                label: const Text(
+                                                  'Tidak ada rumah tersedia',
+                                                ),
+                                              ),
+                                            ],
                                     ),
                                     child: MoonTextInput(
                                       textInputSize: MoonTextInputSize.xl,
                                       readOnly: true,
                                       hintText: _rumahSaatIni ?? 'Alamat Rumah',
                                       onTap: () => setState(
-                                          () => _showDdRumah = !_showDdRumah),
+                                        () => _showDdRumah = !_showDdRumah,
+                                      ),
                                       trailing: DropDownTrailingArrow(
-                                          isShow: _showDdRumah),
+                                        isShow: _showDdRumah,
+                                      ),
                                     ),
                                   )
                                 else
@@ -518,7 +582,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           child: Text(
                                             'Kembali ke pilihan dropdown',
                                             // Teks link warna Primary
-                                            style: TextStyle(color: primaryColor),
+                                            style: TextStyle(
+                                              color: primaryColor,
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -564,12 +630,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     readOnly: true,
                                     hintText:
                                         _controllerJenisKelamin.text.isEmpty
-                                            ? 'Jenis Kelamin'
-                                            : _controllerJenisKelamin.text,
+                                        ? 'Jenis Kelamin'
+                                        : _controllerJenisKelamin.text,
                                     onTap: () => setState(
-                                        () => _showDdKelamin = !_showDdKelamin),
+                                      () => _showDdKelamin = !_showDdKelamin,
+                                    ),
                                     trailing: DropDownTrailingArrow(
-                                        isShow: _showDdKelamin),
+                                      isShow: _showDdKelamin,
+                                    ),
                                   ),
                                 ),
                                 // Dropdown Agama
@@ -579,25 +647,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   onTapOutside: () =>
                                       setState(() => _showDdAgama = false),
                                   content: Column(
-                                    children: [
-                                      'Islam', 'Kristen', 'Katolik', 'Hindu',
-                                      'Buddha', 'Konghucu'
-                                    ].map((agama) => MoonMenuItem(
-                                          onTap: () => setState(() {
-                                            _agama = agama;
-                                            _showDdAgama = false;
-                                          }),
-                                          label: Text(agama),
-                                        )).toList(),
+                                    children:
+                                        [
+                                              'Islam',
+                                              'Kristen',
+                                              'Katolik',
+                                              'Hindu',
+                                              'Buddha',
+                                              'Konghucu',
+                                            ]
+                                            .map(
+                                              (agama) => MoonMenuItem(
+                                                onTap: () => setState(() {
+                                                  _agama = agama;
+                                                  _showDdAgama = false;
+                                                }),
+                                                label: Text(agama),
+                                              ),
+                                            )
+                                            .toList(),
                                   ),
                                   child: MoonTextInput(
                                     textInputSize: MoonTextInputSize.xl,
                                     readOnly: true,
                                     hintText: _agama ?? 'Agama',
                                     onTap: () => setState(
-                                        () => _showDdAgama = !_showDdAgama),
+                                      () => _showDdAgama = !_showDdAgama,
+                                    ),
                                     trailing: DropDownTrailingArrow(
-                                        isShow: _showDdAgama),
+                                      isShow: _showDdAgama,
+                                    ),
                                   ),
                                 ),
                                 MoonDropdown(
@@ -606,23 +685,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   onTapOutside: () =>
                                       setState(() => _showDdGolDarah = false),
                                   content: Column(
-                                    children: [
-                                      'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-',
-                                      'O+', 'O-'
-                                    ].map((gol) => MoonMenuItem(
-                                          onTap: () => setState(() {
-                                            _golonganDarah = gol;
-                                            _showDdGolDarah = false;
-                                          }),
-                                          label: Text(gol),
-                                        )).toList(),
+                                    children:
+                                        [
+                                              'A+',
+                                              'A-',
+                                              'B+',
+                                              'B-',
+                                              'AB+',
+                                              'AB-',
+                                              'O+',
+                                              'O-',
+                                            ]
+                                            .map(
+                                              (gol) => MoonMenuItem(
+                                                onTap: () => setState(() {
+                                                  _golonganDarah = gol;
+                                                  _showDdGolDarah = false;
+                                                }),
+                                                label: Text(gol),
+                                              ),
+                                            )
+                                            .toList(),
                                   ),
                                   child: MoonTextInput(
                                     textInputSize: MoonTextInputSize.xl,
                                     readOnly: true,
-                                    hintText: _golonganDarah ?? 'Golongan Darah',
-                                    onTap: () => setState(() =>
-                                        _showDdGolDarah = !_showDdGolDarah),
+                                    hintText:
+                                        _golonganDarah ?? 'Golongan Darah',
+                                    onTap: () => setState(
+                                      () => _showDdGolDarah = !_showDdGolDarah,
+                                    ),
                                     trailing: DropDownTrailingArrow(
                                       isShow: _showDdGolDarah,
                                     ),
@@ -639,18 +731,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   show: _showDdPeranKeluarga,
                                   constrainWidthToChild: true,
                                   onTapOutside: () => setState(
-                                      () => _showDdPeranKeluarga = false),
+                                    () => _showDdPeranKeluarga = false,
+                                  ),
                                   content: Column(
-                                    children: [
-                                      'Kepala Keluarga', 'Ibu', 'Anak',
-                                      'Lainnya'
-                                    ].map((peran) => MoonMenuItem(
-                                          onTap: () => setState(() {
-                                            _peranKeluarga = peran;
-                                            _showDdPeranKeluarga = false;
-                                          }),
-                                          label: Text(peran),
-                                        )).toList(),
+                                    children:
+                                        [
+                                              'Kepala Keluarga',
+                                              'Ibu',
+                                              'Anak',
+                                              'Lainnya',
+                                            ]
+                                            .map(
+                                              (peran) => MoonMenuItem(
+                                                onTap: () => setState(() {
+                                                  _peranKeluarga = peran;
+                                                  _showDdPeranKeluarga = false;
+                                                }),
+                                                label: Text(peran),
+                                              ),
+                                            )
+                                            .toList(),
                                   ),
                                   child: MoonTextInput(
                                     textInputSize: MoonTextInputSize.xl,
@@ -672,21 +772,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   onTapOutside: () =>
                                       setState(() => _showDdPendidikan = false),
                                   content: Column(
-                                    children: [
-                                      'SD', 'SMP', 'SMA/SMK', 'Diploma', 'S1',
-                                      'S2', 'S3'
-                                    ].map((pend) => MoonMenuItem(
-                                          onTap: () => setState(() {
-                                            _pendidikanTerakhir = pend;
-                                            _showDdPendidikan = false;
-                                          }),
-                                          label: Text(pend),
-                                        )).toList(),
+                                    children:
+                                        [
+                                              'SD',
+                                              'SMP',
+                                              'SMA/SMK',
+                                              'Diploma',
+                                              'S1',
+                                              'S2',
+                                              'S3',
+                                            ]
+                                            .map(
+                                              (pend) => MoonMenuItem(
+                                                onTap: () => setState(() {
+                                                  _pendidikanTerakhir = pend;
+                                                  _showDdPendidikan = false;
+                                                }),
+                                                label: Text(pend),
+                                              ),
+                                            )
+                                            .toList(),
                                   ),
                                   child: MoonTextInput(
                                     textInputSize: MoonTextInputSize.xl,
                                     readOnly: true,
-                                    hintText: _pendidikanTerakhir ??
+                                    hintText:
+                                        _pendidikanTerakhir ??
                                         'Pendidikan Terakhir',
                                     onTap: () => setState(
                                       () => _showDdPendidikan =
@@ -703,24 +814,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   onTapOutside: () =>
                                       setState(() => _showDdPekerjaan = false),
                                   content: Column(
-                                    children: [
-                                      'Pelajar/Mahasiswa', 'Karyawan',
-                                      'Wiraswasta', 'Ibu Rumah Tangga',
-                                      'Tidak Bekerja'
-                                    ].map((job) => MoonMenuItem(
-                                          onTap: () => setState(() {
-                                            _pekerjaan = job;
-                                            _showDdPekerjaan = false;
-                                          }),
-                                          label: Text(job),
-                                        )).toList(),
+                                    children:
+                                        [
+                                              'Pelajar/Mahasiswa',
+                                              'Karyawan',
+                                              'Wiraswasta',
+                                              'Ibu Rumah Tangga',
+                                              'Tidak Bekerja',
+                                            ]
+                                            .map(
+                                              (job) => MoonMenuItem(
+                                                onTap: () => setState(() {
+                                                  _pekerjaan = job;
+                                                  _showDdPekerjaan = false;
+                                                }),
+                                                label: Text(job),
+                                              ),
+                                            )
+                                            .toList(),
                                   ),
                                   child: MoonTextInput(
                                     textInputSize: MoonTextInputSize.xl,
                                     readOnly: true,
                                     hintText: _pekerjaan ?? 'Pekerjaan',
                                     onTap: () => setState(
-                                      () => _showDdPekerjaan = !_showDdPekerjaan,
+                                      () =>
+                                          _showDdPekerjaan = !_showDdPekerjaan,
                                     ),
                                     trailing: DropDownTrailingArrow(
                                       isShow: _showDdPekerjaan,
@@ -738,16 +857,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   show: _showDdStatusHidup,
                                   constrainWidthToChild: true,
                                   onTapOutside: () => setState(
-                                      () => _showDdStatusHidup = false),
+                                    () => _showDdStatusHidup = false,
+                                  ),
                                   content: Column(
                                     children: ['Hidup', 'Wafat']
-                                        .map((status) => MoonMenuItem(
-                                              onTap: () => setState(() {
-                                                _statusHidup = status;
-                                                _showDdStatusHidup = false;
-                                              }),
-                                              label: Text(status),
-                                            ))
+                                        .map(
+                                          (status) => MoonMenuItem(
+                                            onTap: () => setState(() {
+                                              _statusHidup = status;
+                                              _showDdStatusHidup = false;
+                                            }),
+                                            label: Text(status),
+                                          ),
+                                        )
                                         .toList(),
                                   ),
                                   child: MoonTextInput(
@@ -767,23 +889,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   show: _showDdStatusKependudukan,
                                   constrainWidthToChild: true,
                                   onTapOutside: () => setState(
-                                      () => _showDdStatusKependudukan = false),
+                                    () => _showDdStatusKependudukan = false,
+                                  ),
                                   content: Column(
                                     children: ['Aktif', 'Nonaktif']
-                                        .map((status) => MoonMenuItem(
-                                              onTap: () => setState(() {
-                                                _statusKependudukan = status;
-                                                _showDdStatusKependudukan =
-                                                    false;
-                                              }),
-                                              label: Text(status),
-                                            ))
+                                        .map(
+                                          (status) => MoonMenuItem(
+                                            onTap: () => setState(() {
+                                              _statusKependudukan = status;
+                                              _showDdStatusKependudukan = false;
+                                            }),
+                                            label: Text(status),
+                                          ),
+                                        )
                                         .toList(),
                                   ),
                                   child: MoonTextInput(
                                     textInputSize: MoonTextInputSize.xl,
                                     readOnly: true,
-                                    hintText: _statusKependudukan ??
+                                    hintText:
+                                        _statusKependudukan ??
                                         'Status Kependudukan',
                                     onTap: () => setState(
                                       () => _showDdStatusKependudukan =
@@ -828,26 +953,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                                       .generic_picture_32_light,
                                                   size: 48,
                                                   color: MoonTokens
-                                                      .light.colors.bulma,
+                                                      .light
+                                                      .colors
+                                                      .bulma,
                                                 ),
                                                 const SizedBox(height: 12),
                                                 Text(
                                                   'Upload Foto KK/KTP',
-                                                  style: MoonTokens.light
-                                                      .typography.heading.text16
+                                                  style: MoonTokens
+                                                      .light
+                                                      .typography
+                                                      .heading
+                                                      .text16
                                                       .copyWith(
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
                                                 ),
                                                 const SizedBox(height: 4),
                                                 Text(
                                                   'Tap untuk memilih dari galeri atau kamera',
                                                   style: MoonTokens
-                                                      .light.typography.body.text12
+                                                      .light
+                                                      .typography
+                                                      .body
+                                                      .text12
                                                       .copyWith(
-                                                    color: MoonTokens
-                                                        .light.colors.trunks,
-                                                  ),
+                                                        color: MoonTokens
+                                                            .light
+                                                            .colors
+                                                            .trunks,
+                                                      ),
                                                   textAlign: TextAlign.center,
                                                 ),
                                               ],
@@ -870,17 +1006,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                                   Material(
                                                     color: Colors.black54,
                                                     borderRadius:
-                                                        BorderRadius.circular(8),
+                                                        BorderRadius.circular(
+                                                          8,
+                                                        ),
                                                     child: InkWell(
                                                       onTap: _pickImage,
                                                       borderRadius:
                                                           BorderRadius.circular(
-                                                        8,
-                                                      ),
+                                                            8,
+                                                          ),
                                                       child: Container(
                                                         padding:
                                                             const EdgeInsets.all(
-                                                                8),
+                                                              8,
+                                                            ),
                                                         child: const Icon(
                                                           Icons.edit,
                                                           color: Colors.white,
@@ -893,7 +1032,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                                   Material(
                                                     color: Colors.red,
                                                     borderRadius:
-                                                        BorderRadius.circular(8),
+                                                        BorderRadius.circular(
+                                                          8,
+                                                        ),
                                                     child: InkWell(
                                                       onTap: () {
                                                         setState(() {
@@ -902,12 +1043,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                                       },
                                                       borderRadius:
                                                           BorderRadius.circular(
-                                                        8,
-                                                      ),
+                                                            8,
+                                                          ),
                                                       child: Container(
                                                         padding:
                                                             const EdgeInsets.all(
-                                                                8),
+                                                              8,
+                                                            ),
                                                         child: const Icon(
                                                           Icons.close,
                                                           color: Colors.white,
@@ -994,7 +1136,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
 
                       // Padding bawah extra
-                      SizedBox(height: MediaQuery.of(context).size.height * 0.1),
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.1,
+                      ),
                     ],
                   ),
                 ),
@@ -1011,11 +1155,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 16),
-        Text(title,
-            style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87)),
+        Text(
+          title,
+          style: GoogleFonts.poppins(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
         const SizedBox(height: 8),
         ...children.expand((element) => [element, const SizedBox(height: 8)]),
       ],
