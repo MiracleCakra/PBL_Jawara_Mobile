@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:SapaWarga_kel_2/models/marketplace/product_model.dart';
 import 'package:SapaWarga_kel_2/providers/product_provider.dart';
 import 'package:SapaWarga_kel_2/services/marketplace/product_service.dart';
 import 'package:SapaWarga_kel_2/utils.dart' show formatRupiah;
 import 'package:SapaWarga_kel_2/widget/marketplace/custom_dialog.dart';
 import 'package:SapaWarga_kel_2/widget/product_image.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 class MyStoreProductDetailScreen extends StatefulWidget {
@@ -44,10 +44,27 @@ class _MyStoreProductDetailScreenState
       extra: currentProduct,
     );
 
-    if (result is ProductModel) {
-      setState(() {
-        currentProduct = result;
-      });
+    if (result == 'updated') {
+      // Reload product from database to get fresh data
+      try {
+        final productService = ProductService();
+        final updatedProduct = await productService.getProductById(
+          currentProduct.productId!,
+        );
+
+        if (updatedProduct != null && mounted) {
+          setState(() {
+            currentProduct = updatedProduct;
+          });
+
+          // Return 'updated' to parent screen so it can refresh too
+          if (context.mounted) {
+            context.pop('updated');
+          }
+        }
+      } catch (e) {
+        print('Error reloading product: $e');
+      }
     }
   }
 

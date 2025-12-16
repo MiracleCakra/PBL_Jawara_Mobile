@@ -1,11 +1,12 @@
+import 'package:SapaWarga_kel_2/constants/constant_colors.dart';
+import 'package:SapaWarga_kel_2/models/pie_card_model.dart';
+import 'package:SapaWarga_kel_2/widget/plot_pie_card.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:SapaWarga_kel_2/constants/constant_colors.dart';
-import 'package:SapaWarga_kel_2/models/pie_card_model.dart';
-import 'package:SapaWarga_kel_2/widget/plot_pie_card.dart';
 import 'package:moon_design/moon_design.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MenuItem {
   final IconData icon;
@@ -27,15 +28,12 @@ class _MarketplaceState extends State<Marketplace> {
   int _selectedYear = DateTime.now().year;
   int? _selectedMonth;
 
-  // Data Dummy
-  final int totalProdukAktif = 125;
-  final int menungguValidasi = 5;
-  final List<String> produkTopML = const [
-    'Wortel Grade A',
-    'Tomat Grade B',
-    'Tomat Grade C',
-  ];
-  final List<String> penjualTop = const ['Toko Sayursegar', 'Kios sayur'];
+  // Real data from database
+  int _tokoValidasiCount = 0;
+  int _produkValidasiCount = 0;
+  bool _isLoading = true;
+  List<Map<String, dynamic>> _topProducts = [];
+  List<Map<String, dynamic>> _topSellers = [];
 
   final List<PieCardModel> kategoriData = [
     PieCardModel(
@@ -73,9 +71,124 @@ class _MarketplaceState extends State<Marketplace> {
   @override
   void initState() {
     super.initState();
+    _loadDashboardData();
     Future.delayed(const Duration(milliseconds: 180), () {
       if (mounted) setState(() => _opacity = 1);
     });
+  }
+
+  Future<void> _loadDashboardData() async {
+    try {
+      final supabase = Supabase.instance.client;
+
+      // Get count of pending stores
+      final storeResponse = await supabase
+          .from('store')
+          .select()
+          .eq('verifikasi', 'Pending');
+
+      // Get count of all active products
+      final produkResponse = await supabase
+          .from('produk')
+          .select()
+          .gt('stok', 0);
+
+      // Build date filter based on selected year and month
+      String startDate;
+      String endDate;
+
+      if (_selectedMonth != null) {
+        // Filter by specific month and year
+        startDate =
+            '$_selectedYear-${_selectedMonth.toString().padLeft(2, '0')}-01';
+        final lastDay = DateTime(_selectedYear, _selectedMonth! + 1, 0).day;
+        endDate =
+            '$_selectedYear-${_selectedMonth.toString().padLeft(2, '0')}-${lastDay.toString().padLeft(2, '0')}';
+      } else {
+        // Filter by entire year
+        startDate = '$_selectedYear-01-01';
+        endDate = '$_selectedYear-12-31';
+      }
+
+      // Get top products based on order_item with date filter
+      final orderItemsResponse = await supabase
+          .from('order_item')
+          .select('product_id, qty, order!inner(created_at), produk(nama)')
+          .gte('order.created_at', startDate)
+          .lte('order.created_at', endDate);
+
+      // Aggregate products by counting total quantity
+      Map<String, Map<String, dynamic>> productQuantities = {};
+      for (var item in orderItemsResponse as List) {
+        if (item['product_id'] != null && item['produk'] != null) {
+          final productId = item['product_id'].toString();
+          final productName = item['produk']['nama'] ?? 'Unknown';
+          final quantity = item['qty'] ?? 0;
+
+          if (productQuantities.containsKey(productId)) {
+            productQuantities[productId]!['total_quantity'] += quantity;
+          } else {
+            productQuantities[productId] = {
+              'nama_produk': productName,
+              'total_quantity': quantity,
+            };
+          }
+        }
+      }
+
+      // Sort and get top 3
+      final sortedProducts = productQuantities.values.toList()
+        ..sort((a, b) => b['total_quantity'].compareTo(a['total_quantity']));
+      final topProducts = sortedProducts.take(3).toList();
+
+      // Get top sellers based on order_item and produk relation
+      final orderItemsForStore = await supabase
+          .from('order_item')
+          .select(
+            'product_id, order!inner(created_at), produk!inner(store_id, store(nama))',
+          )
+          .gte('order.created_at', startDate)
+          .lte('order.created_at', endDate);
+
+      // Count orders per store
+      Map<String, Map<String, dynamic>> storeCounts = {};
+      for (var item in orderItemsForStore as List) {
+        if (item['produk'] != null &&
+            item['produk']['store_id'] != null &&
+            item['produk']['store'] != null) {
+          final storeId = item['produk']['store_id'].toString();
+          final storeName = item['produk']['store']['nama'] ?? 'Unknown';
+
+          if (storeCounts.containsKey(storeId)) {
+            storeCounts[storeId]!['total_orders'] += 1;
+          } else {
+            storeCounts[storeId] = {'nama_toko': storeName, 'total_orders': 1};
+          }
+        }
+      }
+
+      // Sort and get top 3
+      final sortedSellers = storeCounts.values.toList()
+        ..sort((a, b) => b['total_orders'].compareTo(a['total_orders']));
+      final topSellers = sortedSellers.take(3).toList();
+
+      if (mounted) {
+        setState(() {
+          _tokoValidasiCount = (storeResponse as List).length;
+          _produkValidasiCount = (produkResponse as List).length;
+          _topProducts = topProducts;
+          _topSellers = topSellers;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading dashboard data: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   /*void _goToValidasiProduk() {
@@ -271,45 +384,54 @@ class _MarketplaceState extends State<Marketplace> {
                         fontWeight: FontWeight.w700,
                         color: const Color(0xFF374151),
                       ),
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: isNarrow ? 8 : 10),
-              ...items.asMap().entries.map((entry) {
-                int index = entry.key;
-                String item = entry.value;
-                return Padding(
-                  padding: EdgeInsets.symmetric(vertical: isNarrow ? 2.0 : 3.0),
-                  child: Row(
+              SizedBox(height: isNarrow ? 6 : 8),
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${index + 1}.',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: ConstantColors.primary,
-                          fontSize: isNarrow ? 11 : 13,
+                    children: items.asMap().entries.map((entry) {
+                      int index = entry.key;
+                      String item = entry.value;
+                      return Padding(
+                        padding: EdgeInsets.symmetric(
+                          vertical: isNarrow ? 1.5 : 2.5,
                         ),
-                      ),
-                      SizedBox(width: isNarrow ? 4 : 6),
-                      Expanded(
-                        child: Text(
-                          item,
-                          style: TextStyle(
-                            fontSize: isNarrow ? 11 : 13,
-                            color: const Color(0xFF4B5563),
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${index + 1}.',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: ConstantColors.primary,
+                                fontSize: isNarrow ? 11 : 13,
+                              ),
+                            ),
+                            SizedBox(width: isNarrow ? 4 : 6),
+                            Expanded(
+                              child: Text(
+                                item,
+                                style: TextStyle(
+                                  fontSize: isNarrow ? 11 : 13,
+                                  color: const Color(0xFF4B5563),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
+                      );
+                    }).toList(),
                   ),
-                );
-              }).toList(),
+                ),
+              ),
             ],
           ),
         );
@@ -366,19 +488,40 @@ class _MarketplaceState extends State<Marketplace> {
           Expanded(
             child: SingleChildScrollView(
               child: Column(
-                children: List.generate(10, (index) {
-                  final year = DateTime.now().year - index;
-                  return MoonMenuItem(
-                    onTap: () {
-                      Navigator.pop(context);
-                      _showMonthSelection(context, year);
-                    },
-                    label: Text('$year'),
-                    trailing: year == _selectedYear
-                        ? const Icon(Icons.check, color: ConstantColors.primary)
-                        : null,
-                  );
-                }),
+                children:
+                    List.generate(10, (index) {
+                      final year = DateTime.now().year - index;
+                      return MoonMenuItem(
+                        onTap: () {
+                          Navigator.pop(context);
+                          _showMonthSelection(context, year);
+                        },
+                        label: Text('$year'),
+                        trailing: year == _selectedYear
+                            ? const Icon(
+                                Icons.check,
+                                color: ConstantColors.primary,
+                              )
+                            : null,
+                      );
+                    }) +
+                    [
+                      MoonMenuItem(
+                        onTap: () {
+                          setState(() {
+                            _selectedYear = DateTime.now().year;
+                            _selectedMonth = null;
+                          });
+                          Navigator.pop(context);
+                          _loadDashboardData();
+                        },
+                        label: const Text('Reset ke Tahun Ini'),
+                        trailing: const Icon(
+                          Icons.refresh,
+                          color: ConstantColors.primary,
+                        ),
+                      ),
+                    ],
               ),
             ),
           ),
@@ -433,23 +576,50 @@ class _MarketplaceState extends State<Marketplace> {
           Expanded(
             child: SingleChildScrollView(
               child: Column(
-                children: List.generate(12, (index) {
-                  final monthIndex = index + 1;
-                  return MoonMenuItem(
-                    onTap: () {
-                      setState(() {
-                        _selectedYear = year;
-                        _selectedMonth = monthIndex;
-                      });
-                      Navigator.pop(context);
-                    },
-                    label: Text(monthNames[index]),
-                    trailing:
-                        _selectedYear == year && _selectedMonth == monthIndex
-                        ? const Icon(Icons.check, color: ConstantColors.primary)
-                        : null,
-                  );
-                }),
+                children:
+                    [
+                      MoonMenuItem(
+                        onTap: () {
+                          setState(() {
+                            _selectedYear = year;
+                            _selectedMonth = null;
+                          });
+                          Navigator.pop(context);
+                          _loadDashboardData();
+                        },
+                        label: const Text('Semua Bulan'),
+                        trailing:
+                            _selectedYear == year && _selectedMonth == null
+                            ? const Icon(
+                                Icons.check,
+                                color: ConstantColors.primary,
+                              )
+                            : null,
+                      ),
+                      const Divider(),
+                    ] +
+                    List.generate(12, (index) {
+                      final monthIndex = index + 1;
+                      return MoonMenuItem(
+                        onTap: () {
+                          setState(() {
+                            _selectedYear = year;
+                            _selectedMonth = monthIndex;
+                          });
+                          Navigator.pop(context);
+                          _loadDashboardData();
+                        },
+                        label: Text(monthNames[index]),
+                        trailing:
+                            _selectedYear == year &&
+                                _selectedMonth == monthIndex
+                            ? const Icon(
+                                Icons.check,
+                                color: ConstantColors.primary,
+                              )
+                            : null,
+                      );
+                    }),
               ),
             ),
           ),
@@ -557,7 +727,9 @@ class _MarketplaceState extends State<Marketplace> {
                         children: [
                           _buildTotalCard(
                             title: "Validasi Toko",
-                            value: totalProdukAktif.toString(),
+                            value: _isLoading
+                                ? "..."
+                                : _tokoValidasiCount.toString(),
                             icon: Icons.inventory_2_rounded,
                             color: Colors.white,
                             valueColor: ConstantColors.primary,
@@ -567,7 +739,9 @@ class _MarketplaceState extends State<Marketplace> {
                           const SizedBox(width: 16),
                           _buildTotalCard(
                             title: "Validasi Produk",
-                            value: menungguValidasi.toString(),
+                            value: _isLoading
+                                ? "..."
+                                : _produkValidasiCount.toString(),
                             icon: Icons.pending_actions_rounded,
                             color: Colors.white,
                             valueColor: ConstantColors.primary,
@@ -640,14 +814,26 @@ class _MarketplaceState extends State<Marketplace> {
                         children: [
                           _buildListCard(
                             title: "Sayur Terlaris",
-                            items: produkTopML,
+                            items: _isLoading
+                                ? ['Memuat...']
+                                : _topProducts.isEmpty
+                                ? ['Belum ada data']
+                                : _topProducts
+                                      .map((p) => p['nama_produk'].toString())
+                                      .toList(),
                             icon: Icons.local_florist_rounded,
                             iconColor: Colors.green,
                           ),
 
                           _buildListCard(
                             title: "Top Penjual",
-                            items: penjualTop,
+                            items: _isLoading
+                                ? ['Memuat...']
+                                : _topSellers.isEmpty
+                                ? ['Belum ada data']
+                                : _topSellers
+                                      .map((s) => s['nama_toko'].toString())
+                                      .toList(),
                             icon: Icons.group_rounded,
                             iconColor: Colors.orange,
                           ),
