@@ -246,22 +246,22 @@ class _WargaProductDetailScreenState extends State<WargaProductDetailScreen> {
             'Agus RT 01/RW 01 - Terakhir aktif 5 menit lalu',
             style: TextStyle(fontSize: 13, color: Colors.grey),
           ),
-          trailing: OutlinedButton.icon(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Membuka Chat dengan Penjual...')),
-              );
-            },
-            icon: const Icon(Icons.chat_bubble_outline, size: 18),
-            label: const Text('Chat'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: _primaryColor,
-              side: BorderSide(color: _primaryColor),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
-          ),
+          // trailing: OutlinedButton.icon(
+          //   onPressed: () {
+          //     ScaffoldMessenger.of(context).showSnackBar(
+          //       const SnackBar(content: Text('Membuka Chat dengan Penjual...')),
+          //     );
+          //   },
+            // icon: const Icon(Icons.chat_bubble_outline, size: 18),
+            // label: const Text('Chat'),
+            // style: OutlinedButton.styleFrom(
+            //   foregroundColor: _primaryColor,
+            //   side: BorderSide(color: _primaryColor),
+            //   shape: RoundedRectangleBorder(
+            //     borderRadius: BorderRadius.circular(20),
+            //   ),
+            // ),
+          //),
         ),
       ],
     );

@@ -95,7 +95,7 @@ class AboutAppScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Jawara Pintar',
+            'SapaWarga',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,

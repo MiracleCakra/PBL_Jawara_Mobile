@@ -256,7 +256,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
 
-                      // --- FORM LOGIN (Card Putih) ---
+                      
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 600),
                         curve: Curves.fastOutSlowIn,
@@ -330,7 +330,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   key: const Key('btn_submit_login'),
                                   text: "Login",
                                   onTap: () => signIn(),
-                                  withColor: true, // Akan menggunakan warna Primary
+                                  withColor: true,
                                 ),
                                 
                                 const SizedBox(height: 20),
