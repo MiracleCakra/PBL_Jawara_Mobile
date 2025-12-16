@@ -1,8 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:SapaWarga_kel_2/models/marketplace/order_model.dart';
 import 'package:SapaWarga_kel_2/services/marketplace/order_service.dart';
 import 'package:SapaWarga_kel_2/utils.dart' show formatRupiah;
-import 'package:SapaWarga_kel_2/widget/marketplace/custom_dialog.dart';
+import 'package:flutter/material.dart';
 
 class MyStoreOrderDetail extends StatefulWidget {
   final OrderModel order;
@@ -80,11 +79,7 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
 
   Future<void> updateOrderStatus(String newStatus) async {
     if (_currentOrder.orderId == null) {
-      CustomSnackbar.show(
-        context: context,
-        message: 'Order ID tidak valid',
-        type: DialogType.error,
-      );
+      _showErrorDialog('Order ID tidak valid');
       return;
     }
 
@@ -96,26 +91,296 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
       if (mounted) {
         setState(() => currentStatus = newStatus);
 
-        CustomSnackbar.show(
-          context: context,
-          message: 'Status berhasil diubah: $newStatus',
-          type: DialogType.success,
-        );
-
-        // Return to previous screen with update flag
+        // Show success dialog based on status
         if (newStatus == 'completed') {
-          Navigator.pop(context, 'completed');
+          _showSuccessDialog(
+            'Pesanan Diterima!',
+            'Pesanan telah berhasil diterima dan diproses.',
+          );
+        } else if (newStatus == 'canceled') {
+          _showSuccessDialog(
+            'Pesanan Ditolak',
+            'Pesanan telah ditolak dan dibatalkan.',
+          );
         }
+
+        // Return to previous screen after delay
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            Navigator.pop(context, newStatus);
+          }
+        });
       }
     } catch (e) {
       if (mounted) {
-        CustomSnackbar.show(
-          context: context,
-          message: 'Gagal mengubah status: $e',
-          type: DialogType.error,
-        );
+        _showErrorDialog('Gagal mengubah status: $e');
       }
     }
+  }
+
+  void _showSuccessDialog(String title, String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: Colors.white,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: primaryColor,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.check_circle,
+                    color: Colors.white,
+                    size: 64,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: primaryColor,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  message,
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'OK',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: Colors.white,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: primaryColor,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.error_outline,
+                    color: Colors.white,
+                    size: 64,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Terjadi Kesalahan',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: primaryColor,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  message,
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Tutup',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showConfirmDialog({
+    required String title,
+    required String message,
+    required String confirmText,
+    required Color confirmColor,
+    required VoidCallback onConfirm,
+  }) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: Colors.white,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: primaryColor.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.help_outline,
+                    color: primaryColor,
+                    size: 64,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  message,
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          side: BorderSide(color: primaryColor),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'Batal',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: primaryColor,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          onConfirm();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          confirmText,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -412,74 +677,65 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
     final paymentStatus =
         _currentOrder.paymentStatus?.toLowerCase() ?? 'unpaid';
 
-    // Status: NULL (pesanan baru, belum direspons)
-    if (lower == 'null' || status == 'null' || status.isEmpty) {
+    // Status: NULL atau PENDING (pesanan baru, belum direspons)
+    if (lower == 'null' ||
+        status == 'null' ||
+        status.isEmpty ||
+        lower == 'pending') {
       return Column(
         children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.blue.shade200),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Terima pesanan ini untuk diproses dan dikirim',
+                    style: TextStyle(fontSize: 12, color: Colors.blue.shade900),
+                  ),
+                ),
+              ],
+            ),
+          ),
           _button(
-            label: "✅ Terima & Kirim Pesanan",
-            icon: Icons.local_shipping_outlined,
-            color: primaryColor,
+            label: "Terima & Proses Pesanan",
+            color: successColor,
             onTap: () {
-              updateOrderStatus("pending");
-              Navigator.pop(context, "pending");
+              _showConfirmDialog(
+                title: 'Terima Pesanan?',
+                message:
+                    'Apakah Anda yakin ingin menerima dan memproses pesanan ini?',
+                confirmText: 'Terima',
+                confirmColor: successColor,
+                onConfirm: () {
+                  updateOrderStatus("completed");
+                },
+              );
             },
           ),
           const SizedBox(height: 12),
           _button(
-            label: "❌ Tolak Pesanan",
-            icon: Icons.cancel_outlined,
-            color: Colors.red,
+            label: "Tolak Pesanan",
+            color: errorColor,
             onTap: () {
-              updateOrderStatus("canceled");
-              Navigator.pop(context, "canceled");
-            },
-          ),
-        ],
-      );
-    }
-
-    // Status: pending (pesanan sedang diantar)
-    if (lower == 'pending') {
-      return Column(
-        children: [
-          // Jika belum bayar & metode COD, beri info
-          if (paymentStatus == 'unpaid' && _currentOrder.paymentMethod == 'COD')
-            Container(
-              padding: const EdgeInsets.all(12),
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: Colors.orange.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.orange.shade200),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: Colors.orange.shade700,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Pembayaran COD - Terima uang saat pengiriman',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.orange.shade900,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          _button(
-            label: "✅ Pesanan Selesai",
-            icon: Icons.check_circle_outline,
-            color: successColor,
-            onTap: () {
-              updateOrderStatus("completed");
-              Navigator.pop(context, "completed");
+              _showConfirmDialog(
+                title: 'Tolak Pesanan?',
+                message:
+                    'Apakah Anda yakin ingin menolak pesanan ini? Tindakan ini tidak dapat dibatalkan.',
+                confirmText: 'Tolak',
+                confirmColor: errorColor,
+                onConfirm: () {
+                  updateOrderStatus("canceled");
+                },
+              );
             },
           ),
         ],
@@ -493,7 +749,6 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
 
     return _button(
       label: "Tutup Detail",
-      icon: Icons.close,
       color: Colors.deepPurple,
       onTap: () => Navigator.pop(context),
     );
@@ -501,16 +756,13 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
 
   Widget _button({
     required String label,
-    required IconData icon,
     required Color color,
     required VoidCallback onTap,
   }) {
     return SizedBox(
       width: double.infinity,
-      child: ElevatedButton.icon(
+      child: ElevatedButton(
         onPressed: onTap,
-        icon: Icon(icon, color: Colors.white),
-        label: Text(label),
         style: ElevatedButton.styleFrom(
           backgroundColor: color,
           foregroundColor: Colors.white,
@@ -519,6 +771,7 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
             borderRadius: BorderRadius.circular(10),
           ),
         ),
+        child: Text(label),
       ),
     );
   }
@@ -526,15 +779,15 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
   Color _getStatusColor(String status) {
     final lower = status.toLowerCase();
     if (lower == 'null' || status == 'null' || status.isEmpty) {
-      return Colors.orange;
+      return warningColor;
     }
     switch (lower) {
       case "pending":
-        return Colors.blue;
+        return warningColor;
       case "completed":
-        return Colors.green;
+        return successColor;
       case "canceled":
-        return Colors.red;
+        return errorColor;
       default:
         return Colors.grey;
     }
@@ -547,7 +800,7 @@ class _MyStoreOrderDetailState extends State<MyStoreOrderDetail> {
     }
     switch (lower) {
       case "pending":
-        return "SEDANG DIANTAR";
+        return "MENUNGGU";
       case "completed":
         return "SELESAI";
       case "canceled":

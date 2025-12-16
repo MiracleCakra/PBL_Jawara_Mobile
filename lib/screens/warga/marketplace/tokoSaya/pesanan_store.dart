@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:SapaWarga_kel_2/models/marketplace/order_model.dart';
 import 'package:SapaWarga_kel_2/services/marketplace/order_service.dart';
 import 'package:SapaWarga_kel_2/services/marketplace/store_service.dart';
 import 'package:SapaWarga_kel_2/utils.dart' show formatRupiah;
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class Menupesanan extends StatefulWidget {
@@ -127,11 +127,11 @@ class _MenupesananState extends State<Menupesanan> {
     List<Map<String, dynamic>> filtered = _orders;
 
     // Apply status filter
-    if (_selectedFilter == 'Diantar') {
+    if (_selectedFilter == 'Menunggu') {
       filtered = filtered.where((orderData) {
         final order = orderData['order'];
         final status = (order['order_status'] as String? ?? '').toLowerCase();
-        return status == 'pending';
+        return status == 'null' || status.isEmpty || status == 'pending';
       }).toList();
     } else if (_selectedFilter == 'Selesai') {
       filtered = filtered.where((orderData) {
@@ -362,8 +362,8 @@ class _MenupesananState extends State<Menupesanan> {
                 primaryColor,
               ),
               _buildFilterOption(
-                'Diantar',
-                'Pesanan sedang diantar',
+                'Menunggu',
+                'Pesanan menunggu konfirmasi',
                 primaryColor,
               ),
               _buildFilterOption(
@@ -489,12 +489,12 @@ class _MenupesananState extends State<Menupesanan> {
     final lower = orderStatus.toLowerCase();
     if (lower == 'null' || orderStatus == 'null' || orderStatus.isEmpty) {
       statusColor = Colors.orange;
-      statusLabel = 'Baru';
+      statusLabel = 'Menunggu';
     } else {
       switch (lower) {
         case 'pending':
-          statusColor = Colors.blue;
-          statusLabel = 'Diantar';
+          statusColor = Colors.orange;
+          statusLabel = 'Menunggu';
           break;
         case 'completed':
           statusColor = Colors.green;
