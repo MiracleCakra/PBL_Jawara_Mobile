@@ -336,6 +336,7 @@ class _IconRow extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   value,
+                  key: label == 'Judul Broadcast' ? const Key('warga_broadcast_detail_title') : null,
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,

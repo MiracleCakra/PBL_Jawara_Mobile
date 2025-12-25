@@ -104,6 +104,7 @@ class _DaftarBroadcastWargaScreenState
             child: SizedBox(
               height: 50,
               child: TextField(
+                key: const Key('warga_broadcast_search'),
                 controller: _searchController,
                 onChanged: (value) => setState(() => _searchQuery = value),
                 decoration: InputDecoration(

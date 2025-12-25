@@ -111,6 +111,7 @@ class _DaftarKegiatanWargaScreenState extends State<DaftarKegiatanWargaScreen> {
             child: SizedBox(
               height: 50,
               child: TextField(
+                key: const Key('warga_kegiatan_search'),
                 controller: _searchController,
                 onChanged: (value) => setState(() => _searchQuery = value),
                 decoration: InputDecoration(

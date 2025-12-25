@@ -42,6 +42,7 @@ class _DetailKegiatanWargaScreenState extends State<DetailKegiatanWargaScreen> {
         ),
         const SizedBox(height: 8),
         TextFormField(
+          key: label == 'Nama Kegiatan' ? const Key('warga_kegiatan_detail_title') : null,
           initialValue: value.isEmpty ? '-' : value,
           readOnly: true,
           style: const TextStyle(

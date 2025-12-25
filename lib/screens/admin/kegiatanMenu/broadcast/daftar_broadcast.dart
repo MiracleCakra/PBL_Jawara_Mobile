@@ -130,6 +130,7 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
             child: SizedBox(
               height: 50,
               child: TextField(
+                key: const Key('broadcast_search_field'),
                 controller: _searchController,
                 onChanged: (value) {
                   setState(() {
@@ -180,6 +181,7 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
             color: _isFilterActive ? Colors.grey.shade200 : Colors.white,
             borderRadius: BorderRadius.circular(8),
             child: InkWell(
+              key: const Key('broadcast_filter_button'),
               onTap: () => _showFilterModal(context),
               borderRadius: BorderRadius.circular(8),
               highlightColor: Colors.transparent,
