@@ -1,7 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:SapaWarga_kel_2/models/kegiatan/aspirasi_model.dart';
 import 'package:SapaWarga_kel_2/models/kegiatan/broadcast_model.dart';
 import 'package:SapaWarga_kel_2/models/kegiatan/kegiatan_model.dart';
@@ -13,8 +11,7 @@ import 'package:SapaWarga_kel_2/models/keuangan/transaksi_model.dart';
 import 'package:SapaWarga_kel_2/models/keuangan/warga_tagihan_model.dart';
 import 'package:SapaWarga_kel_2/models/marketplace/marketplace_model.dart'
     as m_model;
-import 'package:SapaWarga_kel_2/models/marketplace/order_model.dart'
-    as o_model;
+import 'package:SapaWarga_kel_2/models/marketplace/order_model.dart' as o_model;
 import 'package:SapaWarga_kel_2/models/marketplace/product_model.dart';
 import 'package:SapaWarga_kel_2/models/marketplace/store_model.dart';
 // ----------------------- ADMIN ---------------------
@@ -100,7 +97,8 @@ import 'package:SapaWarga_kel_2/screens/admin/pemasukan/pemasukan_screen.dart';
 import 'package:SapaWarga_kel_2/screens/admin/pemasukan/tagih_iuran_screen.dart';
 import 'package:SapaWarga_kel_2/screens/admin/pemasukan/tagihan_screen.dart';
 // Keluarga
-import 'package:SapaWarga_kel_2/screens/admin/penduduk/keluarga/daftar_keluarga.dart' hide Keluarga;
+import 'package:SapaWarga_kel_2/screens/admin/penduduk/keluarga/daftar_keluarga.dart'
+    hide Keluarga;
 import 'package:SapaWarga_kel_2/screens/admin/penduduk/keluarga/daftar_mutasi_keluarga.dart';
 import 'package:SapaWarga_kel_2/screens/admin/penduduk/keluarga/detail_keluarga.dart';
 import 'package:SapaWarga_kel_2/screens/admin/penduduk/keluarga/tambah_mutasi_keluarga.dart';
@@ -210,6 +208,8 @@ import 'package:SapaWarga_kel_2/screens/warga/profil/profil_screen.dart';
 import 'package:SapaWarga_kel_2/screens/warga/profil/pusat_bantuan.dart';
 import 'package:SapaWarga_kel_2/screens/warga/profil/reset_pw_screen.dart';
 import 'package:SapaWarga_kel_2/screens/warga/profil/tentang_apk.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 // ================= Dummy Class (Placeholder) =================
 class DetailValidasiProdukScreen extends StatelessWidget {
@@ -433,7 +433,10 @@ final router = GoRouter(
               path: '/admin/marketplace/daftarproduk',
               name: 'DaftarProdukToko',
               builder: (context, state) {
-                final store = state.extra as StoreModel;
+                final extra = state.extra;
+                final store = extra is StoreModel
+                    ? extra
+                    : StoreModel.fromJson(extra as Map<String, dynamic>);
                 return DaftarProdukTokoScreen(store: store);
               },
             ),
