@@ -1,10 +1,10 @@
 import 'dart:async';
 
+import 'package:SapaWarga_kel_2/models/marketplace/store_model.dart';
+import 'package:SapaWarga_kel_2/providers/marketplace/store_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:SapaWarga_kel_2/models/marketplace/store_model.dart';
-import 'package:SapaWarga_kel_2/providers/marketplace/store_provider.dart';
 import 'package:provider/provider.dart';
 
 const Color _primaryColor = Color(0xFF6366F1);
@@ -39,7 +39,10 @@ class _DaftarTokoAktifScreenState extends State<DaftarTokoAktifScreen> {
   @override
   void initState() {
     super.initState();
-    _loadActiveStores();
+    // Gunakan addPostFrameCallback untuk menghindari setState during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadActiveStores();
+    });
   }
 
   Future<void> _loadActiveStores() async {

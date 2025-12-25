@@ -1,10 +1,10 @@
 import 'dart:async';
 
+import 'package:SapaWarga_kel_2/models/marketplace/store_model.dart';
+import 'package:SapaWarga_kel_2/providers/marketplace/store_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:SapaWarga_kel_2/models/marketplace/store_model.dart';
-import 'package:SapaWarga_kel_2/providers/marketplace/store_provider.dart';
 import 'package:provider/provider.dart';
 
 const Color primaryColor = Color(0xFF6A5AE0);
@@ -40,7 +40,10 @@ class _ValidasiAkunTokoScreenState extends State<ValidasiAkunTokoScreen> {
   @override
   void initState() {
     super.initState();
-    _loadStores();
+    // Gunakan addPostFrameCallback untuk menghindari setState during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadStores();
+    });
   }
 
   Future<void> _loadStores() async {
