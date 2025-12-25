@@ -160,6 +160,15 @@ Rekaman demo diambil melalui web dikarenakan keterbatasan pada mobile dan bebera
 
 ### 🛒 Marketplace UMKM Warga
 
+
+#### Belanja Produk (Warga)
+
+![](demo/BelanjaProduk.gif)
+
+#### Manajemen Toko (Warga)
+
+![](demo/ManajemenToko.gif)
+
 #### Validasi Produk (Admin)
 
 ![](demo/MVPValidateMarket.gif)
