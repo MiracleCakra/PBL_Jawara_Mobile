@@ -16,6 +16,7 @@ class LogAktivitasScreenAdmin extends StatelessWidget {
         backgroundColor: Colors.white,
         centerTitle: false,
         leading: IconButton(
+          key: const Key('log_back_button'),
           icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
@@ -105,6 +106,7 @@ class _LogAktivitasContentState extends State<LogAktivitasContent> {
 
   Widget _buildLogItem(ActivityLogModel log) {
     return Container(
+      key: log.id != null ? Key('log_item_${log.id}') : null,
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -195,6 +197,7 @@ class _LogAktivitasContentState extends State<LogAktivitasContent> {
                 child: SizedBox(
                   height: 50,
                   child: TextField(
+                    key: const Key('log_search_field'),
                     onChanged: _onSearchChanged,
                     decoration: InputDecoration(
                       filled: true,
@@ -248,6 +251,7 @@ class _LogAktivitasContentState extends State<LogAktivitasContent> {
                 color: isFilterActive ? Colors.grey.shade200 : Colors.white,
                 borderRadius: BorderRadius.circular(8),
                 child: InkWell(
+                  key: const Key('log_filter_button'),
                   onTap: () => _showFilterModal(context),
                   borderRadius: BorderRadius.circular(8),
                   highlightColor: Colors.transparent,
@@ -284,16 +288,24 @@ class _LogAktivitasContentState extends State<LogAktivitasContent> {
               }
               if (!snapshot.hasData || snapshot.data!.isEmpty) {
                 return const Center(
-                    child: Text("Tidak ada aktivitas yang tercatat."));
+                    child: Text(
+                  "Tidak ada aktivitas yang tercatat.",
+                  key: Key('log_empty_state_text'),
+                ));
               }
 
               final filteredLogs = _applyFilters(snapshot.data!);
 
               if (filteredLogs.isEmpty) {
-                return const Center(child: Text("Data tidak ditemukan."));
+                return const Center(
+                    child: Text(
+                  "Data tidak ditemukan.",
+                  key: Key('log_no_data_found_text'),
+                ));
               }
 
               return ListView.builder(
+                key: const Key('log_list_view'),
                 padding: const EdgeInsets.symmetric(
                     horizontal: 16, vertical: 8),
                 itemCount: filteredLogs.length,

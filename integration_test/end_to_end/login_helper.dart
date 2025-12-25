@@ -1,22 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:SapaWarga_kel_2/main.dart' as app;
 
 /// Helper function to perform login for integration tests.
-/// 
-/// This function will:
-/// 1. Start the app.
-/// 2. Navigate to the login form.
-/// 3. Enter the provided email and password.
-/// 4. Submit the form.
-/// 5. Wait for the app to settle after login.
 Future<void> login(WidgetTester tester, {
   String email = 'admin@gmail.com',
   String password = 'password',
 }) async {
   // Step 1: Start the app and wait for it to settle.
-  app.main();
   await tester.pumpAndSettle(const Duration(seconds: 2));
+
+  // Check if already logged in
+  if (tester.any(find.byKey(const Key('kegiatan_tab')))) {
+    return;
+  }
 
   // Step 2: Find and tap the button to show the login form.
   final btnShowForm = find.byKey(const Key('btn_show_login_form'));
@@ -41,8 +37,9 @@ Future<void> login(WidgetTester tester, {
   await tester.pump(const Duration(milliseconds: 100));
 
   // Step 5: Tap the submit button and wait for navigation.
+  await tester.ensureVisible(submitButton);
   await tester.tap(submitButton);
-  await tester.pumpAndSettle(const Duration(seconds: 4));
+  await tester.pumpAndSettle(const Duration(seconds: 8));
 
   // Verify that the login button is no longer on the screen,
   // indicating a successful navigation.

@@ -57,7 +57,7 @@ class _DetailKegiatanScreenState extends State<DetailKegiatanScreen> {
         const SizedBox(height: 8),
         TextFormField(
           // Force rebuild when value changes by including it in the key
-          key: ValueKey("${key.toString()}_$value"), 
+          key: key, 
           initialValue: value.isEmpty ? '-' : value,
           readOnly: true,
           style: const TextStyle(color: Colors.black87),
@@ -380,6 +380,7 @@ class _DetailKegiatanScreenState extends State<DetailKegiatanScreen> {
           elevation: 0,
           foregroundColor: Colors.black,
           leading: IconButton(
+            key: const Key('back_button'),
             icon: const Icon(Icons.arrow_back_ios, size: 20),
             onPressed: () => context.pop(_isChanged ? 'refresh' : null),
           ),

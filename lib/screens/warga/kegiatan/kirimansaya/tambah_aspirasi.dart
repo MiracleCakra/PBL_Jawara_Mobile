@@ -204,6 +204,7 @@ class _WargaTambahAspirasiScreenState
               ),
               const SizedBox(height: 8),
               TextFormField(
+                key: const Key('input_judul_aspirasi'),
                 controller: _judulController,
                 decoration: InputDecoration(
                   hintText: 'Masukkan judul pesan',
@@ -227,6 +228,7 @@ class _WargaTambahAspirasiScreenState
               ),
               const SizedBox(height: 8),
               TextFormField(
+                key: const Key('input_isi_aspirasi'),
                 controller: _isiController,
                 maxLines: 8,
                 decoration: InputDecoration(
@@ -250,6 +252,7 @@ class _WargaTambahAspirasiScreenState
                   Expanded(
                     flex: 3,
                     child: ElevatedButton(
+                      key: const Key('btn_kirim_aspirasi'),
                       onPressed: _isLoading ? null : _submitForm,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _primaryColor,

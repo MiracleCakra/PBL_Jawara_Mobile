@@ -581,6 +581,7 @@ class _KegiatanScreenState extends State<KegiatanScreen> {
                               children: [
                                 Expanded(
                                   child: quickButton(
+                                    key: const Key('pesan_warga_button'),
                                     icon: allMenuItems[2].icon,
                                     label: allMenuItems[2].label,
                                     onTap: allMenuItems[2].onTap,
@@ -589,6 +590,7 @@ class _KegiatanScreenState extends State<KegiatanScreen> {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: quickButton(
+                                    key: const Key('log_aktivitas_button'),
                                     icon: allMenuItems[3].icon,
                                     label: allMenuItems[3].label,
                                     onTap: allMenuItems[3].onTap,

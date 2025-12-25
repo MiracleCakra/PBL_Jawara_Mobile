@@ -485,6 +485,7 @@ class _WargaPesanSayaScreenState extends State<WargaPesanSayaScreen> {
       ),
 
       floatingActionButton: FloatingActionButton(
+        key: const Key('fab_tambah_aspirasi'),
         onPressed: () async {
           final result = await context.pushNamed('warga_aspirasiForm');
           if (result == true) {
