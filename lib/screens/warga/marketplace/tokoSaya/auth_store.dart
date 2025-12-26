@@ -1,6 +1,6 @@
+import 'package:SapaWarga_kel_2/services/store_status_service.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:SapaWarga_kel_2/services/store_status_service.dart';
 import 'package:moon_design/moon_design.dart';
 
 class AuthStoreScreen extends StatefulWidget {
@@ -11,6 +11,7 @@ class AuthStoreScreen extends StatefulWidget {
 }
 
 class _AuthStoreScreenState extends State<AuthStoreScreen> {
+  bool _error = false;
   @override
   void initState() {
     super.initState();
@@ -19,36 +20,90 @@ class _AuthStoreScreenState extends State<AuthStoreScreen> {
 
   // Cek status toko
   void _checkStoreStatus() async {
-    int status = await StoreStatusService.getStoreStatus();
-    if (!mounted) return;
+    try {
+      int status = await StoreStatusService.getStoreStatus();
+      if (!mounted) return;
 
-    switch (status) {
-      case 2:
-        // Sudah punya toko - langsung ke dashboard
-        context.goNamed('WargaMarketplaceStore');
-        break;
-      case 1:
-        // Menunggu validasi
-        context.goNamed('StorePendingValidation');
-        break;
-      case 3:
-        // Toko ditolak
-        context.goNamed('StoreRejected');
-        break;
-      case 4:
-        // Toko nonaktif (owner atau admin)
-        context.goNamed('StoreDeactivated');
-        break;
-      case 0:
-      default:
-        // Belum punya toko - langsung ke register
-        context.goNamed('WargaStoreRegister');
-        break;
+      switch (status) {
+        case 2:
+          context.goNamed('WargaMarketplaceStore');
+          break;
+        case 1:
+          context.goNamed('StorePendingValidation');
+          break;
+        case 3:
+          context.goNamed('StoreRejected');
+          break;
+        case 4:
+          context.goNamed('StoreDeactivated');
+          break;
+        case 0:
+        default:
+          context.goNamed('WargaStoreRegister');
+          break;
+      }
+    } catch (e) {
+      setState(() {
+        _error = true;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_error) {
+      return Scaffold(
+        backgroundColor: Colors.black.withOpacity(0.2),
+        body: Center(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 15,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.error_outline, color: Colors.red, size: 40),
+                const SizedBox(height: 16),
+                const Text(
+                  'Gagal Memuat Data',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFB91C1C),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Terjadi kesalahan saat memuat data toko Anda. Silakan coba lagi.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14, color: Color(0xFF4B5563)),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _error = false;
+                    });
+                    _checkStoreStatus();
+                  },
+                  child: const Text('Coba Lagi'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
     return Scaffold(
       backgroundColor: Colors.black.withOpacity(0.2),
       body: Center(
