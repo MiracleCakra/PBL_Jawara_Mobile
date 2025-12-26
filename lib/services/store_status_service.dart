@@ -1,7 +1,10 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+typedef StoreStatusGetter = Future<int> Function();
+
 class StoreStatusService {
+  static StoreStatusGetter? mockGetStoreStatus;
   // 0 = belum daftar
   // 1 = pending
   // 2 = aktif
@@ -10,6 +13,9 @@ class StoreStatusService {
   static const String key = 'store_status';
 
   static Future<int> getStoreStatus() async {
+    if (mockGetStoreStatus != null) {
+      return await mockGetStoreStatus!();
+    }
     try {
       // Get current user email
       final authUser = Supabase.instance.client.auth.currentUser;
