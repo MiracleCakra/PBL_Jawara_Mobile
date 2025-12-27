@@ -59,6 +59,7 @@ class _DetailBroadcastWargaScreenState
         elevation: 0,
         foregroundColor: Colors.black,
         leading: IconButton(
+          key: const Key('back_button_broadcast_detail'),
           icon: const Icon(Icons.arrow_back_ios_new, size: 20),
           onPressed: () => context.pop(),
         ),
@@ -336,6 +337,7 @@ class _IconRow extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   value,
+                  key: label == 'Judul Broadcast' ? const Key('warga_broadcast_detail_title') : null,
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,

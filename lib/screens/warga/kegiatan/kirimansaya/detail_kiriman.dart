@@ -176,6 +176,7 @@ class _WargaDetailKirimanScreenState extends State<WargaDetailKirimanScreen> {
             const SizedBox(height: 16),
 
             _buildOptionTile(
+              key: const Key('option_edit_aspirasi'),
               icon: Icons.edit_rounded,
               color: _editColor,
               title: 'Edit Data',
@@ -187,6 +188,7 @@ class _WargaDetailKirimanScreenState extends State<WargaDetailKirimanScreen> {
             ),
 
             _buildOptionTile(
+              key: const Key('option_delete_aspirasi'),
               icon: Icons.delete_forever,
               color: _deleteColor,
               title: 'Hapus Data',
@@ -204,6 +206,7 @@ class _WargaDetailKirimanScreenState extends State<WargaDetailKirimanScreen> {
   }
 
   Widget _buildOptionTile({
+    Key? key,
     required IconData icon,
     required Color color,
     required String title,
@@ -211,6 +214,7 @@ class _WargaDetailKirimanScreenState extends State<WargaDetailKirimanScreen> {
     required VoidCallback onTap,
   }) {
     return ListTile(
+      key: key,
       leading: CircleAvatar(
         backgroundColor: color.withOpacity(0.15),
         child: Icon(icon, color: color, size: 24),
@@ -251,6 +255,7 @@ class _WargaDetailKirimanScreenState extends State<WargaDetailKirimanScreen> {
           const SizedBox(width: 6),
           Text(
             status,
+            key: const Key('detail_aspirasi_status'),
             style: TextStyle(
               color: statusColor,
               fontWeight: FontWeight.bold,
@@ -363,6 +368,7 @@ class _WargaDetailKirimanScreenState extends State<WargaDetailKirimanScreen> {
         centerTitle: false,
         titleSpacing: 0,
         leading: IconButton(
+          key: const Key('back_button_aspirasi_detail'),
           icon: const Icon(
             Icons.arrow_back_ios_new,
             color: Colors.black,
@@ -373,6 +379,7 @@ class _WargaDetailKirimanScreenState extends State<WargaDetailKirimanScreen> {
         actions: [
           if (canModify)
             IconButton(
+              key: const Key('detail_aspirasi_more_options'),
               icon: const Icon(Icons.more_vert, color: Colors.black),
               onPressed: () => _showOptionsBottomSheet(context),
             ),
@@ -388,6 +395,7 @@ class _WargaDetailKirimanScreenState extends State<WargaDetailKirimanScreen> {
               children: [
                 Text(
                   judul,
+                  key: const Key('detail_aspirasi_judul'),
                   style: const TextStyle(
                     fontSize: 19,
                     fontWeight: FontWeight.bold,
@@ -444,6 +452,7 @@ class _WargaDetailKirimanScreenState extends State<WargaDetailKirimanScreen> {
                   ),
                   child: Text(
                     deskripsi,
+                    key: const Key('detail_aspirasi_isi'),
                     style: const TextStyle(
                       fontSize: 15,
                       height: 1.6,

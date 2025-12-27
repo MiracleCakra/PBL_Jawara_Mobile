@@ -111,6 +111,7 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
+                    key: const Key('selesai_button'),
                     onPressed: () {
                       Navigator.of(context).pop(); // Tutup Dialog
                       // Tutup halaman TambahKegiatanScreen, sambil mengirim hasil 'true'
@@ -535,6 +536,7 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
                     )
                   else
                     InkWell(
+                      key: const Key('upload_dokumentasi'),
                       onTap: _pickImage,
                       child: Container(
                         height: 150,
@@ -568,6 +570,7 @@ class _TambahKegiatanScreenState extends State<TambahKegiatanScreen> {
                       children: [
                         Expanded(
                           child: ElevatedButton(
+                            key: const Key('batal_kegiatan_button'),
                             onPressed: () => context.pop(),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: batalColor,

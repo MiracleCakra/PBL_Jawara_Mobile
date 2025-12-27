@@ -33,6 +33,7 @@ class WargaMenuKegiatanScreen extends StatelessWidget {
           childAspectRatio: 1.0,
           children: [
             _buildMenuItem(
+              key: const Key('warga_menu_daftar_kegiatan'),
               icon: Icons.event_outlined,
               label: 'Daftar Kegiatan',
               color: primaryColor,
@@ -41,6 +42,7 @@ class WargaMenuKegiatanScreen extends StatelessWidget {
             ),
 
             _buildMenuItem(
+              key: const Key('warga_menu_daftar_broadcast'),
               icon: Icons.campaign_outlined,
               label: 'Daftar Broadcast',
               color: secondaryColor,
@@ -49,6 +51,7 @@ class WargaMenuKegiatanScreen extends StatelessWidget {
             ),
 
             _buildMenuItem(
+              key: const Key('warga_menu_aspirasi'),
               icon: Icons.message_outlined,
               label: 'Aspirasi Warga',
               onTap: () => context.pushNamed('warga_aspirasiHome'),
@@ -56,6 +59,7 @@ class WargaMenuKegiatanScreen extends StatelessWidget {
 
             ),
             _buildMenuItem(
+              key: const Key('warga_menu_kiriman_saya'),
               icon: Icons.mark_email_read_outlined,
               label: 'Kiriman Saya',
               color: const Color.fromARGB(255, 113, 154, 238),
@@ -69,6 +73,7 @@ class WargaMenuKegiatanScreen extends StatelessWidget {
   }
 
   Widget _buildMenuItem({
+    Key? key,
     required IconData icon,
     required String label,
     required Color color,
@@ -77,6 +82,7 @@ class WargaMenuKegiatanScreen extends StatelessWidget {
     bool isAction = false,
   }) {
     return InkWell(
+      key: key,
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: Container(

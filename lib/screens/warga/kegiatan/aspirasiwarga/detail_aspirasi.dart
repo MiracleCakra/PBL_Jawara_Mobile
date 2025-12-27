@@ -60,6 +60,7 @@ class WargaDetailAspirasiScreen extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 data.isi,
+                key: const Key('detail_aspirasi_isi'),
                 style: const TextStyle(
                   fontSize: 15,
                   height: 1.6,
@@ -103,6 +104,7 @@ class WargaDetailAspirasiScreen extends StatelessWidget {
           // Judul Besar
           Text(
             data.judul,
+            key: const Key('detail_aspirasi_judul'),
             style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -126,6 +128,7 @@ class WargaDetailAspirasiScreen extends StatelessWidget {
                     const SizedBox(width: 6),
                     Text(
                       statusText,
+                      key: const Key('detail_aspirasi_status'),
                       style: TextStyle(
                           color: statusColor,
                           fontWeight: FontWeight.bold,

@@ -429,6 +429,7 @@ class _WargaPesanSayaScreenState extends State<WargaPesanSayaScreen> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
+          key: const Key('back_button_aspirasi_list'),
           icon: const Icon(
             Icons.arrow_back_ios_new,
             color: Colors.black,
@@ -485,6 +486,7 @@ class _WargaPesanSayaScreenState extends State<WargaPesanSayaScreen> {
       ),
 
       floatingActionButton: FloatingActionButton(
+        key: const Key('fab_tambah_aspirasi'),
         onPressed: () async {
           final result = await context.pushNamed('warga_aspirasiForm');
           if (result == true) {

@@ -104,6 +104,7 @@ class _DaftarBroadcastWargaScreenState
             child: SizedBox(
               height: 50,
               child: TextField(
+                key: const Key('warga_broadcast_search'),
                 controller: _searchController,
                 onChanged: (value) => setState(() => _searchQuery = value),
                 decoration: InputDecoration(
@@ -157,6 +158,7 @@ class _DaftarBroadcastWargaScreenState
             color: _isFilterActive ? Colors.grey.shade200 : Colors.white,
             borderRadius: BorderRadius.circular(8),
             child: InkWell(
+              key: const Key('warga_broadcast_filter_button'),
               onTap: () => _showFilterModal(context),
               borderRadius: BorderRadius.circular(8),
               highlightColor: Colors.transparent,
@@ -256,6 +258,7 @@ class _DaftarBroadcastWargaScreenState
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         leading: IconButton(
+          key: const Key('back_button_broadcast_list'),
           icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 20),
           onPressed: () => Navigator.of(context).pop(),
         ),

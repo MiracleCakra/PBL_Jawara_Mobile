@@ -76,26 +76,34 @@ class _WargaLayoutState extends State<WargaLayout>
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: List.generate(
               tabs.length,
-              (index) => BottomAppBarItem(
-                icon: index == 0
-                    ? Icon(
-                        MoonIcons.generic_home_32_regular,
-                        size: 24,
-                        color: widget.navigationShell.currentIndex == index
-                            ? ConstantColors.primary
-                            : Colors.black,
-                      )
-                    : Iconify(
-                        tabs.values.elementAt(index),
-                        size: 24,
-                        color: widget.navigationShell.currentIndex == index
-                            ? ConstantColors.primary
-                            : Colors.black,
-                      ),
-                label: tabs.keys.elementAt(index),
-                active: widget.navigationShell.currentIndex == index,
-                onTap: () => _goTo(index),
-              ),
+              (index) {
+                final label = tabs.keys.elementAt(index);
+                return BottomAppBarItem(
+                  key: label == 'Kegiatan' 
+                      ? const Key('kegiatan_tab') 
+                      : label == 'Profil' 
+                          ? const Key('profil_tab') 
+                          : null,
+                  icon: index == 0
+                      ? Icon(
+                          MoonIcons.generic_home_32_regular,
+                          size: 24,
+                          color: widget.navigationShell.currentIndex == index
+                              ? ConstantColors.primary
+                              : Colors.black,
+                        )
+                      : Iconify(
+                          tabs.values.elementAt(index),
+                          size: 24,
+                          color: widget.navigationShell.currentIndex == index
+                              ? ConstantColors.primary
+                              : Colors.black,
+                        ),
+                  label: label,
+                  active: widget.navigationShell.currentIndex == index,
+                  onTap: () => _goTo(index),
+                );
+              },
             ).toList(),
           ),
         ),

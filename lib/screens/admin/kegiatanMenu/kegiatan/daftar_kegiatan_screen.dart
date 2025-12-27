@@ -116,6 +116,7 @@ class _DaftarKegiatanScreenState extends State<DaftarKegiatanScreen> {
             child: SizedBox(
               height: 50,
               child: TextField(
+                key: const Key('search_kegiatan_field'),
                 controller: _searchController,
                 onChanged: (value) => setState(() => _searchQuery = value),
                 decoration: InputDecoration(
@@ -160,6 +161,7 @@ class _DaftarKegiatanScreenState extends State<DaftarKegiatanScreen> {
             color: _isFilterActive ? Colors.grey.shade200 : Colors.white,
             borderRadius: BorderRadius.circular(8),
             child: InkWell(
+              key: const Key('filter_kegiatan_button'),
               onTap: () => _showFilterModal(context),
               borderRadius: BorderRadius.circular(8),
               highlightColor: Colors.transparent,
@@ -194,6 +196,7 @@ class _DaftarKegiatanScreenState extends State<DaftarKegiatanScreen> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         leading: IconButton(
+          key: const Key('back_button_admin_kegiatan_list'),
           icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 20),
           onPressed: () => context.pop(),
         ),
@@ -266,6 +269,7 @@ class _DaftarKegiatanScreenState extends State<DaftarKegiatanScreen> {
                   itemBuilder: (_, index) {
                     final kegiatan = filteredList[index];
                     return GestureDetector(
+                      key: Key('kegiatan_card_${kegiatan.id}'),
                       onTap: () async {
                         final result = await context.push<String>(
                           '/admin/kegiatan/detail',

@@ -42,6 +42,7 @@ class _DetailKegiatanWargaScreenState extends State<DetailKegiatanWargaScreen> {
         ),
         const SizedBox(height: 8),
         TextFormField(
+          key: label == 'Nama Kegiatan' ? const Key('warga_kegiatan_detail_title') : null,
           initialValue: value.isEmpty ? '-' : value,
           readOnly: true,
           style: const TextStyle(
@@ -83,6 +84,7 @@ class _DetailKegiatanWargaScreenState extends State<DetailKegiatanWargaScreen> {
         elevation: 0,
         foregroundColor: Colors.black,
         leading: IconButton(
+          key: const Key('back_button_detail'),
           icon: const Icon(Icons.arrow_back_ios_new, size: 20),
           onPressed: () => context.pop(),
         ),

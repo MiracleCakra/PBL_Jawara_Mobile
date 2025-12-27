@@ -184,6 +184,7 @@ class _PesanWargaScreenState extends State<PesanWargaScreen> {
             child: SizedBox(
               height: 50,
               child: TextField(
+                key: const Key('pesan_warga_search_field'),
                 controller: _searchController,
                 onChanged: (value) => setState(() => _searchText = value),
                 decoration: InputDecoration(
@@ -224,6 +225,7 @@ class _PesanWargaScreenState extends State<PesanWargaScreen> {
             color: _isFilterActive ? Colors.grey.shade200 : Colors.white,
             borderRadius: BorderRadius.circular(8),
             child: InkWell(
+              key: const Key('pesan_warga_filter_button'),
               borderRadius: BorderRadius.circular(8),
               onTap: () {
                 String tempStatus = _selectedStatus ?? 'Semua';
@@ -327,6 +329,7 @@ class _PesanWargaScreenState extends State<PesanWargaScreen> {
                                     children: [
                                       Expanded(
                                         child: ElevatedButton(
+                                          key: const Key('filter_reset_button'),
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: Colors.grey[300],
                                             foregroundColor: Colors.black,
@@ -349,6 +352,7 @@ class _PesanWargaScreenState extends State<PesanWargaScreen> {
                                       const SizedBox(width: 12),
                                       Expanded(
                                         child: ElevatedButton(
+                                          key: const Key('filter_apply_button'),
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: getPrimaryColor(context),
                                             foregroundColor: Colors.white,
@@ -413,6 +417,7 @@ class _PesanWargaScreenState extends State<PesanWargaScreen> {
 
       appBar: AppBar(
         leading: IconButton(
+          key: const Key('pesan_warga_back_button'),
           icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 20),
 
           onPressed: () => Navigator.pop(context),

@@ -64,6 +64,23 @@ class _LogFilterScreenState extends State<LogFilterScreen> {
     }
   }
 
+  Future<void> _selectEndDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _endDate ?? _startDate ?? DateTime.now(),
+      firstDate: _startDate ?? DateTime(2020),
+      lastDate: DateTime(2030),
+      helpText: 'Pilih Tanggal Selesai',
+    );
+
+    if (picked != null) {
+      setState(() {
+        _endDate = picked;
+        _endDateController.text = _dateFormat.format(picked);
+      });
+    }
+  }
+
   void _resetFilter() {
     setState(() {
       _startDate = null;
@@ -82,13 +99,14 @@ class _LogFilterScreenState extends State<LogFilterScreen> {
     Navigator.pop(context, filterData);
   }
 
-  Widget _buildDateField(String label, TextEditingController controller, VoidCallback onTap, VoidCallback onClear, bool isSelected) {
+  Widget _buildDateField(String label, TextEditingController controller, VoidCallback onTap, VoidCallback onClear, bool isSelected, {Key? key}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: const TextStyle(fontWeight: FontWeight.normal, fontSize: 16, color: Colors.black87)),
         const SizedBox(height: 8),
         TextFormField(
+          key: key,
           controller: controller,
           readOnly: true,
           onTap: onTap,
@@ -113,7 +131,6 @@ class _LogFilterScreenState extends State<LogFilterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final Color primaryColor = Theme.of(context).primaryColor;
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -131,9 +148,15 @@ class _LogFilterScreenState extends State<LogFilterScreen> {
           const Divider(height: 20),
           
           // Input Tanggal
-          _buildDateField('Tanggal', _startDateController, () => _selectStartDate(context), () {
+          _buildDateField('Tanggal Mulai', _startDateController, () => _selectStartDate(context), () {
              setState(() { _startDate = null; _startDateController.clear(); });
-          }, _startDate != null),
+          }, _startDate != null, key: const Key('filter_start_date_field')),
+
+          const SizedBox(height: 16),
+
+          _buildDateField('Tanggal Selesai', _endDateController, () => _selectEndDate(context), () {
+             setState(() { _endDate = null; _endDateController.clear(); });
+          }, _endDate != null, key: const Key('filter_end_date_field')),
 
           const SizedBox(height: 24),
 
@@ -145,6 +168,7 @@ class _LogFilterScreenState extends State<LogFilterScreen> {
             children: [
               Expanded(
                 child: ElevatedButton(
+                  key: const Key('filter_reset_button'),
                   onPressed: _resetFilter,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.grey.shade200,
@@ -159,6 +183,7 @@ class _LogFilterScreenState extends State<LogFilterScreen> {
               const SizedBox(width: 16),
               Expanded(
                 child: ElevatedButton(
+                  key: const Key('filter_apply_button'),
                   onPressed: _applyFilter,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF4E46B4), // Hardcoded primary from other screens if context primary isn't set

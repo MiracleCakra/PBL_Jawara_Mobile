@@ -113,11 +113,17 @@ class _BroadcastFilterScreenState extends State<BroadcastFilterScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: ElevatedButton(onPressed: _resetFilter, style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade200, foregroundColor: Colors.black, padding: const EdgeInsets.symmetric(vertical: 16), elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0))), child: const Text('Reset Filter')),
+                child: ElevatedButton(
+                  key: const Key('filter_reset_button'),
+                  onPressed: _resetFilter, 
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade200, foregroundColor: Colors.black, padding: const EdgeInsets.symmetric(vertical: 16), elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0))), child: const Text('Reset Filter')),
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: ElevatedButton(onPressed: _applyFilter, style: ElevatedButton.styleFrom(backgroundColor: primaryColor, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0))), child: const Text('Terapkan')),
+                child: ElevatedButton(
+                  key: const Key('filter_apply_button'),
+                  onPressed: _applyFilter, 
+                  style: ElevatedButton.styleFrom(backgroundColor: primaryColor, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0))), child: const Text('Terapkan')),
               ),
             ],
           ),

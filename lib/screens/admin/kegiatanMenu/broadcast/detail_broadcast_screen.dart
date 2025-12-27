@@ -395,6 +395,7 @@ class _DetailBroadcastScreenState extends State<DetailBroadcastScreen> {
             child: Divider(height: 1, color: Colors.grey),
           ),
           leading: IconButton(
+            key: const Key('back_button_admin_broadcast_detail'),
             icon: const Icon(Icons.arrow_back, color: Colors.black),
             onPressed: () => Navigator.of(context).pop(_hasEdited),
           ),

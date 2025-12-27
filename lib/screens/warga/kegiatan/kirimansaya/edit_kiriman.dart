@@ -102,6 +102,7 @@ class _WargaEditKirimanScreenState extends State<WargaEditKirimanScreen> {
         foregroundColor: Colors.black,
         elevation: 0,
         leading: IconButton(
+          key: const Key('back_button_aspirasi_edit'),
           icon: const Icon(Icons.arrow_back_ios_new, size: 20),
           onPressed: () => context.pop(),
         ),
@@ -120,6 +121,7 @@ class _WargaEditKirimanScreenState extends State<WargaEditKirimanScreen> {
               ),
               const SizedBox(height: 8),
               TextFormField(
+                key: const Key('edit_judul_aspirasi'),
                 controller: _judulController,
                 decoration: InputDecoration(
                   hintText: 'Masukkan judul pesan',
@@ -146,6 +148,7 @@ class _WargaEditKirimanScreenState extends State<WargaEditKirimanScreen> {
               ),
               const SizedBox(height: 8),
               TextFormField(
+                key: const Key('edit_isi_aspirasi'),
                 controller: _isiController,
                 maxLines: 8,
                 decoration: InputDecoration(
@@ -190,6 +193,7 @@ class _WargaEditKirimanScreenState extends State<WargaEditKirimanScreen> {
                   Expanded(
                     flex: 3,
                     child: ElevatedButton(
+                      key: const Key('btn_save_edit_aspirasi'),
                       onPressed: _isLoading ? null : _submitForm,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _primaryColor,

@@ -111,6 +111,7 @@ class _DaftarKegiatanWargaScreenState extends State<DaftarKegiatanWargaScreen> {
             child: SizedBox(
               height: 50,
               child: TextField(
+                key: const Key('warga_kegiatan_search'),
                 controller: _searchController,
                 onChanged: (value) => setState(() => _searchQuery = value),
                 decoration: InputDecoration(
@@ -154,6 +155,7 @@ class _DaftarKegiatanWargaScreenState extends State<DaftarKegiatanWargaScreen> {
             color: _isFilterActive ? Colors.grey.shade200 : Colors.white,
             borderRadius: BorderRadius.circular(8),
             child: InkWell(
+              key: const Key('warga_kegiatan_filter_button'),
               onTap: () => _showFilterModal(context),
               borderRadius: BorderRadius.circular(8),
               highlightColor: Colors.transparent,
@@ -186,6 +188,7 @@ class _DaftarKegiatanWargaScreenState extends State<DaftarKegiatanWargaScreen> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         leading: IconButton(
+          key: const Key('back_button_list'),
           icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
