@@ -293,6 +293,7 @@ class _DaftarBroadcastScreenState extends State<DaftarBroadcastScreen> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         leading: IconButton(
+          key: const Key('back_button_admin_broadcast_list'),
           icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 20),
           onPressed: () => Navigator.of(context).pop(),
         ),

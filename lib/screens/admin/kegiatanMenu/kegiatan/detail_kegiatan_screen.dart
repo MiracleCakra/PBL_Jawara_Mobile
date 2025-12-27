@@ -380,7 +380,7 @@ class _DetailKegiatanScreenState extends State<DetailKegiatanScreen> {
           elevation: 0,
           foregroundColor: Colors.black,
           leading: IconButton(
-            key: const Key('back_button'),
+            key: const Key('back_button_admin_kegiatan_detail'),
             icon: const Icon(Icons.arrow_back_ios, size: 20),
             onPressed: () => context.pop(_isChanged ? 'refresh' : null),
           ),

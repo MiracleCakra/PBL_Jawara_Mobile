@@ -196,6 +196,7 @@ class _DaftarKegiatanScreenState extends State<DaftarKegiatanScreen> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         leading: IconButton(
+          key: const Key('back_button_admin_kegiatan_list'),
           icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 20),
           onPressed: () => context.pop(),
         ),

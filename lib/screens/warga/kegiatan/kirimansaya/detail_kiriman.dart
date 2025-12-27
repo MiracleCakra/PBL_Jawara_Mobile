@@ -368,6 +368,7 @@ class _WargaDetailKirimanScreenState extends State<WargaDetailKirimanScreen> {
         centerTitle: false,
         titleSpacing: 0,
         leading: IconButton(
+          key: const Key('back_button_aspirasi_detail'),
           icon: const Icon(
             Icons.arrow_back_ios_new,
             color: Colors.black,

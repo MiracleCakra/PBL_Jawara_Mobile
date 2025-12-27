@@ -483,8 +483,11 @@ final router = GoRouter(
                 GoRoute(
                   path: 'detail',
                   builder: (context, state) {
-                    final kegiatan = state.extra as KegiatanModel;
-                    return DetailKegiatanScreen(kegiatan: kegiatan);
+                    if (state.extra is KegiatanModel) {
+                      final kegiatan = state.extra as KegiatanModel;
+                      return DetailKegiatanScreen(kegiatan: kegiatan);
+                    }
+                    return const Scaffold(body: Center(child: Text("Invalid Data")));
                   },
                 ),
                 GoRoute(

@@ -84,6 +84,7 @@ class _DetailKegiatanWargaScreenState extends State<DetailKegiatanWargaScreen> {
         elevation: 0,
         foregroundColor: Colors.black,
         leading: IconButton(
+          key: const Key('back_button_detail'),
           icon: const Icon(Icons.arrow_back_ios_new, size: 20),
           onPressed: () => context.pop(),
         ),

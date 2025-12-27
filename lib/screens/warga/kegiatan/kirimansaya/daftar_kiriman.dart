@@ -429,6 +429,7 @@ class _WargaPesanSayaScreenState extends State<WargaPesanSayaScreen> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
+          key: const Key('back_button_aspirasi_list'),
           icon: const Icon(
             Icons.arrow_back_ios_new,
             color: Colors.black,

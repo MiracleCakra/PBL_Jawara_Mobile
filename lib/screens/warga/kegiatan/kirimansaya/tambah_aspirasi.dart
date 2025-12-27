@@ -186,6 +186,7 @@ class _WargaTambahAspirasiScreenState
         foregroundColor: Colors.black,
         elevation: 0,
         leading: IconButton(
+          key: const Key('back_button_aspirasi_create'),
           icon: const Icon(Icons.arrow_back_ios_new, size: 20),
           onPressed: () => context.pop(),
         ),

@@ -102,6 +102,7 @@ class _WargaEditKirimanScreenState extends State<WargaEditKirimanScreen> {
         foregroundColor: Colors.black,
         elevation: 0,
         leading: IconButton(
+          key: const Key('back_button_aspirasi_edit'),
           icon: const Icon(Icons.arrow_back_ios_new, size: 20),
           onPressed: () => context.pop(),
         ),

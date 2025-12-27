@@ -13,30 +13,24 @@ void main() {
 
   Future<void> performLogin(WidgetTester tester) async {
     print('LOG: Starting Login Process...');
-    
-    if (tester.any(find.byKey(const Key('kegiatan_tab')))) {
-      return;
-    }
+    if (tester.any(find.byKey(const Key('kegiatan_tab')))) return;
 
     if (!tester.any(find.byKey(const Key('btn_show_login_form')))) {
-       await tester.pumpAndSettle(const Duration(seconds: 2));
+       await tester.pump(const Duration(seconds: 2));
     }
-
     if (tester.any(find.byKey(const Key('btn_show_login_form')))) {
         await tester.ensureVisible(find.byKey(const Key('btn_show_login_form')));
-        await tester.pumpAndSettle();
+        await tester.pump();
         await tester.tap(find.byKey(const Key('btn_show_login_form')));
         await tester.pumpAndSettle(const Duration(seconds: 1));
     }
 
-    print('LOG: Filling login form for Admin...');
     await tester.ensureVisible(find.byKey(const Key('input_email')));
     await tester.enterText(find.byKey(const Key('input_email')), 'admin@gmail.com');
     await tester.pump(const Duration(milliseconds: 100));
     await tester.enterText(find.byKey(const Key('input_password')), 'password');
     await tester.pump(const Duration(milliseconds: 100));
 
-    print('LOG: Submitting login...');
     await tester.ensureVisible(find.byKey(const Key('btn_submit_login')));
     await tester.tap(find.byKey(const Key('btn_submit_login')));
     
@@ -58,13 +52,11 @@ void main() {
         await tester.tap(lainnyaTab);
         await tester.pumpAndSettle(const Duration(seconds: 2));
     }
-
-    final logoutBtn = find.text('Keluar');
+    final logoutBtn = find.byKey(const Key('logout_button'));
     if (tester.any(logoutBtn)) {
         await tester.scrollUntilVisible(logoutBtn, 500, scrollable: find.byType(Scrollable).first);
         await tester.tap(logoutBtn);
-        await tester.pumpAndSettle();
-        
+        await tester.pump();
         if (tester.any(find.text('Ya, Keluar'))) {
             await tester.tap(find.text('Ya, Keluar'));
             await tester.pumpAndSettle(const Duration(seconds: 3));
@@ -72,7 +64,7 @@ void main() {
     }
   }
 
-  group('Admin Log Aktivitas Tests', () {
+  group('Admin Aspirasi Tests', () {
     setUpAll(() async {
       try {
         await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -86,9 +78,9 @@ void main() {
       await initializeDateFormatting('id_ID', null);
     });
 
-    testWidgets('1. Search Log Aktivitas', (WidgetTester tester) async {
+    testWidgets('1. Search Aspirasi', (WidgetTester tester) async {
       app.main();
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 2));
       tester.view.physicalSize = const Size(1080, 1920);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -97,32 +89,27 @@ void main() {
       await performLogin(tester);
 
       await tester.tap(find.byKey(const Key('kegiatan_tab')));
-      await tester.pumpAndSettle(const Duration(seconds: 2));
-
-      final logButton = find.byKey(const Key('log_aktivitas_button'));
-      await tester.scrollUntilVisible(logButton, 500.0, scrollable: find.byType(Scrollable).first);
-      await tester.tap(logButton);
+      await tester.pump(const Duration(seconds: 2));
+      
+      final pesanButton = find.byKey(const Key('pesan_warga_button'));
+      await tester.scrollUntilVisible(pesanButton, 500.0, scrollable: find.byType(Scrollable).first);
+      await tester.tap(pesanButton);
       await tester.pump(const Duration(seconds: 5));
 
-      expect(find.descendant(of: find.byType(AppBar), matching: find.text('Log Aktivitas')), findsOneWidget);
+      final searchField = find.byKey(const Key('pesan_warga_search_field'));
+      await tester.enterText(searchField, 'Test');
+      await tester.pump(const Duration(seconds: 2));
+      print('LOG: Search Performed.');
 
-      final searchField = find.byKey(const Key('log_search_field'));
-      await tester.enterText(searchField, 'Test Search');
-      await tester.pump(const Duration(milliseconds: 800)); 
-      await tester.pumpAndSettle();
-      
-      // Just verifying UI doesn't crash and search executes
-      print('LOG: Search Performed');
-
-      await tester.tap(find.byKey(const Key('log_back_button')));
-      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('pesan_warga_back_button')));
+      await tester.pump(const Duration(seconds: 2));
 
       await performLogout(tester);
     });
 
-    testWidgets('2. Filter Log Aktivitas', (WidgetTester tester) async {
+    testWidgets('2. Filter Aspirasi', (WidgetTester tester) async {
       app.main();
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 2));
       tester.view.physicalSize = const Size(1080, 1920);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -131,27 +118,34 @@ void main() {
       await performLogin(tester);
 
       await tester.tap(find.byKey(const Key('kegiatan_tab')));
-      await tester.pumpAndSettle(const Duration(seconds: 2));
-
-      final logButton = find.byKey(const Key('log_aktivitas_button'));
-      await tester.scrollUntilVisible(logButton, 500.0, scrollable: find.byType(Scrollable).first);
-      await tester.tap(logButton);
+      await tester.pump(const Duration(seconds: 2));
+      
+      final pesanButton = find.byKey(const Key('pesan_warga_button'));
+      await tester.scrollUntilVisible(pesanButton, 500.0, scrollable: find.byType(Scrollable).first);
+      await tester.tap(pesanButton);
       await tester.pump(const Duration(seconds: 5));
 
-      final filterButton = find.byKey(const Key('log_filter_button'));
-      await tester.tap(filterButton);
+      print('LOG: Opening Filter...');
+      await tester.tap(find.byKey(const Key('pesan_warga_filter_button')));
       await tester.pumpAndSettle();
       
-      expect(find.text('Filter Log Aktivitas'), findsOneWidget);
+      expect(find.text('Status Pesan Warga'), findsOneWidget);
       
-      final resetButton = find.byKey(const Key('filter_reset_button'));
-      await tester.tap(resetButton);
+      print('LOG: Selecting "Semua" in Filter Dropdown...');
+      await tester.tap(find.byKey(const Key('dropdown_filter_status_pesan')));
       await tester.pumpAndSettle();
-      
-      expect(find.text('Filter Log Aktivitas'), findsNothing);
+      await tester.tap(find.text('Semua').last);
+      await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(const Key('log_back_button')));
+      print('LOG: Tapping Terapkan...');
+      await tester.tap(find.byKey(const Key('filter_apply_button')));
       await tester.pumpAndSettle();
+      
+      expect(find.text('Status Pesan Warga'), findsNothing);
+      print('LOG: Filter Tested with "Semua".');
+
+      await tester.tap(find.byKey(const Key('pesan_warga_back_button')));
+      await tester.pump(const Duration(seconds: 2));
 
       await performLogout(tester);
     });
